@@ -1,0 +1,140 @@
+%{
+
+#include <cstdio>
+#include <iostream>
+#include <string>
+
+extern "C" int yylex();
+extern "C" int yyparse();
+extern "C" FILE *yyin;
+
+void yyerror(const char *s);
+
+%}
+
+%code requires
+{
+    struct Text
+    {
+        int from, to;
+    };
+}
+
+%code provides
+{
+    #include <ostream>
+
+    static std::ostream &
+    operator<<(std::ostream &os, Text text)
+    {
+        return os;
+    }
+}
+
+%union {
+    Text text;
+    char ch;
+}
+
+%token <text> ID NUM RETURN
+
+%type <text> tu
+%type <text> funcs
+%type <text> func
+%type <text> stmts
+%type <text> head
+%type <text> body
+%type <text> type
+%type <text> name
+%type <text> id
+%type <text> args
+%type <text> ret
+
+%%
+
+tu
+    : funcs { std::cout << "found funcs: " << $1 << std::endl; }
+    ;
+
+funcs
+    : func       { std::cout << "found one func: " << $1 << std::endl; }
+    | funcs func { std::cout << "found another func: " << $2 << std::endl; }
+    ;
+
+func
+    : head body { std::cout << "found func: " << $1 << $2 << std::endl; }
+    ;
+
+body
+    : '{' stmts '}' { std::cout << "found body: " << $2 << std::endl; }
+    ;
+
+stmts
+    : /* empty */ { std::cout << "no statements: \n"; }
+    | stmts ret   { std::cout << "found another ret: " << $2 << std::endl; }
+    ;
+
+head
+    : type name args { std::cout << "found head: " << $1 << $2 << $3 << std::endl; }
+    ;
+
+type
+    : id { std::cout << "found type: " << $1 << std::endl; }
+
+name
+    : id { std::cout << "found name: " << $1 << std::endl; }
+
+id
+    : ID { std::cout << "found id: " << $1 << std::endl; }
+
+args
+    : '(' ')' { std::cout << "found ()" << std::endl; }
+    ;
+
+ret
+    : RETURN ';'
+    {
+        std::cout << "found return without value: " << std::endl;
+    }
+    | RETURN NUM ';'
+    {
+        std::cout << "found return with value: " << $2 << std::endl;
+    }
+    ;
+
+%%
+
+int
+main(int argc, char *argv[])
+{
+    extern int yydebug;
+    yydebug = 0;
+
+    if (argc != 2) {
+        std::cerr << "Wrong arguments\n";
+        return 1;
+    }
+
+    // open a file handle to a particular file:
+    FILE *myfile = std::fopen(argv[1], "r");
+    // make sure it is valid:
+    if (!myfile) {
+        std::cerr << "I can't open " << argv[1] << "!\n";
+        return -1;
+    }
+    // set flex to read from it instead of defaulting to STDIN:
+    yyin = myfile;
+
+    // parse through the input until there is no more:
+    do {
+        yyparse();
+    } while (!std::feof(yyin));
+}
+
+void
+yyerror(const char s[])
+{
+    std::cout << "EEK, parse error!  Message: " << s << std::endl;
+    // might as well halt now:
+    std::exit(-1);
+}
