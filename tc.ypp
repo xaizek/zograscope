@@ -1,23 +1,26 @@
 %{
 
+#include "tc.tab.hpp"
+
 #include <cstdio>
+
 #include <iostream>
 #include <string>
 
+#include "TreeBuilder.hpp"
+
 extern "C" int yylex();
-extern "C" int yyparse();
 extern "C" FILE *yyin;
 
 void yyerror(const char *s);
+
+static TreeBuilder tb;
 
 %}
 
 %code requires
 {
-    struct Text
-    {
-        std::size_t from, len;
-    };
+#include "TreeBuilder.hpp"
 }
 
 %code provides
@@ -34,72 +37,60 @@ void yyerror(const char *s);
 
 %union {
     Text text;
+    PNode *node;
 }
 
-%token <text> ID NUM RETURN
+%token <text> ID NUM RETURN ';' '(' ')' '{' '}'
 
-%type <text> tu
-%type <text> funcs
-%type <text> func
-%type <text> stmts
-%type <text> head
-%type <text> body
-%type <text> type
-%type <text> name
-%type <text> id
-%type <text> args
-%type <text> ret
+%type <node> tu funcs func stmts head body type name id args ret
 
 %%
 
 tu
-    : funcs { std::cout << "found funcs: " << $1 << std::endl; }
+    : funcs { tb.setRoot(tb.addNode($1)); }
     ;
 
 funcs
-    : func       { std::cout << "found one func: " << $1 << std::endl; }
-    | funcs func { std::cout << "found another func: " << $2 << std::endl; }
+    : func       { $$ = tb.addNode($1); }
+    | funcs func { $$ = tb.append($1, tb.addNode($2)); }
     ;
 
 func
-    : head body { std::cout << "found func: " << $1 << $2 << std::endl; }
+    : head body { $$ = tb.append($1, tb.addNode($2)); }
     ;
 
 body
-    : '{' stmts '}' { std::cout << "found body: " << $2 << std::endl; }
+    : '{' stmts '}' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2), tb.addNode($3) }); }
     ;
 
 stmts
-    : /* empty */ { std::cout << "no statements: \n"; }
-    | stmts ret   { std::cout << "found another ret: " << $2 << std::endl; }
+    : /* empty */ { $$ = tb.addNode(); }
+    | stmts ret   { $$ = tb.append($1, tb.addNode($2)); }
     ;
 
 head
-    : type name args { std::cout << "found head: " << $1 << $2 << $3 << std::endl; }
+    : type name args { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2), tb.addNode($3) }); }
     ;
 
 type
-    : id { std::cout << "found type: " << $1 << std::endl; }
+    : id { $$ = tb.addNode($1); }
+    ;
 
 name
-    : id { std::cout << "found name: " << $1 << std::endl; }
+    : id { $$ = tb.addNode($1); }
+    ;
 
 id
-    : ID { std::cout << "found id: " << $1 << std::endl; }
+    : ID { $$ = tb.addNode($1); }
+    ;
 
 args
-    : '(' ')' { std::cout << "found ()" << std::endl; }
+    : '(' ')' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2) }); }
     ;
 
 ret
-    : RETURN ';'
-    {
-        std::cout << "found return without value: " << $1 << std::endl;
-    }
-    | RETURN NUM ';'
-    {
-        std::cout << "found return with value: " << $2 << std::endl;
-    }
+    : RETURN ';' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2) }); }
+    | RETURN NUM ';' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2), tb.addNode($3) }); }
     ;
 
 %%
