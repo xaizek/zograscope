@@ -6,20 +6,28 @@
 
 #include "tc.tab.hpp"
 
-std::size_t offset;
+std::size_t yyoffset;
+std::size_t yyline;
+std::size_t yycolumn;
 
 #define YY_USER_ACTION \
-    yylval.text = { offset, yyleng }; \
-    offset += yyleng;
+    yylval.text = { yyoffset, yyleng }; \
+    yylloc.first_line = yyline; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_line = yyline; \
+    yylloc.last_column = yycolumn + yyleng; \
+    yyoffset += yyleng; \
+    yycolumn += yyleng;
 
 %}
 
 %%
 
-[ \t\n]                 ;
-[0-9]+                  { std::cout << "Found an integer: " << yytext << std::endl; return NUM; }
+[ \t]                   ;
+\n                      { ++yyline; yycolumn = 1U; }
+[0-9]+                  { return NUM; }
 return                  { return RETURN; }
-[a-zA-Z][0-9a-zA-Z]*    { std::cout << "Found an id: " << yytext << std::endl; return ID; }
+[a-zA-Z][0-9a-zA-Z]*    { return ID; }
 
 "("|")"|";"|"{"|"}" {
     return yytext[0];

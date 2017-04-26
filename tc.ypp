@@ -7,20 +7,19 @@
 #include <iostream>
 #include <string>
 
-#include "TreeBuilder.hpp"
-
 extern "C" int yylex();
 extern "C" FILE *yyin;
 
 void yyerror(const char *s);
 
-static TreeBuilder tb;
+static TreeBuilder *tb;
 
 %}
 
 %code requires
 {
 #include "TreeBuilder.hpp"
+#define YYLTYPE Location
 }
 
 %code provides
@@ -35,6 +34,8 @@ static TreeBuilder tb;
     }
 }
 
+%locations
+
 %union {
     Text text;
     PNode *node;
@@ -47,73 +48,75 @@ static TreeBuilder tb;
 %%
 
 tu
-    : funcs { tb.setRoot(tb.addNode($1)); }
+    : funcs { tb->setRoot(tb->addNode($1, @1)); }
     ;
 
 funcs
-    : func       { $$ = tb.addNode($1); }
-    | funcs func { $$ = tb.append($1, tb.addNode($2)); }
+    : func       { $$ = tb->addNode($1, @1); }
+    | funcs func { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 func
-    : head body { $$ = tb.append($1, tb.addNode($2)); }
+    : head body { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 body
-    : '{' stmts '}' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2), tb.addNode($3) }); }
+    : '{' stmts '}' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
 stmts
-    : /* empty */ { $$ = tb.addNode(); }
-    | stmts ret   { $$ = tb.append($1, tb.addNode($2)); }
+    : /* empty */ { $$ = tb->addNode(); }
+    | stmts ret   { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 head
-    : type name args { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2), tb.addNode($3) }); }
+    : type name args { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
 type
-    : id { $$ = tb.addNode($1); }
+    : id { $$ = tb->addNode($1, @1); }
     ;
 
 name
-    : id { $$ = tb.addNode($1); }
+    : id { $$ = tb->addNode($1, @1); }
     ;
 
 id
-    : ID { $$ = tb.addNode($1); }
+    : ID { $$ = tb->addNode($1, @1); }
     ;
 
 args
-    : '(' ')' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2) }); }
+    : '(' ')' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
 
 ret
-    : RETURN ';' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2) }); }
-    | RETURN NUM ';' { $$ = tb.addNode({ tb.addNode($1), tb.addNode($2), tb.addNode($3) }); }
+    : RETURN ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | RETURN NUM ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
 %%
 
-int
-main(int argc, char *argv[])
+
+TreeBuilder
+parse(const std::string &contents)
 {
-    extern std::size_t offset;
-    offset = 0U;
+    extern std::size_t yyoffset;
+    yyoffset = 0U;
+    extern std::size_t yyline;
+    yyline = 1U;
+    extern std::size_t yycolumn;
+    yycolumn = 1U;
     extern int yydebug;
     yydebug = 0;
 
-    if (argc != 2) {
-        std::cerr << "Wrong arguments\n";
-        return 1;
-    }
+    TreeBuilder tb;
+    ::tb = &tb;
 
-    // open a file handle to a particular file:
-    FILE *myfile = std::fopen(argv[1], "r");
-    // make sure it is valid:
+    FILE *myfile = fmemopen(const_cast<char *>(contents.data()),
+                            contents.size(), "r");
     if (!myfile) {
-        std::cerr << "I can't open " << argv[1] << "!\n";
-        return -1;
+        std::cerr << "I can't open the stream!\n";
+        return tb;
     }
     // set flex to read from it instead of defaulting to STDIN:
     yyin = myfile;
@@ -122,6 +125,10 @@ main(int argc, char *argv[])
     do {
         yyparse();
     } while (!std::feof(yyin));
+
+    fclose(myfile);
+
+    return tb;
 }
 
 void

@@ -7,6 +7,14 @@
 #include <utility>
 #include <vector>
 
+struct Location
+{
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+};
+
 struct Text
 {
     std::size_t from, len;
@@ -14,27 +22,45 @@ struct Text
 
 struct PNode
 {
-    Text value;
+    PNode()
+    {
+    }
+    PNode(std::vector<PNode *> children) : children(std::move(children))
+    {
+    }
+    PNode(Text value, const Location &loc)
+        : value(value), line(loc.first_line), col(loc.first_column)
+    {
+    }
+
+    Text value = { 0, 0 };
     std::vector<PNode *> children;
+    int line = 0, col = 0;
 };
 
 class TreeBuilder
 {
 public:
-    PNode * addNode(PNode *node)
+    PNode * addNode(PNode *node, const Location &loc)
     {
         return node;
     }
 
-    PNode * addNode(Text value = {})
+    PNode * addNode()
     {
-        nodes.push_back({ value });
+        nodes.emplace_back();
+        return &nodes.back();
+    }
+
+    PNode * addNode(Text value, const Location &loc)
+    {
+        nodes.emplace_back(value, loc);
         return &nodes.back();
     }
 
     PNode * addNode(std::vector<PNode *> children)
     {
-        nodes.push_back({ {}, std::move(children) });
+        nodes.emplace_back(std::move(children));
         return &nodes.back();
     }
 
@@ -56,7 +82,7 @@ public:
 
 private:
     std::deque<PNode> nodes;
-    PNode *root;
+    PNode *root = nullptr;
 };
 
 #endif // TREEBUILDER_HPP__
