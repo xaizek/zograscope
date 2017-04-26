@@ -16,7 +16,7 @@ void yyerror(const char *s);
 {
     struct Text
     {
-        int from, to;
+        std::size_t from, len;
     };
 }
 
@@ -27,13 +27,13 @@ void yyerror(const char *s);
     static std::ostream &
     operator<<(std::ostream &os, Text text)
     {
+        os << '(' << text.from << ";+" << text.len << ')';
         return os;
     }
 }
 
 %union {
     Text text;
-    char ch;
 }
 
 %token <text> ID NUM RETURN
@@ -94,7 +94,7 @@ args
 ret
     : RETURN ';'
     {
-        std::cout << "found return without value: " << std::endl;
+        std::cout << "found return without value: " << $1 << std::endl;
     }
     | RETURN NUM ';'
     {
@@ -107,6 +107,8 @@ ret
 int
 main(int argc, char *argv[])
 {
+    extern std::size_t offset;
+    offset = 0U;
     extern int yydebug;
     yydebug = 0;
 

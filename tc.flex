@@ -6,6 +6,12 @@
 
 #include "tc.tab.hpp"
 
+std::size_t offset;
+
+#define YY_USER_ACTION \
+    yylval.text = { offset, yyleng }; \
+    offset += yyleng;
+
 %}
 
 %%
