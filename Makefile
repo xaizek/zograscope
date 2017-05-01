@@ -2,10 +2,10 @@ SRC := tc.cpp tc.tab.cpp diffpp.cpp decoration.cpp tree-edit-distance.cpp
 OBJ := $(SRC:.cpp=.o)
 
 tc: $(OBJ)
-	g++ -o $@ $^ -lfl
+	g++ -g -o $@ $^ -lfl
 
 %.o: %.cpp
-	g++ -fmax-errors=3 -DYYDEBUG=1 -std=c++11 -c -g -o $@ $<
+	g++ -fmax-errors=3 -DYYDEBUG=0 -O3 -std=c++11 -c -g -o $@ $<
 
 tc.cpp: tc.flex | tc.tab.hpp
 	flex -o $@ $<

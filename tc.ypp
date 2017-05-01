@@ -1309,8 +1309,10 @@ parse(const std::string &contents)
     yyline = 1U;
     extern std::size_t yycolumn;
     yycolumn = 1U;
+#if YYDEBUG
     extern int yydebug;
     yydebug = 0;
+#endif
 
     TreeBuilder tb;
     ::tb = &tb;

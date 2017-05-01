@@ -1,5 +1,7 @@
 #include "tree-edit-distance.hpp"
 
+#define BOOST_DISABLE_ASSERTS
+
 #include <boost/multi_array.hpp>
 
 #include <algorithm>
@@ -171,11 +173,10 @@ printTree(const std::string &name, Node &root)
 static void
 forestDist(int i, int j, const std::vector<int> &l1, const std::vector<int> &l2,
            boost::multi_array<Change, 2> &td,
+           boost::multi_array<int, 2> &fd,
            const std::vector<Node *> &po1, const std::vector<Node *> &po2)
 {
-    using range = boost::multi_array_types::extent_range;
-    boost::multi_array<int, 2> fd(boost::extents[range(l1[i] - 1, i + 1)]
-                                                [range(l2[j] - 1, j + 1)]);
+    fd[l1[i] - 1][l2[j] - 1] = 0;
     for (int di = l1[i]; di <= i; ++di) {
         fd[di][l2[j] - 1] = fd[di - 1][l2[j] - 1] + Wdel;
     }
@@ -183,8 +184,10 @@ forestDist(int i, int j, const std::vector<int> &l1, const std::vector<int> &l2,
         fd[l1[i] - 1][dj] = fd[l1[i] - 1][dj - 1] + Wins;
     }
     for (int di = l1[i]; di <= i; ++di) {
+        const int ldi = l1[di];
         for (int dj = l2[j]; dj <= j; ++dj) {
-            if (l1[di] == l1[i] && l2[dj] == l2[j]) {
+            const int ldj = l2[dj];
+            if (ldi == l1[i] && ldj == l2[j]) {
                 const bool identicalRename = (po1[di]->label == po2[dj]->label);
                 fd[di][dj] = std::min({
                     fd[di - 1][dj] + Wdel,
@@ -196,7 +199,7 @@ forestDist(int i, int j, const std::vector<int> &l1, const std::vector<int> &l2,
                 fd[di][dj] =
                     std::min({ fd[di - 1][dj] + Wdel,
                                fd[di][dj - 1] + Wins,
-                               fd[l1[di] - 1][l2[dj] - 1] + td[di][dj].cost });
+                               fd[ldi - 1][ldj - 1] + td[di][dj].cost });
             }
         }
     }
@@ -261,6 +264,7 @@ private:
 static void
 backtrackForests(const std::vector<int> &l1, const std::vector<int> &l2,
                  const boost::multi_array<Change, 2> &td,
+                 boost::multi_array<int, 2> &fd,
                  const std::vector<Node *> &po1, const std::vector<Node *> &po2,
                  BacktrackingQueue &bq)
 {
@@ -270,9 +274,7 @@ backtrackForests(const std::vector<int> &l1, const std::vector<int> &l2,
     // This creates forest table identical to the one created on forward pass,
     // but it doesn't update tree table.  Tree table is fully calculated by now,
     // so we can just use its values.
-    using range = boost::multi_array_types::extent_range;
-    boost::multi_array<int, 2> fd(boost::extents[range(l1[i] - 1, i + 1)]
-                                                [range(l2[j] - 1, j + 1)]);
+    fd[l1[i] - 1][l2[j] - 1] = 0;
     for (int di = l1[i]; di <= i; ++di) {
         fd[di][l2[j] - 1] = fd[di - 1][l2[j] - 1] + Wdel;
     }
@@ -352,11 +354,14 @@ ted(Node &T1, Node &T2)
     std::vector<int> k1 = makeKr(T1, l1);
     std::vector<int> k2 = makeKr(T2, l2);
 
+    using range = boost::multi_array_types::extent_range;
+    boost::multi_array<int, 2> fd(boost::extents[range(-1, po1.size())]
+                                                [range(-1, po2.size())]);
     // int step = 0;
     for (int x : k1) {
         for (int y : k2) {
             // std::cout << "step #" << ++step << '\n';
-            forestDist(x, y, l1, l2, td, po1, po2);
+            forestDist(x, y, l1, l2, td, fd, po1, po2);
         }
     }
 
@@ -369,7 +374,7 @@ ted(Node &T1, Node &T2)
     BacktrackingQueue bq;
     bq.enqueue(k1.back(), k2.back(), l1.size() - 1, l2.size() - 1);
     while (bq.hasMore()) {
-        backtrackForests(l1, l2, td, po1, po2, bq);
+        backtrackForests(l1, l2, td, fd, po1, po2, bq);
     }
 
     return td[l1.size() - 1][l2.size() - 1].cost;

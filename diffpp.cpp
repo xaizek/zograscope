@@ -110,7 +110,7 @@ TreeBuilder parse(const std::string &contents);
 int
 main(int argc, char *argv[])
 {
-    if (argc != 3) {
+    if (argc != 3 && argc != 4) {
         std::cerr << "Wrong arguments\n";
         return 1;
     }
@@ -131,16 +131,21 @@ main(int argc, char *argv[])
         treeB = materializeTree(contents, tb.getRoot());
     }
 
+    if (argc == 4) {
+        std::cout << ">>> Skipping diffing\n";
+        return 0;
+    }
+
     // markSatellites(treeA);
     // markSatellites(treeB);
 
     std::cout << "TED(T1, T2) = " << ted(treeA, treeB) << '\n';
 
     std::cout << "T1\n";
-    // print(treeA);
+    print(treeA);
     printSource(treeA);
     std::cout << "T2\n";
-    // print(treeB);
+    print(treeB);
     printSource(treeB);
 
     // printTree("T1", treeA);

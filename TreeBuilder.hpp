@@ -27,15 +27,32 @@ struct PNode
     }
     PNode(std::vector<PNode *> children) : children(std::move(children))
     {
+        for (PNode *&child : this->children) {
+            child = contract(child);
+        }
     }
     PNode(Text value, const Location &loc)
         : value(value), line(loc.first_line), col(loc.first_column)
     {
     }
 
+    bool empty() const
+    {
+        return value.from == 0U && value.len == 0U;
+    }
+
     Text value = { 0, 0 };
     std::vector<PNode *> children;
     int line = 0, col = 0;
+
+private:
+    static PNode * contract(PNode *node)
+    {
+        if (node->empty() && node->children.size() == 1U) {
+            return contract(node->children.front());
+        }
+        return node;
+    }
 };
 
 class TreeBuilder
