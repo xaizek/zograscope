@@ -14,6 +14,12 @@ void yyerror(const char *s);
 
 static TreeBuilder *tb;
 
+static PNode *
+stmtMerge(YYSTYPE x0, YYSTYPE x1)
+{
+  return x1.node;
+}
+
 %}
 
 %code requires
@@ -34,6 +40,9 @@ static TreeBuilder *tb;
     }
 }
 
+%glr-parser
+%error-verbose
+/* %define lr.type ielr */
 %locations
 
 %union {
@@ -41,12 +50,52 @@ static TreeBuilder *tb;
     PNode *node;
 }
 
-%token <text> ID NUM RETURN ';' '(' ')' '{' '}'
+%token <text> DEFAULT RETURN SIZEOF _ALIGNOF _GENERIC
+%token <text> ID ICONST FCONST CHCONST SLIT CONST RESTRICT VOLATILE DOTS
+%token <text> INLINE _NORETURN _ALIGNAS _STATIC_ASSERT
+%token <text> IF ELSE SWITCH WHILE DO FOR BREAK CONTINUE GOTO
+%token <text> ARR_OP INC_OP DEC_OP LSH_OP RSH_OP LTE_OP GTE_OP EQ_OP NE_OP AND_OP OR_OP
+%token <text> TIMESEQ_OP DIVEQ_OP MODEQ_OP PLUSEQ_OP MINUSEQ_OP LSHIFTEQ_OP RSHIFTEQ_OP ANDEQ_OP XOREQ_OP OREQ_OP
+%token <text> TYPEDEF EXTERN STATIC CASE _THREAD_LOCAL AUTO REGISTER STRUCT UNION ENUM
+%token <text> VOID CHAR SHORT INT LONG FLOAT DOUBLE SIGNED UNSIGNED _ATOMIC _BOOL _COMPLEX
+%token <text> '?' ':' ';' '(' ')' '{' '}' '[' ']' '.' ',' '&' '|' '^' '*' '/' '%' '+' '-' '~' '!' '<' '>' '='
 
-%type <node> tu funcs func stmts head body type name id args ret
+/* %type <node> tu funcs func stmts head body type name id args ret */
+%type <node> constant primary_expression generic_selection generic_assoc_list
+%type <node> expression assignment_expression generic_association type_name
+%type <node> postfix_expression argument_expression_list initializer_list
+%type <node> unary_expression cast_expression unary_operator
+%type <node> multiplicative_expression additive_expression shift_expression
+%type <node> relational_expression equality_expression AND_expression
+%type <node> exclusive_OR_expression inclusive_OR_expression
+%type <node> logical_AND_expression logical_OR_expression conditional_expression
+%type <node> assignment_operator constant_expression init_declarator_list
+%type <node> declaration static_assert_declaration declaration_specifiers
+%type <node> storage_class_specifier type_specifier type_qualifier declarator
+%type <node> function_specifier alignment_specifier init_declarator initializer
+%type <node> atomic_type_specifier struct_or_union_specifier enum_specifier
+%type <node> struct_declaration_list struct_declaration specifier_qualifier_list
+%type <node> struct_declarator_list struct_declarator
+%type <node> enumerator_list enumerator direct_declarator
+%type <node> pointer type_qualifier_list parameter_type_list parameter_list
+%type <node> parameter_declaration identifier_list abstract_declarator
+%type <node> direct_abstract_declarator struct_or_union
+%type <node> designation designator_list designator statement labeled_statement
+%type <node> compound_statement block_item_list block_item expression_statement
+%type <node> selection_statement iteration_statement jump_statement
+%type <node> translation_unit external_declaration function_definition
+%type <node> declaration_list
+
+%precedence "atomic"
+%precedence '('
+%precedence "then"
+%precedence ELSE
+
+%start translation_unit
 
 %%
 
+/*
 tu
     : funcs { tb->setRoot(tb->addNode($1, @1)); }
     ;
@@ -65,7 +114,7 @@ body
     ;
 
 stmts
-    : /* empty */ { $$ = tb->addNode(); }
+    : %empty      { $$ = tb->addNode(); }
     | stmts ret   { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -74,7 +123,9 @@ head
     ;
 
 type
-    : id { $$ = tb->addNode($1, @1); }
+    : INT { $$ = tb->addNode($1, @1); }
+    | FLOAT { $$ = tb->addNode($1, @1); }
+    | VOID { $$ = tb->addNode($1, @1); }
     ;
 
 name
@@ -91,7 +142,1159 @@ args
 
 ret
     : RETURN ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | RETURN NUM ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | RETURN constant ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | RETURN SLIT ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+*/
+
+
+/* (6.4.4) constant:
+ *     integer-constant
+ *     floating-constant
+ *     enumeration-constant
+ *     character-constant
+ * (6.4.4.3) enumeration-constant:
+ *     identifier
+ */
+constant
+    : ICONST  { $$ = tb->addNode($1, @1); }
+    | FCONST  { $$ = tb->addNode($1, @1); }
+    | CHCONST { $$ = tb->addNode($1, @1); }
+    ;
+
+/* A.2.1 Expressions */
+
+/* (6.5.1) primary-expression: */
+/*     identifier */
+/*     constant */
+/*     string-literal */
+/*     ( expression ) */
+/*     generic-selection */
+primary_expression
+    : ID                 { $$ = tb->addNode($1, @1); }
+    | constant           { $$ = tb->addNode($1, @1); }
+    | SLIT               { $$ = tb->addNode($1, @1); }
+    | '(' expression ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | generic_selection  { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.5.1.1) generic-selection: */
+/*     _Generic ( assignment-expression , generic-assoc-list ) */
+generic_selection
+    : _GENERIC '(' assignment_expression ',' generic_assoc_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    ;
+
+/* (6.5.1.1) generic-assoc-list: */
+/*     generic-association */
+/*     generic-assoc-list , generic-association */
+generic_assoc_list
+    : %empty      { $$ = tb->addNode(); }
+    | generic_assoc_list generic_association
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+/* (6.5.1.1) generic-association: */
+/*     type-name : assignment-expression */
+/*     default : assignment-expression */
+generic_association
+    : type_name ':' assignment_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | DEFAULT ':' assignment_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.2) postfix-expression: */
+/*     primary-expression */
+/*     postfix-expression [ expression ] */
+/*     postfix-expression ( argument-expression-listopt ) */
+/*     postfix-expression . identifier */
+/*     postfix-expression -> identifier */
+/*     postfix-expression ++ */
+/*     postfix-expression -- */
+/*     ( type-name ) { initializer-list } */
+/*     ( type-name ) { initializer-list , } */
+postfix_expression
+    : primary_expression
+    { $$ = tb->addNode($1, @1); }
+    | postfix_expression '[' expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | postfix_expression '(' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | postfix_expression '(' argument_expression_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | postfix_expression '.' ID
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | postfix_expression ARR_OP ID
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | postfix_expression INC_OP
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | postfix_expression DEC_OP
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | '(' type_name ')' '{' initializer_list '}'
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | '(' type_name ')' '{' initializer_list ',' '}'
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    ;
+
+/* (6.5.2) argument-expression-list: */
+/*     assignment-expression */
+/*     argument-expression-list , assignment-expression */
+argument_expression_list
+    : assignment_expression
+    { $$ = tb->addNode($1, @1); }
+    | argument_expression_list ',' assignment_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.3) unary-expression: */
+/*     postfix-expression */
+/*     ++ unary-expression */
+/*     -- unary-expression */
+/*     unary-operator cast-expression */
+/*     sizeof unary-expression */
+/*     sizeof ( type-name ) */
+/*     _Alignof ( type-name ) */
+unary_expression
+    : postfix_expression
+    | INC_OP unary_expression
+    { $$ = tb->addNode($1, @1); }
+    | DEC_OP unary_expression
+    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    | unary_operator cast_expression
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | SIZEOF unary_expression
+    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    | SIZEOF '(' type_name ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | _ALIGNOF '(' type_name ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    ;
+
+/* (6.5.3) unary-operator: one of */
+/*     & * + - ~ ! */
+unary_operator
+    : '&' { $$ = tb->addNode($1, @1); }
+    | '*' { $$ = tb->addNode($1, @1); }
+    | '+' { $$ = tb->addNode($1, @1); }
+    | '-' { $$ = tb->addNode($1, @1); }
+    | '~' { $$ = tb->addNode($1, @1); }
+    | '!' { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.5.4) cast-expression: */
+/*     unary-expression */
+/*     ( type-name ) cast-expression */
+cast_expression
+    : unary_expression
+    { $$ = tb->addNode($1, @1); }
+    | '(' type_name ')' cast_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.5.5) multiplicative-expression: */
+/*     cast-expression */
+/*     multiplicative-expression * cast-expression */
+/*     multiplicative-expression / cast-expression */
+/*     multiplicative-expression % cast-expression */
+multiplicative_expression
+    : cast_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | multiplicative_expression '*' cast_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | multiplicative_expression '/' cast_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | multiplicative_expression '%' cast_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.6) additive-expression: */
+/*     multiplicative-expression */
+/*     additive-expression + multiplicative-expression */
+/*     additive-expression - multiplicative-expression */
+additive_expression
+    : multiplicative_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | additive_expression '+' multiplicative_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | additive_expression '-' multiplicative_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.7) shift-expression: */
+/*     additive-expression */
+/*     shift-expression << additive-expression */
+/*     shift-expression >> additive-expression */
+shift_expression
+    : additive_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | shift_expression LSH_OP additive_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | shift_expression RSH_OP additive_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.8) relational-expression: */
+/*     shift-expression */
+/*     relational-expression <  shift-expression */
+/*     relational-expression >  shift-expression */
+/*     relational-expression <= shift-expression */
+/*     relational-expression >= shift-expression */
+relational_expression
+    : shift_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | relational_expression '<' shift_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | relational_expression '>' shift_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | relational_expression LTE_OP shift_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | relational_expression GTE_OP shift_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.9) equality-expression: */
+/*     relational-expression */
+/*     equality-expression == relational-expression */
+/*     equality-expression != relational-expression */
+equality_expression
+    : relational_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | equality_expression EQ_OP relational_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | equality_expression NE_OP relational_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.10) AND-expression: */
+/*     equality-expression */
+/*     AND-expression & equality-expression */
+AND_expression
+    : equality_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | AND_expression '&' equality_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.11) exclusive-OR-expression: */
+/*     AND-expression */
+/*     exclusive-OR-expression ^ AND-expression */
+exclusive_OR_expression
+    : AND_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | exclusive_OR_expression '^' AND_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.12) inclusive-OR-expression: */
+/*     exclusive-OR-expression */
+/*     inclusive-OR-expression | exclusive-OR-expression */
+inclusive_OR_expression
+    : exclusive_OR_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | inclusive_OR_expression '|' exclusive_OR_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.13) logical-AND-expression: */
+/*     inclusive-OR-expression */
+/*     logical-AND-expression && inclusive-OR-expression */
+logical_AND_expression
+    : inclusive_OR_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | logical_AND_expression AND_OP inclusive_OR_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.14) logical-OR-expression: */
+/*     logical-AND-expression */
+/*     logical-OR-expression || logical-AND-expression */
+logical_OR_expression
+    : logical_AND_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | logical_OR_expression OR_OP logical_AND_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.15) conditional-expression: */
+/*     logical-OR-expression */
+/*     logical-OR-expression ? expression : conditional-expression */
+conditional_expression
+    : logical_OR_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | logical_OR_expression '?' expression ':' conditional_expression
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5) }); }
+    ;
+
+/* (6.5.16) assignment-expression: */
+/*     conditional-expression */
+/*     unary-expression assignment-operator assignment-expression */
+assignment_expression
+    : conditional_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    | unary_expression assignment_operator assignment_expression
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3) }); }
+    ;
+
+/* (6.5.16) assignment-operator: one of */
+/*     = *= /= %= += -= <<= >>= &= ^= |= */
+assignment_operator
+    : '='         { $$ = tb->addNode($1, @1); }
+    | TIMESEQ_OP  { $$ = tb->addNode($1, @1); }
+    | DIVEQ_OP    { $$ = tb->addNode($1, @1); }
+    | MODEQ_OP    { $$ = tb->addNode($1, @1); }
+    | PLUSEQ_OP   { $$ = tb->addNode($1, @1); }
+    | MINUSEQ_OP  { $$ = tb->addNode($1, @1); }
+    | LSHIFTEQ_OP { $$ = tb->addNode($1, @1); }
+    | RSHIFTEQ_OP { $$ = tb->addNode($1, @1); }
+    | ANDEQ_OP    { $$ = tb->addNode($1, @1); }
+    | XOREQ_OP    { $$ = tb->addNode($1, @1); }
+    | OREQ_OP     { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.5.17) expression: */
+/*     assignment-expression */
+/*     expression , assignment-expression */
+expression
+    : assignment_expression
+    { $$ = tb->addNode($1, @1); }
+    | expression ',' assignment_expression
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.6) constant-expression: */
+/*     conditional-expression */
+constant_expression
+    : conditional_expression
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* A.2.2 Declarations */
+
+/* (6.7) declaration: */
+/*     declaration-specifiers init-declarator-listopt ; */
+/*     static_assert-declaration */
+declaration
+    : declaration_specifiers ';'                      %dprec 200
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | declaration_specifiers init_declarator_list ';' %dprec 100
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | static_assert_declaration
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7) declaration-specifiers: */
+/*     storage-class-specifier declaration-specifiersopt */
+/*     type-specifier declaration-specifiersopt */
+/*     type-qualifier declaration-specifiersopt */
+/*     function-specifier declaration-specifiersopt */
+/*     alignment-specifier declaration-specifiersopt */
+declaration_specifiers
+    : storage_class_specifier declaration_specifiers
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | storage_class_specifier
+    { $$ = tb->addNode($1, @1); }
+    | type_specifier declaration_specifiers
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | type_specifier
+    { $$ = tb->addNode($1, @1); }
+    | type_qualifier declaration_specifiers
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | type_qualifier
+    { $$ = tb->addNode($1, @1); }
+    | function_specifier declaration_specifiers
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | function_specifier
+    { $$ = tb->addNode($1, @1); }
+    | alignment_specifier declaration_specifiers
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | alignment_specifier
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7) init-declarator-list: */
+/*     init-declarator */
+/*     init-declarator-list , init-declarator */
+init_declarator_list
+    : init_declarator
+    { $$ = tb->addNode($1, @1); }
+    | init_declarator_list ',' init_declarator
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7) init-declarator: */
+/*     declarator */
+/*     declarator = initializer */
+init_declarator
+    : declarator
+    { $$ = tb->addNode($1, @1); }
+    | declarator '=' initializer
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.1) storage-class-specifier: */
+/*     typedef */
+/*     extern */
+/*     static */
+/*     _Thread_local */
+/*     auto */
+/*     register */
+storage_class_specifier
+    : TYPEDEF       { $$ = tb->addNode($1, @1); }
+    | EXTERN        { $$ = tb->addNode($1, @1); }
+    | STATIC        { $$ = tb->addNode($1, @1); }
+    | _THREAD_LOCAL { $$ = tb->addNode($1, @1); }
+    | AUTO          { $$ = tb->addNode($1, @1); }
+    | REGISTER      { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.2) type-specifier: */
+/*     void */
+/*     char */
+/*     short */
+/*     int */
+/*     long */
+/*     float */
+/*     double */
+/*     signed */
+/*     unsigned */
+/*     _Bool */
+/*     _Complex */
+/*     atomic-type-specifier */
+/*     struct-or-union-specifier */
+/*     enum-specifier */
+/*     typedef-name */
+/* (6.7.8) typedef-name: */
+/*     identifier */
+type_specifier
+    : VOID                      { $$ = tb->addNode($1, @1); }
+    | CHAR                      { $$ = tb->addNode($1, @1); }
+    | SHORT                     { $$ = tb->addNode($1, @1); }
+    | INT                       { $$ = tb->addNode($1, @1); }
+    | LONG                      { $$ = tb->addNode($1, @1); }
+    | FLOAT                     { $$ = tb->addNode($1, @1); }
+    | DOUBLE                    { $$ = tb->addNode($1, @1); }
+    | SIGNED                    { $$ = tb->addNode($1, @1); }
+    | UNSIGNED                  { $$ = tb->addNode($1, @1); }
+    | _BOOL                     { $$ = tb->addNode($1, @1); }
+    | _COMPLEX                  { $$ = tb->addNode($1, @1); }
+    | atomic_type_specifier     { $$ = tb->addNode($1, @1); }
+    | struct_or_union_specifier { $$ = tb->addNode($1, @1); }
+    | enum_specifier            { $$ = tb->addNode($1, @1); }
+    | ID %dprec 5               { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.2.1) struct-or-union-specifier: */
+/*     struct-or-union identifieropt { struct-declaration-list } */
+/*     struct-or-union identifier */
+struct_or_union_specifier
+    : struct_or_union ID '{' struct_declaration_list '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | struct_or_union '{' struct_declaration_list '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | struct_or_union ID
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.2.1) struct-or-union: */
+/*     struct */
+/*     union */
+struct_or_union
+    : STRUCT { $$ = tb->addNode($1, @1); }
+    | UNION  { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.2.1) struct-declaration-list: */
+/*     struct-declaration */
+/*     struct-declaration-list struct-declaration */
+struct_declaration_list
+    : struct_declaration
+    { $$ = tb->addNode($1, @1); }
+    | struct_declaration_list struct_declaration
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+/* (6.7.2.1) struct-declaration: */
+/*     specifier-qualifier-list struct-declarator-listopt ; */
+/*     static_assert-declaration */
+struct_declaration
+    : specifier_qualifier_list struct_declarator_list ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | specifier_qualifier_list ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | static_assert_declaration
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.2.1) specifier-qualifier-list: */
+/*     type-specifier specifier-qualifier-listopt */
+/*     type-qualifier specifier-qualifier-listopt */
+specifier_qualifier_list
+    : type_specifier specifier_qualifier_list
+    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    | type_specifier
+    { $$ = tb->addNode($1, @1); }
+    | type_qualifier specifier_qualifier_list
+    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    | type_qualifier
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.2.1) struct-declarator-list: */
+/*     struct-declarator */
+/*     struct-declarator-list , struct-declarator */
+struct_declarator_list
+    : struct_declarator
+    { $$ = tb->addNode($1, @1); }
+    | struct_declarator_list ',' struct_declarator
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.2.1) struct-declarator: */
+/*     declarator */
+/*     declaratoropt : constant-expression */
+struct_declarator
+    : declarator
+    { $$ = tb->addNode($1, @1); }
+    | declarator ':' constant_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | ':' constant_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.2.2) enum-specifier: */
+/*     enum identifieropt { enumerator-list } */
+/*     enum identifieropt { enumerator-list , } */
+/*     enum identifier */
+enum_specifier
+    : ENUM ID '{' enumerator_list '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | ENUM '{' enumerator_list '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | ENUM ID '{' enumerator_list ',' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | ENUM '{' enumerator_list ',' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | ENUM ID
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.2.2) enumerator-list: */
+/*     enumerator */
+/*     enumerator-list , enumerator */
+enumerator_list
+    : enumerator
+    { $$ = tb->addNode($1, @1); }
+    | enumerator_list ',' enumerator
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.2.2) enumerator: */
+/*     enumeration-constant */
+/*     enumeration-constant = constant-expression */
+enumerator
+    : ID
+    { $$ = tb->addNode($1, @1); }
+    | ID '=' constant_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.2.4) atomic-type-specifier: */
+/*     _Atomic ( type-name ) */
+atomic_type_specifier
+    : _ATOMIC '(' type_name ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    ;
+
+/* (6.7.3) type-qualifier: */
+/*     const */
+/*     restrict */
+/*     volatile */
+/*     _Atomic */
+type_qualifier
+    : CONST    { $$ = tb->addNode($1, @1); }
+    | RESTRICT { $$ = tb->addNode($1, @1); }
+    | VOLATILE { $$ = tb->addNode($1, @1); }
+    | _ATOMIC %prec "atomic" { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.4) function-specifier: */
+/*     inline */
+/*     _Noreturn */
+function_specifier
+    : INLINE    { $$ = tb->addNode($1, @1); }
+    | _NORETURN { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.5) alignment-specifier: */
+/*     _Alignas ( type-name ) */
+/*     _Alignas ( constant-expression ) */
+alignment_specifier
+    : _ALIGNAS '(' type_name ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | _ALIGNAS '(' constant_expression ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    ;
+
+/* (6.7.6) declarator: */
+/*     pointeropt direct-declarator */
+declarator
+    : pointer direct_declarator
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | direct_declarator
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.6) direct-declarator: */
+/*     identifier */
+/*     ( declarator ) */
+/*     direct-declarator [ type-qualifier-listopt assignment-expressionopt ] */
+/*     direct-declarator [ static type-qualifier-listopt assignment-expression ] */
+/*     direct-declarator [ type-qualifier-list static assignment-expression ] */
+/*     direct-declarator [ type-qualifier-listopt * ] */
+/*     direct-declarator ( parameter-type-list ) */
+/*     direct-declarator ( identifier-listopt ) */
+direct_declarator
+    : ID
+    { $$ = tb->addNode($1, @1); }
+    | '(' declarator ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | direct_declarator '[' type_qualifier_list assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | direct_declarator '[' type_qualifier_list ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_declarator '[' assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_declarator '[' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | direct_declarator '[' STATIC type_qualifier_list assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | direct_declarator '[' STATIC assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | direct_declarator '[' type_qualifier_list STATIC assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | direct_declarator '[' type_qualifier_list '*' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | direct_declarator '[' '*' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_declarator '(' parameter_type_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_declarator '(' identifier_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_declarator '(' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.6) pointer: */
+/*     * type-qualifier-listopt */
+/*     * type-qualifier-listopt pointer */
+pointer
+    : '*' type_qualifier_list
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | '*'
+    { $$ = tb->addNode($1, @1); }
+    | '*' type_qualifier_list pointer
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '*' pointer
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.6) type-qualifier-list: */
+/*     type-qualifier */
+/*     type-qualifier-list type-qualifier */
+type_qualifier_list
+    : type_qualifier
+    { $$ = tb->addNode($1, @1); }
+    | type_qualifier_list type_qualifier
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.6) parameter-type-list: */
+/*     parameter-list */
+/*     parameter-list , ... */
+parameter_type_list
+    : parameter_list
+    { $$ = tb->addNode($1, @1); }
+    | parameter_list ',' DOTS
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.6) parameter-list: */
+/*     parameter-declaration */
+/*     parameter-list , parameter-declaration */
+parameter_list
+    : parameter_declaration
+    { $$ = tb->addNode($1, @1); }
+    | parameter_list ',' parameter_declaration
+    { $$ = tb->prepend($3, { tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.6) parameter-declaration: */
+/*     declaration-specifiers declarator */
+/*     declaration-specifiers abstract-declaratoropt */
+parameter_declaration
+    : declaration_specifiers declarator %dprec 20
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | declaration_specifiers abstract_declarator %dprec 30
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | declaration_specifiers  %dprec 40
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.6) identifier-list: */
+/*     identifier */
+/*     identifier-list , identifier */
+identifier_list
+    : ID %dprec 10
+    { $$ = tb->addNode($1, @1); }
+    | identifier_list ',' ID
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* (6.7.7) type-name: */
+/*     specifier-qualifier-list abstract-declaratoropt */
+type_name
+    : specifier_qualifier_list abstract_declarator
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | specifier_qualifier_list
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.7) abstract-declarator: */
+/*     pointer */
+/*     pointeropt direct-abstract-declarator */
+abstract_declarator
+    : pointer
+    { $$ = tb->addNode($1, @1); }
+    | pointer direct_abstract_declarator
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | direct_abstract_declarator
+    { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.7.7) direct-abstract-declarator: */
+/*     ( abstract-declarator ) */
+/*     direct-abstract-declaratoropt [ type-qualifier-listopt assignment-expressionopt ] */
+/*     direct-abstract-declaratoropt [ static type-qualifier-listopt assignment-expression ] */
+/*     direct-abstract-declaratoropt [ type-qualifier-list static assignment-expression ] */
+/*     direct-abstract-declaratoropt [ * ] */
+/*     direct-abstract-declaratoropt ( parameter-type-listopt ) */
+direct_abstract_declarator
+    : '(' abstract_declarator ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | direct_abstract_declarator '[' type_qualifier_list assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | direct_abstract_declarator '[' type_qualifier_list ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_abstract_declarator '[' assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_abstract_declarator '[' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '[' type_qualifier_list assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | '[' type_qualifier_list ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '[' assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '[' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | direct_abstract_declarator '[' STATIC type_qualifier_list assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | direct_abstract_declarator '[' STATIC assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | '[' STATIC type_qualifier_list assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | '[' STATIC assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_abstract_declarator '[' type_qualifier_list STATIC assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | '[' type_qualifier_list STATIC assignment_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | direct_abstract_declarator '[' '*' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | '[' '*' ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | direct_abstract_declarator '(' parameter_type_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | direct_abstract_declarator '(' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '(' parameter_type_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '(' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.9) initializer: */
+/*     assignment-expression */
+/*     { initializer-list } */
+/*     { initializer-list , } */
+initializer
+    : assignment_expression
+    { $$ = tb->addNode($1, @1); }
+    | '{' initializer_list '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '{' initializer_list ',' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    ;
+
+/* (6.7.9) initializer-list: */
+/*     designationopt initializer */
+/*     initializer-list , designationopt initializer */
+initializer_list
+    : designation initializer
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | initializer_list ',' designation initializer
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3),
+                            tb->addNode($4, @4) }); }
+    ;
+
+/* (6.7.9) designation: */
+/*     designator-list = */
+designation
+    : designator_list '='
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.9) designator-list: */
+/*     designator */
+/*     designator-list designator */
+designator_list
+    : designator
+    { $$ = tb->addNode($1, @1); }
+    | designator_list designator
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+/* (6.7.9) designator: */
+/*     [ constant-expression ] */
+/*     . identifier */
+designator
+    : '[' constant_expression ']'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '.' ID
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.7.10) static_assert-declaration: */
+/*     _Static_assert ( constant-expression , string-literal ) ; */
+static_assert_declaration
+    : _STATIC_ASSERT '(' constant_expression ',' SLIT ')' ';'
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    ;
+
+/* A.2.3 Statements */
+
+/* (6.8) statement: */
+/*     labeled-statement */
+/*     compound-statement */
+/*     expression-statement */
+/*     selection-statement */
+/*     iteration-statement */
+/*     jump-statement */
+statement
+    : labeled_statement    { $$ = tb->addNode($1, @1); }
+    | compound_statement   { $$ = tb->addNode($1, @1); }
+    | expression_statement { $$ = tb->addNode($1, @1); }
+    | selection_statement  { $$ = tb->addNode($1, @1); }
+    | iteration_statement  { $$ = tb->addNode($1, @1); }
+    | jump_statement       { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.8.1) labeled-statement: */
+/*     identifier : statement */
+/*     case constant-expression : statement */
+/*     default : statement */
+labeled_statement
+    : ID ':' statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | CASE constant_expression ':' statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | DEFAULT ':' statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.8.2) compound-statement: */
+/*     { block-item-listopt } */
+compound_statement
+    : '{' block_item_list '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | '{' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.8.2) block-item-list: */
+/*     block-item */
+/*     block-item-list block-item */
+block_item_list
+    : block_item                 { $$ = tb->addNode($1, @1); }
+    | block_item_list block_item { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+/* (6.8.2) block-item: */
+/*     declaration */
+/*     statement */
+block_item
+    : declaration  %dprec 2 { $$ = tb->addNode($1, @1); }
+    | statement    %dprec 1 { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.8.3) expression-statement: */
+/*     expressionopt ; */
+expression_statement
+    : ';'
+    { $$ = tb->addNode($1, @1); }
+    | expression ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* (6.8.4) selection-statement: */
+/*     if ( expression ) statement */
+/*     if ( expression ) statement else statement */
+/*     switch ( expression ) statement */
+selection_statement
+    : IF '(' expression ')' statement %prec "then"
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | IF '(' expression ')' statement ELSE statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6),
+                         tb->addNode($7, @7) }); }
+    | SWITCH '(' expression ')' statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    ;
+
+/* (6.8.5) iteration-statement: */
+/*     while ( expression ) statement */
+/*     do statement while ( expression ) ; */
+/*     for ( expressionopt ; expressionopt ; expressionopt ) statement */
+/*     for ( declaration expressionopt ; expressionopt ) statement */
+iteration_statement
+    : WHILE '(' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5) }); }
+    | DO statement WHILE '(' expression ')' ';'
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    | FOR '(' expression ';' expression ';' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7), tb->addNode($8, @8),
+                          tb->addNode($9, @9) }); }
+    | FOR '(' expression ';' expression ';' ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
+    | FOR '(' expression ';' ';' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
+    | FOR '(' ';' expression ';' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
+    | FOR '(' ';' ';' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    | FOR '(' expression ';' ';' ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    | FOR '(' ';' expression ';' ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    | FOR '(' ';' ';' ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    | FOR '(' declaration expression ';' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
+    | FOR '(' declaration expression ';' ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    | FOR '(' declaration ';' expression ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6),
+                          tb->addNode($7, @7) }); }
+    | FOR '(' declaration ';' ')' statement
+    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
+                          tb->addNode($3, @3), tb->addNode($4, @4),
+                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    ;
+
+/* (6.8.6) jump-statement: */
+/*     goto identifier ; */
+/*     continue ; */
+/*     break ; */
+/*     return expressionopt ; */
+jump_statement
+    : GOTO ID ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | CONTINUE ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | BREAK ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | RETURN expression ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | RETURN ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+/* A.2.4 External definitions */
+
+/* (6.9) translation-unit: */
+/*     external-declaration */
+/*     translation-unit external-declaration */
+translation_unit
+    : external_declaration
+    { $$ = tb->addNode({ tb->addNode($1, @1) });
+      tb->setRoot($$); }
+    | translation_unit external_declaration
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+/* (6.9) external-declaration: */
+/*     function-definition */
+/*     declaration */
+external_declaration
+    : function_definition { $$ = tb->addNode($1, @1); }
+    | declaration         { $$ = tb->addNode($1, @1); }
+    ;
+
+/* (6.9.1) function-definition: */
+/*     declaration-specifiers declarator declaration-listopt compound-statement */
+function_definition
+    : declaration_specifiers declarator declaration_list compound_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | declaration_specifiers declarator compound_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+/* (6.9.1) declaration-list: */
+/*     declaration */
+/*     declaration-list declaration */
+declaration_list
+    : declaration                  { $$ = tb->addNode($1, @1); }
+    | declaration_list declaration { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 %%
@@ -134,7 +1337,7 @@ parse(const std::string &contents)
 void
 yyerror(const char s[])
 {
-    std::cout << "EEK, parse error!  Message: " << s << std::endl;
+    std::cout << "Parse error at " << yylloc.first_line << ':' << yylloc.first_column << "!  Message: " << s << std::endl;
     // might as well halt now:
     std::exit(-1);
 }

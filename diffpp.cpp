@@ -117,12 +117,14 @@ main(int argc, char *argv[])
 
     Node treeA, treeB;
 
+    std::cout << ">>> Parsing " << argv[1] << "\n";
     {
         std::string contents = readFile(argv[1]);
         TreeBuilder tb = parse(contents);
         treeA = materializeTree(contents, tb.getRoot());
     }
 
+    std::cout << ">>> Parsing " << argv[2] << "\n";
     {
         std::string contents = readFile(argv[2]);
         TreeBuilder tb = parse(contents);

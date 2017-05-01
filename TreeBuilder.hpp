@@ -70,6 +70,24 @@ public:
         return node;
     }
 
+    PNode * prepend(PNode *node, PNode *child)
+    {
+        node->children.insert(node->children.cbegin(), child);
+        return node;
+    }
+
+    PNode * append(PNode *node, const std::initializer_list<PNode *> &c)
+    {
+        node->children.insert(node->children.cend(), c);
+        return node;
+    }
+
+    PNode * prepend(PNode *node, const std::initializer_list<PNode *> &c)
+    {
+        node->children.insert(node->children.cbegin(), c);
+        return node;
+    }
+
     void setRoot(PNode *node)
     {
         root = node;
