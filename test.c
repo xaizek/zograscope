@@ -1,6 +1,7 @@
 // comment
 int
-main(/*noargs*/)
+main(/*no
+       args*/)
 {
 }
 

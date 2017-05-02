@@ -146,10 +146,10 @@ main(int argc, char *argv[])
     std::cout << "TED(T1, T2) = " << ted(treeA, treeB) << '\n';
 
     std::cout << "T1\n";
-    print(treeA);
+    // print(treeA);
     printSource(treeA);
     std::cout << "T2\n";
-    print(treeB);
+    // print(treeB);
     printSource(treeB);
 
     // printTree("T1", treeA);

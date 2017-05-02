@@ -18,6 +18,7 @@ struct Location
 struct Text
 {
     std::size_t from, len;
+    std::size_t postponedFrom, postponedTo;
 };
 
 struct PNode
@@ -72,6 +73,20 @@ public:
 
     PNode * addNode(Text value, const Location &loc)
     {
+        if (value.postponedFrom != value.postponedTo) {
+            std::vector<PNode *> children;
+            children.reserve(value.postponedTo - value.postponedFrom);
+            for (std::size_t i = value.postponedFrom; i < value.postponedTo;
+                 ++i) {
+                children.push_back(addNode(postponed[i].first,
+                                           postponed[i].second));
+            }
+            nodes.emplace_back(value, loc);
+            children.push_back(&nodes.back());
+            nodes.emplace_back(std::move(children));
+            return &nodes.back();
+        }
+
         nodes.emplace_back(value, loc);
         return &nodes.back();
     }
@@ -106,6 +121,33 @@ public:
         return node;
     }
 
+    void addPostponed(Text value, const Location &loc)
+    {
+        postponed.emplace_back(value, loc);
+        ++newPostponed;
+    }
+
+    void markWithPostponed(Text &value)
+    {
+        value.postponedFrom = postponed.size() - newPostponed;
+        value.postponedTo = postponed.size();
+        newPostponed = 0;
+    }
+
+    void finish()
+    {
+        std::vector<PNode *> children;
+        children.reserve(newPostponed);
+        for (std::size_t i = postponed.size() - newPostponed;
+             i < postponed.size(); ++i) {
+            children.push_back(addNode(postponed[i].first,
+                                       postponed[i].second));
+        }
+
+        root->children.insert(root->children.cend(),
+                              children.cbegin(), children.cend());
+    }
+
     void setRoot(PNode *node)
     {
         root = node;
@@ -119,6 +161,8 @@ public:
 private:
     std::deque<PNode> nodes;
     PNode *root = nullptr;
+    std::vector<std::pair<Text, Location>> postponed;
+    int newPostponed = 0;
 };
 
 #endif // TREEBUILDER_HPP__

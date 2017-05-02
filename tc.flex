@@ -10,8 +10,12 @@ std::size_t yyoffset;
 std::size_t yyline;
 std::size_t yycolumn;
 
+static YYSTYPE startTok;
+static YYLTYPE startLoc;
+
 #define YY_USER_ACTION \
     yylval.text = { yyoffset, yyleng }; \
+    tb->markWithPostponed(yylval.text); \
     yylloc.first_line = yyline; \
     yylloc.first_column = yycolumn; \
     yylloc.last_line = yyline; \
@@ -274,11 +278,36 @@ SCHARSEQ                {SCHAR}*
 "^="                    { return XOREQ_OP; }
 "|="                    { return OREQ_OP; }
 
-"//"                    { BEGIN(slcomment); }
-<slcomment>\n           { ++yyline; yycolumn = 1U; BEGIN(INITIAL); }
+"//" {
+    startTok = yylval;
+    startLoc = yylloc;
+    BEGIN(slcomment);
+}
+<slcomment>\n {
+    startTok.text.len = yyoffset - startTok.text.from - 1;
+    startLoc.last_line = yylloc.last_line;
+    startLoc.last_column = yylloc.last_column;
+    tb->addPostponed(startTok.text, startLoc);
+
+    ++yyline;
+    yycolumn = 1U;
+    BEGIN(INITIAL);
+}
 <slcomment>.            ;
-"/*"                    { BEGIN(mlcomment); }
-<mlcomment>"*/"         { BEGIN(INITIAL); }
+
+"/*" {
+    startTok = yylval;
+    startLoc = yylloc;
+    BEGIN(mlcomment);
+}
+<mlcomment>"*/" {
+    startTok.text.len = yyoffset - startTok.text.from;
+    startLoc.last_line = yylloc.last_line;
+    startLoc.last_column = yylloc.last_column;
+    tb->addPostponed(startTok.text, startLoc);
+
+    BEGIN(INITIAL);
+}
 <mlcomment>.            ;
 
 "..."                   { return DOTS; }

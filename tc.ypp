@@ -12,13 +12,7 @@ extern "C" FILE *yyin;
 
 void yyerror(const char *s);
 
-static TreeBuilder *tb;
-
-static PNode *
-stmtMerge(YYSTYPE x0, YYSTYPE x1)
-{
-  return x1.node;
-}
+TreeBuilder *tb = nullptr;
 
 %}
 
@@ -26,6 +20,7 @@ stmtMerge(YYSTYPE x0, YYSTYPE x1)
 {
 #include "TreeBuilder.hpp"
 #define YYLTYPE Location
+extern TreeBuilder *tb;
 }
 
 %code provides
@@ -1332,6 +1327,7 @@ parse(const std::string &contents)
     do {
         yyparse();
     } while (!std::feof(yyin));
+    tb.finish();
 
     fclose(myfile);
 
