@@ -1,5 +1,6 @@
+// comment
 int
-main()
+main(/*noargs*/)
 {
 }
 

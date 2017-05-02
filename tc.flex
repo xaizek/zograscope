@@ -23,6 +23,8 @@ void yyerror(const char s[]);
 
 %}
 
+%X slcomment mlcomment
+
  /* (6.4.3) hex-quad:
   *     hexadecimal-digit hexadecimal-digit hexadecimal-digit hexadecimal-digit
   */
@@ -271,6 +273,13 @@ SCHARSEQ                {SCHAR}*
 "&="                    { return ANDEQ_OP; }
 "^="                    { return XOREQ_OP; }
 "|="                    { return OREQ_OP; }
+
+"//"                    { BEGIN(slcomment); }
+<slcomment>\n           { ++yyline; yycolumn = 1U; BEGIN(INITIAL); }
+<slcomment>.            ;
+"/*"                    { BEGIN(mlcomment); }
+<mlcomment>"*/"         { BEGIN(INITIAL); }
+<mlcomment>.            ;
 
 "..."                   { return DOTS; }
 

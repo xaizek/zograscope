@@ -48,7 +48,8 @@ struct PNode
 private:
     static PNode * contract(PNode *node)
     {
-        if (node->empty() && node->children.size() == 1U) {
+        if (node->empty() && node->children.size() == 1U &&
+            node->children.front()->empty()) {
             return contract(node->children.front());
         }
         return node;
@@ -60,7 +61,7 @@ class TreeBuilder
 public:
     PNode * addNode(PNode *node, const Location &loc)
     {
-        return node;
+        return addNode({ node });
     }
 
     PNode * addNode()

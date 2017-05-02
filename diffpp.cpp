@@ -23,8 +23,12 @@ markSatellites(Node &node)
     auto nonTerminal = [](const Node &node) {
         return node.line == 0 || node.col == 0 || !node.children.empty();
     };
+    auto terminal = [&nonTerminal](const Node &node) {
+        return !nonTerminal(node);
+    };
 
-    if (std::any_of(node.children.cbegin(), node.children.cend(), nonTerminal)) {
+    if (std::any_of(node.children.cbegin(), node.children.cend(), nonTerminal)
+        || std::all_of(node.children.cbegin(), node.children.cend(), terminal)) {
         for (Node &child : node.children) {
             child.satellite = !nonTerminal(child);
             markSatellites(child);

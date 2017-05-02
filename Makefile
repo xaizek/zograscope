@@ -5,7 +5,7 @@ tc: $(OBJ)
 	g++ -g -o $@ $^ -lfl
 
 %.o: %.cpp
-	g++ -fmax-errors=3 -DYYDEBUG=0 -O3 -std=c++11 -c -g -o $@ $<
+	g++ -fmax-errors=3 -DYYDEBUG=1 -O3 -std=c++11 -c -g -o $@ $<
 
 tc.cpp: tc.flex | tc.tab.hpp
 	flex -o $@ $<

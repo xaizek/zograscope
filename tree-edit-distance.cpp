@@ -23,9 +23,9 @@ enum { Wdel = 1, Wins = 1, Wren = 1 };
 void
 print(const Node &node, int lvl)
 {
-    if (node.satellite) {
-        return;
-    }
+    // if (node.satellite) {
+    //     return;
+    // }
 
     std::string prefix = (lvl > 0) ? "`---" : "";
 
@@ -34,7 +34,7 @@ print(const Node &node, int lvl)
         case State::Unchanged: break;
         case State::Deleted:   suffix = " (deleted)";  break;
         case State::Inserted:  suffix = " (inserted)"; break;
-        case State::Updated:   suffix = " (updated with " + node.buddy->label + ")";  break;
+        case State::Updated:   suffix = " (updated with " + node.buddy->label + "@" + std::to_string(node.buddy->poID) + ")";  break;
     }
 
     std::cout << std::setw(4*lvl) << prefix << node.label
@@ -77,7 +77,6 @@ lmld(Node &node, std::vector<int> &l)
     }
 
     auto isSatellite = [](const Node &n) { return n.satellite; };
-
     std::vector<Node> n = node.children;
     n.erase(std::remove_if(n.begin(), n.end(), isSatellite), n.end());
 
@@ -170,6 +169,28 @@ printTree(const std::string &name, Node &root)
     }
 }
 
+static int
+renameCost(const Node *n1, const Node *n2)
+{
+    std::string n1l;
+    int a = 0, b = 0;
+    for (const Node &child : n1->children) {
+        if (child.satellite) {
+            n1l += child.label;
+            ++a;
+        }
+    }
+    std::string n2l;
+    for (const Node &child : n2->children) {
+        if (child.satellite) {
+            n2l += child.label;
+            ++b;
+        }
+    }
+    const bool identicalRename = (n1->label == n2->label && n1l == n2l && n1->children.size() == n2->children.size());
+    return (identicalRename ? 0 : Wren);
+}
+
 static void
 forestDist(int i, int j, const std::vector<int> &l1, const std::vector<int> &l2,
            boost::multi_array<Change, 2> &td,
@@ -188,11 +209,10 @@ forestDist(int i, int j, const std::vector<int> &l1, const std::vector<int> &l2,
         for (int dj = l2[j]; dj <= j; ++dj) {
             const int ldj = l2[dj];
             if (ldi == l1[i] && ldj == l2[j]) {
-                const bool identicalRename = (po1[di]->label == po2[dj]->label);
                 fd[di][dj] = std::min({
                     fd[di - 1][dj] + Wdel,
                     fd[di][dj - 1] + Wins,
-                    fd[di - 1][dj - 1] + (identicalRename ? 0 : Wren)
+                    fd[di - 1][dj - 1] + renameCost(po1[di], po2[dj])
                 });
                 td[di][dj] = Change { fd[di][dj], i, j };
             } else {
@@ -284,11 +304,11 @@ backtrackForests(const std::vector<int> &l1, const std::vector<int> &l2,
     for (int di = l1[i]; di <= i; ++di) {
         for (int dj = l2[j]; dj <= j; ++dj) {
             if (l1[di] == l1[i] && l2[dj] == l2[j]) {
-                const bool identicalRename = (po1[di]->label == po2[dj]->label);
                 fd[di][dj] = std::min({
                     fd[di - 1][dj] + Wdel,
                     fd[di][dj - 1] + Wins,
-                    fd[di - 1][dj - 1] + (identicalRename ? 0 : Wren)});
+                    fd[di - 1][dj - 1] + renameCost(po1[di], po2[dj])
+                });
             } else {
                 fd[di][dj] =
                     std::min({ fd[di - 1][dj] + Wdel,

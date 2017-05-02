@@ -273,10 +273,11 @@ argument_expression_list
 /*     _Alignof ( type-name ) */
 unary_expression
     : postfix_expression
-    | INC_OP unary_expression
     { $$ = tb->addNode($1, @1); }
+    | INC_OP unary_expression
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | DEC_OP unary_expression
-    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | unary_operator cast_expression
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | SIZEOF unary_expression
@@ -1120,7 +1121,7 @@ compound_statement
 /*     block-item */
 /*     block-item-list block-item */
 block_item_list
-    : block_item                 { $$ = tb->addNode($1, @1); }
+    : block_item                 { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | block_item_list block_item { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -1283,10 +1284,11 @@ external_declaration
 function_definition
     : declaration_specifiers declarator declaration_list compound_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+                         tb->addNode($3, @3) });
+      for (const auto &c : $4->children) tb->append($$, c); }
     | declaration_specifiers declarator compound_statement
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) });
+      for (const auto &c : $3->children) tb->append($$, c); }
     ;
 
 /* (6.9.1) declaration-list: */
