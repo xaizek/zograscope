@@ -172,6 +172,8 @@ printTree(const std::string &name, Node &root)
 static int
 renameCost(const Node *n1, const Node *n2)
 {
+    return ((n1->label == n2->label && n1->children.size() == n2->children.size()) ? 0 : Wren);
+
     std::string n1l;
     int a = 0, b = 0;
     for (const Node &child : n1->children) {

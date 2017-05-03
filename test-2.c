@@ -1,5 +1,7 @@
 float pi() { return 3; }
 
+void something(bla);
+
 void
 main()
 {
