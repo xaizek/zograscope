@@ -1,4 +1,4 @@
-// comment
+/* comment */
 int
 main(/*no
        args*/)

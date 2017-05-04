@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "types.hpp"
+
 enum class State
 {
     Unchanged,
@@ -22,6 +24,7 @@ struct Node
     int col;
     Node *buddy;
     bool satellite;
+    Type type;
 };
 
 void printTree(const std::string &name, Node &root);

@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "types.hpp"
+
 struct Location
 {
     int first_line;
@@ -19,6 +21,7 @@ struct Text
 {
     std::size_t from, len;
     std::size_t postponedFrom, postponedTo;
+    int token;
 };
 
 struct PNode
@@ -59,6 +62,12 @@ private:
 
 class TreeBuilder
 {
+    struct Postponed
+    {
+        Text value;
+        Location loc;
+    };
+
 public:
     PNode * addNode(PNode *node, const Location &loc)
     {
@@ -78,8 +87,8 @@ public:
             children.reserve(value.postponedTo - value.postponedFrom);
             for (std::size_t i = value.postponedFrom; i < value.postponedTo;
                  ++i) {
-                children.push_back(addNode(postponed[i].first,
-                                           postponed[i].second));
+                children.push_back(addNode(postponed[i].value,
+                                           postponed[i].loc));
             }
             nodes.emplace_back(value, loc);
             children.push_back(&nodes.back());
@@ -123,7 +132,7 @@ public:
 
     void addPostponed(Text value, const Location &loc)
     {
-        postponed.emplace_back(value, loc);
+        postponed.push_back({ value, loc });
         ++newPostponed;
     }
 
@@ -140,8 +149,7 @@ public:
         children.reserve(newPostponed);
         for (std::size_t i = postponed.size() - newPostponed;
              i < postponed.size(); ++i) {
-            children.push_back(addNode(postponed[i].first,
-                                       postponed[i].second));
+            children.push_back(addNode(postponed[i].value, postponed[i].loc));
         }
 
         root->children.insert(root->children.cend(),
@@ -161,7 +169,7 @@ public:
 private:
     std::deque<PNode> nodes;
     PNode *root = nullptr;
-    std::vector<std::pair<Text, Location>> postponed;
+    std::vector<Postponed> postponed;
     int newPostponed = 0;
 };
 

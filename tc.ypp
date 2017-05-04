@@ -59,7 +59,9 @@ extern TreeBuilder *tb;
 %token <text> TIMESEQ_OP DIVEQ_OP MODEQ_OP PLUSEQ_OP MINUSEQ_OP LSHIFTEQ_OP RSHIFTEQ_OP ANDEQ_OP XOREQ_OP OREQ_OP
 %token <text> TYPEDEF EXTERN STATIC CASE _THREAD_LOCAL AUTO REGISTER STRUCT UNION ENUM
 %token <text> VOID CHAR SHORT INT LONG FLOAT DOUBLE SIGNED UNSIGNED _ATOMIC _BOOL _COMPLEX
+%token <text> SLCOMMENT MLCOMMENT
 %token <text> '?' ':' ';' '(' ')' '{' '}' '[' ']' '.' ',' '&' '|' '^' '*' '/' '%' '+' '-' '~' '!' '<' '>' '='
+%token <text> NTOKENS
 
 /* %type <node> tu funcs func stmts head body type name id args ret */
 %type <node> constant primary_expression generic_selection generic_assoc_list
@@ -244,14 +246,14 @@ postfix_expression
     | postfix_expression DEC_OP
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | '(' type_name ')' '{' initializer_list '}'
-    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
-                          tb->addNode($3, @3), tb->addNode($4, @4),
-                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
     | '(' type_name ')' '{' initializer_list ',' '}'
-    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
-                          tb->addNode($3, @3), tb->addNode($4, @4),
-                          tb->addNode($5, @5), tb->addNode($6, @6),
-                          tb->addNode($7, @7) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6),
+                         tb->addNode($7, @7) }); }
     ;
 
 /* (6.5.2) argument-expression-list: */

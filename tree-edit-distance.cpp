@@ -18,7 +18,7 @@ struct Change
     int i, j;
 };
 
-enum { Wdel = 1, Wins = 1, Wren = 1 };
+enum { Wdel = 1, Wins = 1, Wren = 1, Wch = 2 };
 
 void
 print(const Node &node, int lvl)
@@ -172,7 +172,17 @@ printTree(const std::string &name, Node &root)
 static int
 renameCost(const Node *n1, const Node *n2)
 {
-    return ((n1->label == n2->label && n1->children.size() == n2->children.size()) ? 0 : Wren);
+    if (n1->label == n2->label && n1->children.size() == n2->children.size()) {
+        return 0;
+    }
+
+    if (n1->type == Type::NonInterchangeable ||
+        n2->type == Type::NonInterchangeable ||
+        n1->type != n2->type) {
+        return Wch;
+    }
+
+    return Wren;
 
     std::string n1l;
     int a = 0, b = 0;

@@ -7,6 +7,7 @@
 #include "TreeBuilder.hpp"
 #include "decoration.hpp"
 #include "tree-edit-distance.hpp"
+#include "types.hpp"
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -100,6 +101,7 @@ materializeTree(const std::string &contents, const PNode *node)
     Node n = { contents.substr(node->value.from, node->value.len) };
     n.line = node->line;
     n.col = node->col;
+    n.type = tokenToType(node->value.token);
 
     n.children.reserve(node->children.size());
     for (const PNode *child : node->children) {
@@ -146,7 +148,7 @@ main(int argc, char *argv[])
     std::cout << "TED(T1, T2) = " << ted(treeA, treeB) << '\n';
 
     std::cout << "T1\n";
-    // print(treeA);
+    print(treeA);
     printSource(treeA);
     std::cout << "T2\n";
     // print(treeB);

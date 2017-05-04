@@ -1,4 +1,4 @@
-SRC := tc.cpp tc.tab.cpp diffpp.cpp decoration.cpp tree-edit-distance.cpp
+SRC := tc.cpp tc.tab.cpp diffpp.cpp decoration.cpp tree-edit-distance.cpp types.cpp
 OBJ := $(SRC:.cpp=.o)
 
 tc: $(OBJ)

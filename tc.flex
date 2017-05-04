@@ -15,13 +15,16 @@ static YYLTYPE startLoc;
 
 #define YY_USER_ACTION \
     yylval.text = { yyoffset, yyleng }; \
-    tb->markWithPostponed(yylval.text); \
     yylloc.first_line = yyline; \
     yylloc.first_column = yycolumn; \
     yylloc.last_line = yyline; \
     yylloc.last_column = yycolumn + yyleng; \
     yyoffset += yyleng; \
     yycolumn += yyleng;
+
+#define TOKEN(t) \
+    tb->markWithPostponed(yylval.text); \
+    return (yylval.text.token = (t))
 
 void yyerror(const char s[]);
 
@@ -183,51 +186,51 @@ SCHARSEQ                {SCHAR}*
 
 [ \t]                   ;
 \n                      { ++yyline; yycolumn = 1U; }
-"case"                  { return CASE; }
-"default"               { return DEFAULT; }
-"sizeof"                { return SIZEOF; }
-"return"                { return RETURN; }
-"_Alignof"              { return _ALIGNOF; }
-"_Generic"              { return _GENERIC; }
-"typedef"               { return TYPEDEF; }
-"extern"                { return EXTERN; }
-"static"                { return STATIC; }
-"_Thread_local"         { return _THREAD_LOCAL; }
-"auto"                  { return AUTO; }
-"register"              { return REGISTER; }
-"void"                  { return VOID; }
-"char"                  { return CHAR; }
-"short"                 { return SHORT; }
-"int"                   { return INT; }
-"long"                  { return LONG; }
-"float"                 { return FLOAT; }
-"double"                { return DOUBLE; }
-"signed"                { return SIGNED; }
-"unsigned"              { return UNSIGNED; }
-"_Bool"                 { return _BOOL; }
-"_Complex"              { return _COMPLEX; }
-"struct"                { return STRUCT; }
-"union"                 { return UNION; }
-"enum"                  { return ENUM; }
-"_Atomic"               { return _ATOMIC; }
-"const"                 { return CONST; }
-"restrict"              { return RESTRICT; }
-"volatile"              { return VOLATILE; }
-"inline"                { return INLINE; }
-"_Noreturn"             { return _NORETURN; }
-"_Alignas"              { return _ALIGNAS; }
-"_Static_assert"        { return _STATIC_ASSERT; }
-"if"                    { return IF; }
-"else"                  { return ELSE; }
-"switch"                { return SWITCH; }
-"while"                 { return WHILE; }
-"do"                    { return DO; }
-"for"                   { return FOR; }
-"break"                 { return BREAK; }
-"continue"              { return CONTINUE; }
-"goto"                  { return GOTO; }
+"case"                  { TOKEN(CASE); }
+"default"               { TOKEN(DEFAULT); }
+"sizeof"                { TOKEN(SIZEOF); }
+"return"                { TOKEN(RETURN); }
+"_Alignof"              { TOKEN(_ALIGNOF); }
+"_Generic"              { TOKEN(_GENERIC); }
+"typedef"               { TOKEN(TYPEDEF); }
+"extern"                { TOKEN(EXTERN); }
+"static"                { TOKEN(STATIC); }
+"_Thread_local"         { TOKEN(_THREAD_LOCAL); }
+"auto"                  { TOKEN(AUTO); }
+"register"              { TOKEN(REGISTER); }
+"void"                  { TOKEN(VOID); }
+"char"                  { TOKEN(CHAR); }
+"short"                 { TOKEN(SHORT); }
+"int"                   { TOKEN(INT); }
+"long"                  { TOKEN(LONG); }
+"float"                 { TOKEN(FLOAT); }
+"double"                { TOKEN(DOUBLE); }
+"signed"                { TOKEN(SIGNED); }
+"unsigned"              { TOKEN(UNSIGNED); }
+"_Bool"                 { TOKEN(_BOOL); }
+"_Complex"              { TOKEN(_COMPLEX); }
+"struct"                { TOKEN(STRUCT); }
+"union"                 { TOKEN(UNION); }
+"enum"                  { TOKEN(ENUM); }
+"_Atomic"               { TOKEN(_ATOMIC); }
+"const"                 { TOKEN(CONST); }
+"restrict"              { TOKEN(RESTRICT); }
+"volatile"              { TOKEN(VOLATILE); }
+"inline"                { TOKEN(INLINE); }
+"_Noreturn"             { TOKEN(_NORETURN); }
+"_Alignas"              { TOKEN(_ALIGNAS); }
+"_Static_assert"        { TOKEN(_STATIC_ASSERT); }
+"if"                    { TOKEN(IF); }
+"else"                  { TOKEN(ELSE); }
+"switch"                { TOKEN(SWITCH); }
+"while"                 { TOKEN(WHILE); }
+"do"                    { TOKEN(DO); }
+"for"                   { TOKEN(FOR); }
+"break"                 { TOKEN(BREAK); }
+"continue"              { TOKEN(CONTINUE); }
+"goto"                  { TOKEN(GOTO); }
 
-{ID}    { return ID; }
+{ID}    { TOKEN(ID); }
 
 
  /* A.1.5 Constants */
@@ -236,50 +239,51 @@ SCHARSEQ                {SCHAR}*
  /*     decimal-constant integer-suffixopt */
  /*     octal-constant integer-suffixopt */
  /*     hexadecimal-constant integer-suffixopt */
-{DCONST}{ISUFFIX}?|{OCONST}{ISUFFIX}?|{HCONST}{ISUFFIX}? { return ICONST; }
+{DCONST}{ISUFFIX}?|{OCONST}{ISUFFIX}?|{HCONST}{ISUFFIX}? { TOKEN(ICONST); }
 
  /* (6.4.4.2) floating-constant: */
  /*     decimal-floating-constant */
  /*     hexadecimal-floating-constant */
-{DFCONST}|{HFCONST}     { return FCONST; }
+{DFCONST}|{HFCONST}     { TOKEN(FCONST); }
 
  /* (6.4.4.4) character-constant: */
  /*     ' c-char-sequence ' */
  /*     L' c-char-sequence ' */
  /*     u' c-char-sequence ' */
  /*     U' c-char-sequence ' */
-[LuU]?'{CCHARSEQ}'      { return CHCONST; }
+[LuU]?'{CCHARSEQ}'      { TOKEN(CHCONST); }
 
  /* A.1.6 String literals */
 
  /* (6.4.5) string-literal: */
  /*     encoding-prefixopt " s-char-sequenceopt " */
-{EPREFIX}?\"{SCHARSEQ}?\" { return SLIT; }
+{EPREFIX}?\"{SCHARSEQ}?\" { TOKEN(SLIT); }
 
-"->"                    { return ARR_OP; }
-"++"                    { return INC_OP; }
-"--"                    { return DEC_OP; }
-"<<"                    { return LSH_OP; }
-">>"                    { return RSH_OP; }
-"<="                    { return LTE_OP; }
-">="                    { return GTE_OP; }
-"=="                    { return EQ_OP; }
-"!="                    { return NE_OP; }
-"&&"                    { return AND_OP; }
-"||"                    { return OR_OP; }
-"*="                    { return TIMESEQ_OP; }
-"/="                    { return DIVEQ_OP; }
-"%="                    { return MODEQ_OP; }
-"+="                    { return PLUSEQ_OP; }
-"-="                    { return MINUSEQ_OP; }
-"<<="                   { return LSHIFTEQ_OP; }
-">>="                   { return RSHIFTEQ_OP; }
-"&="                    { return ANDEQ_OP; }
-"^="                    { return XOREQ_OP; }
-"|="                    { return OREQ_OP; }
+"->"                    { TOKEN(ARR_OP); }
+"++"                    { TOKEN(INC_OP); }
+"--"                    { TOKEN(DEC_OP); }
+"<<"                    { TOKEN(LSH_OP); }
+">>"                    { TOKEN(RSH_OP); }
+"<="                    { TOKEN(LTE_OP); }
+">="                    { TOKEN(GTE_OP); }
+"=="                    { TOKEN(EQ_OP); }
+"!="                    { TOKEN(NE_OP); }
+"&&"                    { TOKEN(AND_OP); }
+"||"                    { TOKEN(OR_OP); }
+"*="                    { TOKEN(TIMESEQ_OP); }
+"/="                    { TOKEN(DIVEQ_OP); }
+"%="                    { TOKEN(MODEQ_OP); }
+"+="                    { TOKEN(PLUSEQ_OP); }
+"-="                    { TOKEN(MINUSEQ_OP); }
+"<<="                   { TOKEN(LSHIFTEQ_OP); }
+">>="                   { TOKEN(RSHIFTEQ_OP); }
+"&="                    { TOKEN(ANDEQ_OP); }
+"^="                    { TOKEN(XOREQ_OP); }
+"|="                    { TOKEN(OREQ_OP); }
 
 "//" {
     startTok = yylval;
+    startTok.text.token = SLCOMMENT;
     startLoc = yylloc;
     BEGIN(slcomment);
 }
@@ -297,6 +301,7 @@ SCHARSEQ                {SCHAR}*
 
 "/*" {
     startTok = yylval;
+    startTok.text.token = MLCOMMENT;
     startLoc = yylloc;
     BEGIN(mlcomment);
 }
@@ -310,10 +315,10 @@ SCHARSEQ                {SCHAR}*
 }
 <mlcomment>.            ;
 
-"..."                   { return DOTS; }
+"..."                   { TOKEN(DOTS); }
 
 "("|")"|";"|"{"|"}"|"["|"]"|"."|","|"?"|":"|"&"|"|"|"^"|"*"|"/"|"%"|"+"|"-"|"~"|"!"|"<"|">"|"=" {
-    return yytext[0];
+    TOKEN(yytext[0]);
 }
 
 .                       { yyerror("Unknown token"); }
