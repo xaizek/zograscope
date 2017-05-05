@@ -59,7 +59,7 @@ extern TreeBuilder *tb;
 %token <text> TIMESEQ_OP DIVEQ_OP MODEQ_OP PLUSEQ_OP MINUSEQ_OP LSHIFTEQ_OP RSHIFTEQ_OP ANDEQ_OP XOREQ_OP OREQ_OP
 %token <text> TYPEDEF EXTERN STATIC CASE _THREAD_LOCAL AUTO REGISTER STRUCT UNION ENUM
 %token <text> VOID CHAR SHORT INT LONG FLOAT DOUBLE SIGNED UNSIGNED _ATOMIC _BOOL _COMPLEX
-%token <text> SLCOMMENT MLCOMMENT
+%token <text> DIRECTIVE SLCOMMENT MLCOMMENT
 %token <text> '?' ':' ';' '(' ')' '{' '}' '[' ']' '.' ',' '&' '|' '^' '*' '/' '%' '+' '-' '~' '!' '<' '>' '='
 %token <text> NTOKENS
 

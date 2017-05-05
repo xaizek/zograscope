@@ -89,6 +89,9 @@ enum class Type
     // OREQ_OP
     Assignments,
 
+    // DIRECTIVE
+    Directives,
+
     // SLCOMMENT
     // MLCOMMENT
     Comments,

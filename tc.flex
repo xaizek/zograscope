@@ -30,7 +30,7 @@ void yyerror(const char s[]);
 
 %}
 
-%X slcomment mlcomment
+%X directive slcomment mlcomment
 
  /* (6.4.3) hex-quad:
   *     hexadecimal-digit hexadecimal-digit hexadecimal-digit hexadecimal-digit
@@ -280,6 +280,25 @@ SCHARSEQ                {SCHAR}*
 "&="                    { TOKEN(ANDEQ_OP); }
 "^="                    { TOKEN(XOREQ_OP); }
 "|="                    { TOKEN(OREQ_OP); }
+
+^[[:space:]]*# {
+    startTok = yylval;
+    startTok.text.token = DIRECTIVE;
+    startLoc = yylloc;
+    BEGIN(directive);
+}
+<directive>\\\n         ;
+<directive>\n {
+    startTok.text.len = yyoffset - startTok.text.from - 1;
+    startLoc.last_line = yylloc.last_line;
+    startLoc.last_column = yylloc.last_column;
+    tb->addPostponed(startTok.text, startLoc);
+
+    ++yyline;
+    yycolumn = 1U;
+    BEGIN(INITIAL);
+}
+<directive>.            ;
 
 "//" {
     startTok = yylval;

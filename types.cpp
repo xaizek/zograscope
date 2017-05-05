@@ -81,6 +81,8 @@ tokenMap()
     map[XOREQ_OP]    = Type::Assignments;
     map[OREQ_OP]     = Type::Assignments;
 
+    map[DIRECTIVE] = Type::Directives;
+
     map[SLCOMMENT] = Type::Comments;
     map[MLCOMMENT] = Type::Comments;
 
