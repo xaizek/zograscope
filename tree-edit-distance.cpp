@@ -18,7 +18,7 @@ struct Change
     int i, j;
 };
 
-enum { Wdel = 1, Wins = 1, Wren = 1, Wch = 2 };
+enum { Wdel = 1, Wins = 1, Wren = 1, Wch = 3 };
 
 void
 print(const Node &node, int lvl)
