@@ -6,6 +6,8 @@
 
 #include "tc.tab.hpp"
 
+enum { tabWidth = 4 };
+
 std::size_t yyoffset;
 std::size_t yyline;
 std::size_t yycolumn;
@@ -184,7 +186,8 @@ SCHARSEQ                {SCHAR}*
 
 %%
 
-[ \t]                   ;
+[ ]                     ;
+\t                      { yycolumn += tabWidth - (yycolumn - 1)%tabWidth; }
 \n                      { ++yyline; yycolumn = 1U; }
 "case"                  { TOKEN(CASE); }
 "default"               { TOKEN(DEFAULT); }

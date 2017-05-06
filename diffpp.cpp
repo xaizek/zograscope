@@ -95,10 +95,46 @@ readFile(const std::string &path)
     return iss.str();
 }
 
+std::string
+materializeLabel(const std::string &contents, const PNode *node)
+{
+    // lexer also has such variable and they need to be synchronized (actually
+    // we should pass this to lexer)
+    enum { tabWidth = 4 };
+
+    std::string label;
+    label.reserve(node->value.len);
+
+    int col = node->col;
+    for (std::size_t i = node->value.from;
+         i < node->value.from + node->value.len; ++i) {
+        switch (const char c = contents[i]) {
+            int width;
+
+            case '\n':
+                col = 1;
+                label += '\n';
+                break;
+            case '\t':
+                width = tabWidth - (col - 1)%tabWidth;
+                label.append(width, ' ');
+                col += width;
+                break;
+
+            default:
+                ++col;
+                label += c;
+                break;
+        }
+    }
+
+    return label;
+}
+
 Node
 materializeTree(const std::string &contents, const PNode *node)
 {
-    Node n = { contents.substr(node->value.from, node->value.len) };
+    Node n = { materializeLabel(contents, node) };
     n.line = node->line;
     n.col = node->col;
     n.type = tokenToType(node->value.token);
