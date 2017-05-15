@@ -4,8 +4,8 @@
 #include <sstream>
 #include <string>
 
+#include "Printer.hpp"
 #include "TreeBuilder.hpp"
-#include "decoration.hpp"
 #include "tree-edit-distance.hpp"
 #include "types.hpp"
 
@@ -34,55 +34,6 @@ markSatellites(Node &node)
             child.satellite = !nonTerminal(child);
             markSatellites(child);
         }
-    }
-}
-
-static void
-printSource(Node &root)
-{
-    int line = 1, col = 1;
-    std::function<void(Node &)> visit = [&](Node &node) {
-        if (node.line != 0 && node.col != 0) {
-            while (node.line > line) {
-                std::cout << '\n';
-                ++line;
-                col = 1;
-            }
-
-            while (node.col > col) {
-                std::cout << ' ';
-                ++col;
-            }
-
-            decor::Decoration dec;
-            switch (node.state) {
-                case State::Unchanged: break;
-                case State::Deleted: dec = decor::red_fg + decor::inv + decor::black_bg + decor::bold; break;
-                case State::Inserted: dec = decor::green_fg + decor::inv + decor::black_bg + decor::bold; break;
-                case State::Updated: dec = decor::yellow_fg + decor::inv + decor::black_bg + decor::bold; break;
-            }
-
-            // if (node.state != State::Unchanged) {
-            //     std::cout << (dec << '[') << node.label << (dec << ']');
-            // } else {
-            //     std::cout << node.label;
-            // }
-                std::cout << (dec << node.label);
-
-            col += node.label.size();
-        }
-
-        for (Node &child : node.children) {
-            if (child.satellite) {
-                child.state = node.state;
-            }
-            visit(child);
-        }
-    };
-    visit(root);
-
-    if (col != 1) {
-        std::cout << '\n';
     }
 }
 
@@ -183,12 +134,13 @@ main(int argc, char *argv[])
 
     std::cout << "TED(T1, T2) = " << ted(treeA, treeB) << '\n';
 
-    std::cout << "T1\n";
+    // std::cout << "T1\n";
     // print(treeA);
-    printSource(treeA);
-    std::cout << "T2\n";
+    // std::cout << "T2\n";
     // print(treeB);
-    printSource(treeB);
+
+    Printer printer(treeA, treeB);
+    printer.print();
 
     // printTree("T1", treeA);
     // printTree("T2", treeB);
