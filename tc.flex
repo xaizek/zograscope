@@ -336,6 +336,7 @@ SCHARSEQ                {SCHAR}*
     BEGIN(INITIAL);
 }
 <mlcomment>.            ;
+<mlcomment>\n           { ++yyline; yycolumn = 1U; }
 
 "..."                   { TOKEN(DOTS); }
 
