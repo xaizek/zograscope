@@ -1,0 +1,7 @@
+# build artifacts
+/tc
+*.o
+
+# auto-generated files
+tc.tab.*
+tc.cpp
