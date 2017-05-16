@@ -6,10 +6,6 @@
 #define BOOST_DISABLE_ASSERTS
 #include <boost/multi_array.hpp>
 
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
-
 #include <deque>
 #include <functional>
 #include <iomanip>
@@ -31,7 +27,6 @@ enum class Diff
 
 static std::deque<Diff> compare(std::vector<std::string> &l,
                                 std::vector<std::string> &r);
-static unsigned int getTerminalWidth();
 static std::vector<std::string> split(const std::string &str, char with);
 static std::string printSource(Node &root);
 static unsigned int measureWidth(const std::string &s);
@@ -44,8 +39,6 @@ void
 Printer::print()
 {
     static std::string empty;
-
-    const unsigned int halfWidth = getTerminalWidth()/2 - 2;
 
     std::vector<std::string> l = split(printSource(left), '\n');
     std::vector<std::string> r = split(printSource(right), '\n');
@@ -198,17 +191,6 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
     foldIdentical(true);
 
     return diffSeq;
-}
-
-static unsigned int
-getTerminalWidth()
-{
-    winsize ws;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) != 0) {
-        return std::numeric_limits<unsigned int>::max();
-    }
-
-    return ws.ws_col;
 }
 
 /**

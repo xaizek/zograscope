@@ -1,8 +1,8 @@
-SRC := tc.cpp tc.tab.cpp diffpp.cpp decoration.cpp tree-edit-distance.cpp types.cpp Printer.cpp
+SRC := tc.cpp tc.tab.cpp diffpp.cpp decoration.cpp tree-edit-distance.cpp types.cpp Printer.cpp integration.cpp
 OBJ := $(SRC:.cpp=.o)
 
 tc: $(OBJ)
-	g++ -g -o $@ $^ -lfl
+	g++ -g -o $@ $^ -lfl -lboost_iostreams
 
 %.o: %.cpp
 	g++ -fmax-errors=3 -DYYDEBUG=1 -O3 -std=c++11 -c -g -o $@ $<

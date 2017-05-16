@@ -6,6 +6,7 @@
 
 #include "Printer.hpp"
 #include "TreeBuilder.hpp"
+#include "integration.hpp"
 #include "tree-edit-distance.hpp"
 #include "types.hpp"
 
@@ -107,6 +108,8 @@ main(int argc, char *argv[])
         std::cerr << "Wrong arguments\n";
         return 1;
     }
+
+    RedirectToPager redirectToPager;
 
     Node treeA, treeB;
 
