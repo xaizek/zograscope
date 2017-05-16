@@ -25,7 +25,8 @@ enum class Diff
 {
     Left,
     Right,
-    Both,
+    Identical,
+    Different,
 };
 
 static std::deque<Diff> compare(std::vector<std::string> &l,
@@ -66,22 +67,32 @@ Printer::print()
         const std::string *ll = &empty;
         const std::string *rl = &empty;
 
+        const char *marker;
         switch (d) {
             case Diff::Left:
                 ll = &l[i++];
+                marker = " << ";
                 break;
             case Diff::Right:
                 rl = &r[j++];
+                marker = " >> ";
                 break;
-            case Diff::Both:
+            case Diff::Identical:
                 ll = &l[i++];
                 rl = &r[j++];
+                marker = " || ";
+                break;
+            case Diff::Different:
+                ll = &l[i++];
+                rl = &r[j++];
+                marker = " <> ";
                 break;
         }
 
         unsigned int width = (ll->empty() ? 0U : widths[i - 1U]);
         width = maxWidth + (ll->size() - width);
-        std::cout << std::left << std::setw(width) << *ll << " || " << *rl << '\n';
+        std::cout << std::left << std::setw(width) << *ll
+                  << marker << *rl << '\n';
     }
 }
 
@@ -144,10 +155,11 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
     auto handleSameLines = [&](size_type i, size_type j) {
         if (l[i] == r[j]) {
             ++identicalLines;
+            diffSeq.emplace_front(Diff::Identical);
         } else {
             foldIdentical(false);
+            diffSeq.emplace_front(Diff::Different);
         }
-        diffSeq.emplace_front(Diff::Both);
     };
 
     // Compose results with folding of long runs of identical lines (longer
