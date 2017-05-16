@@ -3,10 +3,14 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#define BOOST_DISABLE_ASSERTS
+#include <boost/multi_array.hpp>
+
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
+#include <deque>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -17,6 +21,15 @@
 #include "decoration.hpp"
 #include "tree-edit-distance.hpp"
 
+enum class Diff
+{
+    Left,
+    Right,
+    Both,
+};
+
+static std::deque<Diff> compare(std::vector<std::string> &l,
+                                std::vector<std::string> &r);
 static unsigned int getTerminalWidth();
 static std::vector<std::string> split(const std::string &str, char with);
 static std::string printSource(Node &root);
@@ -36,6 +49,8 @@ Printer::print()
     std::vector<std::string> l = split(printSource(left), '\n');
     std::vector<std::string> r = split(printSource(right), '\n');
 
+    std::deque<Diff> diff = compare(l, r);
+
     unsigned int maxWidth = 0U;
     std::vector<unsigned int> widths;
     widths.reserve(l.size());
@@ -46,14 +61,131 @@ Printer::print()
         maxWidth = std::max(width, maxWidth);
     }
 
-    for (unsigned int i = 0U; i < l.size() || i < r.size(); ++i) {
-        const std::string &ll = (i < l.size() ? l[i] : empty);
-        const std::string &rl = (i < r.size() ? r[i] : empty);
+    unsigned int i = 0U, j = 0U;
+    for (Diff d : diff) {
+        const std::string *ll = &empty;
+        const std::string *rl = &empty;
 
-        unsigned int width = (ll.empty() ? 0U : widths[i]);
-        width = maxWidth + (ll.size() - width);
-        std::cout << std::left << std::setw(width) << ll << " || " << rl << '\n';
+        switch (d) {
+            case Diff::Left:
+                ll = &l[i++];
+                break;
+            case Diff::Right:
+                rl = &r[j++];
+                break;
+            case Diff::Both:
+                ll = &l[i++];
+                rl = &r[j++];
+                break;
+        }
+
+        unsigned int width = (ll->empty() ? 0U : widths[i - 1U]);
+        width = maxWidth + (ll->size() - width);
+        std::cout << std::left << std::setw(width) << *ll << " || " << *rl << '\n';
     }
+}
+
+static std::deque<Diff>
+compare(std::vector<std::string> &l, std::vector<std::string> &r)
+{
+    using size_type = std::vector<std::string>::size_type;
+
+    // Narrow portion of lines that should be compared by throwing away matching
+    // leading and trailing lines.
+    size_type ol = 0U, nl = 0U, ou = l.size(), nu = r.size();
+    while (ol < ou && nl < nu && l[ol] == r[nl]) {
+        ++ol;
+        ++nl;
+    }
+    while (ou > ol && nu > nl && l[ou - 1U] == r[nu - 1U]) {
+        --ou;
+        --nu;
+    }
+
+    boost::multi_array<int, 2> d(boost::extents[ou - ol + 1U][nu - nl + 1U]);
+
+    // Edit distance finding.
+    for (size_type i = 0U; i <= ou - ol; ++i) {
+        for (size_type j = 0U; j <= nu - nl; ++j) {
+            if (i == 0U) {
+                d[i][j] = j;
+            } else if (j == 0U) {
+                d[i][j] = i;
+            } else {
+                const bool same = (l[ol + i - 1U] == r[nl + j - 1U]);
+                d[i][j] = std::min({ d[i - 1U][j] + 1, d[i][j - 1U] + 1,
+                                     d[i - 1U][j - 1U] + (same ? 0 : 1) });
+            }
+        }
+    }
+
+    size_type identicalLines = 0U;
+
+    const size_type minFold = 3;
+    const size_type ctxSize = 2;
+
+    std::deque<Diff> diffSeq;
+
+    auto foldIdentical = [&](bool last) {
+        // size_type startContext = (last ? 0 : ctxSize);
+        // size_type endContext = (identicalLines == diffSeq.size() ? 0 : ctxSize);
+        // size_type context = startContext + endContext;
+
+        // if (identicalLines >= context && identicalLines - context > minFold) {
+        //     diffSeq.erase(diffSeq.cbegin() + startContext,
+        //                   diffSeq.cbegin() + (identicalLines - endContext));
+        //     diffSeq.emplace(diffSeq.cbegin() + startContext, Diff::Note,
+        //                     std::to_string(identicalLines - context) +
+        //                     " lines folded", -1, -1);
+        // }
+        // identicalLines = 0U;
+    };
+
+    auto handleSameLines = [&](size_type i, size_type j) {
+        if (l[i] == r[j]) {
+            ++identicalLines;
+        } else {
+            foldIdentical(false);
+        }
+        diffSeq.emplace_front(Diff::Both);
+    };
+
+    // Compose results with folding of long runs of identical lines (longer
+    // than two lines).  Mind that we go from last to first element and loops
+    // below process tail, middle and then head parts of the files.
+
+    for (size_type k = l.size(), l = r.size(); k > ou; --k, --l) {
+        handleSameLines(k - 1U, l - 1U);
+    }
+
+    int i = ou - ol, j = nu - nl;
+    while (i != 0U || j != 0U) {
+        if (i == 0) {
+            --j;
+            diffSeq.emplace_front(Diff::Right);
+        } else if (j == 0) {
+            --i;
+            diffSeq.emplace_front(Diff::Left);
+        } else if (d[i][j] == d[i][j - 1] + 1) {
+            --j;
+            diffSeq.emplace_front(Diff::Right);
+        } else if (d[i][j] == d[i - 1][j] + 1) {
+            --i;
+            diffSeq.emplace_front(Diff::Left);
+        } else {
+            --i;
+            --j;
+            handleSameLines(ol + i, nl + j);
+        }
+    }
+
+    for (size_type i = ol; i != 0U; --i) {
+        handleSameLines(i - 1U, i - 1U);
+    }
+
+    foldIdentical(true);
+
+    return diffSeq;
 }
 
 static unsigned int

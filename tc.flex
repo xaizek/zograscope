@@ -284,13 +284,16 @@ SCHARSEQ                {SCHAR}*
 "^="                    { TOKEN(XOREQ_OP); }
 "|="                    { TOKEN(OREQ_OP); }
 
-^[[:space:]]*# {
+^[[:space:]]{-}[\n]*# {
     startTok = yylval;
     startTok.text.token = DIRECTIVE;
     startLoc = yylloc;
     BEGIN(directive);
 }
-<directive>\\\n         ;
+<directive>\\\n {
+    ++yyline;
+    yycolumn = 1U;
+}
 <directive>\n {
     startTok.text.len = yyoffset - startTok.text.from - 1;
     startLoc.last_line = yylloc.last_line;
