@@ -23,10 +23,21 @@ enum class Diff
     Right,
     Identical,
     Different,
+    Fold,
 };
 
-static std::deque<Diff> compare(std::vector<std::string> &l,
-                                std::vector<std::string> &r);
+struct DiffLine
+{
+    DiffLine(Diff type, int data = 0) : type(type), data(data)
+    {
+    }
+
+    Diff type;
+    int data;
+};
+
+static std::deque<DiffLine> compare(std::vector<std::string> &l,
+                                    std::vector<std::string> &r);
 static std::vector<std::string> split(const std::string &str, char with);
 static std::string printSource(Node &root);
 static unsigned int measureWidth(const std::string &s);
@@ -43,7 +54,7 @@ Printer::print()
     std::vector<std::string> l = split(printSource(left), '\n');
     std::vector<std::string> r = split(printSource(right), '\n');
 
-    std::deque<Diff> diff = compare(l, r);
+    std::deque<DiffLine> diff = compare(l, r);
 
     unsigned int maxWidth = 0U;
     std::vector<unsigned int> widths;
@@ -56,12 +67,12 @@ Printer::print()
     }
 
     unsigned int i = 0U, j = 0U;
-    for (Diff d : diff) {
+    for (DiffLine d : diff) {
         const std::string *ll = &empty;
         const std::string *rl = &empty;
 
         const char *marker;
-        switch (d) {
+        switch (d.type) {
             case Diff::Left:
                 ll = &l[i++];
                 marker = " << ";
@@ -80,6 +91,17 @@ Printer::print()
                 rl = &r[j++];
                 marker = " <> ";
                 break;
+            case Diff::Fold:
+                i += d.data;
+                j += d.data;
+                {
+                    std::string msg = " @@ folded " + std::to_string(d.data)
+                                    + " identical lines @@";
+                    std::cout << std::right
+                              << std::setw(maxWidth + 4 + msg.size()/2)
+                              << msg << '\n';
+                }
+                continue;
         }
 
         unsigned int width = (ll->empty() ? 0U : widths[i - 1U]);
@@ -89,7 +111,7 @@ Printer::print()
     }
 }
 
-static std::deque<Diff>
+static std::deque<DiffLine>
 compare(std::vector<std::string> &l, std::vector<std::string> &r)
 {
     using size_type = std::vector<std::string>::size_type;
@@ -128,21 +150,20 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
     const size_type minFold = 3;
     const size_type ctxSize = 2;
 
-    std::deque<Diff> diffSeq;
+    std::deque<DiffLine> diffSeq;
 
     auto foldIdentical = [&](bool last) {
-        // size_type startContext = (last ? 0 : ctxSize);
-        // size_type endContext = (identicalLines == diffSeq.size() ? 0 : ctxSize);
-        // size_type context = startContext + endContext;
+        size_type startContext = (last ? 0 : ctxSize);
+        size_type endContext = (identicalLines == diffSeq.size() ? 0 : ctxSize);
+        size_type context = startContext + endContext;
 
-        // if (identicalLines >= context && identicalLines - context > minFold) {
-        //     diffSeq.erase(diffSeq.cbegin() + startContext,
-        //                   diffSeq.cbegin() + (identicalLines - endContext));
-        //     diffSeq.emplace(diffSeq.cbegin() + startContext, Diff::Note,
-        //                     std::to_string(identicalLines - context) +
-        //                     " lines folded", -1, -1);
-        // }
-        // identicalLines = 0U;
+        if (identicalLines >= context && identicalLines - context > minFold) {
+            diffSeq.erase(diffSeq.cbegin() + startContext,
+                          diffSeq.cbegin() + (identicalLines - endContext));
+            diffSeq.emplace(diffSeq.cbegin() + startContext, Diff::Fold,
+                            identicalLines - context);
+        }
+        identicalLines = 0U;
     };
 
     auto handleSameLines = [&](size_type i, size_type j) {
@@ -167,15 +188,19 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
     while (i != 0U || j != 0U) {
         if (i == 0) {
             --j;
+            foldIdentical(false);
             diffSeq.emplace_front(Diff::Right);
         } else if (j == 0) {
             --i;
+            foldIdentical(false);
             diffSeq.emplace_front(Diff::Left);
         } else if (d[i][j] == d[i][j - 1] + 1) {
             --j;
+            foldIdentical(false);
             diffSeq.emplace_front(Diff::Right);
         } else if (d[i][j] == d[i - 1][j] + 1) {
             --i;
+            foldIdentical(false);
             diffSeq.emplace_front(Diff::Left);
         } else {
             --i;
