@@ -51,6 +51,8 @@ extern TreeBuilder *tb;
 %token <text> '?' ':' ';' '(' ')' '{' '}' '[' ']' '.' ',' '&' '|' '^' '*' '/' '%' '+' '-' '~' '!' '<' '>' '='
 %token <text> NTOKENS
 
+%printer { fprintf(yyoutput, "(%d;+%d)", $$.from, $$.len); } SLIT
+
 /* %type <node> tu funcs func stmts head body type name id args ret */
 %type <node> constant primary_expression generic_selection generic_assoc_list
 %type <node> expression assignment_expression generic_association type_name
@@ -75,7 +77,7 @@ extern TreeBuilder *tb;
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
 %type <node> translation_unit external_declaration function_definition
-%type <node> declaration_list
+%type <node> declaration_list string_lit
 
 %precedence "atomic"
 %precedence '('
@@ -164,11 +166,18 @@ constant
 primary_expression
     : ID                 { $$ = tb->addNode($1, @1); }
     | constant           { $$ = tb->addNode($1, @1); }
-    | SLIT               { $$ = tb->addNode($1, @1); }
+    | string_lit         { $$ = tb->addNode($1, @1); }
     | '(' expression ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     | generic_selection  { $$ = tb->addNode($1, @1); }
+    ;
+
+string_lit
+    : SLIT            { $$ = tb->addNode($1, @1); }
+    | string_lit SLIT { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | string_lit ID SLIT
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
 /* (6.5.1.1) generic-selection: */
@@ -271,9 +280,9 @@ unary_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | unary_operator cast_expression
     { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | SIZEOF unary_expression
+    | SIZEOF unary_expression  %dprec 1
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
-    | SIZEOF '(' type_name ')'
+    | SIZEOF '(' type_name ')' %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | _ALIGNOF '(' type_name ')'
@@ -296,9 +305,9 @@ unary_operator
 /*     unary-expression */
 /*     ( type-name ) cast-expression */
 cast_expression
-    : unary_expression
+    : unary_expression                  %dprec 1
     { $$ = tb->addNode($1, @1); }
-    | '(' type_name ')' cast_expression
+    | '(' type_name ')' cast_expression %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
 
@@ -323,11 +332,11 @@ multiplicative_expression
 /*     additive-expression + multiplicative-expression */
 /*     additive-expression - multiplicative-expression */
 additive_expression
-    : multiplicative_expression
+    : multiplicative_expression                         %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | additive_expression '+' multiplicative_expression
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
-    | additive_expression '-' multiplicative_expression
+    | additive_expression '-' multiplicative_expression %dprec 2
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
@@ -1021,9 +1030,13 @@ initializer
 initializer_list
     : designation initializer
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | initializer
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | initializer_list ',' designation initializer
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3),
                             tb->addNode($4, @4) }); }
+    | initializer_list ',' initializer
+    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
 /* (6.7.9) designation: */
@@ -1057,7 +1070,7 @@ designator
 /* (6.7.10) static_assert-declaration: */
 /*     _Static_assert ( constant-expression , string-literal ) ; */
 static_assert_declaration
-    : _STATIC_ASSERT '(' constant_expression ',' SLIT ')' ';'
+    : _STATIC_ASSERT '(' constant_expression ',' string_lit ')' ';'
     { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
                           tb->addNode($3, @3), tb->addNode($4, @4),
                           tb->addNode($5, @5), tb->addNode($6, @6),

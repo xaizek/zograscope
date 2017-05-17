@@ -32,7 +32,7 @@ void yyerror(const char s[]);
 
 %}
 
-%X directive slcomment mlcomment
+%X directive dirmlcomment slcomment mlcomment
 
  /* (6.4.3) hex-quad:
   *     hexadecimal-digit hexadecimal-digit hexadecimal-digit hexadecimal-digit
@@ -77,7 +77,7 @@ HESC                    \\x[[:xdigit:]]+
  /* (6.4.4.4) simple-escape-sequence: one of */
  /*     \' \" \? \\ */
  /*     \a \b \f \n \r \t \v */
-SESC                    "\'"|"\""|"\?"|"\\"|"\a"|"\b"|"\f"|"\n"|"\r"|"\t"|"\v"
+SESC                    \\['"?\\abfnrtv]
  /* (6.4.4.4) escape-sequence: */
  /*     simple-escape-sequence */
  /*     octal-escape-sequence */
@@ -88,7 +88,7 @@ ESEQ                    {SESC}|{OESC}|{HESC}|{UCN}
  /*     any member of the source character set except */
  /*         the single-quote ', backslash \, or new-line character */
  /*     escape-sequence */
-CCHAR                   [^'\\\n]|ESEQ
+CCHAR                   [^'\\\n]|{ESEQ}
  /* (6.4.4.4) c-char-sequence: */
  /*     c-char */
  /*     c-char-sequence c-char */
@@ -182,7 +182,26 @@ SCHAR                   [^"\\\n]|{ESEQ}
  /*     s-char */
  /*     s-char-sequence s-char */
 SCHARSEQ                {SCHAR}*
-
+ /* (6.4.7) header-name: */
+ /*     < h-char-sequence > */
+ /*     " q-char-sequence " */
+HEADERNAME              <{HCHARSEQ}>|"{QCHARSEQ}"
+ /* (6.4.7) h-char-sequence: */
+ /*     h-char */
+ /*     h-char-sequence h-char */
+HCHARSEQ                {HCHAR}+
+ /* (6.4.7) h-char: */
+ /*     any member of the source character set except */
+ /*         the new-line character and > */
+HCHAR                   [^>\n]
+ /* (6.4.7) q-char-sequence: */
+ /*     q-char */
+ /*     q-char-sequence q-char */
+QCHARSEQ                {QCHAR}+
+ /* (6.4.7) q-char: */
+ /*     any member of the source character set except */
+ /*         the new-line character and " */
+QCHAR                   [^"\n]
 
 %%
 
@@ -304,6 +323,11 @@ SCHARSEQ                {SCHAR}*
     yycolumn = 1U;
     BEGIN(INITIAL);
 }
+<directive>"/*"         BEGIN(dirmlcomment);
+<dirmlcomment>"*/"      BEGIN(directive);
+<dirmlcomment>\n        { ++yyline; yycolumn = 1U; }
+<dirmlcomment>.         ;
+<directive>HEADERNAME   ;
 <directive>.            ;
 
 "//" {
@@ -338,8 +362,8 @@ SCHARSEQ                {SCHAR}*
 
     BEGIN(INITIAL);
 }
-<mlcomment>.            ;
 <mlcomment>\n           { ++yyline; yycolumn = 1U; }
+<mlcomment>.            ;
 
 "..."                   { TOKEN(DOTS); }
 
