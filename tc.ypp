@@ -29,18 +29,6 @@ TreeBuilder *tb = nullptr;
 extern TreeBuilder *tb;
 }
 
-%code provides
-{
-    #include <ostream>
-
-    static std::ostream &
-    operator<<(std::ostream &os, Text text)
-    {
-        os << '(' << text.from << ";+" << text.len << ')';
-        return os;
-    }
-}
-
 %glr-parser
 %error-verbose
 /* %define lr.type ielr */
@@ -1304,7 +1292,6 @@ declaration_list
 
 %%
 
-
 TreeBuilder
 parse(const std::string &contents)
 {
@@ -1332,10 +1319,8 @@ parse(const std::string &contents)
     yyin = myfile;
 
     // parse through the input until there is no more:
-    do {
-        yyparse();
-    } while (!std::feof(yyin));
-    tb.finish();
+    const bool failed = (yyparse() != 0);
+    tb.finish(failed);
 
     fclose(myfile);
 
@@ -1346,6 +1331,4 @@ void
 yyerror(const char s[])
 {
     std::cout << "Parse error at " << yylloc.first_line << ':' << yylloc.first_column << "!  Message: " << s << std::endl;
-    // might as well halt now:
-    std::exit(-1);
 }

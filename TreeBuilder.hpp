@@ -143,8 +143,13 @@ public:
         newPostponed = 0;
     }
 
-    void finish()
+    void finish(bool failed)
     {
+        if (failed) {
+            this->failed = failed;
+            return;
+        }
+
         std::vector<PNode *> children;
         children.reserve(newPostponed);
         for (std::size_t i = postponed.size() - newPostponed;
@@ -166,11 +171,17 @@ public:
         return root;
     }
 
+    bool hasFailed() const
+    {
+        return failed;
+    }
+
 private:
     std::deque<PNode> nodes;
     PNode *root = nullptr;
     std::vector<Postponed> postponed;
     int newPostponed = 0;
+    bool failed = false;
 };
 
 #endif // TREEBUILDER_HPP__

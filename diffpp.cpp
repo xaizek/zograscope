@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 {
     if (argc != 3 && argc != 4) {
         std::cerr << "Wrong arguments\n";
-        return 1;
+        return EXIT_FAILURE;
     }
 
     RedirectToPager redirectToPager;
@@ -117,6 +117,10 @@ main(int argc, char *argv[])
     {
         std::string contents = readFile(argv[1]);
         TreeBuilder tb = parse(contents);
+        if (tb.hasFailed()) {
+            return EXIT_FAILURE;
+        }
+
         treeA = materializeTree(contents, tb.getRoot());
     }
 
@@ -124,12 +128,16 @@ main(int argc, char *argv[])
     {
         std::string contents = readFile(argv[2]);
         TreeBuilder tb = parse(contents);
+        if (tb.hasFailed()) {
+            return EXIT_FAILURE;
+        }
+
         treeB = materializeTree(contents, tb.getRoot());
     }
 
     if (argc == 4) {
         std::cout << ">>> Skipping diffing\n";
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     // markSatellites(treeA);
@@ -147,4 +155,6 @@ main(int argc, char *argv[])
 
     // printTree("T1", treeA);
     // printTree("T2", treeB);
+
+    return EXIT_SUCCESS;
 }
