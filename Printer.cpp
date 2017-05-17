@@ -36,6 +36,7 @@ struct DiffLine
     int data;
 };
 
+static int countWidth(int n);
 static std::deque<DiffLine> compare(std::vector<std::string> &l,
                                     std::vector<std::string> &r);
 static std::vector<std::string> split(const std::string &str, char with);
@@ -63,8 +64,14 @@ Printer::print()
         const unsigned int width = measureWidth(ll);
         widths.push_back(width);
 
+        // TODO: count only lines that are visible.
         maxWidth = std::max(width, maxWidth);
     }
+
+    const int lWidth = countWidth(l.size());
+    const int rWidth = countWidth(r.size());
+
+    decor::Decoration lineNo = decor::white_bg + decor::black_fg;
 
     unsigned int i = 0U, j = 0U;
     for (DiffLine d : diff) {
@@ -98,7 +105,7 @@ Printer::print()
                     std::string msg = " @@ folded " + std::to_string(d.data)
                                     + " identical lines @@";
                     std::cout << std::right
-                              << std::setw(maxWidth + 4 + msg.size()/2)
+                              << std::setw(maxWidth + lWidth + 4 + msg.size()/2)
                               << msg << '\n';
                 }
                 continue;
@@ -106,9 +113,34 @@ Printer::print()
 
         unsigned int width = (ll->empty() ? 0U : widths[i - 1U]);
         width = maxWidth + (ll->size() - width);
-        std::cout << std::left << std::setw(width) << *ll
-                  << marker << *rl << '\n';
+
+        if (d.type != Diff::Right) {
+            std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ');
+        } else {
+            std::cout << std::setw(lWidth + 1) << "";
+        }
+
+        std::cout << ' ' << std::left << std::setw(width) << *ll << marker;
+
+        if (d.type != Diff::Left) {
+            std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ');
+        } else {
+            std::cout << std::setw(rWidth + 1) << "";
+        }
+
+        std::cout << ' ' << *rl << '\n';
     }
+}
+
+static int
+countWidth(int n)
+{
+    int width = 1;
+    while (n > 0) {
+        n /= 10;
+        ++width;
+    }
+    return width;
 }
 
 static std::deque<DiffLine>
