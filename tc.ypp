@@ -173,8 +173,11 @@ primary_expression
     | generic_selection  { $$ = tb->addNode($1, @1); }
     ;
 
+/* Extension to accept concatenation of literals possibly with macros. */
 string_lit
     : SLIT            { $$ = tb->addNode($1, @1); }
+    | ID SLIT
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | string_lit SLIT { $$ = tb->append($1, tb->addNode($2, @2)); }
     | string_lit ID SLIT
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
@@ -1291,9 +1294,17 @@ function_definition
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) });
       for (const auto &c : $4->children) tb->append($$, c); }
-    | declaration_specifiers declarator compound_statement
+    | declaration_specifiers declarator compound_statement   %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) });
       for (const auto &c : $3->children) tb->append($$, c); }
+    /* These are extensions to allow function headers to be defined by a macro. */
+    | ID '(' argument_expression_list ')' compound_statement %dprec 2
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
+    | ID '(' ')' compound_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
     ;
 
 /* (6.9.1) declaration-list: */
