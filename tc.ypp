@@ -646,10 +646,10 @@ struct_declaration_list
 /*     specifier-qualifier-list struct-declarator-listopt ; */
 /*     static_assert-declaration */
 struct_declaration
-    : specifier_qualifier_list struct_declarator_list ';'
+    : specifier_qualifier_list struct_declarator_list ';' %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
-    | specifier_qualifier_list ';'
+    | specifier_qualifier_list ';'                        %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | static_assert_declaration
     { $$ = tb->addNode($1, @1); }
