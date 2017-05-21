@@ -308,7 +308,8 @@ cast_expression
     : unary_expression                  %dprec 1
     { $$ = tb->addNode($1, @1); }
     | '(' type_name ')' cast_expression %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
     ;
 
 /* (6.5.5) multiplicative-expression: */
