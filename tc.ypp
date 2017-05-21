@@ -76,7 +76,7 @@ extern TreeBuilder *tb;
 %type <node> designation designator_list designator statement labeled_statement
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
-%type <node> translation_unit external_declaration function_definition
+%type <node> translation_unit external_declaration function_definition function_header
 %type <node> declaration_list string_lit
 
 %precedence "atomic"
@@ -179,8 +179,8 @@ string_lit
     | ID SLIT
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | string_lit SLIT { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | string_lit ID SLIT
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    | string_lit ID
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 /* (6.5.1.1) generic-selection: */
@@ -1290,21 +1290,23 @@ external_declaration
 /* (6.9.1) function-definition: */
 /*     declaration-specifiers declarator declaration-listopt compound-statement */
 function_definition
-    : declaration_specifiers declarator declaration_list compound_statement
+    : function_header compound_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+function_header
+    : declaration_specifiers declarator declaration_list
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) });
-      for (const auto &c : $4->children) tb->append($$, c); }
-    | declaration_specifiers declarator compound_statement   %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) });
-      for (const auto &c : $3->children) tb->append($$, c); }
+                         tb->addNode($3, @3) }); }
+    | declaration_specifiers declarator %dprec 1
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     /* These are extensions to allow function headers to be defined by a macro. */
-    | ID '(' argument_expression_list ')' compound_statement %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
-    | ID '(' ')' compound_statement
+    | ID '(' argument_expression_list ')' %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | ID '(' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
     ;
 
 /* (6.9.1) declaration-list: */
