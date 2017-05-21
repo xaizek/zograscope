@@ -22,7 +22,7 @@ struct Node
     State state;
     int line;
     int col;
-    Node *buddy;
+    Node *relative;
     bool satellite;
     Type type;
 };

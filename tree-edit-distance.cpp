@@ -33,7 +33,7 @@ print(const Node &node, int lvl)
         case State::Unchanged: break;
         case State::Deleted:   suffix = " (deleted)";  break;
         case State::Inserted:  suffix = " (inserted)"; break;
-        case State::Updated:   suffix = " (updated with " + node.buddy->label + "@" + std::to_string(node.buddy->poID) + ")";  break;
+        case State::Updated:   suffix = " (updated with " + node.relative->label + "@" + std::to_string(node.relative->poID) + ")";  break;
     }
 
     std::cout << std::setw(4*lvl) << prefix << node.label
@@ -54,6 +54,7 @@ postOrder(Node &node, std::vector<Node *> &v)
     }
 
     for (Node &child : node.children) {
+        child.relative = &node;
         postOrder(child, v);
     }
     node.poID = v.size();
@@ -124,7 +125,7 @@ makeKr(Node &root, std::vector<int> &l)
     std::vector<int> kr;
     kr.reserve(k);
 
-    auto i = l.size() - 1U;
+    int i = l.size() - 1U;
     while (k >= 1) {
         if (!visited[l[i]]) {
             kr.push_back(i);
@@ -342,8 +343,8 @@ backtrackForests(const std::vector<int> &l1, const std::vector<int> &l2,
                 } else if (fd[di][dj] == fd[di][dj - 1] + Wins) {
                     po2[dj--]->state = State::Inserted;
                 } else if (fd[di][dj] != fd[di - 1][dj - 1]) {
-                    po1[di]->buddy = po2[dj];
-                    po2[dj]->buddy = po1[di];
+                    po1[di]->relative = po2[dj];
+                    po2[dj]->relative = po1[di];
 
                     po1[di--]->state = State::Updated;
                     po2[dj--]->state = State::Updated;
@@ -366,11 +367,72 @@ backtrackForests(const std::vector<int> &l1, const std::vector<int> &l2,
     }
 }
 
+template <typename I1, typename I2, typename P>
+std::pair<I1, I2>
+mismatch(I1 f1, I1 l1, I2 f2, I2 l2, P p)
+{
+    while (f1 != l1 && f2 != l2 && p(*f1, *f2)) {
+        ++f1;
+        ++f2;
+    }
+    return { f1, f2 };
+}
+
+std::vector<Node>::iterator
+rootPos(Node &root, Node *n)
+{
+    while (n->relative != &root) {
+        n = n->relative;
+    }
+    return root.children.begin() + (n - &root.children[0]);
+}
+
+void
+reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
+{
+    Node &T1 = *po1.back();
+    Node &T2 = *po2.back();
+
+    auto eq = [](const Node *n1, const Node *n2) {
+        return n1->label == n2->label;
+    };
+
+    auto f = mismatch(po1.begin(), po1.end(), po2.begin(), po2.end(), eq);
+
+    using it = std::vector<Node *>::reverse_iterator;
+    auto e = mismatch(po1.rbegin(), it(f.first), po2.rbegin(), it(f.second),
+                      eq);
+
+    auto mark = [](Node &n) {
+        n.satellite = true;
+    };
+
+    if (f.first == po1.end()) {
+        std::for_each(T1.children.begin(), T1.children.end(), mark);
+    } else {
+        std::for_each(T1.children.begin(), rootPos(T1, *f.first), mark);
+    }
+    if (f.second == po2.end()) {
+        std::for_each(T2.children.begin(), T2.children.end(), mark);
+    } else {
+        std::for_each(T2.children.begin(), rootPos(T2, *f.second), mark);
+    }
+    if (e.first != it(f.first) || f.first != po1.end()) {
+        std::for_each(++rootPos(T1, *e.first), T1.children.end(), mark);
+    }
+    if (e.second != it(f.second) || f.second != po2.end()) {
+        std::for_each(++rootPos(T2, *e.second), T2.children.end(), mark);
+    }
+}
+
 int
 ted(Node &T1, Node &T2)
 {
     std::vector<Node *> po1 = postOrder(T1);
     std::vector<Node *> po2 = postOrder(T2);
+    reduce(po1, po2);
+    po1 = postOrder(T1);
+    po2 = postOrder(T2);
 
     std::vector<int> l1 = lmld(T1);
     std::vector<int> l2 = lmld(T2);

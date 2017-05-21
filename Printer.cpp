@@ -314,9 +314,9 @@ printSource(Node &root)
         }
 
         for (Node &child : node.children) {
-            if (child.satellite) {
-                child.state = node.state;
-            }
+            // if (child.satellite) {
+            //     child.state = node.state;
+            // }
             visit(child);
         }
     };
