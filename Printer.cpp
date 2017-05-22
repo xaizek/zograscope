@@ -40,7 +40,6 @@ static int countWidth(int n);
 static std::deque<DiffLine> compare(std::vector<std::string> &l,
                                     std::vector<std::string> &r);
 static std::vector<std::string> split(const std::string &str, char with);
-static std::string printSource(Node &root);
 static unsigned int measureWidth(const std::string &s);
 
 Printer::Printer(Node &left, Node &right) : left(left), right(right)
@@ -270,7 +269,7 @@ split(const std::string &str, char with)
     return results;
 }
 
-static std::string
+std::string
 printSource(Node &root)
 {
     std::ostringstream oss;

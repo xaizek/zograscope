@@ -104,7 +104,7 @@ TreeBuilder parse(const std::string &contents);
 int
 main(int argc, char *argv[])
 {
-    if (argc != 3 && argc != 4) {
+    if (argc != 2 && argc != 3 && argc != 4) {
         std::cerr << "Wrong arguments\n";
         return EXIT_FAILURE;
     }
@@ -122,6 +122,11 @@ main(int argc, char *argv[])
         }
 
         treeA = materializeTree(contents, tb.getRoot());
+    }
+
+    if (argc == 2) {
+        std::cout << printSource(treeA) << '\n';
+        return EXIT_SUCCESS;
     }
 
     std::cout << ">>> Parsing " << argv[2] << "\n";
