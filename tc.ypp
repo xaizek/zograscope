@@ -77,7 +77,9 @@ extern TreeBuilder *tb;
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
 %type <node> translation_unit external_declaration function_definition function_header
-%type <node> declaration_list string_lit
+%type <node> string_lit declaration_specifier
+/* XXX: Disabled because of memory exhaustion */
+/* %type <node> declaration_list */
 
 %precedence "atomic"
 %precedence '('
@@ -164,8 +166,7 @@ constant
 /*     ( expression ) */
 /*     generic-selection */
 primary_expression
-    : ID                 { $$ = tb->addNode($1, @1); }
-    | constant           { $$ = tb->addNode($1, @1); }
+    : constant           { $$ = tb->addNode($1, @1); }
     | string_lit         { $$ = tb->addNode($1, @1); }
     | '(' expression ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
@@ -176,11 +177,9 @@ primary_expression
 /* Extension to accept concatenation of literals possibly with macros. */
 string_lit
     : SLIT            { $$ = tb->addNode($1, @1); }
-    | ID SLIT
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    | ID              { $$ = tb->addNode($1, @1); }
     | string_lit SLIT { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | string_lit ID
-    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | string_lit ID   { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 /* (6.5.1.1) generic-selection: */
@@ -501,9 +500,9 @@ constant_expression
 /*     declaration-specifiers init-declarator-listopt ; */
 /*     static_assert-declaration */
 declaration
-    : declaration_specifiers ';'                      %dprec 200
+    : declaration_specifiers ';'                      %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | declaration_specifiers init_declarator_list ';' %dprec 100 %merge <stmtMerge>
+    | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <stmtMerge>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     | static_assert_declaration
@@ -517,26 +516,18 @@ declaration
 /*     function-specifier declaration-specifiersopt */
 /*     alignment-specifier declaration-specifiersopt */
 declaration_specifiers
-    : storage_class_specifier declaration_specifiers
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | storage_class_specifier
+    : declaration_specifier declaration_specifiers
+    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    | declaration_specifier
     { $$ = tb->addNode($1, @1); }
-    | type_specifier declaration_specifiers
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | type_specifier
-    { $$ = tb->addNode($1, @1); }
-    | type_qualifier declaration_specifiers
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | type_qualifier
-    { $$ = tb->addNode($1, @1); }
-    | function_specifier declaration_specifiers
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | function_specifier
-    { $$ = tb->addNode($1, @1); }
-    | alignment_specifier declaration_specifiers
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | alignment_specifier
-    { $$ = tb->addNode($1, @1); }
+    ;
+
+declaration_specifier
+    : storage_class_specifier { $$ = tb->addNode($1, @1); }
+    | type_specifier          { $$ = tb->addNode($1, @1); }
+    | type_qualifier          { $$ = tb->addNode($1, @1); }
+    | function_specifier      { $$ = tb->addNode($1, @1); }
+    | alignment_specifier     { $$ = tb->addNode($1, @1); }
     ;
 
 /* (6.7) init-declarator-list: */
@@ -1295,10 +1286,11 @@ function_definition
     ;
 
 function_header
-    : declaration_specifiers declarator declaration_list
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
-    | declaration_specifiers declarator %dprec 1
+    /* XXX: Disabled because of memory exhaustion */
+    /* : declaration_specifiers declarator declaration_list */
+    /* { $$ = tb->addNode({ tb->addNode($2, @2), tb->addNode($3, @3), */
+    /*                      tb->addNode($4, @4) }); } */
+    : declaration_specifiers declarator %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     /* These are extensions to allow function headers to be defined by a macro. */
     | ID '(' argument_expression_list ')' %dprec 2
@@ -1312,10 +1304,11 @@ function_header
 /* (6.9.1) declaration-list: */
 /*     declaration */
 /*     declaration-list declaration */
-declaration_list
-    : declaration                  { $$ = tb->addNode($1, @1); }
-    | declaration_list declaration { $$ = tb->append($1, tb->addNode($2, @2)); }
-    ;
+/* XXX: Disabled because of memory exhaustion */
+/* declaration_list */
+/*     : declaration                  { $$ = tb->addNode($1, @1); } */
+/*     | declaration_list declaration { $$ = tb->append($1, tb->addNode($2, @2)); } */
+/*     ; */
 
 %%
 
