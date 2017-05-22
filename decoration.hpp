@@ -30,6 +30,7 @@ namespace decor {
 class Decoration
 {
     using decorFunc = std::ostream & (*)(std::ostream &os);
+    using intDecorFunc = std::ostream & (*)(std::ostream &os, int n);
 
 public:
     /**
@@ -38,6 +39,13 @@ public:
      * @param decorator Decorating function.
      */
     explicit Decoration(decorFunc decorator = nullptr);
+    /**
+     * @brief Constructs decoration from an unary function.
+     *
+     * @param intDecorator Decorating function.
+     * @param n Parameter for decorating function.
+     */
+    explicit Decoration(intDecorFunc intDecorator, int n);
     /**
      * @brief Constructs a (deep) copy of a decoration.
      *
@@ -76,6 +84,14 @@ private:
      * @brief Decoration function (can be nullptr).
      */
     decorFunc decorator = nullptr;
+    /**
+     * @brief Unary decoration function (can be nullptr).
+     */
+    intDecorFunc intDecorator = nullptr;
+    /**
+     * @brief Parameter for intDecorator.
+     */
+    int n;
     /**
      * @brief One of two decorations that compose this object.
      */
@@ -428,6 +444,23 @@ void disableDecorations();
 /**
  * @}
  */
+
+// TODO: document this
+namespace literals {
+
+    std::ostream & fg256(std::ostream &os, int n);
+    std::ostream & bg256(std::ostream &os, int n);
+
+    inline Decoration operator""_fg(unsigned long long n)
+    {
+        return Decoration(&fg256, n);
+    }
+
+    inline Decoration operator""_bg(unsigned long long n)
+    {
+        return Decoration(&bg256, n);
+    }
+}
 
 }
 

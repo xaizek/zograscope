@@ -41,6 +41,15 @@ public:
     const char * cyan_bg    () { return isAscii ? "\033[46m" : ""; }
     const char * white_bg   () { return isAscii ? "\033[47m" : ""; }
 
+    std::string fg(int n)
+    {
+        return isAscii ? "\033[38;5;" + std::to_string(n) + "m" : "";
+    }
+    std::string bg(int n)
+    {
+        return isAscii ? "\033[48;5;" + std::to_string(n) + "m" : "";
+    }
+
 private:
     /**
      * @brief Whether outputting of ASCII escape sequences is enabled.
@@ -80,13 +89,18 @@ const Decoration
     decor::white_bg   ([](ostr &os) -> ostr & { return os << C.white_bg();   });
 
 Decoration::Decoration(const Decoration &rhs)
-    : decorator(rhs.decorator),
+    : decorator(rhs.decorator), intDecorator(rhs.intDecorator), n(rhs.n),
       lhs(rhs.lhs == nullptr ? nullptr : new Decoration(*rhs.lhs)),
       rhs(rhs.rhs == nullptr ? nullptr : new Decoration(*rhs.rhs))
 {
 }
 
 Decoration::Decoration(decorFunc decorator) : decorator(decorator)
+{
+}
+
+Decoration::Decoration(intDecorFunc intDecorator, int n)
+    : intDecorator(intDecorator), n(n)
 {
 }
 
@@ -101,6 +115,8 @@ Decoration::operator=(const Decoration &rhs)
 {
     Decoration copy(rhs);
     std::swap(copy.decorator, this->decorator);
+    std::swap(copy.intDecorator, this->intDecorator);
+    std::swap(copy.n, this->n);
     std::swap(copy.lhs, this->lhs);
     std::swap(copy.rhs, this->rhs);
     return *this;
@@ -109,12 +125,19 @@ Decoration::operator=(const Decoration &rhs)
 std::ostream &
 Decoration::decorate(std::ostream &os) const
 {
-    if (decorator != nullptr) {
+    if (decorator != nullptr || intDecorator != nullptr) {
         // Reset and preserve width field, so printing escape sequence doesn't
         // mess up formatting.
         const auto width = os.width({});
-        os << decorator;
+
+        if (decorator != nullptr) {
+            decorator(os);
+        } else {
+            intDecorator(os, n);
+        }
+
         static_cast<void>(os.width(width));
+
         return os;
     }
     if (lhs != nullptr && rhs != nullptr) {
@@ -138,4 +161,14 @@ void
 decor::disableDecorations()
 {
     C.disable();
+}
+
+std::ostream & literals::fg256(std::ostream &os, int n)
+{
+    return os << C.fg(n);
+}
+
+std::ostream & literals::bg256(std::ostream &os, int n)
+{
+    return os << C.bg(n);
 }
