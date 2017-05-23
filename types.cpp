@@ -86,34 +86,37 @@ tokenMap()
     map[SLCOMMENT] = Type::Comments;
     map[MLCOMMENT] = Type::Comments;
 
-    map[SLIT]           = Type::NonInterchangeable;
-    map[ICONST]         = Type::NonInterchangeable;
-    map[FCONST]         = Type::NonInterchangeable;
-    map[CHCONST]        = Type::NonInterchangeable;
-    map[DEFAULT]        = Type::NonInterchangeable;
-    map[RETURN]         = Type::NonInterchangeable;
-    map[SIZEOF]         = Type::NonInterchangeable;
-    map[_ALIGNOF]       = Type::NonInterchangeable;
-    map[_GENERIC]       = Type::NonInterchangeable;
-    map[DOTS]           = Type::NonInterchangeable;
-    map[_STATIC_ASSERT] = Type::NonInterchangeable;
-    map[IF]             = Type::NonInterchangeable;
-    map[ELSE]           = Type::NonInterchangeable;
-    map[SWITCH]         = Type::NonInterchangeable;
-    map[WHILE]          = Type::NonInterchangeable;
-    map[DO]             = Type::NonInterchangeable;
-    map[FOR]            = Type::NonInterchangeable;
-    map[CASE]           = Type::NonInterchangeable;
-    map[TYPEDEF]        = Type::NonInterchangeable;
-    map[STRUCT]         = Type::NonInterchangeable;
-    map[UNION]          = Type::NonInterchangeable;
-    map[ENUM]           = Type::NonInterchangeable;
-    map['?']            = Type::NonInterchangeable;
-    map[':']            = Type::NonInterchangeable;
-    map[';']            = Type::NonInterchangeable;
-    map['.']            = Type::NonInterchangeable;
-    map[',']            = Type::NonInterchangeable;
-    map[ARR_OP]         = Type::NonInterchangeable;
+    map[SLIT]           = Type::Constants;
+    map[ICONST]         = Type::Constants;
+    map[FCONST]         = Type::Constants;
+    map[CHCONST]        = Type::Constants;
+
+    map[DEFAULT]        = Type::Keywords;
+    map[RETURN]         = Type::Keywords;
+    map[SIZEOF]         = Type::Keywords;
+    map[_ALIGNOF]       = Type::Keywords;
+    map[_GENERIC]       = Type::Keywords;
+    map[DOTS]           = Type::Keywords;
+    map[_STATIC_ASSERT] = Type::Keywords;
+    map[IF]             = Type::Keywords;
+    map[ELSE]           = Type::Keywords;
+    map[SWITCH]         = Type::Keywords;
+    map[WHILE]          = Type::Keywords;
+    map[DO]             = Type::Keywords;
+    map[FOR]            = Type::Keywords;
+    map[CASE]           = Type::Keywords;
+    map[TYPEDEF]        = Type::Keywords;
+    map[STRUCT]         = Type::Keywords;
+    map[UNION]          = Type::Keywords;
+    map[ENUM]           = Type::Keywords;
+
+    map['?']            = Type::Other;
+    map[':']            = Type::Other;
+    map[';']            = Type::Other;
+    map['.']            = Type::Other;
+    map[',']            = Type::Other;
+    map[ARR_OP]         = Type::Other;
+
     return map;
 };
 

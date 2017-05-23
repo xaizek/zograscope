@@ -96,10 +96,15 @@ enum class Type
     // MLCOMMENT
     Comments,
 
+    // This is a separator, all types below are not interchangeable.
+    NonInterchangeable,
+
     // SLIT
     // ICONST
     // FCONST
     // CHCONST
+    Constants,
+
     // DEFAULT
     // RETURN
     // SIZEOF
@@ -118,13 +123,15 @@ enum class Type
     // STRUCT
     // UNION
     // ENUM
+    Keywords,
+
     // '?'
     // ':'
     // ';'
     // '.'
     // ','
     // ARR_OP
-    NonInterchangeable,
+    Other,
 };
 
 Type tokenToType(int token);

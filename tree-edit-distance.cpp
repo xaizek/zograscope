@@ -176,8 +176,8 @@ renameCost(const Node *n1, const Node *n2)
         return 0;
     }
 
-    if (n1->type == Type::NonInterchangeable ||
-        n2->type == Type::NonInterchangeable ||
+    if (n1->type >= Type::NonInterchangeable ||
+        n2->type >= Type::NonInterchangeable ||
         n1->type != n2->type) {
         return Wch;
     }
