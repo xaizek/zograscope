@@ -43,7 +43,7 @@ struct PNode
         return value.from == 0U && value.len == 0U;
     }
 
-    Text value = { 0, 0 };
+    Text value = { };
     std::vector<PNode *> children;
     int line = 0, col = 0;
 
@@ -67,7 +67,7 @@ class TreeBuilder
     };
 
 public:
-    PNode * addNode(PNode *node, const Location &loc)
+    PNode * addNode(PNode *node, const Location &)
     {
         return addNode({ node });
     }

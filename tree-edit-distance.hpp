@@ -23,7 +23,7 @@ struct Node
     int line;
     int col;
     Node *relative;
-    bool satellite;
+    bool satellite = false;
     Type type;
 };
 

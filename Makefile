@@ -5,7 +5,7 @@ tc: $(OBJ)
 	g++ -g -o $@ $^ -lboost_iostreams
 
 %.o: %.cpp
-	g++ -MMD -fmax-errors=3 -DYYDEBUG=1 -O3 -std=c++11 -c -g -o $@ $<
+	g++ -MMD -Wall -Wextra -Werror -fmax-errors=3 -DYYDEBUG=1 -O3 -std=c++11 -c -g -o $@ $<
 
 tc.cpp: tc.flex | tc.tab.hpp
 	flex -o $@ $<

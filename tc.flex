@@ -18,7 +18,7 @@ static YYSTYPE startTok;
 static YYLTYPE startLoc;
 
 #define YY_USER_ACTION \
-    yylval.text = { yyoffset, yyleng }; \
+    yylval.text = { yyoffset, yyleng, 0U, 0U, 0 }; \
     yylloc.first_line = yyline; \
     yylloc.first_column = yycolumn; \
     yylloc.last_line = yyline; \
@@ -390,3 +390,10 @@ QCHAR                   [^"\n]
 }
 
 .                       { yyerror("Unknown token"); }
+
+%%
+
+void fakeYYunputUse()
+{
+    yyunput(0, nullptr);
+}

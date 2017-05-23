@@ -86,7 +86,8 @@ materializeLabel(const std::string &contents, const PNode *node)
 Node
 materializeTree(const std::string &contents, const PNode *node)
 {
-    Node n = { materializeLabel(contents, node) };
+    Node n;
+    n.label = materializeLabel(contents, node);
     n.line = node->line;
     n.col = node->col;
     n.type = tokenToType(node->value.token);

@@ -343,6 +343,9 @@ printSource(Node &root)
                         case Type::Virtual:
                             break;
 
+                        case Type::NonInterchangeable:
+                            break;
+
                     }
                     break;
             }

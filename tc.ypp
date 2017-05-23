@@ -13,7 +13,7 @@ extern "C" FILE *yyin;
 void yyerror(const char *s);
 
 static PNode *
-stmtMerge(YYSTYPE x0, YYSTYPE x1)
+stmtMerge(YYSTYPE, YYSTYPE x1)
 {
   return x1.node;
 }
@@ -52,7 +52,7 @@ extern TreeBuilder *tb;
 %token <text> '?' ':' ';' '(' ')' '{' '}' '[' ']' '.' ',' '&' '|' '^' '*' '/' '%' '+' '-' '~' '!' '<' '>' '='
 %token <text> NTOKENS
 
-%printer { fprintf(yyoutput, "(%d;+%d)", $$.from, $$.len); } SLIT
+%printer { fprintf(yyoutput, "(%d;+%d)", (int)$$.from, (int)$$.len); } SLIT
 
 /* %type <node> tu funcs func stmts head body type name id args ret */
 %type <node> constant primary_expression generic_selection generic_assoc_list
