@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-#include "types.hpp"
-
 struct Location
 {
     int first_line;
