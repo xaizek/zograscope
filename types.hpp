@@ -5,6 +5,9 @@ enum class Type
 {
     Virtual,
 
+    // FUNCTION
+    Functions,
+
     // ID
     Identifiers,
 

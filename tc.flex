@@ -28,11 +28,15 @@ static YYLTYPE startLoc;
     tb->markWithPostponed(yylval.text); \
     return (yylval.text.token = (t))
 
+#define KW(t) \
+    BEGIN(INITIAL); \
+    TOKEN(t)
+
 void yyerror(const char s[]);
 
 %}
 
-%X directive dirmlcomment slcomment mlcomment
+%X directive dirmlcomment beforeparen slcomment mlcomment
 
  /* (6.4.3) hex-quad:
   *     hexadecimal-digit hexadecimal-digit hexadecimal-digit hexadecimal-digit
@@ -208,51 +212,63 @@ QCHAR                   [^"\n]
 [ ]                     ;
 \t                      { yycolumn += tabWidth - (yycolumn - 1)%tabWidth; }
 \n                      { ++yyline; yycolumn = 1U; }
-"case"                  { TOKEN(CASE); }
-"default"               { TOKEN(DEFAULT); }
-"sizeof"                { TOKEN(SIZEOF); }
-"return"                { TOKEN(RETURN); }
-"_Alignof"              { TOKEN(_ALIGNOF); }
-"_Generic"              { TOKEN(_GENERIC); }
-"typedef"               { TOKEN(TYPEDEF); }
-"extern"                { TOKEN(EXTERN); }
-"static"                { TOKEN(STATIC); }
-"_Thread_local"         { TOKEN(_THREAD_LOCAL); }
-"auto"                  { TOKEN(AUTO); }
-"register"              { TOKEN(REGISTER); }
-"void"                  { TOKEN(VOID); }
-"char"                  { TOKEN(CHAR); }
-"short"                 { TOKEN(SHORT); }
-"int"                   { TOKEN(INT); }
-"long"                  { TOKEN(LONG); }
-"float"                 { TOKEN(FLOAT); }
-"double"                { TOKEN(DOUBLE); }
-"signed"                { TOKEN(SIGNED); }
-"unsigned"              { TOKEN(UNSIGNED); }
-"_Bool"                 { TOKEN(_BOOL); }
-"_Complex"              { TOKEN(_COMPLEX); }
-"struct"                { TOKEN(STRUCT); }
-"union"                 { TOKEN(UNION); }
-"enum"                  { TOKEN(ENUM); }
-"_Atomic"               { TOKEN(_ATOMIC); }
-"const"                 { TOKEN(CONST); }
-"restrict"              { TOKEN(RESTRICT); }
-"volatile"              { TOKEN(VOLATILE); }
-"inline"                { TOKEN(INLINE); }
-"_Noreturn"             { TOKEN(_NORETURN); }
-"_Alignas"              { TOKEN(_ALIGNAS); }
-"_Static_assert"        { TOKEN(_STATIC_ASSERT); }
-"if"                    { TOKEN(IF); }
-"else"                  { TOKEN(ELSE); }
-"switch"                { TOKEN(SWITCH); }
-"while"                 { TOKEN(WHILE); }
-"do"                    { TOKEN(DO); }
-"for"                   { TOKEN(FOR); }
-"break"                 { TOKEN(BREAK); }
-"continue"              { TOKEN(CONTINUE); }
-"goto"                  { TOKEN(GOTO); }
+<INITIAL,beforeparen>"case"                  { KW(CASE); }
+<INITIAL,beforeparen>"default"               { KW(DEFAULT); }
+<INITIAL,beforeparen>"sizeof"                { KW(SIZEOF); }
+<INITIAL,beforeparen>"return"                { KW(RETURN); }
+<INITIAL,beforeparen>"_Alignof"              { KW(_ALIGNOF); }
+<INITIAL,beforeparen>"_Generic"              { KW(_GENERIC); }
+<INITIAL,beforeparen>"typedef"               { KW(TYPEDEF); }
+<INITIAL,beforeparen>"extern"                { KW(EXTERN); }
+<INITIAL,beforeparen>"static"                { KW(STATIC); }
+<INITIAL,beforeparen>"_Thread_local"         { KW(_THREAD_LOCAL); }
+<INITIAL,beforeparen>"auto"                  { KW(AUTO); }
+<INITIAL,beforeparen>"register"              { KW(REGISTER); }
+<INITIAL,beforeparen>"void"                  { KW(VOID); }
+<INITIAL,beforeparen>"char"                  { KW(CHAR); }
+<INITIAL,beforeparen>"short"                 { KW(SHORT); }
+<INITIAL,beforeparen>"int"                   { KW(INT); }
+<INITIAL,beforeparen>"long"                  { KW(LONG); }
+<INITIAL,beforeparen>"float"                 { KW(FLOAT); }
+<INITIAL,beforeparen>"double"                { KW(DOUBLE); }
+<INITIAL,beforeparen>"signed"                { KW(SIGNED); }
+<INITIAL,beforeparen>"unsigned"              { KW(UNSIGNED); }
+<INITIAL,beforeparen>"_Bool"                 { KW(_BOOL); }
+<INITIAL,beforeparen>"_Complex"              { KW(_COMPLEX); }
+<INITIAL,beforeparen>"struct"                { KW(STRUCT); }
+<INITIAL,beforeparen>"union"                 { KW(UNION); }
+<INITIAL,beforeparen>"enum"                  { KW(ENUM); }
+<INITIAL,beforeparen>"_Atomic"               { KW(_ATOMIC); }
+<INITIAL,beforeparen>"const"                 { KW(CONST); }
+<INITIAL,beforeparen>"restrict"              { KW(RESTRICT); }
+<INITIAL,beforeparen>"volatile"              { KW(VOLATILE); }
+<INITIAL,beforeparen>"inline"                { KW(INLINE); }
+<INITIAL,beforeparen>"_Noreturn"             { KW(_NORETURN); }
+<INITIAL,beforeparen>"_Alignas"              { KW(_ALIGNAS); }
+<INITIAL,beforeparen>"_Static_assert"        { KW(_STATIC_ASSERT); }
+<INITIAL,beforeparen>"if"                    { KW(IF); }
+<INITIAL,beforeparen>"else"                  { KW(ELSE); }
+<INITIAL,beforeparen>"switch"                { KW(SWITCH); }
+<INITIAL,beforeparen>"while"                 { KW(WHILE); }
+<INITIAL,beforeparen>"do"                    { KW(DO); }
+<INITIAL,beforeparen>"for"                   { KW(FOR); }
+<INITIAL,beforeparen>"break"                 { KW(BREAK); }
+<INITIAL,beforeparen>"continue"              { KW(CONTINUE); }
+<INITIAL,beforeparen>"goto"                  { KW(GOTO); }
+<INITIAL>{ID}                                { TOKEN(ID); }
+<beforeparen>{ID} {
+    BEGIN(INITIAL);
+    tb->markWithPostponed(yylval.text);
+    yylval.text.token = FUNCTION;
+    return ID;
+}
 
-{ID}    { TOKEN(ID); }
+{ID}"("    {
+    BEGIN(beforeparen);
+    yyoffset -= yyleng;
+    yycolumn -= yyleng;
+    yyless(0);
+}
 
 
  /* A.1.5 Constants */

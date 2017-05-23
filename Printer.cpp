@@ -334,6 +334,10 @@ printSource(Node &root)
                             dec = 144_fg;
                             break;
 
+                        case Type::Functions:
+                            dec = 81_fg;
+                            break;
+
                         case Type::Identifiers:
                         case Type::Other:
                         case Type::Virtual:

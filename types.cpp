@@ -6,6 +6,9 @@ static Type *
 tokenMap()
 {
     static Type map[NTOKENS];
+
+    map[FUNCTION] = Type::Functions;
+
     map[ID] = Type::Identifiers;
 
     map[BREAK]    = Type::Jumps;
