@@ -294,66 +294,48 @@ printSource(Node &root)
 
             decor::Decoration dec;
             switch (node.state) {
-                case State::Deleted: dec = decor::red_fg + decor::inv + decor::black_bg + decor::bold; break;
-                case State::Inserted: dec = decor::green_fg + decor::inv + decor::black_bg + decor::bold; break;
-                case State::Updated: dec = decor::yellow_fg + decor::inv + decor::black_bg + decor::bold; break;
+                using namespace decor;
+                using namespace decor::literals;
+
+                case State::Deleted:
+                    dec = 160_fg + inv + 255_bg + bold;
+                    break;
+                case State::Inserted:
+                    dec = 84_fg + inv + black_bg + bold;
+                    break;
+                case State::Updated:
+                    dec = 228_fg + inv + black_bg + bold;
+                    break;
 
                 case State::Unchanged:
                     switch (node.type) {
-                        using namespace decor::literals;
-
-                        case Type::Specifiers:
-                            dec = 183_fg;
-                            break;
-
-                        case Type::UserTypes:
-                            dec = 214_fg;
-                            break;
-
-                        case Type::Types:
-                            dec = 77_fg;
-                            break;
-
-                        case Type::Directives:
-                            dec = decor::yellow_fg;
-                            break;
-
-                        case Type::Comments:
-                            dec = 248_fg;
-                            break;
+                        case Type::Specifiers: dec = 183_fg; break;
+                        case Type::UserTypes:  dec = 214_fg; break;
+                        case Type::Types:      dec = 77_fg;  break;
+                        case Type::Directives: dec = 228_fg; break;
+                        case Type::Comments:   dec = 248_fg; break;
+                        case Type::Constants:  dec = 198_fg; break;
+                        case Type::Functions:  dec = 81_fg;  break;
 
                         case Type::Jumps:
                         case Type::Keywords:
                             dec = 177_fg;
                             break;
-
-                        case Type::Constants:
-                            dec = 198_fg;
-                            break;
-
                         case Type::LeftBrackets:
                         case Type::RightBrackets:
-                            dec = 136_fg;
+                            dec = 222_fg;
                             break;
-
                         case Type::Assignments:
                         case Type::Operators:
                         case Type::Comparisons:
                             dec = 144_fg;
                             break;
 
-                        case Type::Functions:
-                            dec = 81_fg;
-                            break;
-
                         case Type::Identifiers:
                         case Type::Other:
                         case Type::Virtual:
-                            break;
-
                         case Type::NonInterchangeable:
                             break;
-
                     }
                     break;
             }
