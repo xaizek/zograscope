@@ -8,6 +8,9 @@ enum class Type
     // FUNCTION
     Functions,
 
+    // TYPE
+    UserTypes,
+
     // ID
     Identifiers,
 

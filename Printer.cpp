@@ -302,6 +302,10 @@ printSource(Node &root)
                             dec = 183_fg;
                             break;
 
+                        case Type::UserTypes:
+                            dec = 214_fg;
+                            break;
+
                         case Type::Types:
                             dec = 77_fg;
                             break;
@@ -320,7 +324,7 @@ printSource(Node &root)
                             break;
 
                         case Type::Constants:
-                            dec = 75_fg;
+                            dec = 198_fg;
                             break;
 
                         case Type::LeftBrackets:

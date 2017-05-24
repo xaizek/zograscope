@@ -80,6 +80,13 @@ public:
 
     PNode * addNode(Text value, const Location &loc)
     {
+        return addNode(value, loc, value.token);
+    }
+
+    PNode * addNode(Text value, const Location &loc, int token)
+    {
+        value.token = token;
+
         if (value.postponedFrom != value.postponedTo) {
             std::vector<PNode *> children;
             children.reserve(value.postponedTo - value.postponedFrom);

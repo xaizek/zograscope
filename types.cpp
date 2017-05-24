@@ -9,6 +9,8 @@ tokenMap()
 
     map[FUNCTION] = Type::Functions;
 
+    map[TYPENAME] = Type::UserTypes;
+
     map[ID] = Type::Identifiers;
 
     map[BREAK]    = Type::Jumps;

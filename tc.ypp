@@ -15,7 +15,31 @@ void yyerror(const char *s);
 static PNode *
 stmtMerge(YYSTYPE, YYSTYPE x1)
 {
-  return x1.node;
+    return x1.node;
+}
+
+static void
+postOrderLeafs(const PNode *node, std::vector<const PNode *> &v)
+{
+    for (PNode *child : node->children) {
+        postOrderLeafs(child, v);
+    }
+
+    if (node->children.empty()) {
+        v.push_back(node);
+    }
+}
+
+static PNode *
+decStmtMerge(YYSTYPE x0, YYSTYPE x1)
+{
+    std::vector<const PNode *> v;
+    postOrderLeafs(x0.node, v);
+
+    if (v.size() > 1U && (*(v.end() - 2))->value.token == ')') {
+        return x1.node;
+    }
+    return x0.node;
 }
 
 TreeBuilder *tb = nullptr;
@@ -41,7 +65,7 @@ extern TreeBuilder *tb;
 
 %token <text> DEFAULT RETURN SIZEOF _ALIGNOF _GENERIC
 %token <text> ID ICONST FCONST CHCONST SLIT CONST RESTRICT VOLATILE DOTS
-%token <text> FUNCTION
+%token <text> FUNCTION TYPENAME
 %token <text> INLINE _NORETURN _ALIGNAS _STATIC_ASSERT
 %token <text> IF ELSE SWITCH WHILE DO FOR BREAK CONTINUE GOTO
 %token <text> ARR_OP INC_OP DEC_OP LSH_OP RSH_OP LTE_OP GTE_OP EQ_OP NE_OP AND_OP OR_OP
@@ -601,7 +625,7 @@ type_specifier
     | atomic_type_specifier     { $$ = tb->addNode($1, @1); }
     | struct_or_union_specifier { $$ = tb->addNode($1, @1); }
     | enum_specifier            { $$ = tb->addNode($1, @1); }
-    | ID %dprec 5               { $$ = tb->addNode($1, @1); }
+    | ID                        { $$ = tb->addNode($1, @1, TYPENAME); }
     ;
 
 /* (6.7.2.1) struct-or-union-specifier: */
@@ -641,10 +665,10 @@ struct_declaration_list
 /*     specifier-qualifier-list struct-declarator-listopt ; */
 /*     static_assert-declaration */
 struct_declaration
-    : specifier_qualifier_list struct_declarator_list ';' %dprec 1
+    : specifier_qualifier_list struct_declarator_list ';' %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
-    | specifier_qualifier_list ';'                        %dprec 2
+    | specifier_qualifier_list ';'                        %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | static_assert_declaration
     { $$ = tb->addNode($1, @1); }
@@ -793,7 +817,7 @@ declarator
 direct_declarator
     : ID
     { $$ = tb->addNode($1, @1); }
-    | '(' declarator ')' %dprec 1
+    | '(' declarator ')' %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     | direct_declarator '[' type_qualifier_list assignment_expression ']'
@@ -831,7 +855,7 @@ direct_declarator
     | direct_declarator '(' parameter_type_list ')' %dprec 3
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
-    | direct_declarator '(' identifier_list ')' %dprec 2
+    | direct_declarator '(' identifier_list ')' %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | direct_declarator '(' ')'
@@ -889,11 +913,11 @@ parameter_list
 /*     declaration-specifiers declarator */
 /*     declaration-specifiers abstract-declaratoropt */
 parameter_declaration
-    : declaration_specifiers declarator %dprec 20
+    : declaration_specifiers declarator %dprec 3
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | declaration_specifiers abstract_declarator %dprec 30
+    | declaration_specifiers abstract_declarator %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | declaration_specifiers  %dprec 40
+    | declaration_specifiers  %dprec 1
     { $$ = tb->addNode($1, @1); }
     ;
 
@@ -901,7 +925,7 @@ parameter_declaration
 /*     identifier */
 /*     identifier-list , identifier */
 identifier_list
-    : ID %dprec 10
+    : ID
     { $$ = tb->addNode($1, @1); }
     | identifier_list ',' ID
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
@@ -1129,8 +1153,8 @@ block_item_list
 /*     declaration */
 /*     statement */
 block_item
-    : declaration  %dprec 2 { $$ = tb->addNode($1, @1); }
-    | statement    %dprec 1 { $$ = tb->addNode($1, @1); }
+    : declaration  %merge <decStmtMerge> { $$ = tb->addNode($1, @1); }
+    | statement    %merge <decStmtMerge> { $$ = tb->addNode($1, @1); }
     ;
 
 /* (6.8.3) expression-statement: */
