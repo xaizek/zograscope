@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #define BOOST_DISABLE_ASSERTS
 #include <boost/multi_array.hpp>
@@ -169,7 +170,10 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
             } else if (j == 0U) {
                 d[i][j] = i;
             } else {
-                const bool same = (l[ol + i - 1U] == r[nl + j - 1U]);
+                // XXX: this comparison is very approximate, should be possible
+                //      to do better by comparing tokens somehow
+                const bool same = (boost::trim_copy(l[ol + i - 1U]) ==
+                                   boost::trim_copy(r[nl + j - 1U]));
                 d[i][j] = std::min({ d[i - 1U][j] + 1, d[i][j - 1U] + 1,
                                      d[i - 1U][j - 1U] + (same ? 0 : 1) });
             }
