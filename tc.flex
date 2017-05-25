@@ -1,10 +1,10 @@
 %option noyywrap
+%option header-file="tc.hpp"
 
 %{
 
 #include <iostream>
 #include <string>
-#define YY_DECL extern "C" int yylex()
 
 #include "tc.tab.hpp"
 

@@ -2,13 +2,12 @@
 
 #include "tc.tab.hpp"
 
+#include "tc.hpp"
+
 #include <cstdio>
 
 #include <iostream>
 #include <string>
-
-extern "C" int yylex();
-extern "C" FILE *yyin;
 
 void yyerror(const char *s);
 
