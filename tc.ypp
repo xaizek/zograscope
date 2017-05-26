@@ -75,7 +75,7 @@ extern TreeBuilder *tb;
 %token <text> '?' ':' ';' '(' ')' '{' '}' '[' ']' '.' ',' '&' '|' '^' '*' '/' '%' '+' '-' '~' '!' '<' '>' '='
 %token <text> NTOKENS
 
-%printer { fprintf(yyoutput, "(%d;+%d)", (int)$$.from, (int)$$.len); } SLIT
+%printer { std::fprintf(yyoutput, "(%d;+%d)", (int)$$.from, (int)$$.len); } SLIT
 
 /* %type <node> tu funcs func stmts head body type name id args ret */
 %type <node> constant primary_expression generic_selection generic_assoc_list
@@ -1353,20 +1353,11 @@ parse(const std::string &contents)
     TreeBuilder tb;
     ::tb = &tb;
 
-    FILE *myfile = fmemopen(const_cast<char *>(contents.data()),
-                            contents.size(), "r");
-    if (!myfile) {
-        std::cerr << "I can't open the stream!\n";
-        return tb;
-    }
-    // set flex to read from it instead of defaulting to STDIN:
-    yyin = myfile;
+    yy_scan_bytes(contents.data(), contents.size());
 
     // parse through the input until there is no more:
     const bool failed = (yyparse() != 0);
     tb.finish(failed);
-
-    fclose(myfile);
 
     return tb;
 }
