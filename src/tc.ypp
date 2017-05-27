@@ -111,7 +111,7 @@ extern TreeBuilder *tb;
 %precedence "then"
 %precedence ELSE
 
-%start translation_unit
+%start program
 
 %%
 
@@ -1042,6 +1042,9 @@ initializer
     | '{' initializer_list ',' '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    /* This is an extension to allow {} initializer. */
+    | '{' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
 
 /* (6.7.9) initializer-list: */
@@ -1284,13 +1287,14 @@ jump_statement
 
 /* A.2.4 External definitions */
 
+program : translation_unit { tb->setRoot($1); };
+
 /* (6.9) translation-unit: */
 /*     external-declaration */
 /*     translation-unit external-declaration */
 translation_unit
     : external_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1) });
-      tb->setRoot($$); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | translation_unit external_declaration
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
@@ -1301,6 +1305,14 @@ translation_unit
 external_declaration
     : function_definition { $$ = tb->addNode($1, @1); }
     | declaration         { $$ = tb->addNode($1, @1); }
+    /* This are extensions for top-level macros. */
+    | ID '(' translation_unit ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    | ID '(' argument_expression_list ')' ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
     ;
 
 /* (6.9.1) function-definition: */

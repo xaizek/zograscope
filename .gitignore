@@ -2,6 +2,7 @@
 /coverage/
 /debug/
 /release/
+/tests/tests
 /tc
 *.o
 *.d
