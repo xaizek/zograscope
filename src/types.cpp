@@ -29,6 +29,7 @@ tokenMap()
     map[CONST]         = Type::Specifiers;
     map[VOLATILE]      = Type::Specifiers;
     map[RESTRICT]      = Type::Specifiers;
+    map[TYPEDEF]       = Type::Specifiers;
 
     map[VOID]     = Type::Types;
     map[CHAR]     = Type::Types;
@@ -91,10 +92,10 @@ tokenMap()
     map[SLCOMMENT] = Type::Comments;
     map[MLCOMMENT] = Type::Comments;
 
-    map[SLIT]           = Type::Constants;
-    map[ICONST]         = Type::Constants;
-    map[FCONST]         = Type::Constants;
-    map[CHCONST]        = Type::Constants;
+    map[SLIT]    = Type::Constants;
+    map[ICONST]  = Type::Constants;
+    map[FCONST]  = Type::Constants;
+    map[CHCONST] = Type::Constants;
 
     map[DEFAULT]        = Type::Keywords;
     map[RETURN]         = Type::Keywords;
@@ -110,17 +111,16 @@ tokenMap()
     map[DO]             = Type::Keywords;
     map[FOR]            = Type::Keywords;
     map[CASE]           = Type::Keywords;
-    map[TYPEDEF]        = Type::Keywords;
     map[STRUCT]         = Type::Keywords;
     map[UNION]          = Type::Keywords;
     map[ENUM]           = Type::Keywords;
 
-    map['?']            = Type::Other;
-    map[':']            = Type::Other;
-    map[';']            = Type::Other;
-    map['.']            = Type::Other;
-    map[',']            = Type::Other;
-    map[ARR_OP]         = Type::Other;
+    map['?']    = Type::Other;
+    map[':']    = Type::Other;
+    map[';']    = Type::Other;
+    map['.']    = Type::Other;
+    map[',']    = Type::Other;
+    map[ARR_OP] = Type::Other;
 
     return map;
 };

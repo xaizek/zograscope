@@ -298,7 +298,7 @@ printSource(Node &root)
                 using namespace decor::literals;
 
                 case State::Deleted:
-                    dec = 160_fg + inv + 255_bg + bold;
+                    dec = 210_fg + inv + black_bg + bold;
                     break;
                 case State::Inserted:
                     dec = 84_fg + inv + black_bg + bold;
@@ -310,16 +310,16 @@ printSource(Node &root)
                 case State::Unchanged:
                     switch (node.type) {
                         case Type::Specifiers: dec = 183_fg; break;
-                        case Type::UserTypes:  dec = 214_fg; break;
-                        case Type::Types:      dec = 77_fg;  break;
+                        case Type::UserTypes:  dec = 215_fg; break;
+                        case Type::Types:      dec = 85_fg;  break;
                         case Type::Directives: dec = 228_fg; break;
                         case Type::Comments:   dec = 248_fg; break;
-                        case Type::Constants:  dec = 198_fg; break;
+                        case Type::Constants:  dec = 219_fg; break;
                         case Type::Functions:  dec = 81_fg;  break;
 
                         case Type::Jumps:
                         case Type::Keywords:
-                            dec = 177_fg;
+                            dec = 83_fg;
                             break;
                         case Type::LeftBrackets:
                         case Type::RightBrackets:
@@ -328,7 +328,7 @@ printSource(Node &root)
                         case Type::Assignments:
                         case Type::Operators:
                         case Type::Comparisons:
-                            dec = 144_fg;
+                            dec = 224_fg;
                             break;
 
                         case Type::Identifiers:
