@@ -136,12 +136,13 @@ uninstall:
 	      $(DESTDIR)/usr/share/man/man1/tc.1
 	$(RM) -r $(DESTDIR)/usr/share/tc/
 
-$(out_dir)/src/c11-lexer.hpp $(out_dir)/src/c11-lexer.cpp: src/c11-lexer.flex \
-                                              | $(out_dir)/src/c11-parser.hpp
+$(out_dir)/src/c11-lexer.hpp: $(out_dir)/src/c11-lexer.cpp
+$(out_dir)/src/c11-lexer.cpp: src/c11-lexer.flex | $(out_dir)/src/c11-parser.hpp
 	flex --header-file=$(out_dir)/src/c11-lexer.hpp \
 	     --outfile=$(out_dir)/src/c11-lexer.cpp $<
 
-$(out_dir)/src/c11-parser.hpp $(out_dir)/src/c11-parser.cpp: src/c11-parser.ypp
+$(out_dir)/src/c11-parser.hpp: $(out_dir)/src/c11-parser.cpp
+$(out_dir)/src/c11-parser.cpp: src/c11-parser.ypp
 	bison --defines=$(out_dir)/src/c11-parser.hpp \
 	      --output=$(out_dir)/src/c11-parser.cpp $<
 
