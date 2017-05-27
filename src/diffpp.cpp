@@ -7,6 +7,7 @@
 #include "Printer.hpp"
 #include "TreeBuilder.hpp"
 #include "integration.hpp"
+#include "parser.hpp"
 #include "tree-edit-distance.hpp"
 #include "types.hpp"
 
@@ -99,8 +100,6 @@ materializeTree(const std::string &contents, const PNode *node)
 
     return n;
 }
-
-TreeBuilder parse(const std::string &contents);
 
 int
 main(int argc, char *argv[])

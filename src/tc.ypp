@@ -1,6 +1,7 @@
 %{
 
 #include "tc.tab.hpp"
+#include "parser.hpp"
 
 #include "tc.hpp"
 
