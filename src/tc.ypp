@@ -78,7 +78,6 @@ extern TreeBuilder *tb;
 
 %printer { std::fprintf(yyoutput, "(%d;+%d)", (int)$$.from, (int)$$.len); } SLIT
 
-/* %type <node> tu funcs func stmts head body type name id args ret */
 %type <node> constant primary_expression generic_selection generic_assoc_list
 %type <node> expression assignment_expression generic_association type_name
 %type <node> postfix_expression argument_expression_list initializer_list
@@ -114,59 +113,6 @@ extern TreeBuilder *tb;
 %start program
 
 %%
-
-/*
-tu
-    : funcs { tb->setRoot(tb->addNode($1, @1)); }
-    ;
-
-funcs
-    : func       { $$ = tb->addNode($1, @1); }
-    | funcs func { $$ = tb->append($1, tb->addNode($2, @2)); }
-    ;
-
-func
-    : head body { $$ = tb->append($1, tb->addNode($2, @2)); }
-    ;
-
-body
-    : '{' stmts '}' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
-    ;
-
-stmts
-    : %empty      { $$ = tb->addNode(); }
-    | stmts ret   { $$ = tb->append($1, tb->addNode($2, @2)); }
-    ;
-
-head
-    : type name args { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
-    ;
-
-type
-    : INT { $$ = tb->addNode($1, @1); }
-    | FLOAT { $$ = tb->addNode($1, @1); }
-    | VOID { $$ = tb->addNode($1, @1); }
-    ;
-
-name
-    : id { $$ = tb->addNode($1, @1); }
-    ;
-
-id
-    : ID { $$ = tb->addNode($1, @1); }
-    ;
-
-args
-    : '(' ')' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    ;
-
-ret
-    : RETURN ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | RETURN constant ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
-    | RETURN SLIT ';' { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), tb->addNode($3, @3) }); }
-    ;
-*/
-
 
 /* (6.4.4) constant:
  *     integer-constant
