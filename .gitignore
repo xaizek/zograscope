@@ -1,4 +1,7 @@
 # build artifacts
+/coverage/
+/debug/
+/release/
 /tc
 *.o
 *.d
