@@ -8,6 +8,5 @@
 *.d
 
 # auto-generated files
-tc.tab.*
-tc.cpp
-tc.hpp
+c11-parser.[ch]pp
+c11-lexer.[ch]pp

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include "tc.tab.hpp"
+#include "c11-parser.hpp"
 
 enum { tabWidth = 4 };
 

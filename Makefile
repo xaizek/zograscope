@@ -72,8 +72,8 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
 bin := $(out_dir)/tc$(bin_suffix)
 
 bin_sources := $(call rwildcard, src/, *.cpp)
-bin_autocpp := $(addprefix $(out_dir)/src/, tc.cpp tc.tab.cpp)
-bin_autohpp := $(addprefix $(out_dir)/src/, tc.hpp tc.tab.hpp)
+bin_autocpp := $(addprefix $(out_dir)/src/, c11-lexer.cpp c11-parser.cpp)
+bin_autohpp := $(addprefix $(out_dir)/src/, c11-lexer.hpp c11-parser.hpp)
 bin_objects := $(sort $(bin_sources:%.cpp=$(out_dir)/%.o) \
                       $(bin_autocpp:%.cpp=%.o))
 bin_depends := $(bin_objects:.o=.d)
@@ -136,13 +136,14 @@ uninstall:
 	      $(DESTDIR)/usr/share/man/man1/tc.1
 	$(RM) -r $(DESTDIR)/usr/share/tc/
 
-$(out_dir)/src/tc.hpp $(out_dir)/src/tc.cpp: src/tc.flex \
-                                           | $(out_dir)/src/tc.tab.hpp
-	flex --header-file=$(out_dir)/src/tc.hpp --outfile=$(out_dir)/src/tc.cpp $<
+$(out_dir)/src/c11-lexer.hpp $(out_dir)/src/c11-lexer.cpp: src/c11-lexer.flex \
+                                              | $(out_dir)/src/c11-parser.hpp
+	flex --header-file=$(out_dir)/src/c11-lexer.hpp \
+	     --outfile=$(out_dir)/src/c11-lexer.cpp $<
 
-$(out_dir)/src/tc.tab.hpp $(out_dir)/src/tc.tab.cpp: src/tc.ypp
-	bison --defines=$(out_dir)/src/tc.tab.hpp \
-	      --output=$(out_dir)/src/tc.tab.cpp $<
+$(out_dir)/src/c11-parser.hpp $(out_dir)/src/c11-parser.cpp: src/c11-parser.ypp
+	bison --defines=$(out_dir)/src/c11-parser.hpp \
+	      --output=$(out_dir)/src/c11-parser.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet
 $(bin_objects): $(bin_autohpp)

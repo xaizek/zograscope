@@ -1,6 +1,6 @@
 #include "types.hpp"
 
-#include "tc.tab.hpp"
+#include "c11-parser.hpp"
 
 static Type *
 tokenMap()
