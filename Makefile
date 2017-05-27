@@ -74,14 +74,13 @@ bin := $(out_dir)/tc$(bin_suffix)
 bin_sources := $(call rwildcard, src/, *.cpp)
 bin_autocpp := $(addprefix $(out_dir)/src/, tc.cpp tc.tab.cpp)
 bin_autohpp := $(addprefix $(out_dir)/src/, tc.hpp tc.tab.hpp)
-bin_objects := $(bin_sources:%.cpp=$(out_dir)/%.o) $(bin_autocpp:%.cpp=%.o)
+bin_objects := $(sort $(bin_sources:%.cpp=$(out_dir)/%.o) \
+                      $(bin_autocpp:%.cpp=%.o))
 bin_depends := $(bin_objects:.o=.d)
 
 tests_sources := $(call rwildcard, tests/, *.cpp)
-tests_sources := $(filter-out tests/test-repo/%, $(tests_sources))
-
 tests_objects := $(tests_sources:%.cpp=$(out_dir)/%.o)
-tests_objects += $(filter-out %/main.o,$(bin_objects))
+tests_objects += $(filter-out %/diffpp.o,$(bin_objects))
 tests_depends := $(tests_objects:%.o=%.d)
 
 out_dirs := $(sort $(dir $(bin_objects) $(tests_objects)))
