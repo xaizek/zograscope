@@ -80,7 +80,7 @@ bin_depends := $(bin_objects:.o=.d)
 
 tests_sources := $(call rwildcard, tests/, *.cpp)
 tests_objects := $(tests_sources:%.cpp=$(out_dir)/%.o)
-tests_objects += $(filter-out %/diffpp.o,$(bin_objects))
+tests_objects += $(filter-out %/main.o,$(bin_objects))
 tests_depends := $(tests_objects:%.o=%.d)
 
 out_dirs := $(sort $(dir $(bin_objects) $(tests_objects)))
