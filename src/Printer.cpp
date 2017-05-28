@@ -117,7 +117,7 @@ Printer::print()
         if (d.type != Diff::Right) {
             std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ');
         } else {
-            std::cout << std::setw(lWidth + 1) << "";
+            std::cout << (lineNo << std::right << std::setw(lWidth + 1) << "- ");
         }
 
         std::cout << ' ' << std::left << std::setw(width) << *ll << marker;
@@ -125,7 +125,7 @@ Printer::print()
         if (d.type != Diff::Left) {
             std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ');
         } else {
-            std::cout << std::setw(rWidth + 1) << "";
+            std::cout << (lineNo << std::right << std::setw(rWidth + 1) << "- ");
         }
 
         std::cout << ' ' << *rl << '\n';
