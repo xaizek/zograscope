@@ -1,8 +1,12 @@
+#include <boost/program_options.hpp>
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Printer.hpp"
 #include "TreeBuilder.hpp"
@@ -10,6 +14,10 @@
 #include "parser.hpp"
 #include "tree-edit-distance.hpp"
 #include "types.hpp"
+
+namespace po = boost::program_options;
+
+static po::variables_map parseOptions(const std::vector<std::string> &args);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -104,18 +112,31 @@ materializeTree(const std::string &contents, const PNode *node)
 int
 main(int argc, char *argv[])
 {
-    if (argc != 2 && argc != 3 && argc != 4) {
+    po::variables_map varMap;
+    try {
+        varMap = parseOptions({ argv + 1, argv + argc });
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+
+    const auto args = varMap["positional"].as<std::vector<std::string>>();
+    if (args.empty() || args.size() > 2U) {
         std::cerr << "Wrong arguments\n";
         return EXIT_FAILURE;
     }
+
+    const bool highlightMode = (args.size() == 1U);
+    const bool dumpTree = varMap.count("dump-tree");
+    const bool skipDiff = varMap.count("skip-diff");
 
     RedirectToPager redirectToPager;
 
     Node treeA, treeB;
 
-    std::cout << ">>> Parsing " << argv[1] << "\n";
+    std::cout << ">>> Parsing " << args[0] << "\n";
     {
-        std::string contents = readFile(argv[1]);
+        std::string contents = readFile(args[0]);
         TreeBuilder tb = parse(contents);
         if (tb.hasFailed()) {
             return EXIT_FAILURE;
@@ -124,14 +145,18 @@ main(int argc, char *argv[])
         treeA = materializeTree(contents, tb.getRoot());
     }
 
-    if (argc == 2) {
+    if (highlightMode) {
+        if (dumpTree) {
+            print(treeA);
+        }
+
         std::cout << printSource(treeA) << '\n';
         return EXIT_SUCCESS;
     }
 
-    std::cout << ">>> Parsing " << argv[2] << "\n";
+    std::cout << ">>> Parsing " << args[1] << "\n";
     {
-        std::string contents = readFile(argv[2]);
+        std::string contents = readFile(args[1]);
         TreeBuilder tb = parse(contents);
         if (tb.hasFailed()) {
             return EXIT_FAILURE;
@@ -140,7 +165,20 @@ main(int argc, char *argv[])
         treeB = materializeTree(contents, tb.getRoot());
     }
 
-    if (argc == 4) {
+    auto dumpTrees = [&]() {
+        if (!dumpTree) {
+            return;
+        }
+
+        std::cout << "T1\n";
+        print(treeA);
+        std::cout << "T2\n";
+        print(treeB);
+    };
+
+    if (skipDiff) {
+        dumpTrees();
+
         std::cout << ">>> Skipping diffing\n";
         return EXIT_SUCCESS;
     }
@@ -150,10 +188,7 @@ main(int argc, char *argv[])
 
     std::cout << "TED(T1, T2) = " << ted(treeA, treeB) << '\n';
 
-    // std::cout << "T1\n";
-    // print(treeA);
-    // std::cout << "T2\n";
-    // print(treeB);
+    dumpTrees();
 
     Printer printer(treeA, treeB);
     printer.print();
@@ -162,4 +197,46 @@ main(int argc, char *argv[])
     // printTree("T2", treeB);
 
     return EXIT_SUCCESS;
+}
+
+/**
+ * @brief Parses command line-options.
+ *
+ * Positional arguments are returned in "positional" entry, which exists even
+ * when there is no positional arguments.
+ *
+ * @param args Command-line arguments.
+ *
+ * @returns Variables map of option values.
+ */
+static po::variables_map
+parseOptions(const std::vector<std::string> &args)
+{
+    po::options_description hiddenOpts;
+    hiddenOpts.add_options()
+        ("positional", po::value<std::vector<std::string>>()
+                       ->default_value({}, ""),
+         "positional args");
+
+    po::positional_options_description positionalOptions;
+    positionalOptions.add("positional", -1);
+
+    po::options_description cmdlineOptions;
+
+    cmdlineOptions.add_options()
+        ("skip-diff", "just parse")
+        ("dump-tree", "display tree(s)");
+
+    po::options_description allOptions;
+    allOptions.add(cmdlineOptions).add(hiddenOpts);
+
+    auto parsed_from_cmdline =
+        po::command_line_parser(args)
+        .options(allOptions)
+        .positional(positionalOptions)
+        .run();
+
+    po::variables_map varMap;
+    po::store(parsed_from_cmdline, varMap);
+    return varMap;
 }

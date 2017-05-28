@@ -1,7 +1,7 @@
 NAME := jposed
 
 CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -I$(abspath src)
-LDFLAGS  += -g -lboost_iostreams
+LDFLAGS  += -g -lboost_iostreams -lboost_program_options
 
 INSTALL := install -D
 
@@ -58,7 +58,7 @@ else
                 EXTRA_CXXFLAGS += --coverage
                 EXTRA_LDFLAGS  += --coverage
             else
-                EXTRA_CXXFLAGS := -O3
+                EXTRA_CXXFLAGS := -O3 -g
                 out_dir := .
             endif
         endif
