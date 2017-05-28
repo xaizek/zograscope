@@ -3,7 +3,7 @@
 /debug/
 /release/
 /tests/tests
-/tc
+/jposed
 *.o
 *.d
 

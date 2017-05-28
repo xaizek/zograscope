@@ -1,3 +1,5 @@
+NAME := jposed
+
 CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -I$(abspath src)
 LDFLAGS  += -g -lboost_iostreams
 
@@ -69,7 +71,7 @@ endif
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
                                         $(filter $(subst *,%,$2),$d))
 
-bin := $(out_dir)/tc$(bin_suffix)
+bin := $(out_dir)/$(NAME)$(bin_suffix)
 
 bin_sources := $(call rwildcard, src/, *.cpp)
 bin_autocpp := $(addprefix $(out_dir)/src/, c11-lexer.cpp c11-parser.cpp)
@@ -99,14 +101,14 @@ coverage: check $(bin)
 	| uncov new
 	find . -name '*.gcov' -delete
 
-man: docs/tc.1
+man: docs/$(NAME).1
 # the next target doesn't depend on $(wildcard docs/*.md) to make pandoc
 # optional
-docs/tc.1: force | $(out_dir)/docs
-	pandoc -V title=tc \
+docs/$(NAME).1: force | $(out_dir)/docs
+	pandoc -V title=$(NAME) \
 	       -V section=1 \
-	       -V app=tc \
-	       -V footer="tc v0.1" \
+	       -V app=$(NAME) \
+	       -V footer="$(NAME) v0.1" \
 	       -V date="$$(date +'%B %d, %Y')" \
 	       -V author='xaizek <xaizek@openmailbox.org>' \
 	       -s -o $@ $(sort $(wildcard docs/*.md))
@@ -129,12 +131,12 @@ check: $(target) $(out_dir)/tests/tests reset-coverage
 
 install: release
 	$(INSTALL) -t $(DESTDIR)/usr/bin/ $(bin)
-	$(INSTALL) -m 644 docs/tc.1 $(DESTDIR)/usr/share/man/man1/tc.1
+	$(INSTALL) -m 644 docs/$(NAME).1 $(DESTDIR)/usr/share/man/man1/$(NAME).1
 
 uninstall:
 	$(RM) $(DESTDIR)/usr/bin/$(basename $(bin)) \
-	      $(DESTDIR)/usr/share/man/man1/tc.1
-	$(RM) -r $(DESTDIR)/usr/share/tc/
+	      $(DESTDIR)/usr/share/man/man1/$(NAME).1
+	$(RM) -r $(DESTDIR)/usr/share/$(NAME)/
 
 $(out_dir)/src/c11-lexer.hpp: $(out_dir)/src/c11-lexer.cpp
 $(out_dir)/src/c11-lexer.cpp: src/c11-lexer.flex | $(out_dir)/src/c11-parser.hpp
