@@ -384,6 +384,10 @@ mismatch(I1 f1, I1 l1, I2 f2, I2 l2, P p)
 std::vector<Node>::iterator
 rootPos(Node &root, Node *n)
 {
+    if (n->relative == &root) {
+        return root.children.begin();
+    }
+
     while (n->relative != &root) {
         n = n->relative;
     }
@@ -402,8 +406,8 @@ reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
 
     auto f = mismatch(po1.begin(), po1.end(), po2.begin(), po2.end(), eq);
 
-    using it = std::vector<Node *>::reverse_iterator;
-    auto e = mismatch(po1.rbegin(), it(f.first), po2.rbegin(), it(f.second),
+    using rit = std::vector<Node *>::reverse_iterator;
+    auto e = mismatch(po1.rbegin(), rit(f.first), po2.rbegin(), rit(f.second),
                       eq);
 
     auto mark = [](Node &n) {
@@ -420,25 +424,64 @@ reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
     } else {
         std::for_each(T2.children.begin(), rootPos(T2, *f.second), mark);
     }
-    if (e.first != it(f.first) || f.first != po1.end()) {
+
+    if ((e.first != rit(f.first) || f.first != po1.end()) &&
+        !T1.children.empty()) {
         std::for_each(++rootPos(T1, *e.first), T1.children.end(), mark);
     }
-    if (e.second != it(f.second) || f.second != po2.end()) {
+    if ((e.second != rit(f.second) || f.second != po2.end()) &&
+        !T2.children.empty()) {
         std::for_each(++rootPos(T2, *e.second), T2.children.end(), mark);
     }
 }
 
-int
-ted(Node &T1, Node &T2)
+static int
+ted(Node *T1, Node *T2)
 {
-    std::vector<Node *> po1 = postOrder(T1);
-    std::vector<Node *> po2 = postOrder(T2);
-    reduce(po1, po2);
-    po1 = postOrder(T1);
-    po2 = postOrder(T2);
+    while (T1->children.size() == 1U && T2->children.size() == 1U) {
+        T1 = &T1->children.front();
+        T2 = &T2->children.front();
+    }
 
-    std::vector<int> l1 = lmld(T1);
-    std::vector<int> l2 = lmld(T2);
+    auto notReduced = [](const Node &n) { return !n.satellite; };
+
+
+    std::vector<Node *> po1 = postOrder(*T1);
+    std::vector<Node *> po2 = postOrder(*T2);
+    while (true) {
+        reduce(po1, po2);
+
+        bool canReduceMore = T1->children.size() > 1U
+                          && T2->children.size() > 1U
+                          && std::count_if(T1->children.cbegin(),
+                                           T1->children.cend(),
+                                           notReduced) == 1
+                          && std::count_if(T2->children.cbegin(),
+                                           T2->children.cend(),
+                                           notReduced) == 1;
+
+        if (!canReduceMore) {
+            po1 = postOrder(*T1);
+            po2 = postOrder(*T2);
+            break;
+        }
+
+        T1 = &*std::find_if(T1->children.begin(), T1->children.end(),
+                            notReduced);
+        T2 = &*std::find_if(T2->children.begin(), T2->children.end(),
+                            notReduced);
+
+        while (T1->children.size() == 1U && T2->children.size() == 1U) {
+            T1 = &T1->children.front();
+            T2 = &T2->children.front();
+        }
+
+        po1 = postOrder(*T1);
+        po2 = postOrder(*T2);
+    }
+
+    std::vector<int> l1 = lmld(*T1);
+    std::vector<int> l2 = lmld(*T2);
 
     boost::multi_array<Change, 2> td(boost::extents[l1.size()][l2.size()]);
     for (unsigned int i = 0; i < l1.size(); ++i) {
@@ -447,8 +490,8 @@ ted(Node &T1, Node &T2)
         }
     }
 
-    std::vector<int> k1 = makeKr(T1, l1);
-    std::vector<int> k2 = makeKr(T2, l2);
+    std::vector<int> k1 = makeKr(*T1, l1);
+    std::vector<int> k2 = makeKr(*T2, l2);
 
     using range = boost::multi_array_types::extent_range;
     boost::multi_array<int, 2> fd(boost::extents[range(-1, po1.size())]
@@ -474,4 +517,10 @@ ted(Node &T1, Node &T2)
     }
 
     return td[l1.size() - 1][l2.size() - 1].cost;
+}
+
+int
+ted(Node &T1, Node &T2)
+{
+    return ted(&T1, &T2);
 }
