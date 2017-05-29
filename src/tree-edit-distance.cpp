@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "tree.hpp"
+
 struct Change
 {
     int cost;
@@ -18,35 +20,6 @@ struct Change
 };
 
 enum { Wdel = 1, Wins = 1, Wren = 1, Wch = 3 };
-
-void
-print(const Node &node, int lvl)
-{
-    // if (node.satellite) {
-    //     return;
-    // }
-
-    std::string prefix = (lvl > 0) ? "`---" : "";
-
-    std::string suffix;
-    switch (node.state) {
-        case State::Unchanged: break;
-        case State::Deleted:   suffix = " (deleted)";  break;
-        case State::Inserted:  suffix = " (inserted)"; break;
-        case State::Updated:   suffix = " (updated with " + node.relative->label + "@" + std::to_string(node.relative->poID) + ")";  break;
-    }
-
-    std::cout << std::setw(4*lvl) << prefix << node.label
-              << '[' << node.poID << ']'
-              << '(' << node.line << ';' << node.col << ')'
-              << (node.satellite ? "{S}" : "")
-              << suffix
-              << '<' << static_cast<int>(node.type) << '>'
-              << '\n';
-    for (const Node &child : node.children) {
-        print(child, lvl + 1);
-    }
-}
 
 static void
 postOrder(Node &node, std::vector<Node *> &v)

@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "decoration.hpp"
+#include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
 enum class Diff
