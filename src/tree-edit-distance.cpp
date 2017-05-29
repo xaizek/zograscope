@@ -40,7 +40,9 @@ print(const Node &node, int lvl)
               << '[' << node.poID << ']'
               << '(' << node.line << ';' << node.col << ')'
               << (node.satellite ? "{S}" : "")
-              << suffix << '\n';
+              << suffix
+              << '<' << static_cast<int>(node.type) << '>'
+              << '\n';
     for (const Node &child : node.children) {
         print(child, lvl + 1);
     }
