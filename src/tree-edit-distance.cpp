@@ -67,6 +67,7 @@ static std::vector<Node *>
 postOrder(Node &root)
 {
     std::vector<Node *> v;
+    root.relative = &root;
     postOrder(root, v);
     return v;
 }
