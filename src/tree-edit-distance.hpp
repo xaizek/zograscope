@@ -18,13 +18,13 @@ struct Node
 {
     std::string label;
     std::vector<Node> children;
-    int poID; // post-order ID
-    State state;
-    int line;
-    int col;
-    Node *relative;
+    int poID = -1; // post-order ID
+    State state = State::Unchanged;
+    int line = 0;
+    int col = 0;
+    Node *relative = nullptr;
     bool satellite = false;
-    Type type;
+    Type type = Type::Virtual;
 };
 
 void printTree(const std::string &name, Node &root);
