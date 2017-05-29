@@ -1,6 +1,8 @@
 #ifndef TREEBUILDER_HPP__
 #define TREEBUILDER_HPP__
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include <cstddef>
 
 #include <deque>
@@ -33,8 +35,9 @@ struct PNode
             child = contract(child);
         }
     }
-    PNode(Text value, const Location &loc)
-        : value(value), line(loc.first_line), col(loc.first_column)
+    PNode(Text value, const Location &loc, bool postponed = false)
+        : value(value), line(loc.first_line), col(loc.first_column),
+          postponed(postponed)
     {
     }
 
@@ -46,6 +49,7 @@ struct PNode
     Text value = { };
     std::vector<PNode *> children;
     int line = 0, col = 0;
+    bool postponed = false;
 
 private:
     static PNode * contract(PNode *node)
@@ -83,55 +87,44 @@ public:
         return addNode(value, loc, value.token);
     }
 
-    PNode * addNode(Text value, const Location &loc, int token)
-    {
-        value.token = token;
-
-        if (value.postponedFrom != value.postponedTo) {
-            std::vector<PNode *> children;
-            children.reserve(value.postponedTo - value.postponedFrom);
-            for (std::size_t i = value.postponedFrom; i < value.postponedTo;
-                 ++i) {
-                children.push_back(addNode(postponed[i].value,
-                                           postponed[i].loc));
-            }
-            nodes.emplace_back(value, loc);
-            children.push_back(&nodes.back());
-            nodes.emplace_back(std::move(children));
-            return &nodes.back();
-        }
-
-        nodes.emplace_back(value, loc);
-        return &nodes.back();
-    }
+    PNode * addNode(Text value, const Location &loc, int token);
 
     PNode * addNode(std::vector<PNode *> children)
     {
+        movePostponed(children[0], children, children.cbegin());
         nodes.emplace_back(std::move(children));
         return &nodes.back();
     }
 
     PNode * append(PNode *node, PNode *child)
     {
+        movePostponed(child, node->children, node->children.cend());
         node->children.push_back(child);
         return node;
     }
 
     PNode * prepend(PNode *node, PNode *child)
     {
-        node->children.insert(node->children.cbegin(), child);
+        const auto sizeWas = node->children.size();
+        movePostponed(child, node->children, node->children.cbegin());
+        const auto sizeChange = node->children.size() - sizeWas;
+        node->children.insert(node->children.cbegin() + sizeChange, child);
         return node;
     }
 
-    PNode * append(PNode *node, const std::initializer_list<PNode *> &c)
+    PNode * append(PNode *node, const std::initializer_list<PNode *> &children)
     {
-        node->children.insert(node->children.cend(), c);
+        for (PNode *child : children) {
+            append(node, child);
+        }
         return node;
     }
 
-    PNode * prepend(PNode *node, const std::initializer_list<PNode *> &c)
+    PNode * prepend(PNode *node, const std::initializer_list<PNode *> &children)
     {
-        node->children.insert(node->children.cbegin(), c);
+        for (PNode *child : boost::adaptors::reverse(children)) {
+            prepend(node, child);
+        }
         return node;
     }
 
@@ -148,23 +141,7 @@ public:
         newPostponed = 0;
     }
 
-    void finish(bool failed)
-    {
-        if (failed) {
-            this->failed = failed;
-            return;
-        }
-
-        std::vector<PNode *> children;
-        children.reserve(newPostponed);
-        for (std::size_t i = postponed.size() - newPostponed;
-             i < postponed.size(); ++i) {
-            children.push_back(addNode(postponed[i].value, postponed[i].loc));
-        }
-
-        root->children.insert(root->children.cend(),
-                              children.cbegin(), children.cend());
-    }
+    void finish(bool failed);
 
     void setRoot(PNode *node)
     {
@@ -180,6 +157,10 @@ public:
     {
         return failed;
     }
+
+private:
+    void movePostponed(PNode *&node, std::vector<PNode *> &nodes,
+                       std::vector<PNode *>::const_iterator insertPos);
 
 private:
     std::deque<PNode> nodes;
