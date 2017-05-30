@@ -354,10 +354,20 @@ mismatch(I1 f1, I1 l1, I2 f2, I2 l2, P p)
     return { f1, f2 };
 }
 
+template <typename I, typename T, typename F>
+I
+for_each_n(I first, T n, F f)
+{
+    for (T i = 0; i < n; ++first, ++i) {
+        f(*first);
+    }
+    return first;
+}
+
 std::vector<Node>::iterator
 rootPos(Node &root, Node *n)
 {
-    if (n->relative == &root) {
+    if (n == &root) {
         return root.children.begin();
     }
 
@@ -365,6 +375,22 @@ rootPos(Node &root, Node *n)
         n = n->relative;
     }
     return root.children.begin() + (n - &root.children[0]);
+}
+
+static bool
+areIdentical(const Node &l, const Node &r)
+{
+    if (l.label != r.label || l.children.size() != r.children.size()) {
+        return false;
+    }
+
+    for (unsigned int i = 0; i < l.children.size(); ++i) {
+        if (!areIdentical(l.children[i], r.children[i])) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void
@@ -387,24 +413,45 @@ reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
         n.satellite = true;
     };
 
+    int t1Front;
     if (f.first == po1.end()) {
-        std::for_each(T1.children.begin(), T1.children.end(), mark);
+        t1Front = T1.children.size();
     } else {
-        std::for_each(T1.children.begin(), rootPos(T1, *f.first), mark);
+        t1Front = rootPos(T1, *f.first) - T1.children.begin();
     }
+    int t2Front;
     if (f.second == po2.end()) {
-        std::for_each(T2.children.begin(), T2.children.end(), mark);
+        t2Front = T2.children.size();
     } else {
-        std::for_each(T2.children.begin(), rootPos(T2, *f.second), mark);
+        t2Front = rootPos(T2, *f.second) - T2.children.begin();
     }
 
+    for (int i = 0, n = std::min(t1Front, t2Front); i < n; ++i) {
+        if (!areIdentical(T1.children[i], T2.children[i])) {
+            break;
+        }
+        mark(T1.children[i]);
+        mark(T2.children[i]);
+    }
+
+    int t1Back = 0;
     if ((e.first != rit(f.first) || f.first != po1.end()) &&
         !T1.children.empty()) {
-        std::for_each(++rootPos(T1, *e.first), T1.children.end(), mark);
+        t1Back = T1.children.end() - ++rootPos(T1, *e.first);
     }
+    int t2Back = 0;
     if ((e.second != rit(f.second) || f.second != po2.end()) &&
         !T2.children.empty()) {
-        std::for_each(++rootPos(T2, *e.second), T2.children.end(), mark);
+        t2Back = T2.children.end() - ++rootPos(T2, *e.second);
+    }
+
+    for (int i = 0, n = std::min(t1Back, t2Back); i < n; ++i) {
+        if (!areIdentical(T1.children[T1.children.size() - 1 - i],
+                          T2.children[T2.children.size() - 1 - i])) {
+            break;
+        }
+        mark(T1.children[T1.children.size() - 1 - i]);
+        mark(T2.children[T2.children.size() - 1 - i]);
     }
 }
 
