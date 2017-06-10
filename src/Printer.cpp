@@ -51,6 +51,8 @@ Printer::Printer(Node &left, Node &right) : left(left), right(right)
 void
 Printer::print()
 {
+    using namespace decor::literals;
+
     static std::string empty;
 
     std::vector<std::string> l = split(printSource(left), '\n');
@@ -58,15 +60,23 @@ Printer::print()
 
     std::deque<DiffLine> diff = compare(l, r);
 
-    unsigned int maxWidth = 0U;
-    std::vector<unsigned int> widths;
-    widths.reserve(l.size());
+    unsigned int maxLeftWidth = 0U;
+    std::vector<unsigned int> leftWidths;
+    leftWidths.reserve(l.size());
     for (const std::string &ll : l) {
         const unsigned int width = measureWidth(ll);
-        widths.push_back(width);
+        leftWidths.push_back(width);
 
         // TODO: count only lines that are visible.
-        maxWidth = std::max(width, maxWidth);
+        maxLeftWidth = std::max(width, maxLeftWidth);
+    }
+
+    unsigned int maxRightWidth = 0U;
+    for (const std::string &rl : r) {
+        const unsigned int width = measureWidth(rl);
+
+        // TODO: count only lines that are visible.
+        maxRightWidth = std::max(width, maxRightWidth);
     }
 
     const int lWidth = countWidth(l.size());
@@ -106,30 +116,37 @@ Printer::print()
                     std::string msg = " @@ folded " + std::to_string(d.data)
                                     + " identical lines @@";
                     std::cout << std::right
-                              << std::setw(maxWidth + lWidth + 4 + msg.size()/2)
+                              << std::setw(maxLeftWidth + lWidth + 4 +
+                                           msg.size()/2)
                               << msg << '\n';
                 }
                 continue;
         }
 
-        unsigned int width = (ll->empty() ? 0U : widths[i - 1U]);
-        width = maxWidth + (ll->size() - width);
+        unsigned int width = (ll->empty() ? 0U : leftWidths[i - 1U]);
+        width = maxLeftWidth + (ll->size() - width);
 
         if (d.type != Diff::Right) {
-            std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ');
+            std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ')
+                      << ' ' << std::left << std::setw(width) << *ll;
         } else {
-            std::cout << (lineNo << std::right << std::setw(lWidth + 1) << "- ");
+            std::cout << (lineNo << std::right << std::setw(lWidth + 1) << "- ")
+                      << ' ' << std::left << std::setw(width)
+                      << (235_bg << *ll);
         }
 
-        std::cout << ' ' << std::left << std::setw(width) << *ll << marker;
+        std::cout << marker;
 
         if (d.type != Diff::Left) {
-            std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ');
+            std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ')
+                      << ' ' << *rl;
         } else {
-            std::cout << (lineNo << std::right << std::setw(rWidth + 1) << "- ");
+            std::cout << (lineNo << std::right << std::setw(rWidth + 1) << "- ")
+                      << ' ' << std::left << std::setw(maxRightWidth)
+                      << (235_bg << *rl);
         }
 
-        std::cout << ' ' << *rl << '\n';
+        std::cout << '\n';
     }
 }
 
