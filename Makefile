@@ -76,7 +76,9 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
 bin := $(out_dir)/$(NAME)$(bin_suffix)
 
 bin_sources := $(call rwildcard, src/, *.cpp)
-bin_autocpp := $(addprefix $(out_dir)/src/, c11-lexer.cpp c11-parser.cpp)
+bin_sources := $(filter-out %.gen.cpp,$(bin_sources))
+bin_autocpp := $(addprefix $(out_dir)/src/, \
+                           c11-lexer.gen.cpp c11-parser.gen.cpp)
 bin_autohpp := $(addprefix $(out_dir)/src/, c11-lexer.hpp c11-parser.hpp)
 bin_objects := $(sort $(bin_sources:%.cpp=$(out_dir)/%.o) \
                       $(bin_autocpp:%.cpp=%.o))
@@ -140,15 +142,16 @@ uninstall:
 	      $(DESTDIR)/usr/share/man/man1/$(NAME).1
 	$(RM) -r $(DESTDIR)/usr/share/$(NAME)/
 
-$(out_dir)/src/c11-lexer.hpp: $(out_dir)/src/c11-lexer.cpp
-$(out_dir)/src/c11-lexer.cpp: src/c11-lexer.flex | $(out_dir)/src/c11-parser.hpp
+$(out_dir)/src/c11-lexer.hpp: $(out_dir)/src/c11-lexer.gen.cpp
+$(out_dir)/src/c11-lexer.gen.cpp: src/c11-lexer.flex \
+                                | $(out_dir)/src/c11-parser.hpp
 	flex --header-file=$(out_dir)/src/c11-lexer.hpp \
-	     --outfile=$(out_dir)/src/c11-lexer.cpp $<
+	     --outfile=$(out_dir)/src/c11-lexer.gen.cpp $<
 
-$(out_dir)/src/c11-parser.hpp: $(out_dir)/src/c11-parser.cpp
-$(out_dir)/src/c11-parser.cpp: src/c11-parser.ypp
+$(out_dir)/src/c11-parser.hpp: $(out_dir)/src/c11-parser.gen.cpp
+$(out_dir)/src/c11-parser.gen.cpp: src/c11-parser.ypp
 	bison --defines=$(out_dir)/src/c11-parser.hpp \
-	      --output=$(out_dir)/src/c11-parser.cpp $<
+	      --output=$(out_dir)/src/c11-parser.gen.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet
 $(bin_objects): $(bin_autohpp)
@@ -157,6 +160,9 @@ $(bin_objects): $(bin_autohpp)
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses -Itests/
 $(out_dir)/tests/tests: $(tests_objects) tests/. | $(out_dirs)
 	$(CXX) -o $@ $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS)
+
+%.gen.o: %.gen.cpp | $(out_dirs)
+	$(CXX) -o $@ -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $<
 
 $(out_dir)/%.o: %.cpp | $(out_dirs)
 	$(CXX) -o $@ -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $<

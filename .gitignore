@@ -8,5 +8,6 @@
 *.d
 
 # auto-generated files
-c11-parser.[ch]pp
-c11-lexer.[ch]pp
+*.gen.*
+c11-parser.hpp
+c11-lexer.hpp
