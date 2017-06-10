@@ -106,8 +106,10 @@ extern TreeBuilder *tb;
 /* %type <node> declaration_list */
 
 %precedence "atomic"
+%precedence "typeid"
 %precedence '('
 %precedence "then"
+%precedence "macrotype"
 %precedence ELSE
 
 %start program
@@ -571,7 +573,11 @@ type_specifier
     | atomic_type_specifier     { $$ = tb->addNode($1, @1); }
     | struct_or_union_specifier { $$ = tb->addNode($1, @1); }
     | enum_specifier            { $$ = tb->addNode($1, @1); }
-    | ID                        { $$ = tb->addNode($1, @1, TYPENAME); }
+    | ID  %prec "typeid"        { $$ = tb->addNode($1, @1, TYPENAME); }
+    /* This is an extension to allow types which are defined by macros. */
+    | ID '(' type_name ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
     ;
 
 /* (6.7.2.1) struct-or-union-specifier: */
