@@ -1,6 +1,6 @@
 NAME := jposed
 
-CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -I$(abspath src)
+CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -Isrc/
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options
 
 INSTALL := install -D
@@ -65,6 +65,8 @@ else
     endif
     target := debug
 endif
+
+CXXFLAGS := -I$(out_dir)/src/ $(CXXFLAGS)
 
 # traverse directories ($1) recursively looking for a pattern ($2) to make list
 # of matching files
