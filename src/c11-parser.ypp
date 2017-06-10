@@ -63,6 +63,7 @@ extern TreeBuilder *tb;
     PNode *node;
 }
 
+%token END 0 "end of file"
 %token <text> DEFAULT RETURN SIZEOF _ALIGNOF _GENERIC
 %token <text> ID ICONST FCONST CHCONST SLIT CONST RESTRICT VOLATILE DOTS
 %token <text> FUNCTION TYPENAME
@@ -1239,7 +1240,10 @@ jump_statement
 
 /* A.2.4 External definitions */
 
-program : translation_unit { tb->setRoot($1); };
+program
+    : translation_unit { tb->setRoot($1); }
+    /* This is effectively grammar extension that allows for empty input. */
+    | END              { tb->setRoot(tb->addNode()); };
 
 /* (6.9) translation-unit: */
 /*     external-declaration */
