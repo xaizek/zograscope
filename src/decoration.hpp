@@ -437,7 +437,12 @@ extern const Decoration white_bg;
  */
 
 /**
- * @brief Forces disabling of decorations.
+ * @brief Forces enabled state of decorations.
+ */
+void enableDecorations();
+
+/**
+ * @brief Forces disabled state of decorations.
  */
 void disableDecorations();
 

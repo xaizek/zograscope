@@ -10,6 +10,7 @@
 
 #include "Printer.hpp"
 #include "TreeBuilder.hpp"
+#include "decoration.hpp"
 #include "integration.hpp"
 #include "parser.hpp"
 #include "tree.hpp"
@@ -77,6 +78,11 @@ main(int argc, char *argv[])
     const bool highlightMode = (args.size() == 1U);
     const bool dumpTree = varMap.count("dump-tree");
     const bool skipDiff = varMap.count("skip-diff");
+    const bool color = varMap.count("color");
+
+    if (color) {
+        decor::enableDecorations();
+    }
 
     RedirectToPager redirectToPager;
 
@@ -173,7 +179,8 @@ parseOptions(const std::vector<std::string> &args)
 
     cmdlineOptions.add_options()
         ("skip-diff", "just parse")
-        ("dump-tree", "display tree(s)");
+        ("dump-tree", "display tree(s)")
+        ("color", "force colorization of output");
 
     po::options_description allOptions;
     allOptions.add(cmdlineOptions).add(hiddenOpts);

@@ -15,7 +15,12 @@ class Colors
 {
 public:
     /**
-     * @brief Constructs the class checking whether stdout is a terminal.
+     * @brief Forces enabled state.
+     */
+    void enable() { isAscii = true; }
+
+    /**
+     * @brief Forces disabled state.
      */
     void disable() { isAscii = false; }
 
@@ -155,6 +160,12 @@ ScopedDecoration::decorate(std::ostream &os) const
     }
     os << def;
     return os;
+}
+
+void
+decor::enableDecorations()
+{
+    C.enable();
 }
 
 void
