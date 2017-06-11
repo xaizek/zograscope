@@ -61,22 +61,37 @@ Printer::print()
     std::deque<DiffLine> diff = compare(l, r);
 
     unsigned int maxLeftWidth = 0U;
-    std::vector<unsigned int> leftWidths;
-    leftWidths.reserve(l.size());
-    for (const std::string &ll : l) {
-        const unsigned int width = measureWidth(ll);
-        leftWidths.push_back(width);
-
-        // TODO: count only lines that are visible.
-        maxLeftWidth = std::max(width, maxLeftWidth);
-    }
-
     unsigned int maxRightWidth = 0U;
-    for (const std::string &rl : r) {
-        const unsigned int width = measureWidth(rl);
+    std::vector<unsigned int> leftWidths;
 
-        // TODO: count only lines that are visible.
-        maxRightWidth = std::max(width, maxRightWidth);
+    unsigned int i = 0U, j = 0U;
+    for (DiffLine d : diff) {
+        switch (d.type) {
+            unsigned int width;
+
+            case Diff::Left:
+                width = measureWidth(l[i++]);
+                leftWidths.push_back(width);
+                maxLeftWidth = std::max(width, maxLeftWidth);
+                break;
+            case Diff::Right:
+                width = measureWidth(r[j++]);
+                maxRightWidth = std::max(width, maxRightWidth);
+                break;
+            case Diff::Identical:
+            case Diff::Different:
+                width = measureWidth(l[i++]);
+                leftWidths.push_back(width);
+                maxLeftWidth = std::max(width, maxLeftWidth);
+
+                width = measureWidth(r[j++]);
+                maxRightWidth = std::max(width, maxRightWidth);
+                break;
+            case Diff::Fold:
+                i += d.data;
+                j += d.data;
+                break;
+        }
     }
 
     const int lWidth = countWidth(l.size());
@@ -84,7 +99,9 @@ Printer::print()
 
     decor::Decoration lineNo = decor::white_bg + decor::black_fg;
 
-    unsigned int i = 0U, j = 0U;
+    i = 0U;
+    j = 0U;
+    unsigned int ii = 0U;
     for (DiffLine d : diff) {
         const std::string *ll = &empty;
         const std::string *rl = &empty;
@@ -123,7 +140,7 @@ Printer::print()
                 continue;
         }
 
-        unsigned int width = (ll->empty() ? 0U : leftWidths[i - 1U]);
+        unsigned int width = (d.type == Diff::Right ? 0U : leftWidths[ii++]);
         width = maxLeftWidth + (ll->size() - width);
 
         if (d.type != Diff::Right) {
