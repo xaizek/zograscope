@@ -42,6 +42,7 @@ static int countWidth(int n);
 static std::deque<DiffLine> compare(std::vector<std::string> &l,
                                     std::vector<std::string> &r);
 static std::vector<std::string> split(const std::string &str, char with);
+static decor::Decoration getHighlight(const Node &node);
 static unsigned int measureWidth(const std::string &s);
 
 Printer::Printer(Node &left, Node &right) : left(left), right(right)
@@ -327,53 +328,7 @@ printSource(Node &root)
                 ++col;
             }
 
-            decor::Decoration dec;
-            switch (node.state) {
-                using namespace decor;
-                using namespace decor::literals;
-
-                case State::Deleted:
-                    dec = 210_fg + inv + black_bg + bold;
-                    break;
-                case State::Inserted:
-                    dec = 84_fg + inv + black_bg + bold;
-                    break;
-                case State::Updated:
-                    dec = 228_fg + inv + black_bg + bold;
-                    break;
-
-                case State::Unchanged:
-                    switch (node.type) {
-                        case Type::Specifiers: dec = 183_fg; break;
-                        case Type::UserTypes:  dec = 215_fg; break;
-                        case Type::Types:      dec = 85_fg;  break;
-                        case Type::Directives: dec = 228_fg; break;
-                        case Type::Comments:   dec = 248_fg; break;
-                        case Type::Constants:  dec = 219_fg; break;
-                        case Type::Functions:  dec = 81_fg;  break;
-
-                        case Type::Jumps:
-                        case Type::Keywords:
-                            dec = 83_fg;
-                            break;
-                        case Type::LeftBrackets:
-                        case Type::RightBrackets:
-                            dec = 222_fg;
-                            break;
-                        case Type::Assignments:
-                        case Type::Operators:
-                        case Type::Comparisons:
-                            dec = 224_fg;
-                            break;
-
-                        case Type::Identifiers:
-                        case Type::Other:
-                        case Type::Virtual:
-                        case Type::NonInterchangeable:
-                            break;
-                    }
-                    break;
-            }
+            decor::Decoration dec = getHighlight(node);
 
             // if (node.state != State::Unchanged) {
             //     oss << (dec << '[') << node.label << (dec << ']');
@@ -401,6 +356,62 @@ printSource(Node &root)
     visit(root);
 
     return oss.str();
+}
+
+/**
+ * @brief Retrieves decoration for the specified node.
+ *
+ * @param node Node whose decoration is being queried.
+ *
+ * @returns The decoration.
+ */
+static decor::Decoration
+getHighlight(const Node &node)
+{
+    using namespace decor::literals;
+
+    // Highlighting based on node state has higher priority.
+    switch (node.state) {
+        using namespace decor;
+
+        case State::Deleted:  return 210_fg + inv + black_bg + bold;
+        case State::Inserted: return  84_fg + inv + black_bg + bold;
+        case State::Updated:  return 228_fg + inv + black_bg + bold;
+
+        case State::Unchanged:
+            break;
+    }
+
+    // Highlighting based on node type follows.
+    switch (node.type) {
+        case Type::Specifiers: return 183_fg;
+        case Type::UserTypes:  return 215_fg;
+        case Type::Types:      return  85_fg;
+        case Type::Directives: return 228_fg;
+        case Type::Comments:   return 248_fg;
+        case Type::Constants:  return 219_fg;
+        case Type::Functions:  return  81_fg;
+
+        case Type::Jumps:
+        case Type::Keywords:
+            return 83_fg;
+        case Type::LeftBrackets:
+        case Type::RightBrackets:
+            return 222_fg;
+        case Type::Assignments:
+        case Type::Operators:
+        case Type::Comparisons:
+            return 224_fg;
+
+        case Type::Identifiers:
+        case Type::Other:
+        case Type::Virtual:
+        case Type::NonInterchangeable:
+            break;
+    }
+
+    // Use default terminal colors if wasn't handled above.
+    return decor::Decoration();
 }
 
 /**

@@ -59,6 +59,12 @@ public:
      * @param rhs Second decoration to combine.
      */
     Decoration(const Decoration &lhs, const Decoration &rhs);
+    /**
+     * @brief Defaulted move constructor.
+     *
+     * @param rhs Object to move from.
+     */
+    Decoration(Decoration &&rhs) = default;
 
 public:
     /**
