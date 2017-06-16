@@ -255,7 +255,7 @@ unary_expression
     | DEC_OP unary_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | unary_operator cast_expression
-    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | SIZEOF unary_expression  %dprec 1
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
     | SIZEOF '(' type_name ')' %dprec 2
