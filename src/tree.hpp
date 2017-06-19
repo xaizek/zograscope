@@ -33,4 +33,6 @@ void print(const Node &node, int lvl = 0);
 
 Node materializeTree(const std::string &contents, const PNode *node);
 
+std::vector<Node *> postOrder(Node &root);
+
 #endif // TREE_HPP__

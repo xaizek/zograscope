@@ -89,3 +89,27 @@ materializeTree(const std::string &contents, const PNode *node)
 
     return n;
 }
+
+static void
+postOrder(Node &node, std::vector<Node *> &v)
+{
+    if (node.satellite) {
+        return;
+    }
+
+    for (Node &child : node.children) {
+        child.relative = &node;
+        postOrder(child, v);
+    }
+    node.poID = v.size();
+    v.push_back(&node);
+}
+
+std::vector<Node *>
+postOrder(Node &root)
+{
+    std::vector<Node *> v;
+    root.relative = &root;
+    postOrder(root, v);
+    return v;
+}

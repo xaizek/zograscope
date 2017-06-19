@@ -22,30 +22,6 @@ struct Change
 enum { Wdel = 1, Wins = 1, Wren = 1, Wch = 3 };
 
 static void
-postOrder(Node &node, std::vector<Node *> &v)
-{
-    if (node.satellite) {
-        return;
-    }
-
-    for (Node &child : node.children) {
-        child.relative = &node;
-        postOrder(child, v);
-    }
-    node.poID = v.size();
-    v.push_back(&node);
-}
-
-static std::vector<Node *>
-postOrder(Node &root)
-{
-    std::vector<Node *> v;
-    root.relative = &root;
-    postOrder(root, v);
-    return v;
-}
-
-static void
 lmld(Node &node, std::vector<int> &l)
 {
     if (node.satellite) {
