@@ -10,6 +10,7 @@
 
 #include "Printer.hpp"
 #include "TreeBuilder.hpp"
+#include "change-distilling.hpp"
 #include "decoration.hpp"
 #include "integration.hpp"
 #include "parser.hpp"
@@ -145,7 +146,12 @@ main(int argc, char *argv[])
 
     Node *T1 = &treeA, *T2 = &treeB;
     reduceTrees(T1, T2);
-    std::cout << "TED(T1, T2) = " << ted(*T1, *T2) << '\n';
+
+    if (coarse) {
+        distill(*T1, *T2);
+    } else {
+        std::cout << "TED(T1, T2) = " << ted(*T1, *T2) << '\n';
+    }
 
     dumpTrees();
 
