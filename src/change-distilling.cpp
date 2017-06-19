@@ -7,15 +7,16 @@
 #include "utils.hpp"
 
 static void
-postOrder(Node &node, std::vector<Node *> &v, bool excludeSatellites)
+postOrderAndInit(Node &node, std::vector<Node *> &v)
 {
     node.relative = nullptr;
-    if (excludeSatellites && node.satellite) {
+
+    if (node.satellite) {
         return;
     }
 
     for (Node &child : node.children) {
-        postOrder(child, v, excludeSatellites);
+        postOrderAndInit(child, v);
     }
     node.poID = v.size();
 
@@ -23,10 +24,10 @@ postOrder(Node &node, std::vector<Node *> &v, bool excludeSatellites)
 }
 
 static std::vector<Node *>
-postOrder(Node &root, bool excludeSatellites)
+postOrderAndInit(Node &root)
 {
     std::vector<Node *> v;
-    postOrder(root, v, excludeSatellites);
+    postOrderAndInit(root, v);
     return v;
 }
 
@@ -47,13 +48,10 @@ canMatch(const Node *x, const Node *y)
 }
 
 static void
-markAll(Node &node, State state)
+markNode(Node &node, State state)
 {
-    if (node.relative == nullptr) {
-        node.state = state;
-    }
+    node.state = state;
     for (Node &child : node.children) {
-        // markAll(child, state);
         if (child.satellite) {
             child.state = node.state;
         }
@@ -70,17 +68,8 @@ distill(Node &T1, Node &T2)
         float similarity;
     };
 
-    // std::vector<Node *> po1s = postOrder(T1, false);
-    // std::vector<Node *> po2s = postOrder(T2, false);
-
-    std::vector<Node *> po1 = postOrder(T1, true);
-    std::vector<Node *> po2 = postOrder(T2, true);
-    for (Node *n : po1) {
-        n->relative = nullptr;
-    }
-    for (Node *n : po2) {
-        n->relative = nullptr;
-    }
+    std::vector<Node *> po1 = postOrderAndInit(T1);
+    std::vector<Node *> po2 = postOrderAndInit(T2);
 
     auto commonAreaSize = [&](const Match &m) {
         int size = 1;
@@ -189,12 +178,10 @@ distill(Node &T1, Node &T2)
                         }
                     }
 
-                    int xLeaves = 0;
-                    for (int i = xFrom; i < x->poID; ++i) {
-                        if (po1[i]->children.empty()) {
-                            ++xLeaves;
-                        }
-                    }
+                    int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
+                                                [](const Node *n) {
+                                                    return n->children.empty();
+                                                });
 
                     float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
 
@@ -212,8 +199,6 @@ distill(Node &T1, Node &T2)
                     State state = (similarity1 == 1.0f && similarity2 == 1.0f)
                                 ? State::Unchanged
                                 : State::Updated;
-                    // markAll(*x, state);
-                    // markAll(*y, state);
                     x->state = state;
                     y->state = state;
 
@@ -231,14 +216,12 @@ distill(Node &T1, Node &T2)
 
     for (Node *x : po1) {
         if (x->relative == nullptr) {
-            // x->state = State::Deleted;
-            markAll(*x, State::Deleted);
+            markNode(*x, State::Deleted);
         }
     }
     for (Node *y : po2) {
         if (y->relative == nullptr) {
-            // y->state = State::Inserted;
-            markAll(*y, State::Inserted);
+            markNode(*y, State::Inserted);
         }
     }
 }
