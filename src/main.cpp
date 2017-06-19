@@ -71,7 +71,7 @@ main(int argc, char *argv[])
     }
 
     const auto args = varMap["positional"].as<std::vector<std::string>>();
-    if (args.empty() || args.size() > 2U) {
+    if ((args.empty() || args.size() > 2U) && args.size() != 7U) {
         std::cerr << "Wrong arguments\n";
         return EXIT_FAILURE;
     }
@@ -81,6 +81,7 @@ main(int argc, char *argv[])
     const bool skipDiff = varMap.count("skip-diff");
     const bool color = varMap.count("color");
     const bool coarse = varMap.count("coarse");
+    const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
 
     if (color) {
         decor::enableDecorations();
@@ -90,9 +91,9 @@ main(int argc, char *argv[])
 
     Node treeA, treeB;
 
-    std::cout << ">>> Parsing " << args[0] << "\n";
+    std::cout << ">>> Parsing " << oldFile << "\n";
     {
-        std::string contents = readFile(args[0]);
+        std::string contents = readFile(oldFile);
         TreeBuilder tb = parse(contents);
         if (tb.hasFailed()) {
             return EXIT_FAILURE;
@@ -111,9 +112,10 @@ main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-    std::cout << ">>> Parsing " << args[1] << "\n";
+    const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
+    std::cout << ">>> Parsing " << newFile << "\n";
     {
-        std::string contents = readFile(args[1]);
+        std::string contents = readFile(newFile);
         TreeBuilder tb = parse(contents);
         if (tb.hasFailed()) {
             return EXIT_FAILURE;
