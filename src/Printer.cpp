@@ -1,7 +1,5 @@
 #include "Printer.hpp"
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #define BOOST_DISABLE_ASSERTS
@@ -18,6 +16,7 @@
 #include "decoration.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
+#include "utils.hpp"
 
 enum class Diff
 {
@@ -41,7 +40,6 @@ struct DiffLine
 static int countWidth(int n);
 static std::deque<DiffLine> compare(std::vector<std::string> &l,
                                     std::vector<std::string> &r);
-static std::vector<std::string> split(const std::string &str, char with);
 static decor::Decoration getHighlight(const Node &node);
 static unsigned int measureWidth(const std::string &s);
 
@@ -287,26 +285,6 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
     foldIdentical(true);
 
     return diffSeq;
-}
-
-/**
- * @brief Splits string in a range-for loop friendly way.
- *
- * @param str String to split into substrings.
- * @param with Character to split at.
- *
- * @returns Array of results, empty on empty string.
- */
-static std::vector<std::string>
-split(const std::string &str, char with)
-{
-    if (str.empty()) {
-        return {};
-    }
-
-    std::vector<std::string> results;
-    boost::split(results, str, boost::is_from_range(with, with));
-    return results;
 }
 
 std::string
