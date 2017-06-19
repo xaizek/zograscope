@@ -435,13 +435,13 @@ reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
     }
 
     int t1Back = 0;
-    if ((e.first != rit(f.first) || f.first != po1.end()) &&
-        !T1.children.empty()) {
+    if (!T1.children.empty() &&
+        (e.first != rit(f.first) || f.first != po1.begin())) {
         t1Back = T1.children.end() - ++rootPos(T1, *e.first);
     }
     int t2Back = 0;
-    if ((e.second != rit(f.second) || f.second != po2.end()) &&
-        !T2.children.empty()) {
+    if (!T2.children.empty() &&
+        (e.second != rit(f.second) || f.second != po2.begin())) {
         t2Back = T2.children.end() - ++rootPos(T2, *e.second);
     }
 

@@ -88,6 +88,26 @@ TEST_CASE("Changes are detected in presence of comments",
           == State::Updated);
 }
 
+TEST_CASE("Reduction doesn't crash", "[comparison][reduction][crash]")
+{
+    Node oldTree = makeTree(R"(
+        void func()
+        {
+            /* Comment. */
+            func();
+            func();
+        }
+    )");
+    Node newTree = makeTree(R"(
+        void func()
+        {
+            func();
+        }
+    )");
+
+    ted(oldTree, newTree);
+}
+
 static Node
 makeTree(const std::string &str)
 {
