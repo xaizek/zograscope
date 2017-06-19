@@ -161,7 +161,7 @@ $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses -Itests/
 $(out_dir)/tests/tests: $(tests_objects) tests/. | $(out_dirs)
 	$(CXX) -o $@ $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS)
 
-%.gen.o: %.gen.cpp | $(out_dirs)
+$(out_dir)/%.gen.o: $(out_dir)/%.gen.cpp | $(out_dirs)
 	$(CXX) -o $@ -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $<
 
 $(out_dir)/%.o: %.cpp | $(out_dirs)
