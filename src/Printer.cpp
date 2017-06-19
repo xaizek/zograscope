@@ -37,6 +37,7 @@ struct DiffLine
     int data;
 };
 
+static std::string noLineMarker(int at);
 static int countWidth(int n);
 static std::deque<DiffLine> compare(std::vector<std::string> &l,
                                     std::vector<std::string> &r);
@@ -146,7 +147,8 @@ Printer::print()
             std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ')
                       << ' ' << std::left << std::setw(width) << *ll;
         } else {
-            std::cout << (lineNo << std::right << std::setw(lWidth + 1) << "- ")
+            std::cout << (lineNo << std::right << std::setw(lWidth + 1)
+                                 << (noLineMarker(i) + ' '))
                       << ' ' << std::left << std::setw(width)
                       << (235_bg << *ll);
         }
@@ -157,13 +159,27 @@ Printer::print()
             std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ')
                       << ' ' << *rl;
         } else {
-            std::cout << (lineNo << std::right << std::setw(rWidth + 1) << "- ")
+            std::cout << (lineNo << std::right << std::setw(rWidth + 1)
+                                 << (noLineMarker(j) + ' '))
                       << ' ' << std::left << std::setw(maxRightWidth)
                       << (235_bg << *rl);
         }
 
         std::cout << '\n';
     }
+}
+
+/**
+ * @brief Generates string that should be used instead of line number.
+ *
+ * @param at Line number of the last displayed line (0 if none was printed).
+ *
+ * @returns The marker.
+ */
+static std::string
+noLineMarker(int at)
+{
+    return std::string(countWidth(at), '-');
 }
 
 static int
