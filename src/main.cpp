@@ -140,7 +140,9 @@ main(int argc, char *argv[])
     // markSatellites(treeA);
     // markSatellites(treeB);
 
-    std::cout << "TED(T1, T2) = " << ted(treeA, treeB) << '\n';
+    Node *T1 = &treeA, *T2 = &treeB;
+    reduceTrees(T1, T2);
+    std::cout << "TED(T1, T2) = " << ted(*T1, *T2) << '\n';
 
     dumpTrees();
 
