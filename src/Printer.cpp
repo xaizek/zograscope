@@ -93,8 +93,8 @@ Printer::print()
         }
     }
 
-    const int lWidth = countWidth(l.size());
-    const int rWidth = countWidth(r.size());
+    const int lWidth = countWidth(l.size()) + 1;
+    const int rWidth = countWidth(r.size()) + 1;
 
     decor::Decoration lineNo = decor::white_bg + decor::black_fg;
 
@@ -169,12 +169,12 @@ Printer::print()
 static int
 countWidth(int n)
 {
-    int width = 1;
+    int width = 0;
     while (n > 0) {
         n /= 10;
         ++width;
     }
-    return width;
+    return (width == 0) ? 1 : width;
 }
 
 static std::deque<DiffLine>
