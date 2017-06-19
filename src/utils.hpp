@@ -27,4 +27,6 @@ split(const std::string &str, char with)
     return results;
 }
 
+float diceCoefficient(const std::string &a, const std::string &b);
+
 #endif // UTILS_HPP__

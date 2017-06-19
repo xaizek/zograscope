@@ -18,6 +18,9 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+// TODO: colors should reside in some configuration file, it's very inconvenient
+//       to have to recompile the tool to experiment with coloring.
+
 enum class Diff
 {
     Left,
@@ -196,6 +199,8 @@ countWidth(int n)
 static std::deque<DiffLine>
 compare(std::vector<std::string> &l, std::vector<std::string> &r)
 {
+    enum { Wins = 1, Wdel = 1, Wren = 1 };
+
     using size_type = std::vector<std::string>::size_type;
 
     // Narrow portion of lines that should be compared by throwing away matching
@@ -220,12 +225,12 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
             } else if (j == 0U) {
                 d[i][j] = i;
             } else {
-                // XXX: this comparison is very approximate, should be possible
-                //      to do better by comparing tokens somehow
-                const bool same = (boost::trim_copy(l[ol + i - 1U]) ==
-                                   boost::trim_copy(r[nl + j - 1U]));
-                d[i][j] = std::min({ d[i - 1U][j] + 1, d[i][j - 1U] + 1,
-                                     d[i - 1U][j - 1U] + (same ? 0 : 1) });
+                // XXX: should we use tokens here instead?
+                const bool same =
+                    diceCoefficient(boost::trim_copy(l[ol + i - 1U]),
+                                    boost::trim_copy(r[nl + j - 1U])) >= 0.8f;
+                d[i][j] = std::min({ d[i - 1U][j] + Wren, d[i][j - 1U] + Wins,
+                                     d[i - 1U][j - 1U] + (same ? 0 : Wren) });
             }
         }
     }
@@ -279,11 +284,11 @@ compare(std::vector<std::string> &l, std::vector<std::string> &r)
             --i;
             foldIdentical(false);
             diffSeq.emplace_front(Diff::Left);
-        } else if (d[i][j] == d[i][j - 1] + 1) {
+        } else if (d[i][j] == d[i][j - 1] + Wins) {
             --j;
             foldIdentical(false);
             diffSeq.emplace_front(Diff::Right);
-        } else if (d[i][j] == d[i - 1][j] + 1) {
+        } else if (d[i][j] == d[i - 1][j] + Wdel) {
             --i;
             foldIdentical(false);
             diffSeq.emplace_front(Diff::Left);
