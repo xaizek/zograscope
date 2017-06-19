@@ -32,12 +32,17 @@ print(const Node &node, int lvl)
         case State::Updated:   suffix = " (updated with " + node.relative->label + "@" + std::to_string(node.relative->poID) + ")";  break;
     }
 
+    if (node.relative != nullptr && node.state != State::Updated) {
+        suffix += " (relative: " + node.relative->label + "@" + std::to_string(node.relative->poID) + ")";
+    }
+
     std::cout << std::setw(4*lvl) << prefix << node.label
               << '[' << node.poID << ']'
               << '(' << node.line << ';' << node.col << ')'
               << (node.satellite ? "{S}" : "")
               << suffix
               << '<' << static_cast<int>(node.type) << '>'
+              << '<' << static_cast<int>(node.stype) << '>'
               << '\n';
     for (const Node &child : node.children) {
         print(child, lvl + 1);
