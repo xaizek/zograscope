@@ -79,6 +79,7 @@ main(int argc, char *argv[])
     const bool dumpTree = varMap.count("dump-tree");
     const bool skipDiff = varMap.count("skip-diff");
     const bool color = varMap.count("color");
+    const bool coarse = varMap.count("coarse");
 
     if (color) {
         decor::enableDecorations();
@@ -96,7 +97,8 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        treeA = materializeTree(contents, tb.getRoot());
+        treeA = coarse ? materializeTree(contents, tb.makeSTree())
+                       : materializeTree(contents, tb.getRoot());
     }
 
     if (highlightMode) {
@@ -116,7 +118,8 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        treeB = materializeTree(contents, tb.getRoot());
+        treeB = coarse ? materializeTree(contents, tb.makeSTree())
+                       : materializeTree(contents, tb.getRoot());
     }
 
     auto dumpTrees = [&]() {
@@ -182,6 +185,7 @@ parseOptions(const std::vector<std::string> &args)
     cmdlineOptions.add_options()
         ("skip-diff", "just parse")
         ("dump-tree", "display tree(s)")
+        ("coarse", "use coarse-grained tree")
         ("color", "force colorization of output");
 
     po::options_description allOptions;

@@ -134,6 +134,10 @@ renameCost(const Node *n1, const Node *n2)
         return Wch;
     }
 
+    if (n1->type == Type::Virtual) {
+        return (n1->stype == n2->stype) ? Wren : Wch;
+    }
+
     return Wren;
 
     std::string n1l;

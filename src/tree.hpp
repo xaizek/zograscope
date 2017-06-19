@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "TreeBuilder.hpp"
 #include "types.hpp"
-
-class PNode;
 
 enum class State
 {
@@ -27,11 +26,14 @@ struct Node
     Node *relative = nullptr;
     bool satellite = false;
     Type type = Type::Virtual;
+    SType stype = SType::None;
 };
 
 void print(const Node &node, int lvl = 0);
 
 Node materializeTree(const std::string &contents, const PNode *node);
+
+Node materializeTree(const std::string &contents, const SNode *node);
 
 std::vector<Node *> postOrder(Node &root);
 

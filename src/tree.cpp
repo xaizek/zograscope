@@ -1,5 +1,6 @@
 #include "tree.hpp"
 
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -7,8 +8,12 @@
 
 #include "TreeBuilder.hpp"
 #include "types.hpp"
+#include "utils.hpp"
 
+static std::string materializePTree(const std::string &contents,
+                                    const PNode *node);
 static bool areIdentical(const Node &l, const Node &r);
+
 
 void
 print(const Node &node, int lvl)
@@ -90,6 +95,87 @@ materializeTree(const std::string &contents, const PNode *node)
     }
 
     return n;
+}
+
+Node
+materializeTree(const std::string &contents, const SNode *node)
+{
+    std::function<const PNode *(const PNode *)> lml = [&](const PNode *node) {
+        return node->children.empty()
+             ? node
+             : lml(node->children.front());
+    };
+
+    std::function<Node(const SNode *)> visit = [&](const SNode *node) {
+        Node n;
+        n.stype = node->value->stype;
+        n.satellite = (n.stype == SType::Separator);
+
+        if (node->children.empty()) {
+            const PNode *leaf = lml(node->value);
+
+            n.label = materializePTree(contents, node->value);
+            n.line = leaf->line;
+            n.col = leaf->col;
+            return n;
+        }
+
+        n.children.reserve(node->children.size());
+        for (SNode *child : node->children) {
+            n.children.emplace_back(visit(child));
+            if (!n.children.back().satellite && n.label.empty()) {
+                n.label = n.children.back().label;
+            }
+        }
+        return n;
+    };
+
+    return visit(node);
+}
+
+static std::string
+materializePTree(const std::string &contents, const PNode *node)
+{
+    std::string out;
+
+    int line = -1, col = -1;
+    std::function<void(const PNode *)> visit = [&](const PNode *node) {
+        if (node->line != 0 && node->col != 0) {
+            if (line < 0) {
+                line = node->line;
+                col = node->col;
+            }
+
+            while (node->line > line) {
+                out += '\n';
+                ++line;
+                col = 1;
+            }
+
+            while (node->col > col) {
+                out += ' ';
+                ++col;
+            }
+
+            const std::string label = materializeLabel(contents, node);
+            const std::vector<std::string> lines = split(label, '\n');
+            out += lines.front();
+            for (std::size_t i = 1U; i < lines.size(); ++i) {
+                out += '\n';
+                out += lines[i];
+                ++line;
+            }
+
+            col += label.size();
+        }
+
+        for (PNode *child : node->children) {
+            visit(child);
+        }
+    };
+    visit(node);
+
+    return out;
 }
 
 static void
