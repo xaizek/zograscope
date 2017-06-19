@@ -9,6 +9,29 @@
 #include <utility>
 #include <vector>
 
+enum class SType
+{
+    None,
+    TranslationUnit,
+    Declaration,
+    FunctionDeclaration,
+    FunctionDefinition,
+    Postponed,
+    Macro,
+    CompoundStatement,
+    Separator,
+    Statements,
+    Statement,
+    IfStmt,
+    IfCond,
+    IfElse,
+    WhileStmt,
+    WhileCond,
+    ForStmt,
+    ForHead,
+    Expression,
+};
+
 struct Location
 {
     int first_line;
@@ -29,37 +52,49 @@ struct PNode
     PNode()
     {
     }
-    PNode(std::vector<PNode *> children) : children(std::move(children))
+    PNode(std::vector<PNode *> children, SType stype = SType::None)
+        : children(std::move(children)), stype(stype)
     {
         for (PNode *&child : this->children) {
             child = contract(child);
         }
     }
-    PNode(Text value, const Location &loc, bool postponed = false)
+    PNode(Text value, const Location &loc, SType stype = SType::None,
+          bool postponed = false)
         : value(value), line(loc.first_line), col(loc.first_column),
-          postponed(postponed)
+          postponed(postponed), stype(stype)
     {
     }
 
     bool empty() const
     {
-        return value.from == 0U && value.len == 0U;
+        return value.from == 0U && value.len == 0U && stype == SType::None;
     }
 
     Text value = { };
     std::vector<PNode *> children;
     int line = 0, col = 0;
     bool postponed = false;
+    SType stype = SType::None;
 
 private:
+    // TODO: try contracting in TreeBuilder as well (this way we won't even
+    //       create extra node)
     static PNode * contract(PNode *node)
     {
         if (node->empty() && node->children.size() == 1U &&
             node->children.front()->empty()) {
+            // TODO: we could reuse contracted nodes to save some memory
             return contract(node->children.front());
         }
         return node;
     }
+};
+
+struct SNode
+{
+    PNode *value;
+    std::vector<SNode *> children;
 };
 
 class TreeBuilder
@@ -71,9 +106,9 @@ class TreeBuilder
     };
 
 public:
-    PNode * addNode(PNode *node, const Location &)
+    PNode * addNode(PNode *node, const Location &, SType stype = SType::None)
     {
-        return addNode({ node });
+        return addNode({ node }, stype);
     }
 
     PNode * addNode()
@@ -82,19 +117,15 @@ public:
         return &nodes.back();
     }
 
-    PNode * addNode(Text value, const Location &loc)
+    PNode * addNode(Text value, const Location &loc, SType stype = SType::None)
     {
-        return addNode(value, loc, value.token);
+        return addNode(value, loc, value.token, stype);
     }
 
-    PNode * addNode(Text value, const Location &loc, int token);
+    PNode * addNode(Text value, const Location &loc, int token,
+                    SType stype = SType::None);
 
-    PNode * addNode(std::vector<PNode *> children)
-    {
-        movePostponed(children[0], children, children.cbegin());
-        nodes.emplace_back(std::move(children));
-        return &nodes.back();
-    }
+    PNode * addNode(std::vector<PNode *> children, SType stype = SType::None);
 
     PNode * append(PNode *node, PNode *child)
     {
@@ -158,12 +189,15 @@ public:
         return failed;
     }
 
+    SNode * makeSTree();
+
 private:
     void movePostponed(PNode *&node, std::vector<PNode *> &nodes,
                        std::vector<PNode *>::const_iterator insertPos);
 
 private:
     std::deque<PNode> nodes;
+    std::deque<SNode> snodes;
     PNode *root = nullptr;
     std::vector<Postponed> postponed;
     int newPostponed = 0;

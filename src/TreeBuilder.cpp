@@ -2,13 +2,13 @@
 
 #include <cstddef>
 
-#include <algorithm>
 #include <deque>
+#include <functional>
 #include <utility>
 #include <vector>
 
 PNode *
-TreeBuilder::addNode(Text value, const Location &loc, int token)
+TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
 {
     value.token = token;
 
@@ -16,16 +16,25 @@ TreeBuilder::addNode(Text value, const Location &loc, int token)
         std::vector<PNode *> children;
         children.reserve(value.postponedTo - value.postponedFrom);
         for (std::size_t i = value.postponedFrom; i < value.postponedTo; ++i) {
-            nodes.emplace_back(postponed[i].value, postponed[i].loc, true);
+            nodes.emplace_back(postponed[i].value, postponed[i].loc,
+                               SType::Postponed, true);
             children.push_back(&nodes.back());
         }
-        nodes.emplace_back(value, loc);
+        nodes.emplace_back(value, loc, stype);
         children.push_back(&nodes.back());
         nodes.emplace_back(std::move(children));
         return &nodes.back();
     }
 
-    nodes.emplace_back(value, loc);
+    nodes.emplace_back(value, loc, stype);
+    return &nodes.back();
+}
+
+PNode *
+TreeBuilder::addNode(std::vector<PNode *> children, SType stype)
+{
+    movePostponed(children[0], children, children.cbegin());
+    nodes.emplace_back(std::move(children), stype);
     return &nodes.back();
 }
 
@@ -39,14 +48,54 @@ TreeBuilder::finish(bool failed)
 
     std::vector<PNode *> children;
     children.reserve(newPostponed);
-    for (std::size_t i = postponed.size() - newPostponed;
-            i < postponed.size(); ++i) {
-        nodes.emplace_back(postponed[i].value, postponed[i].loc, true);
+    for (std::size_t i = postponed.size() - newPostponed; i < postponed.size();
+         ++i) {
+        nodes.emplace_back(postponed[i].value, postponed[i].loc,
+                           SType::Postponed, true);
         children.push_back(&nodes.back());
     }
 
     root->children.insert(root->children.cend(),
-                            children.cbegin(), children.cend());
+                          children.cbegin(), children.cend());
+}
+
+static PNode *
+findSNode(PNode *node)
+{
+    if (node->stype != SType::None) {
+        return node;
+    }
+
+    return node->children.size() == 1U
+         ? findSNode(node->children.front())
+         : nullptr;
+}
+
+SNode *
+TreeBuilder::makeSTree()
+{
+    PNode *rootNode = findSNode(root);
+    if (rootNode == nullptr) {
+        snodes.emplace_back(SNode{root, {}});
+        return &snodes[0];
+    }
+
+    std::function<SNode *(PNode *)> makeSNode = [&, this](PNode *node) {
+        std::vector<SNode *> c;
+        c.reserve(node->children.size());
+        for (PNode *child : node->children) {
+            if (PNode *schild = findSNode(child)) {
+                c.push_back(makeSNode(schild));
+            } else {
+                snodes.emplace_back(SNode{node->children[c.size()], {}});
+                c.push_back(&snodes.back());
+            }
+        }
+        snodes.emplace_back(SNode{node, std::move(c)});
+        return &snodes.back();
+    };
+
+    return makeSNode(rootNode);
 }
 
 void
