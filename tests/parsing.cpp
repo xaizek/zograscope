@@ -21,3 +21,8 @@ TEST_CASE("Empty initializer list is parsed", "[parser][extensions]")
 {
     CHECK_FALSE(parse("args_t args = {};").hasFailed());
 }
+
+TEST_CASE("Bit field is parsed", "[parser][conflicts]")
+{
+    CHECK_FALSE(parse("struct s { unsigned int stuff : 1; };").hasFailed());
+}
