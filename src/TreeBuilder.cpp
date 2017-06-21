@@ -113,6 +113,7 @@ TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
     node->children.erase(node->children.begin(), pos);
 
     if (node->children.front()->empty() && node->children.size() == 1U) {
+        node->children.front()->stype = node->stype;
         node = node->children.front();
     }
 

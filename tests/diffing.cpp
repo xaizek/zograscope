@@ -3,13 +3,15 @@
 #include <functional>
 
 #include "TreeBuilder.hpp"
+#include "change-distilling.hpp"
 #include "parser.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
-static Node makeTree(const std::string &str);
+static Node makeTree(const std::string &str, bool stree = false);
 static const Node * findNode(const Node &root, Type type,
                              const std::string &label = {});
+static int countLeaves(const Node &root, State state);
 
 TEST_CASE("Comment is marked as unmodified", "[comparison][postponed]")
 {
@@ -108,12 +110,46 @@ TEST_CASE("Reduction doesn't crash", "[comparison][reduction][crash]")
     ted(oldTree, newTree);
 }
 
+TEST_CASE("Node type is propagated", "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Node oldTree = makeTree(R"(
+        void func()
+        {
+            /* Comment. */
+            return;
+        }
+    )", true);
+    Node newTree = makeTree(R"(
+        void func()
+        {
+            char array[1];
+            /* Comment. */
+            return;
+        }
+    )", true);
+
+    distill(oldTree, newTree);
+
+    CHECK(countLeaves(oldTree, State::Updated) == 0);
+    CHECK(countLeaves(oldTree, State::Deleted) == 0);
+    CHECK(countLeaves(oldTree, State::Inserted) == 0);
+
+    CHECK(countLeaves(newTree, State::Updated) == 0);
+    CHECK(countLeaves(newTree, State::Deleted) == 0);
+    CHECK(countLeaves(newTree, State::Inserted) == 1);
+}
+
 static Node
-makeTree(const std::string &str)
+makeTree(const std::string &str, bool stree)
 {
     TreeBuilder tb = parse(str);
     REQUIRE_FALSE(tb.hasFailed());
-    return materializeTree(str, tb.getRoot());
+    return stree
+         ? materializeTree(str, tb.makeSTree())
+         : materializeTree(str, tb.getRoot());
 }
 
 static const Node *
@@ -140,4 +176,25 @@ findNode(const Node &root, Type type, const std::string &label)
 
     visit(root);
     return needle;
+}
+
+static int
+countLeaves(const Node &root, State state)
+{
+    int count = 0;
+
+    std::function<void(const Node &)> visit = [&](const Node &node) {
+        if (node.children.empty() && node.state == state) {
+            ++count;
+        }
+
+        for (const Node &child : node.children) {
+            visit(child);
+        }
+
+        return false;
+    };
+
+    visit(root);
+    return count;
 }

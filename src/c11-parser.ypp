@@ -1306,7 +1306,7 @@ function_definition
     : function_header '{' block_item_list '}'
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::FunctionDeclaration),
                          tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3),
+                         $3,
                          tb->addNode($4, @4, SType::Separator) },
                        SType::FunctionDefinition); }
     | function_header '{' '}'
