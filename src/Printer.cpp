@@ -233,20 +233,20 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
     IntMatrix d(ou - ol + 1U, nu - nl + 1U);
 
     // Edit distance finding.
+    for (size_type j = 0U; j <= nu - nl; ++j) {
+        d(0, j) = j;
+    }
     for (size_type i = 0U; i <= ou - ol; ++i) {
-        for (size_type j = 0U; j <= nu - nl; ++j) {
-            if (i == 0U) {
-                d(i, j) = j;
-            } else if (j == 0U) {
-                d(i, j) = i;
-            } else {
-                // XXX: should we use tokens here instead?
-                const bool same =
-                    diceCoefficient(boost::trim_copy(l[ol + i - 1U]),
-                                    boost::trim_copy(r[nl + j - 1U])) >= 0.8f;
-                d(i, j) = std::min({ d(i - 1U, j) + Wren, d(i, j - 1U) + Wins,
-                                     d(i - 1U, j - 1U) + (same ? 0 : Wren) });
-            }
+        d(i, 0) = i;
+    }
+    for (size_type i = 1U; i <= ou - ol; ++i) {
+        for (size_type j = 1U; j <= nu - nl; ++j) {
+            // XXX: should we compare tokens here instead?
+            const bool same =
+                diceCoefficient(boost::trim_copy(l[ol + i - 1U]),
+                                boost::trim_copy(r[nl + j - 1U])) >= 0.8f;
+            d(i, j) = std::min({ d(i - 1U, j) + Wren, d(i, j - 1U) + Wins,
+                                 d(i - 1U, j - 1U) + (same ? 0 : Wren) });
         }
     }
 
