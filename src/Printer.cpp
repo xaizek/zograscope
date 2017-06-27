@@ -2,13 +2,11 @@
 
 #include <boost/algorithm/string/trim.hpp>
 
-#define BOOST_DISABLE_ASSERTS
-#include <boost/multi_array.hpp>
-
 #include <deque>
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -20,6 +18,23 @@
 
 // TODO: colors should reside in some configuration file, it's very inconvenient
 //       to have to recompile the tool to experiment with coloring.
+
+class IntMatrix
+{
+public:
+    IntMatrix(int n, int m) : m(m), data(new int[n*m])
+    {
+    }
+
+    int & operator()(int i, int j)
+    {
+        return data.get()[i*m + j];
+    }
+
+private:
+    const int m;
+    std::unique_ptr<int[]> data;
+};
 
 enum class Diff
 {
@@ -215,22 +230,22 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
         --nu;
     }
 
-    boost::multi_array<int, 2> d(boost::extents[ou - ol + 1U][nu - nl + 1U]);
+    IntMatrix d(ou - ol + 1U, nu - nl + 1U);
 
     // Edit distance finding.
     for (size_type i = 0U; i <= ou - ol; ++i) {
         for (size_type j = 0U; j <= nu - nl; ++j) {
             if (i == 0U) {
-                d[i][j] = j;
+                d(i, j) = j;
             } else if (j == 0U) {
-                d[i][j] = i;
+                d(i, j) = i;
             } else {
                 // XXX: should we use tokens here instead?
                 const bool same =
                     diceCoefficient(boost::trim_copy(l[ol + i - 1U]),
                                     boost::trim_copy(r[nl + j - 1U])) >= 0.8f;
-                d[i][j] = std::min({ d[i - 1U][j] + Wren, d[i][j - 1U] + Wins,
-                                     d[i - 1U][j - 1U] + (same ? 0 : Wren) });
+                d(i, j) = std::min({ d(i - 1U, j) + Wren, d(i, j - 1U) + Wins,
+                                     d(i - 1U, j - 1U) + (same ? 0 : Wren) });
             }
         }
     }
@@ -284,11 +299,11 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
             --i;
             foldIdentical(false);
             diffSeq.emplace_front(Diff::Left);
-        } else if (d[i][j] == d[i][j - 1] + Wins) {
+        } else if (d(i, j) == d(i, j - 1) + Wins) {
             --j;
             foldIdentical(false);
             diffSeq.emplace_front(Diff::Right);
-        } else if (d[i][j] == d[i - 1][j] + Wdel) {
+        } else if (d(i, j) == d(i - 1, j) + Wdel) {
             --i;
             foldIdentical(false);
             diffSeq.emplace_front(Diff::Left);
