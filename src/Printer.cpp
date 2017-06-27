@@ -42,8 +42,8 @@ struct DiffLine
 
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::deque<DiffLine> compare(std::vector<std::string> &l,
-                                    std::vector<std::string> &r);
+static std::deque<DiffLine> compare(const std::vector<std::string> &l,
+                                    const std::vector<std::string> &r);
 static decor::Decoration getHighlight(const Node &node);
 static unsigned int measureWidth(const std::string &s);
 
@@ -197,7 +197,7 @@ countWidth(int n)
 }
 
 static std::deque<DiffLine>
-compare(std::vector<std::string> &l, std::vector<std::string> &r)
+compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
 {
     enum { Wins = 1, Wdel = 1, Wren = 1 };
 
