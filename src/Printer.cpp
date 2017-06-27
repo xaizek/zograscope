@@ -251,8 +251,9 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
             // XXX: should we compare tokens here instead?
             const bool same =
                 diceCoefficient(leftTrimmed, rightTrimmed[j - 1U]) >= 0.8f;
-            d(i, j) = std::min({ d(i - 1U, j) + Wren, d(i, j - 1U) + Wins,
-                                 d(i - 1U, j - 1U) + (same ? 0 : Wren) });
+            d(i, j) = std::min(std::min(d(i - 1U, j) + Wren,
+                                        d(i, j - 1U) + Wins),
+                               d(i - 1U, j - 1U) + (same ? 0 : Wren));
         }
     }
 
