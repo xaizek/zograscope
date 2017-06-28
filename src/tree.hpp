@@ -37,6 +37,8 @@ Node materializeTree(const std::string &contents, const SNode *node);
 
 std::vector<Node *> postOrder(Node &root);
 
-void reduceTrees(Node *&T1, Node *&T2);
+void reduceTreesFine(Node *&T1, Node *&T2);
+
+void reduceTreesCoarse(Node *T1, Node *T2);
 
 #endif // TREE_HPP__

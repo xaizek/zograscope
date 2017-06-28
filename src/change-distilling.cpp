@@ -9,11 +9,11 @@
 static void
 postOrderAndInit(Node &node, std::vector<Node *> &v)
 {
-    node.relative = nullptr;
-
     if (node.satellite) {
         return;
     }
+
+    node.relative = nullptr;
 
     for (Node &child : node.children) {
         postOrderAndInit(child, v);
@@ -52,8 +52,8 @@ markNode(Node &node, State state)
 {
     node.state = state;
     for (Node &child : node.children) {
-        if (child.satellite) {
-            child.state = node.state;
+        if (child.satellite && child.stype == SType::None) {
+            child.state = state;
         }
     }
 }

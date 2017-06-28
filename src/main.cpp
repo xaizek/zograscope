@@ -208,12 +208,32 @@ main(int argc, char *argv[])
     // markSatellites(treeB);
 
     Node *T1 = &treeA, *T2 = &treeB;
-    tr.measure("reduction"), reduceTrees(T1, T2);
+    tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
 
     if (coarse) {
-        auto timer = tr.measure("diffing");
+        auto timer = tr.measure("reduction-and-diffing");
+        for (Node &t1Child : T1->children) {
+            if (t1Child.satellite) {
+                continue;
+            }
+            for (Node &t2Child : T2->children) {
+                if (t2Child.satellite || t1Child.label != t2Child.label) {
+                    continue;
+                }
+
+                Node *subT1 = &t1Child, *subT2 = &t2Child;
+                reduceTreesFine(subT1, subT2);
+                distill(*subT1, *subT2);
+                t1Child.satellite = true;
+                t2Child.satellite = true;
+                break;
+            }
+        }
+
         distill(*T1, *T2);
     } else {
+        tr.measure("fine-reduction"), reduceTreesCoarse(T1, T2);
+
         auto timer = tr.measure("diffing");
         std::cout << "TED(T1, T2) = " << ted(*T1, *T2) << '\n';
     }

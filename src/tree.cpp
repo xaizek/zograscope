@@ -1,5 +1,8 @@
 #include "tree.hpp"
 
+#include <boost/functional/hash.hpp>
+
+#include <algorithm>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -304,7 +307,7 @@ reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
 }
 
 void
-reduceTrees(Node *&T1, Node *&T2)
+reduceTreesFine(Node *&T1, Node *&T2)
 {
     while (T1->children.size() == 1U && T2->children.size() == 1U) {
         T1 = &T1->children.front();
@@ -346,6 +349,53 @@ reduceTrees(Node *&T1, Node *&T2)
 
         po1 = postOrder(*T1);
         po2 = postOrder(*T2);
+    }
+}
+
+static std::size_t
+hashNode(const Node &node)
+{
+    const std::size_t hash = std::hash<std::string>()(node.label);
+    return std::accumulate(node.children.cbegin(), node.children.cend(), hash,
+                           [](std::size_t h, const Node &child) {
+                               boost::hash_combine(h, hashNode(child));
+                               return h;
+                           });
+}
+
+static std::vector<std::size_t>
+hashChildren(const Node &node)
+{
+    std::vector<std::size_t> hashes;
+    hashes.reserve(node.children.size());
+    for (const Node &child : node.children) {
+        hashes.push_back(hashNode(child));
+    }
+    return hashes;
+}
+
+void
+reduceTreesCoarse(Node *T1, Node *T2)
+{
+    const std::vector<std::size_t> children1 = hashChildren(*T1);
+    const std::vector<std::size_t> children2 = hashChildren(*T2);
+
+    for (unsigned int i = 0U, n = children1.size(); i < n; ++i) {
+        const std::size_t hash1 = children1[i];
+        for (unsigned int j = 0U, n = children2.size(); j < n; ++j) {
+            if (T2->children[j].satellite) {
+                continue;
+            }
+
+            const std::size_t hash2 = children2[j];
+            if (hash1 == hash2) {
+                T1->children[i].relative = &T2->children[j];
+                T1->children[i].satellite = true;
+                T2->children[j].relative = &T1->children[i];
+                T2->children[j].satellite = true;
+                break;
+            }
+        }
     }
 }
 
