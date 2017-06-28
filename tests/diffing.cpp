@@ -172,6 +172,30 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
     CHECK(countLeaves(newTree, State::Inserted) == 1);
 }
 
+TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Node oldTree = makeTree(R"(
+        int var;
+    )", true);
+    Node newTree = makeTree(R"(
+        // Comment.
+        int var;
+    )", true);
+
+    distill(oldTree, newTree);
+
+    CHECK(countLeaves(oldTree, State::Updated) == 0);
+    CHECK(countLeaves(oldTree, State::Deleted) == 0);
+    CHECK(countLeaves(oldTree, State::Inserted) == 0);
+
+    CHECK(countLeaves(newTree, State::Updated) == 0);
+    CHECK(countLeaves(newTree, State::Deleted) == 0);
+    CHECK(countLeaves(newTree, State::Inserted) == 1);
+}
+
 static Node
 makeTree(const std::string &str, bool stree)
 {

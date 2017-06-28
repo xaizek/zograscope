@@ -81,6 +81,16 @@ TreeBuilder::makeSTree()
     }
 
     std::function<SNode *(PNode *)> makeSNode = [&, this](PNode *node) {
+        auto isSNode = [](PNode *child) {
+            return (findSNode(child) != nullptr);
+        };
+        // If none of the children is SNode, then current node is a leaf SNode.
+        if (std::none_of(node->children.begin(), node->children.end(),
+                         isSNode)) {
+            snodes.emplace_back(SNode{node, {}});
+            return &snodes.back();
+        }
+
         std::vector<SNode *> c;
         c.reserve(node->children.size());
         for (PNode *child : node->children) {
