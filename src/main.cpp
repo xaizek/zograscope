@@ -23,6 +23,8 @@
 namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args);
+static bool buildTreeFromFile(const std::string &path, bool coarse,
+                              Node &treeRoot);
 
 class TimeReport
 {
@@ -155,7 +157,6 @@ main(int argc, char *argv[])
     const bool color = varMap.count("color");
     const bool coarse = varMap.count("coarse");
     const bool timeReport = varMap.count("time-report");
-    const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
 
     if (color) {
         decor::enableDecorations();
@@ -164,18 +165,10 @@ main(int argc, char *argv[])
     RedirectToPager redirectToPager;
     TimeReport tr;
 
-    Node treeA, treeB;
-
-    std::cout << ">>> Parsing " << oldFile << "\n";
-    {
-        std::string contents = readFile(oldFile);
-        TreeBuilder tb = parse(contents);
-        if (tb.hasFailed()) {
-            return EXIT_FAILURE;
-        }
-
-        treeA = coarse ? materializeTree(contents, tb.makeSTree())
-                       : materializeTree(contents, tb.getRoot());
+    Node treeA;
+    const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
+    if (!buildTreeFromFile(oldFile, coarse, treeA)) {
+        return EXIT_FAILURE;
     }
 
     if (highlightMode) {
@@ -187,17 +180,10 @@ main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
+    Node treeB;
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
-    std::cout << ">>> Parsing " << newFile << "\n";
-    {
-        std::string contents = readFile(newFile);
-        TreeBuilder tb = parse(contents);
-        if (tb.hasFailed()) {
-            return EXIT_FAILURE;
-        }
-
-        treeB = coarse ? materializeTree(contents, tb.makeSTree())
-                       : materializeTree(contents, tb.getRoot());
+    if (!buildTreeFromFile(newFile, coarse, treeB)) {
+        return EXIT_FAILURE;
     }
 
     auto dumpTrees = [&]() {
@@ -290,4 +276,30 @@ parseOptions(const std::vector<std::string> &args)
     po::variables_map varMap;
     po::store(parsed_from_cmdline, varMap);
     return varMap;
+}
+
+/**
+ * @brief Reads and parses a file to build its tree.
+ *
+ * @param path     Path to the file to read.
+ * @param coarse   Whether to build coarse-grained tree.
+ * @param treeRoot Where assign the tree root.
+ *
+ * @returns @c true on success, otherwise @c false.
+ */
+static bool
+buildTreeFromFile(const std::string &path, bool coarse, Node &treeRoot)
+{
+    std::cout << ">>> Parsing " << path << '\n';
+
+    const std::string contents = readFile(path);
+
+    TreeBuilder tb = parse(contents);
+    if (tb.hasFailed()) {
+        return false;
+    }
+
+    treeRoot = coarse ? materializeTree(contents, tb.makeSTree())
+                      : materializeTree(contents, tb.getRoot());
+    return true;
 }
