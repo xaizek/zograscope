@@ -211,9 +211,6 @@ distill(Node &T1, Node &T2)
         }
     }
 
-    T1.relative = &T2;
-    T2.relative = &T1;
-
     for (Node *x : po1) {
         if (x->relative == nullptr) {
             markNode(*x, State::Deleted);
