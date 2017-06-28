@@ -232,10 +232,10 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
 
     IntMatrix d(ou - ol + 1U, nu - nl + 1U);
 
-    std::vector<std::string> rightTrimmed;
-    rightTrimmed.reserve(nu - nl);
+    std::vector<DiceString> rightLines;
+    rightLines.reserve(nu - nl);
     for (size_type i = nl; i < nu; ++i) {
-        rightTrimmed.emplace_back(boost::trim_copy(r[i]));
+        rightLines.emplace_back(boost::trim_copy(r[i]));
     }
 
     // Edit distance finding.
@@ -246,11 +246,10 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
         d(i, 0) = i;
     }
     for (size_type i = 1U; i <= ou - ol; ++i) {
-        const std::string leftTrimmed = boost::trim_copy(l[ol + i - 1U]);
+        DiceString leftLine = boost::trim_copy(l[ol + i - 1U]);
         for (size_type j = 1U; j <= nu - nl; ++j) {
             // XXX: should we compare tokens here instead?
-            const bool same =
-                diceCoefficient(leftTrimmed, rightTrimmed[j - 1U]) >= 0.8f;
+            const bool same = (leftLine.compare(rightLines[j - 1U]) >= 0.8f);
             d(i, j) = std::min(std::min(d(i - 1U, j) + Wren,
                                         d(i, j - 1U) + Wins),
                                d(i - 1U, j - 1U) + (same ? 0 : Wren));
