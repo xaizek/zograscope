@@ -1092,7 +1092,7 @@ labeled_statement
 compound_statement
     : '{' block_item_list '}'
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2),
+                         $2,
                          tb->addNode($3, @3, SType::Separator) },
                        SType::CompoundStatement); }
     | '{' '}'

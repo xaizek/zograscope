@@ -196,6 +196,41 @@ TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
     CHECK(countLeaves(newTree, State::Inserted) == 1);
 }
 
+TEST_CASE("Compound statement doesn't unite statements",
+          "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Node oldTree = makeTree(R"(
+        void f() {
+            if(condition1) {
+                if(condition2) {
+                }
+            }
+        }
+    )", true);
+    Node newTree = makeTree(R"(
+        void f() {
+            if(condition1) {
+                // comment
+                if(condition2) {
+                }
+            }
+        }
+    )", true);
+
+    distill(oldTree, newTree);
+
+    CHECK(countLeaves(oldTree, State::Updated) == 0);
+    CHECK(countLeaves(oldTree, State::Deleted) == 0);
+    CHECK(countLeaves(oldTree, State::Inserted) == 0);
+
+    CHECK(countLeaves(newTree, State::Updated) == 0);
+    CHECK(countLeaves(newTree, State::Deleted) == 0);
+    CHECK(countLeaves(newTree, State::Inserted) == 1);
+}
+
 static Node
 makeTree(const std::string &str, bool stree)
 {
