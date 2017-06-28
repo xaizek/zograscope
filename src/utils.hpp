@@ -7,6 +7,22 @@
 #include <string>
 #include <vector>
 
+class DiceString
+{
+public:
+    DiceString(std::string s);
+
+public:
+    float compare(DiceString &other);
+
+private:
+    const std::vector<short> & getBigrams();
+
+private:
+    const std::string s;
+    std::vector<short> bigrams;
+};
+
 /**
  * @brief Splits string in a range-for loop friendly way.
  *
@@ -27,6 +43,12 @@ split(const std::string &str, char with)
     return results;
 }
 
-float diceCoefficient(const std::string &a, const std::string &b);
+inline float
+diceCoefficient(const std::string &a, const std::string &b)
+{
+    // XXX: this is much faster with caching!
+    DiceString diceB = b;
+    return DiceString(a).compare(diceB);
+}
 
 #endif // UTILS_HPP__

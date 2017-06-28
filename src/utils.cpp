@@ -1,44 +1,69 @@
 #include "utils.hpp"
 
-#include <boost/functional/hash.hpp>
-
-#include <array>
+#include <iterator>
 #include <string>
-#include <unordered_set>
+#include <utility>
+
+class CountIterator :
+    public std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+public:
+    CountIterator & operator*() { return *this; }
+    CountIterator & operator++() { return *this; }
+    CountIterator & operator++(int) { return *this; }
+
+    template <typename T>
+    CountIterator & operator=(const T &)
+    {
+        ++count;
+        return *this;
+    }
+
+    int getCount() const { return count; }
+
+private:
+    int count = 0;
+};
+
+DiceString::DiceString(std::string s) : s(std::move(s))
+{
+}
 
 float
-diceCoefficient(const std::string &a, const std::string &b)
+DiceString::compare(DiceString &other)
 {
-    struct Hash
-    {
-        std::size_t operator()(const std::array<char, 2> s) const
-        {
-            std::size_t h = std::hash<char>()(s[0]);
-            boost::hash_combine(h, std::hash<char>()(s[1]));
-            return h;
-        }
-    };
-
-    if (a.length() < 2U && b.length() < 2U) {
-        return (a == b) ? 1.0f : 0.0f;
+    if (s.length() < 2U && other.s.length() < 2U) {
+        return (s == other.s) ? 1.0f : 0.0f;
     }
-    if (a.length() < 2U || b.length() < 2U) {
+    if (s.length() < 2U || other.s.length() < 2U) {
         return 0.0f;
     }
 
-    std::unordered_set<std::array<char, 2>, Hash> ab;
-    for (std::size_t i = 0U; i < a.length() - 1U; ++i) {
-        ab.insert({ a[i], a[i + 1U] });
-    }
+    const std::vector<short> &bigrams = getBigrams();
+    const std::vector<short> &otherBigrams = other.getBigrams();
+    const int common = std::set_intersection(bigrams.cbegin(), bigrams.cend(),
+                                             otherBigrams.cbegin(),
+                                             otherBigrams.cend(),
+                                             CountIterator())
+                      .getCount();
 
-    int common = 0;
+    return (2.0f*common)/(bigrams.size() + otherBigrams.size());
+}
 
-    std::unordered_set<std::array<char, 2>, Hash> bb;
-    for (std::size_t i = 0U; i < b.length() - 1U; ++i) {
-        if (bb.insert({ b[i], b[i + 1U] }).second) {
-            common += ab.count({ b[i], b[i + 1U] });
+const std::vector<short> &
+DiceString::getBigrams()
+{
+    if (bigrams.empty() && s.length() >= 2U) {
+        bigrams.reserve(s.length() - 1U);
+        for (std::size_t i = 0U; i < s.length() - 1U; ++i) {
+            const int bigram = (static_cast<unsigned char>(s[0]) << CHAR_BIT)
+                             | static_cast<unsigned char>(s[1]);
+            bigrams.push_back(bigram);
         }
+        std::sort(bigrams.begin(), bigrams.end());
+        bigrams.erase(std::unique(bigrams.begin(), bigrams.end()),
+                      bigrams.end());
     }
 
-    return (2.0f*common)/(ab.size() + bb.size());
+    return bigrams;
 }
