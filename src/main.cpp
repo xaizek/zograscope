@@ -1,6 +1,8 @@
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -21,6 +23,77 @@
 namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args);
+
+class TimeReport
+{
+    using clock = std::chrono::high_resolution_clock;
+
+    struct Measure
+    {
+        Measure(std::string &&stage, clock::time_point start)
+            : stage(std::move(stage)), start(start)
+        {
+        }
+
+        std::string stage;
+        clock::time_point start;
+        clock::time_point end;
+    };
+
+    class ProxyTimer
+    {
+    public:
+        ProxyTimer(TimeReport &tr) : tr(tr) { }
+        ~ProxyTimer() try
+        {
+            tr.stop();
+        } catch (...) {
+            // Do not throw from a destructor.
+        }
+
+    private:
+        TimeReport &tr;
+    };
+
+    friend inline std::ostream &
+    operator<<(std::ostream &os, const TimeReport &tr)
+    {
+        for (const Measure &measure : tr.measures) {
+            using seconds = std::chrono::duration<float>;
+            auto duration =
+                std::chrono::nanoseconds(measure.end - measure.start);
+            os << measure.stage << " -- " << seconds(duration).count() << "s\n";
+        }
+        return os;
+    }
+
+public:
+    ProxyTimer measure(const std::string &stage)
+    {
+        start(stage);
+        return ProxyTimer(*this);
+    }
+
+    void start(std::string stage)
+    {
+        currentMeasure.emplace(std::move(stage), clock::now());
+    }
+
+    void stop()
+    {
+        if (!currentMeasure) {
+            throw std::logic_error("Can't stop timer that isn't running");
+        }
+
+        currentMeasure->end = clock::now();
+        measures.push_back(*currentMeasure);
+        currentMeasure.reset();
+    }
+
+private:
+    boost::optional<Measure> currentMeasure;
+    std::vector<Measure> measures;
+};
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -81,6 +154,7 @@ main(int argc, char *argv[])
     const bool skipDiff = varMap.count("skip-diff");
     const bool color = varMap.count("color");
     const bool coarse = varMap.count("coarse");
+    const bool timeReport = varMap.count("time-report");
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
 
     if (color) {
@@ -88,6 +162,7 @@ main(int argc, char *argv[])
     }
 
     RedirectToPager redirectToPager;
+    TimeReport tr;
 
     Node treeA, treeB;
 
@@ -147,21 +222,27 @@ main(int argc, char *argv[])
     // markSatellites(treeB);
 
     Node *T1 = &treeA, *T2 = &treeB;
-    reduceTrees(T1, T2);
+    tr.measure("reduction"), reduceTrees(T1, T2);
 
     if (coarse) {
+        auto timer = tr.measure("diffing");
         distill(*T1, *T2);
     } else {
+        auto timer = tr.measure("diffing");
         std::cout << "TED(T1, T2) = " << ted(*T1, *T2) << '\n';
     }
 
     dumpTrees();
 
     Printer printer(treeA, treeB);
-    printer.print();
+    tr.measure("printing"), printer.print();
 
     // printTree("T1", treeA);
     // printTree("T2", treeB);
+
+    if (timeReport) {
+        std::cout << tr;
+    }
 
     return EXIT_SUCCESS;
 }
@@ -194,6 +275,7 @@ parseOptions(const std::vector<std::string> &args)
         ("skip-diff", "just parse")
         ("dump-tree", "display tree(s)")
         ("coarse", "use coarse-grained tree")
+        ("time-report",  "report time spent on different activities")
         ("color", "force colorization of output");
 
     po::options_description allOptions;
