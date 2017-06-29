@@ -56,8 +56,8 @@ DiceString::getBigrams()
     if (bigrams.empty() && s.length() >= 2U) {
         bigrams.reserve(s.length() - 1U);
         for (std::size_t i = 0U; i < s.length() - 1U; ++i) {
-            const int bigram = (static_cast<unsigned char>(s[0]) << CHAR_BIT)
-                             | static_cast<unsigned char>(s[1]);
+            const int bigram = (static_cast<unsigned char>(s[i]) << CHAR_BIT)
+                             | static_cast<unsigned char>(s[i + 1U]);
             bigrams.push_back(bigram);
         }
         std::sort(bigrams.begin(), bigrams.end());

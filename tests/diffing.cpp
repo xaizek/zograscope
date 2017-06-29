@@ -140,6 +140,32 @@ TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
     CHECK(countLeaves(newTree, State::Inserted) == 1);
 }
 
+TEST_CASE("Different trees are recognized as different", "[comparison]")
+{
+    Node oldTree = makeTree(R"(
+        aggregate var = {
+            { .field = 1 },
+        };
+    )", true);
+    Node newTree = makeTree(R"(
+        aggregate var = {
+            { .field = 2 },
+        };
+    )", true);
+
+    Node *oldT = &oldTree, *newT = &newTree;
+    reduceTreesFine(oldT, newT);
+    distill(*oldT, *newT);
+
+    CHECK(countLeaves(oldTree, State::Updated) == 1);
+    CHECK(countLeaves(oldTree, State::Deleted) == 0);
+    CHECK(countLeaves(oldTree, State::Inserted) == 0);
+
+    CHECK(countLeaves(newTree, State::Updated) == 1);
+    CHECK(countLeaves(newTree, State::Deleted) == 0);
+    CHECK(countLeaves(newTree, State::Inserted) == 0);
+}
+
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
