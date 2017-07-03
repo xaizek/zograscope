@@ -28,7 +28,7 @@ static bool buildTreeFromFile(const std::string &path, bool coarse,
 
 class TimeReport
 {
-    using clock = std::chrono::high_resolution_clock;
+    using clock = std::chrono::steady_clock;
 
     struct Measure
     {
@@ -61,10 +61,9 @@ class TimeReport
     operator<<(std::ostream &os, const TimeReport &tr)
     {
         for (const Measure &measure : tr.measures) {
-            using seconds = std::chrono::duration<float>;
-            auto duration =
-                std::chrono::nanoseconds(measure.end - measure.start);
-            os << measure.stage << " -- " << seconds(duration).count() << "s\n";
+            using msf = std::chrono::duration<float, std::milli>;
+            msf duration = measure.end - measure.start;
+            os << measure.stage << " -- " << duration.count() << "ms\n";
         }
         return os;
     }
