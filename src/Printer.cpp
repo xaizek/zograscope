@@ -371,7 +371,7 @@ getHighlight(const Node &node)
 
         case Type::Jumps:
         case Type::Keywords:
-            return 83_fg;
+            return 115_fg;
         case Type::LeftBrackets:
         case Type::RightBrackets:
             return 222_fg;
