@@ -1,7 +1,5 @@
 #include "Printer.hpp"
 
-#include <boost/algorithm/string/trim.hpp>
-
 #include <deque>
 #include <functional>
 #include <iomanip>
@@ -235,7 +233,7 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
     std::vector<DiceString> rightLines;
     rightLines.reserve(nu - nl);
     for (size_type i = nl; i < nu; ++i) {
-        rightLines.emplace_back(boost::trim_copy(r[i]));
+        rightLines.emplace_back(r[i]);
     }
 
     // Edit distance finding.
@@ -246,7 +244,7 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
         d(i, 0) = i;
     }
     for (size_type i = 1U; i <= ou - ol; ++i) {
-        DiceString leftLine = boost::trim_copy(l[ol + i - 1U]);
+        DiceString leftLine = l[ol + i - 1U];
         for (size_type j = 1U; j <= nu - nl; ++j) {
             // XXX: should we compare tokens here instead?
             const bool same = (leftLine.compare(rightLines[j - 1U]) >= 0.8f);
