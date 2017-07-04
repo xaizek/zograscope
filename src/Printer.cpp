@@ -1,6 +1,5 @@
 #include "Printer.hpp"
 
-#include <deque>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -8,6 +7,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "dtl/dtl.hpp"
 
 #include "decoration.hpp"
 #include "tree.hpp"
@@ -55,8 +56,8 @@ struct DiffLine
 
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::deque<DiffLine> compare(const std::vector<std::string> &l,
-                                    const std::vector<std::string> &r);
+static std::vector<DiffLine> dtlCompare(const std::vector<std::string> &l,
+                                        const std::vector<std::string> &r);
 static decor::Decoration getHighlight(const Node &node);
 static unsigned int measureWidth(const std::string &s);
 
@@ -74,7 +75,7 @@ Printer::print()
     std::vector<std::string> l = split(printSource(left), '\n');
     std::vector<std::string> r = split(printSource(right), '\n');
 
-    std::deque<DiffLine> diff = compare(l, r);
+    std::vector<DiffLine> diff = dtlCompare(l, r);
 
     unsigned int maxLeftWidth = 0U;
     unsigned int maxRightWidth = 0U;
@@ -209,67 +210,46 @@ countWidth(int n)
     return (width == 0) ? 1 : width;
 }
 
-static std::deque<DiffLine>
-compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
+static std::vector<DiffLine>
+dtlCompare(const std::vector<std::string> &l, const std::vector<std::string> &r)
 {
-    enum { Wins = 1, Wdel = 1, Wren = 1 };
-
     using size_type = std::vector<std::string>::size_type;
 
-    // Narrow portion of lines that should be compared by throwing away matching
-    // leading and trailing lines.
-    size_type ol = 0U, nl = 0U, ou = l.size(), nu = r.size();
-    while (ol < ou && nl < nu && l[ol] == r[nl]) {
-        ++ol;
-        ++nl;
-    }
-    while (ou > ol && nu > nl && l[ou - 1U] == r[nu - 1U]) {
-        --ou;
-        --nu;
+    std::vector<DiceString> leftTrimmed;
+    leftTrimmed.reserve(l.size());
+    for (const auto &s : l) {
+        leftTrimmed.emplace_back(s);
     }
 
-    IntMatrix d(ou - ol + 1U, nu - nl + 1U);
-
-    std::vector<DiceString> rightLines;
-    rightLines.reserve(nu - nl);
-    for (size_type i = nl; i < nu; ++i) {
-        rightLines.emplace_back(r[i]);
+    std::vector<DiceString> rightTrimmed;
+    rightTrimmed.reserve(r.size());
+    for (const auto &s : r) {
+        rightTrimmed.emplace_back(s);
     }
 
-    // Edit distance finding.
-    for (size_type j = 0U; j <= nu - nl; ++j) {
-        d(0, j) = j;
-    }
-    for (size_type i = 0U; i <= ou - ol; ++i) {
-        d(i, 0) = i;
-    }
-    for (size_type i = 1U; i <= ou - ol; ++i) {
-        DiceString leftLine = l[ol + i - 1U];
-        for (size_type j = 1U; j <= nu - nl; ++j) {
-            // XXX: should we compare tokens here instead?
-            const bool same = (leftLine.compare(rightLines[j - 1U]) >= 0.8f);
-            d(i, j) = std::min(std::min(d(i - 1U, j) + Wren,
-                                        d(i, j - 1U) + Wins),
-                               d(i - 1U, j - 1U) + (same ? 0 : Wren));
-        }
-    }
+    auto cmp = [](DiceString &a, DiceString &b) {
+        return (a.compare(b) >= 0.8f);
+    };
+
+    dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)>
+        diff(leftTrimmed, rightTrimmed, cmp);
+    diff.compose();
 
     size_type identicalLines = 0U;
-
     const size_type minFold = 3;
     const size_type ctxSize = 2;
-
-    std::deque<DiffLine> diffSeq;
+    std::vector<DiffLine> diffSeq;
 
     auto foldIdentical = [&](bool last) {
-        size_type startContext = (last ? 0 : ctxSize);
-        size_type endContext = (identicalLines == diffSeq.size() ? 0 : ctxSize);
-        size_type context = startContext + endContext;
+        const size_type startContext =
+            (identicalLines == diffSeq.size() ? 0U : ctxSize);
+        const size_type endContext = (last ? 0U : ctxSize);
+        const size_type context = startContext + endContext;
 
         if (identicalLines >= context && identicalLines - context > minFold) {
-            diffSeq.erase(diffSeq.cbegin() + startContext,
-                          diffSeq.cbegin() + (identicalLines - endContext));
-            diffSeq.emplace(diffSeq.cbegin() + startContext, Diff::Fold,
+            diffSeq.erase(diffSeq.cend() - (identicalLines - startContext),
+                          diffSeq.cend() - endContext);
+            diffSeq.emplace(diffSeq.cend() - endContext, Diff::Fold,
                             identicalLines - context);
         }
         identicalLines = 0U;
@@ -278,48 +258,27 @@ compare(const std::vector<std::string> &l, const std::vector<std::string> &r)
     auto handleSameLines = [&](size_type i, size_type j) {
         if (l[i] == r[j]) {
             ++identicalLines;
-            diffSeq.emplace_front(Diff::Identical);
+            diffSeq.emplace_back(Diff::Identical);
         } else {
             foldIdentical(false);
-            diffSeq.emplace_front(Diff::Different);
+            diffSeq.emplace_back(Diff::Different);
         }
     };
 
-    // Compose results with folding of long runs of identical lines (longer
-    // than two lines).  Mind that we go from last to first element and loops
-    // below process tail, middle and then head parts of the files.
-
-    for (size_type k = l.size(), l = r.size(); k > ou; --k, --l) {
-        handleSameLines(k - 1U, l - 1U);
-    }
-
-    int i = ou - ol, j = nu - nl;
-    while (i != 0U || j != 0U) {
-        if (i == 0) {
-            --j;
-            foldIdentical(false);
-            diffSeq.emplace_front(Diff::Right);
-        } else if (j == 0) {
-            --i;
-            foldIdentical(false);
-            diffSeq.emplace_front(Diff::Left);
-        } else if (d(i, j) == d(i, j - 1) + Wins) {
-            --j;
-            foldIdentical(false);
-            diffSeq.emplace_front(Diff::Right);
-        } else if (d(i, j) == d(i - 1, j) + Wdel) {
-            --i;
-            foldIdentical(false);
-            diffSeq.emplace_front(Diff::Left);
-        } else {
-            --i;
-            --j;
-            handleSameLines(ol + i, nl + j);
+    for (const auto &x : diff.getSes().getSequence()) {
+        switch (x.second.type) {
+            case dtl::SES_DELETE:
+                foldIdentical(false);
+                diffSeq.emplace_back(Diff::Left);
+                break;
+            case dtl::SES_ADD:
+                foldIdentical(false);
+                diffSeq.emplace_back(Diff::Right);
+                break;
+            case dtl::SES_COMMON:
+                handleSameLines(x.second.beforeIdx - 1, x.second.afterIdx - 1);
+                break;
         }
-    }
-
-    for (size_type i = ol; i != 0U; --i) {
-        handleSameLines(i - 1U, i - 1U);
     }
 
     foldIdentical(true);

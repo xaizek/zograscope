@@ -1,6 +1,7 @@
 NAME := jposed
 
-CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -Isrc/ -DYYDEBUG
+CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -Isrc/ -Ithird-party/
+CXXFLAGS += -DYYDEBUG
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options
 
 INSTALL := install -D

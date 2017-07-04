@@ -19,7 +19,7 @@ private:
     const std::vector<short> & getBigrams();
 
 private:
-    const std::string s;
+    std::string s;
     std::vector<short> bigrams;
 };
 
