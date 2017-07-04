@@ -85,6 +85,13 @@ public:
      */
     std::ostream & decorate(std::ostream &os) const;
 
+    /**
+     * @brief Whether this decoration does nothing.
+     *
+     * @returns @c true if so, @c false otherwise.
+     */
+    bool isEmpty() const;
+
 private:
     /**
      * @brief Decoration function (can be nullptr).

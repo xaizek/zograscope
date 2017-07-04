@@ -151,14 +151,28 @@ Decoration::decorate(std::ostream &os) const
     return os;
 }
 
+bool
+Decoration::isEmpty() const
+{
+    const bool noDecorator = (decorator == nullptr && intDecorator == nullptr);
+    const bool noChildren = (lhs == nullptr && rhs == nullptr);
+    return (noDecorator && noChildren);
+}
+
 std::ostream &
 ScopedDecoration::decorate(std::ostream &os) const
 {
-    os << decoration;
+    if (!decoration.isEmpty()) {
+        os << decoration;
+    }
+
     for (const auto app : apps) {
         app(os);
     }
-    os << def;
+
+    if (!decoration.isEmpty()) {
+        os << def;
+    }
     return os;
 }
 
