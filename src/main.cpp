@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 
     const bool highlightMode = (args.size() == 1U);
     const bool dumpTree = varMap.count("dump-tree");
-    const bool skipDiff = varMap.count("skip-diff");
+    const bool dryRun = varMap.count("dry-run");
     const bool color = varMap.count("color");
     const bool coarse = varMap.count("coarse");
     const bool timeReport = varMap.count("time-report");
@@ -175,7 +175,11 @@ main(int argc, char *argv[])
             print(treeA);
         }
 
-        std::cout << printSource(treeA) << '\n';
+        if (dryRun) {
+            std::cout << ">>> Skipping coloring\n";
+        } else {
+            std::cout << printSource(treeA) << '\n';
+        }
         return EXIT_SUCCESS;
     }
 
@@ -196,7 +200,7 @@ main(int argc, char *argv[])
         print(treeB);
     };
 
-    if (skipDiff) {
+    if (dryRun) {
         dumpTrees();
 
         std::cout << ">>> Skipping diffing\n";
@@ -277,11 +281,11 @@ parseOptions(const std::vector<std::string> &args)
     po::options_description cmdlineOptions;
 
     cmdlineOptions.add_options()
-        ("skip-diff", "just parse")
-        ("dump-tree", "display tree(s)")
-        ("coarse", "use coarse-grained tree")
+        ("dry-run",      "just parse")
+        ("dump-tree",    "display tree(s)")
+        ("coarse",       "use coarse-grained tree")
         ("time-report",  "report time spent on different activities")
-        ("color", "force colorization of output");
+        ("color",        "force colorization of output");
 
     po::options_description allOptions;
     allOptions.add(cmdlineOptions).add(hiddenOpts);
