@@ -26,3 +26,8 @@ TEST_CASE("Bit field is parsed", "[parser][conflicts]")
 {
     CHECK_FALSE(parse("struct s { unsigned int stuff : 1; };").hasFailed());
 }
+
+TEST_CASE("Conversion is not ambiguous", "[parser][conflicts]")
+{
+    CHECK_FALSE(parse("void f() { if ((size_t)*nlines == 1); }").hasFailed());
+}

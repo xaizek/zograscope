@@ -294,9 +294,9 @@ cast_expression
 /*     multiplicative-expression / cast-expression */
 /*     multiplicative-expression % cast-expression */
 multiplicative_expression
-    : cast_expression
+    : cast_expression                                %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
-    | multiplicative_expression '*' cast_expression
+    | multiplicative_expression '*' cast_expression  %dprec 1
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
     | multiplicative_expression '/' cast_expression
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
