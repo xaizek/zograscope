@@ -1,5 +1,7 @@
 #include "change-distilling.hpp"
 
+#include <cmath>
+
 #include <vector>
 
 #include "tree.hpp"
@@ -117,7 +119,7 @@ distill(Node &T1, Node &T2)
 
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const Match &a, const Match &b) {
-                         if (a.similarity == b.similarity) {
+                         if (std::fabs(a.similarity - b.similarity) < 0.01f) {
                              return commonAreaSize(b) < commonAreaSize(a);
                          }
                          return b.similarity < a.similarity;
