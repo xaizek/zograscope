@@ -23,7 +23,7 @@
 namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args);
-static bool buildTreeFromFile(const std::string &path, bool coarse,
+static bool buildTreeFromFile(const std::string &path, bool coarse, bool debug,
                               Node &treeRoot);
 
 class TimeReport
@@ -151,6 +151,7 @@ main(int argc, char *argv[])
     }
 
     const bool highlightMode = (args.size() == 1U);
+    const bool debug = varMap.count("debug");
     const bool dumpTree = varMap.count("dump-tree");
     const bool dryRun = varMap.count("dry-run");
     const bool color = varMap.count("color");
@@ -166,7 +167,7 @@ main(int argc, char *argv[])
 
     Node treeA;
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
-    if (!buildTreeFromFile(oldFile, coarse, treeA)) {
+    if (!buildTreeFromFile(oldFile, coarse, debug, treeA)) {
         return EXIT_FAILURE;
     }
 
@@ -185,7 +186,7 @@ main(int argc, char *argv[])
 
     Node treeB;
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
-    if (!buildTreeFromFile(newFile, coarse, treeB)) {
+    if (!buildTreeFromFile(newFile, coarse, debug, treeB)) {
         return EXIT_FAILURE;
     }
 
@@ -282,6 +283,7 @@ parseOptions(const std::vector<std::string> &args)
 
     cmdlineOptions.add_options()
         ("dry-run",      "just parse")
+        ("debug",        "enable debugging of grammar")
         ("dump-tree",    "display tree(s)")
         ("coarse",       "use coarse-grained tree")
         ("time-report",  "report time spent on different activities")
@@ -306,18 +308,20 @@ parseOptions(const std::vector<std::string> &args)
  *
  * @param path     Path to the file to read.
  * @param coarse   Whether to build coarse-grained tree.
+ * @param debug    Whether grammar debugging is enabled.
  * @param treeRoot Where assign the tree root.
  *
  * @returns @c true on success, otherwise @c false.
  */
 static bool
-buildTreeFromFile(const std::string &path, bool coarse, Node &treeRoot)
+buildTreeFromFile(const std::string &path, bool coarse, bool debug,
+                  Node &treeRoot)
 {
     std::cout << ">>> Parsing " << path << '\n';
 
     const std::string contents = readFile(path);
 
-    TreeBuilder tb = parse(contents);
+    TreeBuilder tb = parse(contents, debug);
     if (tb.hasFailed()) {
         return false;
     }

@@ -1344,7 +1344,7 @@ function_header
 %%
 
 TreeBuilder
-parse(const std::string &contents)
+parse(const std::string &contents, bool debug)
 {
     extern std::size_t yyoffset;
     yyoffset = 0U;
@@ -1352,9 +1352,10 @@ parse(const std::string &contents)
     yyline = 1U;
     extern std::size_t yycolumn;
     yycolumn = 1U;
+
 #if YYDEBUG
     extern int yydebug;
-    yydebug = 0;
+    yydebug = debug;
 #endif
 
     TreeBuilder tb;

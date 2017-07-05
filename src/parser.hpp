@@ -5,6 +5,6 @@
 
 class TreeBuilder;
 
-TreeBuilder parse(const std::string &contents);
+TreeBuilder parse(const std::string &contents, bool debug = false);
 
 #endif // PARSER_HPP__
