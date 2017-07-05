@@ -167,8 +167,9 @@ main(int argc, char *argv[])
 
     Node treeA;
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
-    if (boost::optional<Node> tree = buildTreeFromFile(oldFile, coarse,
-                                                       debug)) {
+    if (boost::optional<Node> tree = (tr.measure("parsing1"),
+                                      buildTreeFromFile(oldFile, coarse,
+                                                        debug))) {
         treeA = std::move(*tree);
     } else {
         return EXIT_FAILURE;
@@ -189,8 +190,9 @@ main(int argc, char *argv[])
 
     Node treeB;
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
-    if (boost::optional<Node> tree = buildTreeFromFile(newFile, coarse,
-                                                       debug)) {
+    if (boost::optional<Node> tree = (tr.measure("parsing2"),
+                                      buildTreeFromFile(newFile, coarse,
+                                                        debug))) {
         treeB = std::move(*tree);
     } else {
         return EXIT_FAILURE;
