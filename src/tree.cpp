@@ -1,5 +1,6 @@
 #include "tree.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/functional/hash.hpp>
 
 #include <algorithm>
@@ -13,32 +14,53 @@
 #include "types.hpp"
 #include "utils.hpp"
 
+static void print(const Node &node, std::vector<bool> &state);
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
 static bool areIdentical(const Node *l, const Node *r);
 
 void
-print(const Node &node, int lvl)
+print(const Node &node)
+{
+    std::vector<bool> state;
+    print(node, state);
+}
+
+static void
+print(const Node &node, std::vector<bool> &state)
 {
     // if (node.satellite) {
     //     return;
     // }
 
-    std::string prefix = (lvl > 0) ? "`---" : "";
+    auto l = [](const std::string &s) {
+        return boost::replace_all_copy(s, "\n", "<NL>");
+    };
+
+    std::cout << (state.empty() ? "--- " : "    ");
+
+    for (unsigned int i = 0U, n = state.size(); i < n; ++i) {
+        const bool last = (i == n - 1U);
+        if (state[i]) {
+            std::cout << (last ? "`-- " : "    ");
+        } else {
+            std::cout << (last ? "|-- " : "|   ");
+        }
+    }
 
     std::string suffix;
     switch (node.state) {
         case State::Unchanged: break;
         case State::Deleted:   suffix = " (deleted)";  break;
         case State::Inserted:  suffix = " (inserted)"; break;
-        case State::Updated:   suffix = " (updated with " + node.relative->label + "@" + std::to_string(node.relative->poID) + ")";  break;
+        case State::Updated:   suffix = " (updated with " + l(node.relative->label) + "@" + std::to_string(node.relative->poID) + ")";  break;
     }
 
     if (node.relative != nullptr && node.state != State::Updated) {
-        suffix += " (relative: " + node.relative->label + "@" + std::to_string(node.relative->poID) + ")";
+        suffix += " (relative: " + l(node.relative->label) + "@" + std::to_string(node.relative->poID) + ")";
     }
 
-    std::cout << std::setw(4*lvl) << prefix << node.label
+    std::cout << l(node.label)
               << '[' << node.poID << ']'
               << '(' << node.line << ';' << node.col << ')'
               << (node.satellite ? "{S}" : "")
@@ -46,9 +68,13 @@ print(const Node &node, int lvl)
               << '<' << static_cast<int>(node.type) << '>'
               << '<' << static_cast<int>(node.stype) << '>'
               << '\n';
-    for (const Node *child : node.children) {
-        print(*child, lvl + 1);
+
+    state.push_back(false);
+    for (unsigned int i = 0U, n = node.children.size(); i < n; ++i) {
+        state.back() = (i == n - 1U);
+        print(*node.children[i], state);
     }
+    state.pop_back();
 }
 
 static std::string

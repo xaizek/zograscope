@@ -30,7 +30,6 @@ struct Node
     Node *next = nullptr;
 };
 
-void print(const Node &node, int lvl = 0);
 class Tree
 {
 public:
@@ -60,6 +59,7 @@ private:
     Node *root = nullptr;
 };
 
+void print(const Node &node);
 
 std::vector<Node *> postOrder(Node &root);
 
