@@ -293,8 +293,8 @@ printSource(Node &root)
 
     std::function<void(Node &, State)> mark = [&](Node &node, State state) {
         node.state = state;
-        for (Node &child : node.children) {
-            mark(child, state);
+        for (Node *child : node.children) {
+            mark(*child, state);
         }
     };
 
@@ -336,11 +336,11 @@ printSource(Node &root)
             col += node.label.size();
         }
 
-        for (Node &child : node.children) {
+        for (Node *child : node.children) {
             // if (child.satellite) {
             //     child.state = node.state;
             // }
-            visit(child);
+            visit(*child);
         }
     };
     visit(root);

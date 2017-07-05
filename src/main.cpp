@@ -23,7 +23,7 @@
 namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args);
-static boost::optional<Node> buildTreeFromFile(const std::string &path,
+static boost::optional<Tree> buildTreeFromFile(const std::string &path,
                                                bool coarse, bool debug);
 
 class TimeReport
@@ -108,18 +108,18 @@ private:
 static void
 markSatellites(Node &node)
 {
-    auto nonTerminal = [](const Node &node) {
-        return node.line == 0 || node.col == 0 || !node.children.empty();
+    auto nonTerminal = [](const Node *node) {
+        return node->line == 0 || node->col == 0 || !node->children.empty();
     };
-    auto terminal = [&nonTerminal](const Node &node) {
+    auto terminal = [&nonTerminal](const Node *node) {
         return !nonTerminal(node);
     };
 
     if (std::any_of(node.children.cbegin(), node.children.cend(), nonTerminal)
         || std::all_of(node.children.cbegin(), node.children.cend(), terminal)) {
-        for (Node &child : node.children) {
-            child.satellite = !nonTerminal(child);
-            markSatellites(child);
+        for (Node *child : node.children) {
+            child->satellite = !nonTerminal(child);
+            markSatellites(*child);
         }
     }
 }
@@ -165,9 +165,9 @@ main(int argc, char *argv[])
     RedirectToPager redirectToPager;
     TimeReport tr;
 
-    Node treeA;
+    Tree treeA;
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
-    if (boost::optional<Node> tree = (tr.measure("parsing1"),
+    if (boost::optional<Tree> tree = (tr.measure("parsing1"),
                                       buildTreeFromFile(oldFile, coarse,
                                                         debug))) {
         treeA = std::move(*tree);
@@ -177,20 +177,20 @@ main(int argc, char *argv[])
 
     if (highlightMode) {
         if (dumpTree) {
-            print(treeA);
+            print(*treeA.getRoot());
         }
 
         if (dryRun) {
             std::cout << ">>> Skipping coloring\n";
         } else {
-            std::cout << printSource(treeA) << '\n';
+            std::cout << printSource(*treeA.getRoot()) << '\n';
         }
         return EXIT_SUCCESS;
     }
 
-    Node treeB;
+    Tree treeB;
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
-    if (boost::optional<Node> tree = (tr.measure("parsing2"),
+    if (boost::optional<Tree> tree = (tr.measure("parsing2"),
                                       buildTreeFromFile(newFile, coarse,
                                                         debug))) {
         treeB = std::move(*tree);
@@ -204,9 +204,9 @@ main(int argc, char *argv[])
         }
 
         std::cout << "T1\n";
-        print(treeA);
+        print(*treeA.getRoot());
         std::cout << "T2\n";
-        print(treeB);
+        print(*treeB.getRoot());
     };
 
     if (dryRun) {
@@ -216,28 +216,28 @@ main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-    // markSatellites(treeA);
-    // markSatellites(treeB);
+    // markSatellites(*treeA.getRoot());
+    // markSatellites(*treeB.getRoot());
 
-    Node *T1 = &treeA, *T2 = &treeB;
+    Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
     tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
 
     if (coarse) {
         auto timer = tr.measure("reduction-and-diffing");
-        for (Node &t1Child : T1->children) {
-            if (t1Child.satellite) {
+        for (Node *t1Child : T1->children) {
+            if (t1Child->satellite) {
                 continue;
             }
-            for (Node &t2Child : T2->children) {
-                if (t2Child.satellite || t1Child.label != t2Child.label) {
+            for (Node *t2Child : T2->children) {
+                if (t2Child->satellite || t1Child->label != t2Child->label) {
                     continue;
                 }
 
-                Node *subT1 = &t1Child, *subT2 = &t2Child;
+                Node *subT1 = t1Child, *subT2 = t2Child;
                 reduceTreesFine(subT1, subT2);
                 distill(*subT1, *subT2);
-                t1Child.satellite = true;
-                t2Child.satellite = true;
+                t1Child->satellite = true;
+                t2Child->satellite = true;
                 break;
             }
         }
@@ -252,11 +252,11 @@ main(int argc, char *argv[])
 
     dumpTrees();
 
-    Printer printer(treeA, treeB);
+    Printer printer(*treeA.getRoot(), *treeB.getRoot());
     tr.measure("printing"), printer.print();
 
-    // printTree("T1", treeA);
-    // printTree("T2", treeB);
+    // printTree("T1", *treeA.getRoot());
+    // printTree("T2", *treeB.getRoot());
 
     if (timeReport) {
         std::cout << tr;
@@ -320,7 +320,7 @@ parseOptions(const std::vector<std::string> &args)
  *
  * @returns Tree on success or empty optional on error.
  */
-static boost::optional<Node>
+static boost::optional<Tree>
 buildTreeFromFile(const std::string &path, bool coarse, bool debug)
 {
     std::cout << ">>> Parsing " << path << '\n';
@@ -332,6 +332,6 @@ buildTreeFromFile(const std::string &path, bool coarse, bool debug)
         return {};
     }
 
-    return coarse ? materializeTree(contents, tb.makeSTree())
-                  : materializeTree(contents, tb.getRoot());
+    return coarse ? Tree(contents, tb.makeSTree())
+                  : Tree(contents, tb.getRoot());
 }

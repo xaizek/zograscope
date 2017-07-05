@@ -18,7 +18,7 @@ enum class State
 struct Node
 {
     std::string label;
-    std::vector<Node> children;
+    std::vector<Node *> children;
     int poID = -1; // post-order ID
     State state = State::Unchanged;
     int line = 0;
@@ -31,10 +31,35 @@ struct Node
 };
 
 void print(const Node &node, int lvl = 0);
+class Tree
+{
+public:
+    Tree() = default;
+    Tree(const std::string &contents, const PNode *node);
+    Tree(const std::string &contents, const SNode *node);
 
-Node materializeTree(const std::string &contents, const PNode *node);
+public:
+    Node * getRoot()
+    {
+        return root;
+    }
 
-Node materializeTree(const std::string &contents, const SNode *node);
+    const Node * getRoot() const
+    {
+        return root;
+    }
+
+    Node & makeNode()
+    {
+        nodes.emplace_back();
+        return nodes.back();
+    }
+
+private:
+    std::deque<Node> nodes;
+    Node *root = nullptr;
+};
+
 
 std::vector<Node *> postOrder(Node &root);
 

@@ -28,8 +28,8 @@ lmld(Node &node, std::vector<int> &l)
         return;
     }
 
-    auto isSatellite = [](const Node &n) { return n.satellite; };
-    std::vector<Node> n = node.children;
+    auto isSatellite = [](const Node *n) { return n->satellite; };
+    std::vector<Node *> n = node.children;
     n.erase(std::remove_if(n.begin(), n.end(), isSatellite), n.end());
 
     if (n.empty()) {
@@ -37,10 +37,10 @@ lmld(Node &node, std::vector<int> &l)
         return;
     }
 
-    for (Node &child : n) {
-        lmld(child, l);
+    for (Node *child : n) {
+        lmld(*child, l);
     }
-    l[node.poID] = l[n[0].poID];
+    l[node.poID] = l[n[0]->poID];
 }
 
 static std::vector<int>
@@ -55,13 +55,13 @@ lmld(Node &root)
 static int
 countLeaves(Node &node)
 {
-    auto notSatellite = [](const Node &n) { return !n.satellite; };
+    auto notSatellite = [](const Node *n) { return !n->satellite; };
 
     int n = std::count_if(node.children.cbegin(), node.children.cend(),
                           notSatellite) == 0;
-    for (Node &child : node.children) {
-        if (!child.satellite) {
-            n += countLeaves(child);
+    for (Node *child : node.children) {
+        if (!child->satellite) {
+            n += countLeaves(*child);
         }
     }
     return n;
@@ -142,16 +142,16 @@ renameCost(const Node *n1, const Node *n2)
 
     std::string n1l;
     int a = 0, b = 0;
-    for (const Node &child : n1->children) {
-        if (child.satellite) {
-            n1l += child.label;
+    for (const Node *child : n1->children) {
+        if (child->satellite) {
+            n1l += child->label;
             ++a;
         }
     }
     std::string n2l;
-    for (const Node &child : n2->children) {
-        if (child.satellite) {
-            n2l += child.label;
+    for (const Node *child : n2->children) {
+        if (child->satellite) {
+            n2l += child->label;
             ++b;
         }
     }

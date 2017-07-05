@@ -15,8 +15,8 @@ postOrderAndInit(Node &node, std::vector<Node *> &v)
 
     node.relative = nullptr;
 
-    for (Node &child : node.children) {
-        postOrderAndInit(child, v);
+    for (Node *child : node.children) {
+        postOrderAndInit(*child, v);
     }
     node.poID = v.size();
 
@@ -51,9 +51,9 @@ static void
 markNode(Node &node, State state)
 {
     node.state = state;
-    for (Node &child : node.children) {
-        if (child.satellite && child.stype == SType::None) {
-            child.state = state;
+    for (Node *child : node.children) {
+        if (child->satellite && child->stype == SType::None) {
+            child->state = state;
         }
     }
 }
@@ -82,7 +82,8 @@ distill(Node &T1, Node &T2)
         }
         i = m.x->poID + 1;
         j = m.y->poID + 1;
-        while (i < (int)po1.size() && j > (int)po2.size() && po1[i]->label == po2[j]->label) {
+        while (i < (int)po1.size() && j > (int)po2.size() &&
+               po1[i]->label == po2[j]->label) {
             ++size;
             ++i;
             ++j;
@@ -142,9 +143,9 @@ distill(Node &T1, Node &T2)
             return node->poID;
         }
 
-        for (const Node &child : node->children) {
-            if (!child.satellite) {
-                return lml(&child);
+        for (const Node *child : node->children) {
+            if (!child->satellite) {
+                return lml(child);
             }
         }
 

@@ -15,8 +15,7 @@
 
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
-static bool areIdentical(const Node &l, const Node &r);
-
+static bool areIdentical(const Node *l, const Node *r);
 
 void
 print(const Node &node, int lvl)
@@ -47,8 +46,8 @@ print(const Node &node, int lvl)
               << '<' << static_cast<int>(node.type) << '>'
               << '<' << static_cast<int>(node.stype) << '>'
               << '\n';
-    for (const Node &child : node.children) {
-        print(child, lvl + 1);
+    for (const Node *child : node.children) {
+        print(*child, lvl + 1);
     }
 }
 
@@ -88,10 +87,10 @@ materializeLabel(const std::string &contents, const PNode *node)
     return label;
 }
 
-Node
-materializeTree(const std::string &contents, const PNode *node)
+static Node *
+materializeNode(Tree &tree, const std::string &contents, const PNode *node)
 {
-    Node n;
+    Node &n = tree.makeNode();
     n.label = materializeLabel(contents, node);
     n.line = node->line;
     n.col = node->col;
@@ -99,14 +98,19 @@ materializeTree(const std::string &contents, const PNode *node)
 
     n.children.reserve(node->children.size());
     for (const PNode *child : node->children) {
-        n.children.push_back(materializeTree(contents, child));
+        n.children.push_back(materializeNode(tree, contents, child));
     }
 
-    return n;
+    return &n;
 }
 
-Node
-materializeTree(const std::string &contents, const SNode *node)
+Tree::Tree(const std::string &contents, const PNode *node)
+{
+    root = materializeNode(*this, contents, node);
+}
+
+static Node *
+materializeNode(Tree &tree, const std::string &contents, const SNode *node)
 {
     std::function<const PNode *(const PNode *)> lml = [&](const PNode *node) {
         return node->children.empty()
@@ -114,8 +118,8 @@ materializeTree(const std::string &contents, const SNode *node)
              : lml(node->children.front());
     };
 
-    std::function<Node(const SNode *)> visit = [&](const SNode *node) {
-        Node n;
+    std::function<Node *(const SNode *)> visit = [&](const SNode *node) {
+        Node &n = tree.makeNode();
         n.stype = node->value->stype;
         n.satellite = (n.stype == SType::Separator);
 
@@ -125,20 +129,26 @@ materializeTree(const std::string &contents, const SNode *node)
             n.label = materializePTree(contents, node->value);
             n.line = leaf->line;
             n.col = leaf->col;
-            return n;
+            n.next = materializeNode(tree, contents, node->value);
+            return &n;
         }
 
         n.children.reserve(node->children.size());
         for (SNode *child : node->children) {
             n.children.emplace_back(visit(child));
-            if (!n.children.back().satellite && n.label.empty()) {
-                n.label = n.children.back().label;
+            if (!n.children.back()->satellite && n.label.empty()) {
+                n.label = n.children.back()->label;
             }
         }
-        return n;
+        return &n;
     };
 
     return visit(node);
+}
+
+Tree::Tree(const std::string &contents, const SNode *node)
+{
+    root = materializeNode(*this, contents, node);
 }
 
 static std::string
@@ -193,9 +203,9 @@ postOrder(Node &node, std::vector<Node *> &v)
         return;
     }
 
-    for (Node &child : node.children) {
-        child.relative = &node;
-        postOrder(child, v);
+    for (Node *child : node.children) {
+        child->relative = &node;
+        postOrder(*child, v);
     }
     node.poID = v.size();
     v.push_back(&node);
@@ -231,8 +241,8 @@ for_each_n(I first, T n, F f)
     return first;
 }
 
-static std::vector<Node>::iterator
-rootPos(Node &root, Node *n)
+static std::vector<Node *>::iterator
+rootPos(Node &root, Node *&n)
 {
     if (n == &root) {
         return root.children.begin();
@@ -241,7 +251,7 @@ rootPos(Node &root, Node *n)
     while (n->relative != &root) {
         n = n->relative;
     }
-    return root.children.begin() + (n - &root.children[0]);
+    return root.children.begin() + (&n - &root.children[0]);
 }
 
 static void
@@ -260,8 +270,8 @@ reduce(std::vector<Node *> &po1, std::vector<Node *> &po2)
     auto e = mismatch(po1.rbegin(), rit(f.first), po2.rbegin(), rit(f.second),
                       eq);
 
-    auto mark = [](Node &n) {
-        n.satellite = true;
+    auto mark = [](Node *n) {
+        n->satellite = true;
     };
 
     int t1Front;
@@ -310,12 +320,11 @@ void
 reduceTreesFine(Node *&T1, Node *&T2)
 {
     while (T1->children.size() == 1U && T2->children.size() == 1U) {
-        T1 = &T1->children.front();
-        T2 = &T2->children.front();
+        T1 = T1->children.front();
+        T2 = T2->children.front();
     }
 
-    auto notReduced = [](const Node &n) { return !n.satellite; };
-
+    auto notReduced = [](const Node *n) { return !n->satellite; };
 
     std::vector<Node *> po1 = postOrder(*T1);
     std::vector<Node *> po2 = postOrder(*T2);
@@ -337,14 +346,14 @@ reduceTreesFine(Node *&T1, Node *&T2)
             break;
         }
 
-        T1 = &*std::find_if(T1->children.begin(), T1->children.end(),
-                            notReduced);
-        T2 = &*std::find_if(T2->children.begin(), T2->children.end(),
-                            notReduced);
+        T1 = *std::find_if(T1->children.begin(), T1->children.end(),
+                           notReduced);
+        T2 = *std::find_if(T2->children.begin(), T2->children.end(),
+                           notReduced);
 
         while (T1->children.size() == 1U && T2->children.size() == 1U) {
-            T1 = &T1->children.front();
-            T2 = &T2->children.front();
+            T1 = T1->children.front();
+            T2 = T2->children.front();
         }
 
         po1 = postOrder(*T1);
@@ -353,11 +362,11 @@ reduceTreesFine(Node *&T1, Node *&T2)
 }
 
 static std::size_t
-hashNode(const Node &node)
+hashNode(const Node *node)
 {
-    const std::size_t hash = std::hash<std::string>()(node.label);
-    return std::accumulate(node.children.cbegin(), node.children.cend(), hash,
-                           [](std::size_t h, const Node &child) {
+    const std::size_t hash = std::hash<std::string>()(node->label);
+    return std::accumulate(node->children.cbegin(), node->children.cend(), hash,
+                           [](std::size_t h, const Node *child) {
                                boost::hash_combine(h, hashNode(child));
                                return h;
                            });
@@ -368,7 +377,7 @@ hashChildren(const Node &node)
 {
     std::vector<std::size_t> hashes;
     hashes.reserve(node.children.size());
-    for (const Node &child : node.children) {
+    for (const Node *child : node.children) {
         hashes.push_back(hashNode(child));
     }
     return hashes;
@@ -383,16 +392,16 @@ reduceTreesCoarse(Node *T1, Node *T2)
     for (unsigned int i = 0U, n = children1.size(); i < n; ++i) {
         const std::size_t hash1 = children1[i];
         for (unsigned int j = 0U, n = children2.size(); j < n; ++j) {
-            if (T2->children[j].satellite) {
+            if (T2->children[j]->satellite) {
                 continue;
             }
 
             const std::size_t hash2 = children2[j];
             if (hash1 == hash2) {
-                T1->children[i].relative = &T2->children[j];
-                T1->children[i].satellite = true;
-                T2->children[j].relative = &T1->children[i];
-                T2->children[j].satellite = true;
+                T1->children[i]->relative = T2->children[j];
+                T1->children[i]->satellite = true;
+                T2->children[j]->relative = T1->children[i];
+                T2->children[j]->satellite = true;
                 break;
             }
         }
@@ -400,14 +409,14 @@ reduceTreesCoarse(Node *T1, Node *T2)
 }
 
 static bool
-areIdentical(const Node &l, const Node &r)
+areIdentical(const Node *l, const Node *r)
 {
-    if (l.label != r.label || l.children.size() != r.children.size()) {
+    if (l->label != r->label || l->children.size() != r->children.size()) {
         return false;
     }
 
-    for (unsigned int i = 0; i < l.children.size(); ++i) {
-        if (!areIdentical(l.children[i], r.children[i])) {
+    for (unsigned int i = 0; i < l->children.size(); ++i) {
+        if (!areIdentical(l->children[i], r->children[i])) {
             return false;
         }
     }
