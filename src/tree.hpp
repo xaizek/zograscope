@@ -27,6 +27,7 @@ struct Node
     bool satellite = false;
     Type type = Type::Virtual;
     SType stype = SType::None;
+    Node *next = nullptr;
 };
 
 void print(const Node &node, int lvl = 0);

@@ -291,8 +291,21 @@ printSource(Node &root)
 {
     std::ostringstream oss;
 
+    std::function<void(Node &, State)> mark = [&](Node &node, State state) {
+        node.state = state;
+        for (Node &child : node.children) {
+            mark(child, state);
+        }
+    };
+
     int line = 1, col = 1;
     std::function<void(Node &)> visit = [&](Node &node) {
+        if (node.next != nullptr) {
+            mark(*node.next, node.state);
+            visit(*node.next);
+            return;
+        }
+
         if (node.line != 0 && node.col != 0) {
             while (node.line > line) {
                 oss << '\n';
