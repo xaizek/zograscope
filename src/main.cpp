@@ -23,8 +23,8 @@
 namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args);
-static bool buildTreeFromFile(const std::string &path, bool coarse, bool debug,
-                              Node &treeRoot);
+static boost::optional<Node> buildTreeFromFile(const std::string &path,
+                                               bool coarse, bool debug);
 
 class TimeReport
 {
@@ -167,7 +167,10 @@ main(int argc, char *argv[])
 
     Node treeA;
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
-    if (!buildTreeFromFile(oldFile, coarse, debug, treeA)) {
+    if (boost::optional<Node> tree = buildTreeFromFile(oldFile, coarse,
+                                                       debug)) {
+        treeA = std::move(*tree);
+    } else {
         return EXIT_FAILURE;
     }
 
@@ -186,7 +189,10 @@ main(int argc, char *argv[])
 
     Node treeB;
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
-    if (!buildTreeFromFile(newFile, coarse, debug, treeB)) {
+    if (boost::optional<Node> tree = buildTreeFromFile(newFile, coarse,
+                                                       debug)) {
+        treeB = std::move(*tree);
+    } else {
         return EXIT_FAILURE;
     }
 
@@ -309,13 +315,11 @@ parseOptions(const std::vector<std::string> &args)
  * @param path     Path to the file to read.
  * @param coarse   Whether to build coarse-grained tree.
  * @param debug    Whether grammar debugging is enabled.
- * @param treeRoot Where assign the tree root.
  *
- * @returns @c true on success, otherwise @c false.
+ * @returns Tree on success or empty optional on error.
  */
-static bool
-buildTreeFromFile(const std::string &path, bool coarse, bool debug,
-                  Node &treeRoot)
+static boost::optional<Node>
+buildTreeFromFile(const std::string &path, bool coarse, bool debug)
 {
     std::cout << ">>> Parsing " << path << '\n';
 
@@ -323,10 +327,9 @@ buildTreeFromFile(const std::string &path, bool coarse, bool debug,
 
     TreeBuilder tb = parse(contents, debug);
     if (tb.hasFailed()) {
-        return false;
+        return {};
     }
 
-    treeRoot = coarse ? materializeTree(contents, tb.makeSTree())
-                      : materializeTree(contents, tb.getRoot());
-    return true;
+    return coarse ? materializeTree(contents, tb.makeSTree())
+                  : materializeTree(contents, tb.getRoot());
 }
