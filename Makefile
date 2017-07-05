@@ -172,7 +172,7 @@ $(out_dirs) $(out_dir)/docs:
 	mkdir -p $@
 
 clean:
-	-$(RM) -r coverage/ debug/ release/
+	-$(RM) -r coverage/ debug/ release/ sanitize-basic/
 	-$(RM) $(bin_objects) $(tests_objects) \
 	       $(bin_depends) $(tests_depends) \
 	       $(bin_autocpp) $(bin_autohpp) \
