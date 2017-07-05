@@ -20,46 +20,91 @@
 
 namespace io = boost::iostreams;
 
+/**
+ * @brief Base for hidden internals of RedirectToPager class.
+ */
 class RedirectToPager::Impl
 {
 public:
+    //! Virtual destructor.
     virtual ~Impl() = default;
 };
 
+/**
+ * @brief Redirects standard output into a pager.
+ *
+ * The redirection happens only if number of lines exceeds screen height,
+ * otherwise lines are just dumped onto the screen as is.
+ */
 class PagerRedirect : public RedirectToPager::Impl
 {
 public:
     /**
      * @brief Custom stream buffer that spawns pager for large outputs only.
      *
-     * Collect up to <terminal height> lines.  If buffer is closed with this
-     * limit not reached, it prints lines on std::cout.  If we hit the limit in
-     * the process of output, it opens a pager and feeds it all collected output
-     * and everything that comes next.
+     * Collect up to terminal height lines.  If buffer is closed with this limit
+     * not reached, it prints lines on std::cout.  If we hit the limit in the
+     * process of output, it opens a pager and feeds it all collected output and
+     * everything that comes next.
      */
     class ScreenPageBuffer
     {
     public:
+        //! Type of character used by this buffer.
         using char_type = char;
+        //! Category of functionality provided by this buffer implementation.
         using category = boost::iostreams::sink_tag;
 
     public:
+        /**
+         * @brief Constructs the buffer.
+         *
+         * @param screenHeight Height of terminal in lines.
+         * @param out Storage for output stream buffer backed up by a file.
+         */
         ScreenPageBuffer(unsigned int screenHeight,
                          io::stream_buffer<io::file_descriptor_sink> *out);
+        /**
+         * @brief Dumps output onto the screen or waits for pager to finish.
+         */
         ~ScreenPageBuffer();
 
     public:
+        /**
+         * @brief Writes @p n characters from @p s.
+         *
+         * @param s Character buffer.
+         * @param n Size of the buffer.
+         *
+         * @returns Number of successfully written characters.
+         */
         std::streamsize write(const char s[], std::streamsize n);
 
     private:
+        /**
+         * @brief Writes single character.
+         *
+         * @param c Character to write.
+         *
+         * @returns @c true on success, @c false otherwise.
+         */
         bool put(char c);
+        /**
+         * @brief Opens pager for output.
+         */
         void openPager();
 
     private:
+        //! Whether redirection into pager is enabled.
         bool redirectToPager = false;
+        //! Number of output lines collected so far.
         unsigned int nLines = 0U;
+        //! Height of terminal in lines.
         unsigned int screenHeight;
+        //! Output collected so far.
         std::string buffer;
+        //! Process id of a pager.
+        pid_t pid;
 
         /**
          * @brief Pointer to buffer stored in RedirectToPager.
@@ -67,27 +112,35 @@ public:
          * This is not by value, because ScreenPageBuffer needs to be copyable.
          */
         io::stream_buffer<io::file_descriptor_sink> *out;
-        pid_t pid;
     };
 
 public:
+    /**
+     * @brief Replaces buffer of @c std::cout with ScreenPageBuffer.
+     */
     PagerRedirect() : screenPageBuffer(getTerminalSize().second, &out)
     {
         rdbuf = std::cout.rdbuf(&screenPageBuffer);
     }
 
+    /**
+     * @brief Restores original buffer of @c std::cout.
+     */
     ~PagerRedirect()
     {
-        // Flush the stream to make sure that we put all contents we want through
-        // the custom stream buffer.
+        // Flush the stream to make sure that we put all contents we want
+        // through the custom stream buffer.
         std::cout.flush();
 
         std::cout.rdbuf(rdbuf);
     }
 
 private:
+    //! This is stored for ScreenPageBuffer class.
     io::stream_buffer<io::file_descriptor_sink> out;
+    //! Custom buffer implementation.
     io::stream_buffer<ScreenPageBuffer> screenPageBuffer;
+    //! Original buffer of @c std::cout.
     std::streambuf *rdbuf;
 };
 
