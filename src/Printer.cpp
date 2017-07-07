@@ -75,6 +75,7 @@ Printer::print()
     std::vector<std::string> l = split(printSource(left), '\n');
     std::vector<std::string> r = split(printSource(right), '\n');
 
+    // TODO: need to do comparison without highlighting or it skews results
     std::vector<DiffLine> diff = dtlCompare(l, r);
 
     unsigned int maxLeftWidth = 0U;
@@ -301,9 +302,10 @@ printSource(Node &root)
     int line = 1, col = 1;
     std::function<void(Node &)> visit = [&](Node &node) {
         if (node.next != nullptr) {
-            mark(*node.next, node.state);
-            visit(*node.next);
-            return;
+            if (node.state != State::Unchanged) {
+                mark(*node.next, node.state);
+            }
+            return visit(*node.next);
         }
 
         if (node.line != 0 && node.col != 0) {

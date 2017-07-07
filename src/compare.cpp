@@ -6,6 +6,8 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static void refine(Node &root);
+
 void
 compare(Node *T1, Node *T2, TimeReport &tr, bool coarse)
 {
@@ -32,6 +34,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse)
             Node *subT1 = t1Child, *subT2 = t2Child;
             reduceTreesFine(subT1, subT2);
             distill(*subT1, *subT2);
+            refine(*subT1);
             t1Child->satellite = true;
             t2Child->satellite = true;
             break;
@@ -39,4 +42,26 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse)
     }
 
     distill(*T1, *T2);
+    refine(*T1);
+}
+
+static void
+refine(Node &root)
+{
+    std::function<void(Node &)> visit = [&](Node &node) {
+        if (node.satellite) {
+            return;
+        }
+
+        if (node.line != 0 && node.col != 0 && node.state == State::Updated) {
+            node.state = State::Unchanged;
+            node.relative->state = State::Unchanged;
+            ted(*node.next, *node.relative->next);
+        }
+
+        for (Node *child : node.children) {
+            visit(*child);
+        }
+    };
+    visit(root);
 }

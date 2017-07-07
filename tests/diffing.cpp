@@ -280,6 +280,36 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
     CHECK(newMap == expectedNew);
 }
 
+TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f(int a,
+               int b)
+        {
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f(int a,
+               int c)
+        {
+        }
+    )", true);
+
+    TimeReport tr;
+    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
+    compare(oldT, newT, tr, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldT);
+    std::vector<Changes> newMap = makeChangeMap(*newT);
+
+    std::vector<Changes> expected = { Changes::No,
+        Changes::No, Changes::Mixed, Changes::No, Changes::No
+    };
+
+    CHECK(oldMap == expected);
+    CHECK(newMap == expected);
+}
+
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
