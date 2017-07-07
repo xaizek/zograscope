@@ -251,7 +251,7 @@ rootPos(Node &root, Node *&n)
     while (n->relative != &root) {
         n = n->relative;
     }
-    return root.children.begin() + (&n - &root.children[0]);
+    return std::find(root.children.begin(), root.children.end(), n);
 }
 
 static void
