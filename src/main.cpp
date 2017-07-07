@@ -11,13 +11,12 @@
 
 #include "Printer.hpp"
 #include "TreeBuilder.hpp"
-#include "change-distilling.hpp"
+#include "compare.hpp"
 #include "decoration.hpp"
 #include "integration.hpp"
 #include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
-#include "tree-edit-distance.hpp"
 #include "types.hpp"
 
 namespace po = boost::program_options;
@@ -150,43 +149,15 @@ main(int argc, char *argv[])
     // markSatellites(*treeB.getRoot());
 
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
-    tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
-
-    if (coarse) {
-        auto timer = tr.measure("reduction-and-diffing");
-        for (Node *t1Child : T1->children) {
-            if (t1Child->satellite) {
-                continue;
-            }
-            for (Node *t2Child : T2->children) {
-                if (t2Child->satellite || t1Child->label != t2Child->label) {
-                    continue;
-                }
-
-                Node *subT1 = t1Child, *subT2 = t2Child;
-                reduceTreesFine(subT1, subT2);
-                distill(*subT1, *subT2);
-                t1Child->satellite = true;
-                t2Child->satellite = true;
-                break;
-            }
-        }
-
-        distill(*T1, *T2);
-    } else {
-        tr.measure("fine-reduction"), reduceTreesCoarse(T1, T2);
-
-        auto timer = tr.measure("diffing");
-        std::cout << "TED(T1, T2) = " << ted(*T1, *T2) << '\n';
-    }
+    compare(T1, T2, tr, coarse);
 
     dumpTrees();
 
-    Printer printer(*treeA.getRoot(), *treeB.getRoot());
+    Printer printer(*T1, *T2);
     tr.measure("printing"), printer.print();
 
-    // printTree("T1", *treeA.getRoot());
-    // printTree("T2", *treeB.getRoot());
+    // printTree("T1", *T1);
+    // printTree("T2", *T2);
 
     if (timeReport) {
         std::cout << tr;
