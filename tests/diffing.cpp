@@ -7,11 +7,21 @@
 #include "parser.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
+#include "utils.hpp"
+
+enum class Changes
+{
+    No,
+    Additions,
+    Deletions,
+    Mixed,
+};
 
 static Tree makeTree(const std::string &str, bool stree = false);
 static const Node * findNode(const Tree &tree, Type type,
                              const std::string &label = {});
 static int countLeaves(const Node &root, State state);
+static std::vector<Changes> makeChangeMap(Node &root);
 
 TEST_CASE("Comment is marked as unmodified", "[comparison][postponed]")
 {
@@ -166,6 +176,64 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
 }
 
+TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+            while (condition1) {
+                if (condition2) {
+                    (void)ioe_errlst_append(&args->result.errors, dst, errno,
+                            "Write to destination file failed");
+                    error = 1;
+                    break;
+                }
+            }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+                while (condition1) {
+                    if (condition2) {
+                        (void)ioe_errlst_append(&args->result.errors, dst,
+                                errno, "Write to destination file failed");
+                        error = 1;
+                        break;
+                    }
+                }
+
+                if (fflush(out) != 0) {
+                    (void)ioe_errlst_append(&args->result.errors, dst, errno,
+                            "Write to destination file failed");
+                    error = 1;
+                }
+        }
+    )", true);
+
+    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
+    distill(*oldT, *newT);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldT);
+    std::vector<Changes> newMap = makeChangeMap(*newT);
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
+
+        Changes::Mixed,
+        Changes::Additions, Changes::Additions, Changes::Additions,
+        Changes::No,
+
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
@@ -312,4 +380,64 @@ countLeaves(const Node &root, State state)
 
     visit(root);
     return count;
+}
+
+static std::vector<Changes>
+makeChangeMap(Node &root)
+{
+    std::vector<Changes> map;
+
+    auto updateMap = [&](int line, const Node &node) {
+        if (map.size() <= static_cast<unsigned int>(line)) {
+            map.resize(line + 1);
+        }
+
+        Changes change = Changes::No;
+        switch (node.state) {
+            case State::Unchanged: change = Changes::No; break;
+            case State::Deleted:   change = Changes::Deletions; break;
+            case State::Inserted:  change = Changes::Additions; break;
+            case State::Updated:   change = Changes::Mixed; break;
+        }
+
+        if (map[line] == Changes::No) {
+            map[line] = change;
+        } else if (map[line] != change) {
+            map[line] = Changes::Mixed;
+        }
+    };
+
+    std::function<void(Node &, State)> mark = [&](Node &node, State state) {
+        node.state = state;
+        for (Node *child : node.children) {
+            mark(*child, state);
+        }
+    };
+
+    int line;
+    std::function<void(Node &)> visit = [&](Node &node) {
+        if (node.line != 0 && node.col != 0) {
+            line = node.line - 1;
+
+            if (node.next != nullptr) {
+                if (node.state != State::Unchanged) {
+                    mark(*node.next, node.state);
+                }
+                return visit(*node.next);
+            }
+
+            const std::vector<std::string> lines = split(node.label, '\n');
+            updateMap(line, node);
+            for (std::size_t i = 1U; i < lines.size(); ++i) {
+                updateMap(++line, node);
+            }
+        }
+
+        for (Node *child : node.children) {
+            visit(*child);
+        }
+    };
+    visit(root);
+
+    return map;
 }

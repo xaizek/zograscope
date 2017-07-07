@@ -182,38 +182,12 @@ materializePTree(const std::string &contents, const PNode *node)
 {
     std::string out;
 
-    int line = -1, col = -1;
     std::function<void(const PNode *)> visit = [&](const PNode *node) {
         if (node->line != 0 && node->col != 0) {
-            if (line < 0) {
-                line = node->line;
-                col = node->col;
-            }
-
-            while (node->line > line) {
-                out += '\n';
-                ++line;
-                col = 1;
-            }
-
-            while (node->col > col) {
-                out += ' ';
-                ++col;
-            }
-
-            const std::string label = materializeLabel(contents, node);
-            const std::vector<std::string> lines = split(label, '\n');
-            out += lines.front();
-            for (std::size_t i = 1U; i < lines.size(); ++i) {
-                out += '\n';
-                out += lines[i];
-                ++line;
-            }
-
-            col += label.size();
+            out += materializeLabel(contents, node);
         }
 
-        for (PNode *child : node->children) {
+        for (const PNode *child : node->children) {
             visit(child);
         }
     };
