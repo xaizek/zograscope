@@ -4,7 +4,9 @@
 
 #include "TreeBuilder.hpp"
 #include "change-distilling.hpp"
+#include "compare.hpp"
 #include "parser.hpp"
+#include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
@@ -227,6 +229,50 @@ TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
         Changes::Additions, Changes::Additions, Changes::Additions,
         Changes::No,
 
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Only similar enough functions are matched", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        int f() {
+            int i = 3;
+            return i;
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        int f() {
+            return f_internal();
+        }
+
+        static int f_internal() {
+            int i = 3;
+            return i;
+        }
+    )", true);
+
+    TimeReport tr;
+    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
+    compare(oldT, newT, tr, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldT);
+    std::vector<Changes> newMap = makeChangeMap(*newT);
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::No,
         Changes::No,
     };
 

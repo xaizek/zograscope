@@ -423,3 +423,23 @@ areIdentical(const Node *l, const Node *r)
 
     return true;
 }
+
+std::string
+printSubTree(const Node &root)
+{
+    std::string out;
+
+    std::function<void(const Node &)> visit = [&](const Node &node) {
+        if (node.line != 0 && node.col != 0) {
+            const std::vector<std::string> lines = split(node.label, '\n');
+            out += node.label;
+        }
+
+        for (const Node *child : node.children) {
+            visit(*child);
+        }
+    };
+    visit(root);
+
+    return out;
+}

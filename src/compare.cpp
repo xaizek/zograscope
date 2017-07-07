@@ -22,8 +22,10 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse)
         if (t1Child->satellite) {
             continue;
         }
+        std::string subtree1 = printSubTree(*t1Child);
         for (Node *t2Child : T2->children) {
-            if (t2Child->satellite || t1Child->label != t2Child->label) {
+            if (t2Child->satellite || t1Child->label != t2Child->label ||
+                diceCoefficient(subtree1, printSubTree(*t2Child)) < 0.6f) {
                 continue;
             }
 

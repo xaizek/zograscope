@@ -67,4 +67,6 @@ void reduceTreesFine(Node *&T1, Node *&T2);
 
 void reduceTreesCoarse(Node *T1, Node *T2);
 
+std::string printSubTree(const Node &root);
+
 #endif // TREE_HPP__
