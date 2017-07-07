@@ -2,7 +2,6 @@
 #include <boost/program_options.hpp>
 
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -16,6 +15,7 @@
 #include "decoration.hpp"
 #include "integration.hpp"
 #include "parser.hpp"
+#include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 #include "types.hpp"
@@ -25,76 +25,6 @@ namespace po = boost::program_options;
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static boost::optional<Tree> buildTreeFromFile(const std::string &path,
                                                bool coarse, bool debug);
-
-class TimeReport
-{
-    using clock = std::chrono::steady_clock;
-
-    struct Measure
-    {
-        Measure(std::string &&stage, clock::time_point start)
-            : stage(std::move(stage)), start(start)
-        {
-        }
-
-        std::string stage;
-        clock::time_point start;
-        clock::time_point end;
-    };
-
-    class ProxyTimer
-    {
-    public:
-        ProxyTimer(TimeReport &tr) : tr(tr) { }
-        ~ProxyTimer() try
-        {
-            tr.stop();
-        } catch (...) {
-            // Do not throw from a destructor.
-        }
-
-    private:
-        TimeReport &tr;
-    };
-
-    friend inline std::ostream &
-    operator<<(std::ostream &os, const TimeReport &tr)
-    {
-        for (const Measure &measure : tr.measures) {
-            using msf = std::chrono::duration<float, std::milli>;
-            msf duration = measure.end - measure.start;
-            os << measure.stage << " -- " << duration.count() << "ms\n";
-        }
-        return os;
-    }
-
-public:
-    ProxyTimer measure(const std::string &stage)
-    {
-        start(stage);
-        return ProxyTimer(*this);
-    }
-
-    void start(std::string stage)
-    {
-        currentMeasure.emplace(std::move(stage), clock::now());
-    }
-
-    void stop()
-    {
-        if (!currentMeasure) {
-            throw std::logic_error("Can't stop timer that isn't running");
-        }
-
-        currentMeasure->end = clock::now();
-        measures.push_back(*currentMeasure);
-        currentMeasure.reset();
-    }
-
-private:
-    boost::optional<Measure> currentMeasure;
-    std::vector<Measure> measures;
-};
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
