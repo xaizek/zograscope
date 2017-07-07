@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <functional>
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -59,6 +60,40 @@ TreeBuilder::finish(bool failed)
                           children.cbegin(), children.cend());
 }
 
+static void
+print(const PNode *node, const std::string &contents, std::vector<bool> &state)
+{
+    std::cout << (state.empty() ? "--- " : "    ");
+
+    for (unsigned int i = 0U; i < state.size(); ++i) {
+        const bool last = (i == state.size() - 1U);
+        if (state[i]) {
+            std::cout << (last ? "`-- " : "    ");
+        } else {
+            std::cout << (last ? "|-- " : "|   ");
+        }
+    }
+
+    // std::cout << '(' << node->line << ';' << node->col << ")\n";
+    std::cout << contents.substr(node->value.from, node->value.len)
+              << ' ' << (int)node->stype
+              << '\n';
+
+    state.push_back(false);
+    for (unsigned int i = 0U; i < node->children.size(); ++i) {
+        state.back() = (i == node->children.size() - 1U);
+        print(node->children[i], contents, state);
+    }
+    state.pop_back();
+}
+
+static void
+print(const PNode *node, const std::string &contents)
+{
+    std::vector<bool> state;
+    print(node, contents, state);
+}
+
 static PNode *
 findSNode(PNode *node)
 {
@@ -72,8 +107,13 @@ findSNode(PNode *node)
 }
 
 SNode *
-TreeBuilder::makeSTree()
+TreeBuilder::makeSTree(const std::string &contents, bool dumpWhole,
+                       bool dumpUnclear)
 {
+    if (dumpWhole) {
+        print(root, contents);
+    }
+
     PNode *rootNode = findSNode(root);
     if (rootNode == nullptr) {
         snodes.emplace_back(SNode{root, {}});
@@ -97,6 +137,9 @@ TreeBuilder::makeSTree()
             if (PNode *schild = findSNode(child)) {
                 c.push_back(makeSNode(schild));
             } else {
+                if (dumpUnclear) {
+                    print(child, contents);
+                }
                 snodes.emplace_back(SNode{node->children[c.size()], {}});
                 c.push_back(&snodes.back());
             }

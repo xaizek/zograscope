@@ -189,7 +189,8 @@ public:
         return failed;
     }
 
-    SNode * makeSTree();
+    SNode * makeSTree(const std::string &contents, bool dumpWhole = false,
+                      bool dumpUnclear = false);
 
 private:
     void movePostponed(PNode *&node, std::vector<PNode *> &nodes,

@@ -331,7 +331,7 @@ makeTree(const std::string &str, bool stree)
     TreeBuilder tb = parse(str);
     REQUIRE_FALSE(tb.hasFailed());
     return stree
-         ? Tree(str, tb.makeSTree())
+         ? Tree(str, tb.makeSTree(str))
          : Tree(str, tb.getRoot());
 }
 
