@@ -216,7 +216,7 @@ buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool debug)
         return {};
     }
 
-    Tree t = coarse ? Tree(contents, tb.makeSTree(contents))
+    Tree t = coarse ? Tree(contents, tb.makeSTree(contents, dump))
                     : Tree(contents, tb.getRoot());
 
     if (dump) {
