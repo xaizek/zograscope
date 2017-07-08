@@ -30,4 +30,8 @@ TEST_CASE("Bit field is parsed", "[parser][conflicts]")
 TEST_CASE("Conversion is not ambiguous", "[parser][conflicts]")
 {
     CHECK_FALSE(parse("void f() { if ((size_t)*nlines == 1); }").hasFailed());
+    CHECK_FALSE(parse("int a = (type)&a;").hasFailed());
+    CHECK_FALSE(parse("int a = (type)*a;").hasFailed());
+    CHECK_FALSE(parse("int a = (type)+a;").hasFailed());
+    CHECK_FALSE(parse("int a = (type)-a;").hasFailed());
 }

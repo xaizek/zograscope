@@ -309,11 +309,11 @@ multiplicative_expression
 /*     additive-expression + multiplicative-expression */
 /*     additive-expression - multiplicative-expression */
 additive_expression
-    : multiplicative_expression                         %dprec 1
+    : multiplicative_expression                         %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
-    | additive_expression '+' multiplicative_expression
+    | additive_expression '+' multiplicative_expression %dprec 1
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
-    | additive_expression '-' multiplicative_expression %dprec 2
+    | additive_expression '-' multiplicative_expression %dprec 1
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
@@ -366,9 +366,9 @@ equality_expression
 /*     equality-expression */
 /*     AND-expression & equality-expression */
 AND_expression
-    : equality_expression
+    : equality_expression                           %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
-    | AND_expression '&' equality_expression
+    | AND_expression '&' equality_expression        %dprec 1
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
     ;
 
