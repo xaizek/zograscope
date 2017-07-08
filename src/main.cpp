@@ -24,7 +24,7 @@ namespace po = boost::program_options;
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static boost::optional<Tree> buildTreeFromFile(const std::string &path,
                                                bool coarse, bool dump,
-                                               bool debug);
+                                               bool sdebug, bool debug);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -82,6 +82,7 @@ main(int argc, char *argv[])
 
     const bool highlightMode = (args.size() == 1U);
     const bool debug = varMap.count("debug");
+    const bool sdebug = varMap.count("sdebug");
     const bool dumpTree = varMap.count("dump-tree");
     const bool dryRun = varMap.count("dry-run");
     const bool color = varMap.count("color");
@@ -99,7 +100,8 @@ main(int argc, char *argv[])
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
     if (boost::optional<Tree> tree = (tr.measure("parsing1"),
                                       buildTreeFromFile(oldFile, coarse,
-                                                        dumpTree, debug))) {
+                                                        dumpTree,
+                                                        sdebug, debug))) {
         treeA = std::move(*tree);
     } else {
         return EXIT_FAILURE;
@@ -118,7 +120,8 @@ main(int argc, char *argv[])
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
     if (boost::optional<Tree> tree = (tr.measure("parsing2"),
                                       buildTreeFromFile(newFile, coarse,
-                                                        dumpTree, debug))) {
+                                                        dumpTree,
+                                                        sdebug, debug))) {
         treeB = std::move(*tree);
     } else {
         return EXIT_FAILURE;
@@ -175,6 +178,7 @@ parseOptions(const std::vector<std::string> &args)
     cmdlineOptions.add_options()
         ("dry-run",      "just parse")
         ("debug",        "enable debugging of grammar")
+        ("sdebug",       "enable debugging of strees")
         ("dump-tree",    "display tree(s)")
         ("coarse",       "use coarse-grained tree")
         ("time-report",  "report time spent on different activities")
@@ -200,12 +204,14 @@ parseOptions(const std::vector<std::string> &args)
  * @param path     Path to the file to read.
  * @param coarse   Whether to build coarse-grained tree.
  * @param dump     Whether to dump trees.
+ * @param sdebug   Whether stree debugging is enabled.
  * @param debug    Whether grammar debugging is enabled.
  *
  * @returns Tree on success or empty optional on error.
  */
 static boost::optional<Tree>
-buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool debug)
+buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool sdebug,
+                  bool debug)
 {
     std::cout << ">>> Parsing " << path << '\n';
 
@@ -216,7 +222,7 @@ buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool debug)
         return {};
     }
 
-    Tree t = coarse ? Tree(contents, tb.makeSTree(contents, dump))
+    Tree t = coarse ? Tree(contents, tb.makeSTree(contents, dump, sdebug))
                     : Tree(contents, tb.getRoot());
 
     if (dump) {
