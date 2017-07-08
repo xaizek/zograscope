@@ -30,6 +30,11 @@ enum class SType
     ForStmt,
     ForHead,
     Expression,
+    Declarator,
+    Initializer,
+    Specifiers,
+    WithInitializer,
+    InitializerElement,
 };
 
 struct Location

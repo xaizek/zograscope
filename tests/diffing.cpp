@@ -151,8 +151,8 @@ TEST_CASE("Fine reduction works", "[comparison][reduction]")
     reduceTreesFine(oldT, newT);
     CHECK(oldT != oldTree.getRoot());
     CHECK(newT != newTree.getRoot());
-    CHECK(countSatellites(*oldTree.getRoot()) == 33);
-    CHECK(countSatellites(*newTree.getRoot()) == 33);
+    CHECK(countSatellites(*oldTree.getRoot()) == 25);
+    CHECK(countSatellites(*newTree.getRoot()) == 25);
 }
 
 TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
@@ -343,6 +343,35 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
     CHECK(newMap == expected);
 }
 
+TEST_CASE("Initializer is decomposed", "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Tree oldTree = makeTree(R"(
+        aggregate var = {
+            { .field = 1 },
+            { .another_field = 1 },
+        };
+    )", true);
+    Tree newTree = makeTree(R"(
+        aggregate var = {
+            { .field = 2 },
+            { .another_field = 2 },
+        };
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 2);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 2);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
+}
+
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
@@ -372,7 +401,7 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
 
     CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
 }
 
 TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")

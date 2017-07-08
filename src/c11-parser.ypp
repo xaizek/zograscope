@@ -477,8 +477,10 @@ declaration
     : declaration_specifiers ';'                      %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <stmtMerge>
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
+                         $2,
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::Declaration); }
     | static_assert_declaration
     { $$ = tb->addNode($1, @1); }
     ;
@@ -521,8 +523,10 @@ init_declarator
     : declarator
     { $$ = tb->addNode($1, @1); }
     | declarator '=' initializer
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator),
+                         tb->addNode($2, @2, SType::Separator),
+                         $3 },
+                       SType::WithInitializer); }
     ;
 
 /* (6.7.1) storage-class-specifier: */
@@ -990,11 +994,16 @@ initializer
     : assignment_expression
     { $$ = tb->addNode($1, @1); }
     | '{' initializer_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         $2,
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::Initializer); }
     | '{' initializer_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         $2,
+                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::Initializer); }
     /* This is an extension to allow {} initializer. */
     | '{' '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
@@ -1005,14 +1014,15 @@ initializer
 /*     initializer-list , designationopt initializer */
 initializer_list
     : designation initializer
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode({ $1, $2 }) },
+                       SType::InitializerElement); }
     | initializer
-    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    { $$ = tb->addNode({ $1 }, SType::InitializerElement); }
     | initializer_list ',' designation initializer
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3),
-                            tb->addNode($4, @4) }); }
+    { auto elem = tb->addNode({ $3, $4 }, SType::InitializerElement);
+      $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), elem }); }
     | initializer_list ',' initializer
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), $3 }); }
     ;
 
 /* (6.7.9) designation: */
@@ -1288,7 +1298,7 @@ external_declaration
     : function_definition
     { $$ = tb->addNode($1, @1); }
     | declaration
-    { $$ = tb->addNode($1, @1, SType::Declaration); }
+    { $$ = $1; }
     /* This are extensions for top-level macros. */
     | ID '(' translation_unit ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
