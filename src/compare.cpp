@@ -56,7 +56,10 @@ refine(Node &root)
         if (node.line != 0 && node.col != 0 && node.state == State::Updated) {
             node.state = State::Unchanged;
             node.relative->state = State::Unchanged;
-            ted(*node.next, *node.relative->next);
+
+            Node *subT1 = node.next, *subT2 = node.relative->next;
+            reduceTreesFine(subT1, subT2);
+            ted(*subT1, *subT2);
         }
 
         for (Node *child : node.children) {
