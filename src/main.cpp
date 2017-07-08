@@ -23,7 +23,8 @@ namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static boost::optional<Tree> buildTreeFromFile(const std::string &path,
-                                               bool coarse, bool debug);
+                                               bool coarse, bool dump,
+                                               bool debug);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -98,17 +99,13 @@ main(int argc, char *argv[])
     const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
     if (boost::optional<Tree> tree = (tr.measure("parsing1"),
                                       buildTreeFromFile(oldFile, coarse,
-                                                        debug))) {
+                                                        dumpTree, debug))) {
         treeA = std::move(*tree);
     } else {
         return EXIT_FAILURE;
     }
 
     if (highlightMode) {
-        if (dumpTree) {
-            print(*treeA.getRoot());
-        }
-
         if (dryRun) {
             std::cout << ">>> Skipping coloring\n";
         } else {
@@ -121,26 +118,13 @@ main(int argc, char *argv[])
     const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
     if (boost::optional<Tree> tree = (tr.measure("parsing2"),
                                       buildTreeFromFile(newFile, coarse,
-                                                        debug))) {
+                                                        dumpTree, debug))) {
         treeB = std::move(*tree);
     } else {
         return EXIT_FAILURE;
     }
 
-    auto dumpTrees = [&]() {
-        if (!dumpTree) {
-            return;
-        }
-
-        std::cout << "T1\n";
-        print(*treeA.getRoot());
-        std::cout << "T2\n";
-        print(*treeB.getRoot());
-    };
-
     if (dryRun) {
-        dumpTrees();
-
         std::cout << ">>> Skipping diffing\n";
         return EXIT_SUCCESS;
     }
@@ -150,8 +134,6 @@ main(int argc, char *argv[])
 
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
     compare(T1, T2, tr, coarse);
-
-    dumpTrees();
 
     Printer printer(*T1, *T2);
     tr.measure("printing"), printer.print();
@@ -217,12 +199,13 @@ parseOptions(const std::vector<std::string> &args)
  *
  * @param path     Path to the file to read.
  * @param coarse   Whether to build coarse-grained tree.
+ * @param dump     Whether to dump trees.
  * @param debug    Whether grammar debugging is enabled.
  *
  * @returns Tree on success or empty optional on error.
  */
 static boost::optional<Tree>
-buildTreeFromFile(const std::string &path, bool coarse, bool debug)
+buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool debug)
 {
     std::cout << ">>> Parsing " << path << '\n';
 
@@ -233,6 +216,13 @@ buildTreeFromFile(const std::string &path, bool coarse, bool debug)
         return {};
     }
 
-    return coarse ? Tree(contents, tb.makeSTree(contents))
-                  : Tree(contents, tb.getRoot());
+    Tree t = coarse ? Tree(contents, tb.makeSTree(contents))
+                    : Tree(contents, tb.getRoot());
+
+    if (dump) {
+        std::cout << "Tree of " << path << ":\n";
+        print(*t.getRoot());
+    }
+
+    return t;
 }
