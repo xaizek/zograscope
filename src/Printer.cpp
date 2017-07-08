@@ -149,11 +149,20 @@ Printer::print()
                 j += d.data;
                 {
                     std::string msg = " @@ folded " + std::to_string(d.data)
-                                    + " identical lines @@";
-                    std::cout << std::right
-                              << std::setw(maxLeftWidth + lWidth + 4 +
-                                           msg.size()/2)
-                              << msg << '\n';
+                                    + " identical lines @@ ";
+
+                    int wholeWidth = lWidth + 1 + 1 + maxLeftWidth
+                                   + 4
+                                   + rWidth + 1 + 1 + maxRightWidth;
+                    int leftFill = lWidth + 1 + 1 + maxLeftWidth + 2
+                                 - msg.size()/2;
+                    int rightFill = wholeWidth - (leftFill + msg.size());
+
+                    std::cout << std::right << std::setfill('-')
+                              << (245_fg << std::setw(leftFill) << "")
+                              << msg
+                              << (245_fg << std::setw(rightFill) << "")
+                              << '\n' << std::setfill(' ');
                 }
                 continue;
         }
