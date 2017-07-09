@@ -156,7 +156,7 @@ $(out_dir)/src/c11-parser.gen.cpp: src/c11-parser.ypp
 	      --output=$(out_dir)/src/c11-parser.gen.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet
-$(bin_objects): $(bin_autohpp)
+$(bin_objects): | $(bin_autohpp)
 
 # work around parenthesis warning in tests somehow caused by ccache
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses -Itests/
