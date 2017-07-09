@@ -1,5 +1,6 @@
 #include "TreeBuilder.hpp"
 
+#include <cassert>
 #include <cstddef>
 
 #include <deque>
@@ -7,6 +8,40 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+
+static std::ostream &
+operator<<(std::ostream &os, SType stype)
+{
+    switch (stype) {
+        case SType::None:                return (os << "None");
+        case SType::TranslationUnit:     return (os << "TranslationUnit");
+        case SType::Declaration:         return (os << "Declaration");
+        case SType::FunctionDeclaration: return (os << "FunctionDeclaration");
+        case SType::FunctionDefinition:  return (os << "FunctionDefinition");
+        case SType::Postponed:           return (os << "Postponed");
+        case SType::Macro:               return (os << "Macro");
+        case SType::CompoundStatement:   return (os << "CompoundStatement");
+        case SType::Separator:           return (os << "Separator");
+        case SType::Statements:          return (os << "Statements");
+        case SType::Statement:           return (os << "Statement");
+        case SType::IfStmt:              return (os << "IfStmt");
+        case SType::IfCond:              return (os << "IfCond");
+        case SType::IfElse:              return (os << "IfElse");
+        case SType::WhileStmt:           return (os << "WhileStmt");
+        case SType::WhileCond:           return (os << "WhileCond");
+        case SType::ForStmt:             return (os << "ForStmt");
+        case SType::ForHead:             return (os << "ForHead");
+        case SType::Expression:          return (os << "Expression");
+        case SType::Declarator:          return (os << "Declarator");
+        case SType::Initializer:         return (os << "Initializer");
+        case SType::Specifiers:          return (os << "Specifiers");
+        case SType::WithInitializer:     return (os << "WithInitializer");
+        case SType::InitializerElement:  return (os << "InitializerElement");
+    }
+
+    assert("Unhandled enumeration item");
+    return (os << "<UNKNOWN>");
+}
 
 PNode *
 TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
@@ -87,8 +122,7 @@ print(const PNode *node, const std::string &contents, std::vector<bool> &state)
 
     // std::cout << '(' << node->line << ';' << node->col << ")\n";
     std::cout << contents.substr(node->value.from, node->value.len)
-              << ' ' << (int)node->stype
-              << '\n';
+              << " (" << node->stype << ")\n";
 
     state.push_back(false);
     for (unsigned int i = 0U; i < node->children.size(); ++i) {
