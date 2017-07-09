@@ -370,6 +370,35 @@ TEST_CASE("Initializer is decomposed", "[comparison][parsing]")
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
 }
 
+TEST_CASE("Structure is decomposed", "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Tree oldTree = makeTree(R"(
+        struct s {
+            int a;
+            int b : 1;
+        };
+    )", true);
+    Tree newTree = makeTree(R"(
+        struct s {
+            int g;
+            int b : 2;
+        };
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
+}
+
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test

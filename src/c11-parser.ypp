@@ -481,7 +481,9 @@ constant_expression
 /*     static_assert-declaration */
 declaration
     : declaration_specifiers ';'                      %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
+                         tb->addNode($2, @2, SType::Separator) },
+                       SType::Declaration); }
     | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <takeSecond>
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
                          $2,
@@ -596,12 +598,18 @@ type_specifier
 /*     struct-or-union identifier */
 struct_or_union_specifier
     : struct_or_union ID '{' struct_declaration_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator),
+                         $4,
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::Declaration); }
     | struct_or_union '{' struct_declaration_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         $3,
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::Declaration); }
     | struct_or_union ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
@@ -619,9 +627,9 @@ struct_or_union
 /*     struct-declaration-list struct-declaration */
 struct_declaration_list
     : struct_declaration
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::Declaration); }
     | struct_declaration_list struct_declaration
-    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    { $$ = tb->append($1, tb->addNode($2, @2, SType::Declaration)); }
     ;
 
 /* (6.7.2.1) struct-declaration: */
