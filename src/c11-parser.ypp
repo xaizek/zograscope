@@ -13,9 +13,9 @@
 void yyerror(const char s[]);
 
 static PNode *
-stmtMerge(YYSTYPE, YYSTYPE x1)
+stmtMerge(YYSTYPE, YYSTYPE x)
 {
-    return x1.node;
+    return x.node;
 }
 
 static void
