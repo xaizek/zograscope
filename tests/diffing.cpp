@@ -5,11 +5,12 @@
 #include "TreeBuilder.hpp"
 #include "change-distilling.hpp"
 #include "compare.hpp"
-#include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
+
+#include "tests.hpp"
 
 enum class Changes
 {
@@ -19,9 +20,6 @@ enum class Changes
     Mixed,
 };
 
-static Tree makeTree(const std::string &str, bool stree = false);
-static const Node * findNode(const Tree &tree, Type type,
-                             const std::string &label = {});
 static int countLeaves(const Node &root, State state);
 static int countSatellites(const Node &root);
 static std::vector<Changes> makeChangeMap(Node &root);
@@ -461,42 +459,6 @@ TEST_CASE("Compound statement doesn't unite statements",
     CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
-}
-
-static Tree
-makeTree(const std::string &str, bool stree)
-{
-    TreeBuilder tb = parse(str);
-    REQUIRE_FALSE(tb.hasFailed());
-    return stree
-         ? Tree(str, tb.makeSTree(str))
-         : Tree(str, tb.getRoot());
-}
-
-static const Node *
-findNode(const Tree &tree, Type type, const std::string &label)
-{
-    const Node *needle = nullptr;
-
-    std::function<bool(const Node *)> visit = [&](const Node *node) {
-        if (node->type == type) {
-            if (label.empty() || node->label == label) {
-                needle = node;
-                return true;
-            }
-        }
-
-        for (const Node *child : node->children) {
-            if (visit(child)) {
-                return true;
-            }
-        }
-
-        return false;
-    };
-
-    visit(tree.getRoot());
-    return needle;
 }
 
 static int
