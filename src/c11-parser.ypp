@@ -688,20 +688,32 @@ struct_declarator
 /*     enum identifier */
 enum_specifier
     : ENUM ID '{' enumerator_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+                         tb->addNode($5, @5) },
+                       SType::Declaration); }
     | ENUM '{' enumerator_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         $3,
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::Declaration); }
     | ENUM ID '{' enumerator_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator),
+                         $4,
+                         tb->addNode($5, @5, SType::Separator),
+                         tb->addNode($6, @6, SType::Separator) },
+                       SType::Declaration); }
     | ENUM '{' enumerator_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         $3,
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::Declaration); }
     | ENUM ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
@@ -711,9 +723,10 @@ enum_specifier
 /*     enumerator-list , enumerator */
 enumerator_list
     : enumerator
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::Declarator); }
     | enumerator_list ',' enumerator
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                            tb->addNode($3, @3, SType::Declarator) }); }
     ;
 
 /* (6.7.2.2) enumerator: */
