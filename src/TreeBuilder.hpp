@@ -81,6 +81,7 @@ struct PNode
     int line = 0, col = 0;
     bool postponed = false;
     SType stype = SType::None;
+    int movedChildren = 0;
 
 private:
     // TODO: try contracting in TreeBuilder as well (this way we won't even

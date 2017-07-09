@@ -2,6 +2,9 @@
 
 #include "TreeBuilder.hpp"
 #include "parser.hpp"
+#include "tree.hpp"
+
+#include "tests.hpp"
 
 TEST_CASE("Empty input is OK", "[parser][extensions]")
 {
@@ -34,4 +37,17 @@ TEST_CASE("Conversion is not ambiguous", "[parser][conflicts]")
     CHECK_FALSE(parse("int a = (type)*a;").hasFailed());
     CHECK_FALSE(parse("int a = (type)+a;").hasFailed());
     CHECK_FALSE(parse("int a = (type)-a;").hasFailed());
+}
+
+TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
+          "[parser][postponed][conflicts]")
+{
+    Tree tree = makeTree(R"(
+        struct s {
+            // Comment1
+            int b : 1; // Comment2
+        };
+    )");
+
+    CHECK(findNode(tree, Type::Comments, "// Comment1") != nullptr);
 }
