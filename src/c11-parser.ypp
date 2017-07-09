@@ -13,7 +13,13 @@
 void yyerror(const char s[]);
 
 static PNode *
-stmtMerge(YYSTYPE, YYSTYPE x)
+takeFirst(YYSTYPE x, YYSTYPE)
+{
+    return x.node;
+}
+
+static PNode *
+takeSecond(YYSTYPE, YYSTYPE x)
 {
     return x.node;
 }
@@ -476,7 +482,7 @@ constant_expression
 declaration
     : declaration_specifiers ';'                      %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <stmtMerge>
+    | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <takeSecond>
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
                          $2,
                          tb->addNode($3, @3, SType::Separator) },
@@ -622,7 +628,7 @@ struct_declaration_list
 /*     specifier-qualifier-list struct-declarator-listopt ; */
 /*     static_assert-declaration */
 struct_declaration
-    : specifier_qualifier_list struct_declarator_list ';' %dprec 2 %merge <stmtMerge>
+    : specifier_qualifier_list struct_declarator_list ';' %dprec 2 %merge <takeFirst>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     | specifier_qualifier_list ';'                        %dprec 1

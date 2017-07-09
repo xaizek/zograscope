@@ -51,3 +51,10 @@ TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
 
     CHECK(findNode(tree, Type::Comments, "// Comment1") != nullptr);
 }
+
+TEST_CASE("Trailing id in bitfield declarator is variable by default",
+          "[parser][conflicts]")
+{
+    Tree tree = makeTree("struct s { int b : 1; };");
+    CHECK(findNode(tree, Type::Identifiers, "b") != nullptr);
+}
