@@ -519,6 +519,32 @@ TEST_CASE("Compound statement doesn't unite statements",
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
 }
 
+TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        // Comment.
+        struct s {
+            gid_t gid;
+        };
+    )", true);
+    Tree newTree = makeTree(R"(
+        // Comment.
+        struct s {
+            id_t gid;
+        };
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

@@ -133,7 +133,8 @@ distill(Node &T1, Node &T2)
         match.x->relative = match.y;
         match.y->relative = match.x;
 
-        const State state = (match.similarity == 1.0f)
+        const State state = (match.similarity == 1.0f &&
+                             match.y->label == match.x->label)
                           ? State::Unchanged
                           : State::Updated;
         match.x->state = state;
