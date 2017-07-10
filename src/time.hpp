@@ -43,11 +43,18 @@ class TimeReport
     friend inline std::ostream &
     operator<<(std::ostream &os, const TimeReport &tr)
     {
+        using msf = std::chrono::duration<float, std::milli>;
+
+        msf total(0);
+
         for (const Measure &measure : tr.measures) {
-            using msf = std::chrono::duration<float, std::milli>;
             msf duration = measure.end - measure.start;
+            total += duration;
             os << measure.stage << " -- " << duration.count() << "ms\n";
         }
+
+        os << "TOTAL == " << total.count() << "ms\n";
+
         return os;
     }
 
