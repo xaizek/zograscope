@@ -200,7 +200,9 @@ distill(Node &T1, Node &T2)
                         continue;
                     }
 
-                    State state = (similarity1 == 1.0f && similarity2 == 1.0f)
+                    State state = (similarity1 == 1.0f &&
+                                   x->label == y->label &&
+                                   similarity2 == 1.0f)
                                 ? State::Unchanged
                                 : State::Updated;
                     x->state = state;
