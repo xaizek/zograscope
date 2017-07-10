@@ -88,6 +88,7 @@ main(int argc, char *argv[])
     const bool color = varMap.count("color");
     const bool coarse = varMap.count("coarse");
     const bool timeReport = varMap.count("time-report");
+    const bool noRefine = varMap.count("no-refine");
 
     if (color) {
         decor::enableDecorations();
@@ -136,7 +137,7 @@ main(int argc, char *argv[])
     // markSatellites(*treeB.getRoot());
 
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
-    compare(T1, T2, tr, coarse);
+    compare(T1, T2, tr, coarse, noRefine);
 
     Printer printer(*T1, *T2);
     tr.measure("printing"), printer.print();
@@ -182,7 +183,8 @@ parseOptions(const std::vector<std::string> &args)
         ("dump-tree",    "display tree(s)")
         ("coarse",       "use coarse-grained tree")
         ("time-report",  "report time spent on different activities")
-        ("color",        "force colorization of output");
+        ("color",        "force colorization of output")
+        ("no-refine",    "do not refine coarse results");
 
     po::options_description allOptions;
     allOptions.add(cmdlineOptions).add(hiddenOpts);

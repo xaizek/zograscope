@@ -288,7 +288,7 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
 
     TimeReport tr;
     Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    compare(oldT, newT, tr, true);
+    compare(oldT, newT, tr, true, false);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldT);
     std::vector<Changes> newMap = makeChangeMap(*newT);
@@ -328,7 +328,7 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
 
     TimeReport tr;
     Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    compare(oldT, newT, tr, true);
+    compare(oldT, newT, tr, true, false);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldT);
     std::vector<Changes> newMap = makeChangeMap(*newT);

@@ -9,7 +9,7 @@
 static void refine(Node &root);
 
 void
-compare(Node *T1, Node *T2, TimeReport &tr, bool coarse)
+compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 {
     tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
 
@@ -18,6 +18,12 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse)
         tr.measure("diffing"), ted(*T1, *T2);
         return;
     }
+
+    auto refine = [skipRefine](Node &root) {
+        if (!skipRefine) {
+            ::refine(root);
+        }
+    };
 
     auto timer = tr.measure("reduction-and-diffing");
     for (Node *t1Child : T1->children) {
