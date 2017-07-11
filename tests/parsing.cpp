@@ -99,6 +99,11 @@ TEST_CASE("Types in macro arguments", "[parser][conflict]")
     CHECK_FALSE(parse("int x = va_arg(ap, int);").hasFailed());
 }
 
+TEST_CASE("Macro definition of function declaration", "[parser]")
+{
+    CHECK_FALSE(parse("int DECL(func, (int arg), stuff);").hasFailed());
+}
+
 TEST_CASE("asm directive", "[parser]")
 {
     const char *const str = R"(

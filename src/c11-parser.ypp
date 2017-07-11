@@ -111,6 +111,7 @@ extern TreeBuilder *tb;
 %type <node> selection_statement iteration_statement jump_statement
 %type <node> translation_unit external_declaration function_definition
 %type <node> function_header macro_invocation expr_or_type asm_argument_list
+%type <node> meta_parameter_type_list meta_parameter_declaration
 %type <node> string_lit declaration_specifier
 /* XXX: Disabled because of memory exhaustion */
 /* %type <node> declaration_list */
@@ -884,6 +885,25 @@ direct_declarator
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }); }
+    | ID '(' meta_parameter_type_list ')' %dprec 1
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    ;
+
+meta_parameter_type_list
+    : meta_parameter_declaration
+    { $$ = tb->addNode($1, @1); }
+    | meta_parameter_type_list ',' meta_parameter_declaration
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    ;
+
+meta_parameter_declaration
+    : '(' parameter_type_list ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
+    | ID
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     ;
 
 /* (6.7.6) pointer: */
