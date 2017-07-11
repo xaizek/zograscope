@@ -62,6 +62,13 @@ TEST_CASE("Multi-line string literals are parsed", "[parser]")
     CHECK_FALSE(parse(str).hasFailed());
 }
 
+TEST_CASE("Macros after function declaration are parsed", "[parser]")
+{
+    const char *const str =
+        "char * format(const char fmt[], ...) _gnuc_printf(1, 2);";
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {

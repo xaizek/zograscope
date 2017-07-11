@@ -108,7 +108,8 @@ extern TreeBuilder *tb;
 %type <node> designation designator_list designator statement labeled_statement
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
-%type <node> translation_unit external_declaration function_definition function_header
+%type <node> translation_unit external_declaration function_definition
+%type <node> function_header macro_invocation
 %type <node> string_lit declaration_specifier
 /* XXX: Disabled because of memory exhaustion */
 /* %type <node> declaration_list */
@@ -846,6 +847,11 @@ direct_declarator
     | direct_declarator '(' ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
+    /* This is an extension to allow macros and attributes. */
+    | direct_declarator '(' parameter_type_list ')' macro_invocation %dprec 3
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
     ;
 
 /* (6.7.6) pointer: */
@@ -1361,8 +1367,14 @@ function_header
     /*                      tb->addNode($4, @4) }); } */
     : declaration_specifiers declarator %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    /* These are extensions to allow function headers to be defined by a macro. */
-    | ID '(' argument_expression_list ')' %dprec 2
+    /* This is an extension to allow function headers to be defined by a
+     * macro. */
+    | macro_invocation                  %dprec 2
+    { $$ = $1; }
+    ;
+
+macro_invocation
+    : ID '(' argument_expression_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | ID '(' ')'
