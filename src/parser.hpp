@@ -5,6 +5,8 @@
 
 class TreeBuilder;
 
-TreeBuilder parse(const std::string &contents, bool debug = false);
+TreeBuilder parse(const std::string &contents,
+                  const std::string &fileName = "<input>",
+                  bool debug = false);
 
 #endif // PARSER_HPP__

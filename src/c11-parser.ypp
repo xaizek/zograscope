@@ -49,6 +49,7 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
 }
 
 TreeBuilder *tb = nullptr;
+static std::string fileName;
 
 %}
 
@@ -1381,7 +1382,7 @@ function_header
 %%
 
 TreeBuilder
-parse(const std::string &contents, bool debug)
+parse(const std::string &contents, const std::string &fileName, bool debug)
 {
     extern std::size_t yyoffset;
     yyoffset = 0U;
@@ -1398,6 +1399,8 @@ parse(const std::string &contents, bool debug)
     TreeBuilder tb;
     ::tb = &tb;
 
+    ::fileName = fileName;
+
     yy_scan_bytes(contents.data(), contents.size());
 
     // parse through the input until there is no more:
@@ -1410,5 +1413,7 @@ parse(const std::string &contents, bool debug)
 void
 yyerror(const char s[])
 {
-    std::cout << "Parse error at " << yylloc.first_line << ':' << yylloc.first_column << "!  Message: " << s << std::endl;
+    std::cout << fileName << ':'
+              << yylloc.first_line << ':' << yylloc.first_column
+              << ": parse error: " << s << std::endl;
 }

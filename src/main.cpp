@@ -212,11 +212,9 @@ static boost::optional<Tree>
 buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool sdebug,
                   bool debug)
 {
-    std::cout << ">>> Parsing " << path << '\n';
-
     const std::string contents = readFile(path);
 
-    TreeBuilder tb = parse(contents, debug);
+    TreeBuilder tb = parse(contents, path, debug);
     if (tb.hasFailed()) {
         return {};
     }
