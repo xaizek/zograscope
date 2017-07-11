@@ -927,9 +927,9 @@ identifier_list
 /* (6.7.7) type-name: */
 /*     specifier-qualifier-list abstract-declaratoropt */
 type_name
-    : specifier_qualifier_list abstract_declarator
+    : specifier_qualifier_list abstract_declarator %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | specifier_qualifier_list
+    | specifier_qualifier_list                     %dprec 2
     { $$ = tb->addNode($1, @1); }
     ;
 

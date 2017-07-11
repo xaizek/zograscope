@@ -81,6 +81,11 @@ TEST_CASE("Attributes in typedef", "[parser]")
     CHECK_FALSE(parse(str).hasFailed());
 }
 
+TEST_CASE("Extra braces around call", "[parser][conflict]")
+{
+    CHECK_FALSE(parse("int x = (U64)(func(a)) * b;").hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {
