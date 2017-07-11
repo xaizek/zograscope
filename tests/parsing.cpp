@@ -52,6 +52,16 @@ TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
     CHECK(findNode(tree, Type::Comments, "// Comment1") != nullptr);
 }
 
+TEST_CASE("Multi-line string literals are parsed", "[parser]")
+{
+    const char *const str = R"(
+        const char *str = "\
+        ";
+    )";
+
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {

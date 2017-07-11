@@ -35,9 +35,11 @@ static YYLTYPE startLoc;
 
 void yyerror(const char s[]);
 
+static void reportError();
+
 %}
 
-%X directive dirmlcomment beforeparen slcomment mlcomment
+%X directive dirmlcomment beforeparen slcomment mlcomment slit
 
  /* (6.4.3) hex-quad:
   *     hexadecimal-digit hexadecimal-digit hexadecimal-digit hexadecimal-digit
@@ -183,10 +185,6 @@ EPREFIX                 u8|u|U|L
  /*         the double-quote ", backslash \, or new-line character */
  /*     escape-sequence */
 SCHAR                   [^"\\\n]|{ESEQ}
- /* (6.4.5) s-char-sequence: */
- /*     s-char */
- /*     s-char-sequence s-char */
-SCHARSEQ                {SCHAR}*
  /* (6.4.7) header-name: */
  /*     < h-char-sequence > */
  /*     " q-char-sequence " */
@@ -296,7 +294,29 @@ QCHAR                   [^"\n]
 
  /* (6.4.5) string-literal: */
  /*     encoding-prefixopt " s-char-sequenceopt " */
-{EPREFIX}?\"{SCHARSEQ}?\" { TOKEN(SLIT); }
+ /* (6.4.5) s-char-sequence: */
+ /*     s-char */
+ /*     s-char-sequence s-char */
+{EPREFIX}?\" {
+    startTok = yylval;
+    startTok.text.token = SLIT;
+    startLoc = yylloc;
+    BEGIN(slit);
+}
+
+<slit>{SCHAR} ;
+
+<slit>\" {
+    startTok.text.len = yyoffset - startTok.text.from;
+    yylval = startTok;
+    yylloc = startLoc;
+
+    tb->markWithPostponed(startTok.text);
+    BEGIN(INITIAL);
+    return SLIT;
+}
+<slit>\\\n              { ++yyline; yycolumn = 1U; }
+<slit>.                 { reportError(); }
 
 "->"                    { TOKEN(ARR_OP); }
 "++"                    { TOKEN(INC_OP); }
@@ -388,13 +408,16 @@ QCHAR                   [^"\n]
     TOKEN(yytext[0]);
 }
 
-. {
+. { reportError(); }
+
+%%
+
+static void reportError()
+{
     char error[] = "Unknown token: x";
     error[sizeof(error) - 2U] = yytext[0];
     yyerror(error);
 }
-
-%%
 
 void fakeYYunputUse()
 {
