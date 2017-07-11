@@ -346,7 +346,13 @@ printSource(Node &root)
             const std::vector<std::string> lines = split(node.label, '\n');
             oss << (dec << lines.front());
             for (std::size_t i = 1U; i < lines.size(); ++i) {
-                oss << '\n' << (dec << lines[i]);
+                std::size_t whitespaceLength =
+                    lines[i].find_first_not_of(" \t");
+                if (whitespaceLength == std::string::npos) {
+                    whitespaceLength = lines[i].size();
+                }
+                oss << '\n' << lines[i].substr(0, whitespaceLength)
+                            << (dec << lines[i].substr(whitespaceLength));
                 ++line;
             }
 
