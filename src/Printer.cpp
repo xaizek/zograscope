@@ -6,6 +6,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "dtl/dtl.hpp"
@@ -66,6 +67,12 @@ Printer::Printer(Node &left, Node &right) : left(left), right(right)
 }
 
 void
+Printer::addHeader(Header header)
+{
+    headers.emplace_back(std::move(header));
+}
+
+void
 Printer::print()
 {
     using namespace decor::literals;
@@ -121,6 +128,25 @@ Printer::print()
     const int lWidth = countWidth(maxLeftNum) + 1;
     const int rWidth = countWidth(maxRightNum) + 1;
 
+    const int wholeWidth = lWidth + 1 + 1 + maxLeftWidth
+                         + 3
+                         + rWidth + 1 + 1 + maxRightWidth;
+
+    auto title = 231_fg + decor::bold;
+
+    std::string leftMarker = ' ' + std::string(lWidth - 1, '-') + "  ";
+    std::string rightMarker = ' ' + std::string(rWidth - 1, '+') + "  ";
+    for (const Header &hdr : headers) {
+        const std::string left = leftMarker + hdr.left + ' ';
+        std::cout << (title << std::left
+                            << std::setw(lWidth + 1 + 1 + maxLeftWidth)
+                            << left
+                            << " ! "
+                            << std::setw(rWidth + 1 + 1 + maxRightWidth)
+                            << rightMarker + hdr.right + ' ')
+                  << '\n';
+    }
+
     decor::Decoration lineNo = decor::white_bg + decor::black_fg;
 
     i = 0U;
@@ -157,9 +183,6 @@ Printer::print()
                     std::string msg = " @@ folded " + std::to_string(d.data)
                                     + " identical lines @@ ";
 
-                    int wholeWidth = lWidth + 1 + 1 + maxLeftWidth
-                                   + 3
-                                   + rWidth + 1 + 1 + maxRightWidth;
                     int leftFill = lWidth + 1 + 1 + maxLeftWidth + 2
                                  - msg.size()/2;
                     int rightFill = wholeWidth - (leftFill + msg.size());

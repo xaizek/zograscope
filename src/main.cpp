@@ -90,6 +90,8 @@ main(int argc, char *argv[])
     const bool timeReport = varMap.count("time-report");
     const bool noRefine = varMap.count("no-refine");
 
+    const bool gitDiff = (args.size() == 7U);
+
     if (color) {
         decor::enableDecorations();
     }
@@ -98,7 +100,7 @@ main(int argc, char *argv[])
     TimeReport tr;
 
     Tree treeA;
-    const std::string oldFile = (args.size() == 7U ? args[1] : args[0]);
+    const std::string oldFile = (gitDiff ? args[1] : args[0]);
     if (boost::optional<Tree> tree = (tr.measure("parsing1"),
                                       buildTreeFromFile(oldFile, coarse,
                                                         dumpTree,
@@ -116,7 +118,7 @@ main(int argc, char *argv[])
     }
 
     Tree treeB;
-    const std::string newFile = (args.size() == 7U ? args[4] : args[1]);
+    const std::string newFile = (gitDiff ? args[4] : args[1]);
     if (boost::optional<Tree> tree = (tr.measure("parsing2"),
                                       buildTreeFromFile(newFile, coarse,
                                                         dumpTree,
@@ -137,6 +139,12 @@ main(int argc, char *argv[])
     compare(T1, T2, tr, coarse, noRefine);
 
     Printer printer(*T1, *T2);
+    if (gitDiff) {
+        printer.addHeader({ args[3], args[6] });
+        printer.addHeader({ "a/" + args[0], "b/" + args[0] });
+    } else {
+        printer.addHeader({ oldFile, newFile });
+    }
     tr.measure("printing"), printer.print();
 
     // printTree("T1", *T1);
