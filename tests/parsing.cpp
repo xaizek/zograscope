@@ -69,6 +69,11 @@ TEST_CASE("Macros after function declaration are parsed", "[parser]")
     CHECK_FALSE(parse(str).hasFailed());
 }
 
+TEST_CASE("Function pointers returning user-defined types", "[parser]")
+{
+    CHECK_FALSE(parse("typedef wint_t (*f)(int);").hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {
