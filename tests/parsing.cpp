@@ -86,6 +86,11 @@ TEST_CASE("Extra braces around call", "[parser][conflict]")
     CHECK_FALSE(parse("int x = (U64)(func(a)) * b;").hasFailed());
 }
 
+TEST_CASE("Types in macro arguments", "[parser][conflict]")
+{
+    CHECK_FALSE(parse("int x = va_arg(ap, int);").hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {

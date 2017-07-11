@@ -109,7 +109,7 @@ extern TreeBuilder *tb;
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
 %type <node> translation_unit external_declaration function_definition
-%type <node> function_header macro_invocation
+%type <node> function_header macro_invocation expr_or_type
 %type <node> string_lit declaration_specifier
 /* XXX: Disabled because of memory exhaustion */
 /* %type <node> declaration_list */
@@ -118,6 +118,8 @@ extern TreeBuilder *tb;
 %precedence '('
 %precedence "then"
 %precedence ELSE
+%precedence "expr_arg"
+%precedence "type_arg"
 
 %start program
 
@@ -239,10 +241,18 @@ postfix_expression
 /*     assignment-expression */
 /*     argument-expression-list , assignment-expression */
 argument_expression_list
-    : assignment_expression
+    : expr_or_type
     { $$ = tb->addNode($1, @1); }
-    | argument_expression_list ',' assignment_expression
+    | argument_expression_list ',' expr_or_type
     { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    ;
+
+/* This is an extension to make macros like va_arg() work. */
+expr_or_type
+    : assignment_expression %dprec 2
+    { $$ = tb->addNode($1, @1); }
+    | parameter_declaration %dprec 1
+    { $$ = tb->addNode($1, @1); }
     ;
 
 /* (6.5.3) unary-expression: */
