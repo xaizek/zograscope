@@ -1363,7 +1363,7 @@ external_declaration
     { $$ = tb->addNode($1, @1); }
     | declaration
     { $$ = $1; }
-    /* This are extensions for top-level macros. */
+    /* This are extensions for top-level macros and extern "C". */
     | ID '(' translation_unit ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) },
@@ -1372,6 +1372,10 @@ external_declaration
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }, SType::Macro); }
+    | EXTERN SLIT '{' translation_unit '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
     ;
 
 /* (6.9.1) function-definition: */
