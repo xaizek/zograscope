@@ -109,9 +109,7 @@ main(int argc, char *argv[])
     }
 
     if (highlightMode) {
-        if (dryRun) {
-            std::cout << ">>> Skipping coloring\n";
-        } else {
+        if (!dryRun) {
             std::cout << printSource(*treeA.getRoot()) << '\n';
         }
         return EXIT_SUCCESS;
@@ -129,7 +127,6 @@ main(int argc, char *argv[])
     }
 
     if (dryRun) {
-        std::cout << ">>> Skipping diffing\n";
         return EXIT_SUCCESS;
     }
 
