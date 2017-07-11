@@ -388,7 +388,11 @@ QCHAR                   [^"\n]
     TOKEN(yytext[0]);
 }
 
-.                       { yyerror("Unknown token"); }
+. {
+    char error[] = "Unknown token: x";
+    error[sizeof(error) - 2U] = yytext[0];
+    yyerror(error);
+}
 
 %%
 
