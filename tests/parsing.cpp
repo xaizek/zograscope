@@ -74,6 +74,13 @@ TEST_CASE("Function pointers returning user-defined types", "[parser]")
     CHECK_FALSE(parse("typedef wint_t (*f)(int);").hasFailed());
 }
 
+TEST_CASE("Attributes in typedef", "[parser]")
+{
+    const char *const str =
+        "typedef union { int a, b; } __attribute__((packed)) u;";
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {

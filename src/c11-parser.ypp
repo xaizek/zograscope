@@ -587,7 +587,11 @@ type_specifier
     | struct_or_union_specifier { $$ = tb->addNode($1, @1); }
     | enum_specifier            { $$ = tb->addNode($1, @1); }
     | ID                        { $$ = tb->addNode($1, @1, TYPENAME); }
-    /* This is an extension to allow types which are defined by macros. */
+    /* These are extension to allow attributes and types defined by macros. */
+    | ID '(' '(' type_name ')' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
     | ID '(' type_name ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
