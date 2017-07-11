@@ -134,21 +134,21 @@ Printer::print()
         switch (d.type) {
             case Diff::Left:
                 ll = &l[i++];
-                marker = " << ";
+                marker = " < ";
                 break;
             case Diff::Right:
                 rl = &r[j++];
-                marker = " >> ";
+                marker = " > ";
                 break;
             case Diff::Identical:
                 ll = &l[i++];
                 rl = &r[j++];
-                marker = " || ";
+                marker = " | ";
                 break;
             case Diff::Different:
                 ll = &l[i++];
                 rl = &r[j++];
-                marker = " <> ";
+                marker = " ~ ";
                 break;
             case Diff::Fold:
                 i += d.data;
@@ -158,7 +158,7 @@ Printer::print()
                                     + " identical lines @@ ";
 
                     int wholeWidth = lWidth + 1 + 1 + maxLeftWidth
-                                   + 4
+                                   + 3
                                    + rWidth + 1 + 1 + maxRightWidth;
                     int leftFill = lWidth + 1 + 1 + maxLeftWidth + 2
                                  - msg.size()/2;
