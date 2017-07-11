@@ -82,6 +82,8 @@ Printer::print()
     unsigned int maxRightWidth = 0U;
     std::vector<unsigned int> leftWidths;
 
+    unsigned int maxLeftNum = 0U, maxRightNum = 0U;
+
     unsigned int i = 0U, j = 0U;
     for (DiffLine d : diff) {
         switch (d.type) {
@@ -108,12 +110,16 @@ Printer::print()
             case Diff::Fold:
                 i += d.data;
                 j += d.data;
-                break;
+                continue;
         }
+
+        // Record last non-folded indices.
+        maxLeftNum = i;
+        maxRightNum = j;
     }
 
-    const int lWidth = countWidth(l.size()) + 1;
-    const int rWidth = countWidth(r.size()) + 1;
+    const int lWidth = countWidth(maxLeftNum) + 1;
+    const int rWidth = countWidth(maxRightNum) + 1;
 
     decor::Decoration lineNo = decor::white_bg + decor::black_fg;
 
