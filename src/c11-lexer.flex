@@ -254,6 +254,8 @@ QCHAR                   [^"\n]
 <INITIAL,beforeparen>"break"                 { KW(BREAK); }
 <INITIAL,beforeparen>"continue"              { KW(CONTINUE); }
 <INITIAL,beforeparen>"goto"                  { KW(GOTO); }
+<INITIAL,beforeparen>"__asm__"               { KW(__ASM__); }
+<INITIAL,beforeparen>"__volatile__"          { KW(__VOLATILE__); }
 <INITIAL>{ID}                                { TOKEN(ID); }
 <beforeparen>{ID} {
     BEGIN(INITIAL);

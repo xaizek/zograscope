@@ -91,6 +91,28 @@ TEST_CASE("Types in macro arguments", "[parser][conflict]")
     CHECK_FALSE(parse("int x = va_arg(ap, int);").hasFailed());
 }
 
+TEST_CASE("asm directive", "[parser]")
+{
+    const char *const str = R"(
+        void f() {
+            __asm__("" ::: "memory");
+        }
+    )";
+
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
+TEST_CASE("asm volatile directive", "[parser]")
+{
+    const char *const str = R"(
+        void f() {
+            __asm__ __volatile__("" ::: "memory");
+        }
+    )";
+
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {

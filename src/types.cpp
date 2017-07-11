@@ -114,6 +114,8 @@ tokenMap()
     map[STRUCT]         = Type::Keywords;
     map[UNION]          = Type::Keywords;
     map[ENUM]           = Type::Keywords;
+    map[__ASM__]        = Type::Keywords;
+    map[__VOLATILE__]   = Type::Keywords;
 
     map['?']    = Type::Other;
     map[':']    = Type::Other;
