@@ -3,6 +3,7 @@
 %{
 
 #include <iostream>
+#include <locale>
 #include <string>
 
 #include "c11-parser.hpp"
@@ -416,11 +417,21 @@ NL                      \n|\r|\r\n
 
 %%
 
-static void reportError()
+static void
+reportError()
 {
-    char error[] = "Unknown token: x";
-    error[sizeof(error) - 2U] = yytext[0];
-    yyerror(error);
+    std::string error;
+
+    if (yyleng > 1U) {
+        error = std::string("Unknown token: ") + yytext;
+    } else if (std::isprint(yytext[0], std::locale())) {
+        error = std::string("Unknown token: ") + yytext[0];
+    } else {
+        error = std::string("Unknown token: <") + std::to_string(yytext[0]) +
+                '>';
+    }
+
+    yyerror(error.c_str());
 }
 
 void
