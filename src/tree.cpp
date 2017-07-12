@@ -11,10 +11,11 @@
 #include <vector>
 
 #include "TreeBuilder.hpp"
+#include "trees.hpp"
 #include "types.hpp"
 #include "utils.hpp"
 
-static void print(const Node &node, std::vector<bool> &state);
+static void printNode(std::ostream &os, const Node *node);
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
 static bool areIdentical(const Node *l, const Node *r);
@@ -22,14 +23,13 @@ static bool areIdentical(const Node *l, const Node *r);
 void
 print(const Node &node)
 {
-    std::vector<bool> state;
-    print(node, state);
+    trees::print(std::cout, &node, &printNode);
 }
 
 static void
-print(const Node &node, std::vector<bool> &state)
+printNode(std::ostream &os, const Node *node)
 {
-    // if (node.satellite) {
+    // if (node->satellite) {
     //     return;
     // }
 
@@ -37,44 +37,26 @@ print(const Node &node, std::vector<bool> &state)
         return boost::replace_all_copy(s, "\n", "<NL>");
     };
 
-    std::cout << (state.empty() ? "--- " : "    ");
-
-    for (unsigned int i = 0U, n = state.size(); i < n; ++i) {
-        const bool last = (i == n - 1U);
-        if (state[i]) {
-            std::cout << (last ? "`-- " : "    ");
-        } else {
-            std::cout << (last ? "|-- " : "|   ");
-        }
-    }
-
     std::string suffix;
-    switch (node.state) {
+    switch (node->state) {
         case State::Unchanged: break;
         case State::Deleted:   suffix = " (deleted)";  break;
         case State::Inserted:  suffix = " (inserted)"; break;
-        case State::Updated:   suffix = " (updated with " + l(node.relative->label) + "@" + std::to_string(node.relative->poID) + ")";  break;
+        case State::Updated:   suffix = " (updated with " + l(node->relative->label) + "@" + std::to_string(node->relative->poID) + ")";  break;
     }
 
-    if (node.relative != nullptr && node.state != State::Updated) {
-        suffix += " (relative: " + l(node.relative->label) + "@" + std::to_string(node.relative->poID) + ")";
+    if (node->relative != nullptr && node->state != State::Updated) {
+        suffix += " (relative: " + l(node->relative->label) + "@" + std::to_string(node->relative->poID) + ")";
     }
 
-    std::cout << l(node.label)
-              << '[' << node.poID << ']'
-              << '(' << node.line << ';' << node.col << ')'
-              << (node.satellite ? "{S}" : "")
-              << suffix
-              << '<' << static_cast<int>(node.type) << '>'
-              << '<' << static_cast<int>(node.stype) << '>'
-              << '\n';
-
-    state.push_back(false);
-    for (unsigned int i = 0U, n = node.children.size(); i < n; ++i) {
-        state.back() = (i == n - 1U);
-        print(*node.children[i], state);
-    }
-    state.pop_back();
+    os << l(node->label)
+       << '[' << node->poID << ']'
+       << '(' << node->line << ';' << node->col << ')'
+       << (node->satellite ? "{S}" : "")
+       << suffix
+       << '<' << static_cast<int>(node->type) << '>'
+       << '<' << static_cast<int>(node->stype) << '>'
+       << '\n';
 }
 
 static std::string

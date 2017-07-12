@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include "trees.hpp"
+
 static std::ostream &
 operator<<(std::ostream &os, SType stype)
 {
@@ -107,36 +109,13 @@ TreeBuilder::finish(bool failed)
 }
 
 static void
-print(const PNode *node, const std::string &contents, std::vector<bool> &state)
-{
-    std::cout << (state.empty() ? "--- " : "    ");
-
-    for (unsigned int i = 0U; i < state.size(); ++i) {
-        const bool last = (i == state.size() - 1U);
-        if (state[i]) {
-            std::cout << (last ? "`-- " : "    ");
-        } else {
-            std::cout << (last ? "|-- " : "|   ");
-        }
-    }
-
-    // std::cout << '(' << node->line << ';' << node->col << ")\n";
-    std::cout << contents.substr(node->value.from, node->value.len)
-              << " (" << node->stype << ")\n";
-
-    state.push_back(false);
-    for (unsigned int i = 0U; i < node->children.size(); ++i) {
-        state.back() = (i == node->children.size() - 1U);
-        print(node->children[i], contents, state);
-    }
-    state.pop_back();
-}
-
-static void
 print(const PNode *node, const std::string &contents)
 {
-    std::vector<bool> state;
-    print(node, contents, state);
+    trees::print(std::cout, node,
+                 [&contents](std::ostream &os, const PNode *node) {
+                     os << contents.substr(node->value.from, node->value.len)
+                        << " (" << node->stype << ")\n";
+                 });
 }
 
 static PNode *
