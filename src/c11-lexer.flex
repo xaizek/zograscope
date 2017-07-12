@@ -423,7 +423,9 @@ static void reportError()
     yyerror(error);
 }
 
-void fakeYYunputUse()
+void
+fakeYYunputUse()
 {
-    yyunput(0, nullptr);
+    // This is needed to prevent compilation error on -Werror=unused.
+    static_cast<void>(&yyunput);
 }
