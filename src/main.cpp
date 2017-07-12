@@ -37,6 +37,7 @@ struct Args
 };
 
 static boost::optional<Args> parseArgs(const std::vector<std::string> &argv);
+static int run(const Args &args, TimeReport &tr);
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static boost::optional<Tree> buildTreeFromFile(const std::string &path,
                                                const Args &args);
@@ -88,12 +89,24 @@ main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    RedirectToPager redirectToPager;
+    TimeReport tr;
+
+    const int result = run(args, tr);
+
+    if (args.timeReport) {
+        std::cout << tr;
+    }
+
+    return result;
+}
+
+static int
+run(const Args &args, TimeReport &tr)
+{
     if (args.color) {
         decor::enableDecorations();
     }
-
-    RedirectToPager redirectToPager;
-    TimeReport tr;
 
     Tree treeA;
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
@@ -141,10 +154,6 @@ main(int argc, char *argv[])
 
     // printTree("T1", *T1);
     // printTree("T2", *T2);
-
-    if (args.timeReport) {
-        std::cout << tr;
-    }
 
     return EXIT_SUCCESS;
 }
