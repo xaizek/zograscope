@@ -206,11 +206,13 @@ QCHARSEQ                {QCHAR}+
  /*         the new-line character and " */
 QCHAR                   [^"\n]
 
+NL                      \n|\r|\r\n
+
 %%
 
 [ ]                     ;
 \t                      { yycolumn += tabWidth - (yycolumn - 1)%tabWidth; }
-\n                      { ++yyline; yycolumn = 1U; }
+{NL}                    { ++yyline; yycolumn = 1U; }
 <INITIAL,beforeparen>"case"                  { KW(CASE); }
 <INITIAL,beforeparen>"default"               { KW(DEFAULT); }
 <INITIAL,beforeparen>"sizeof"                { KW(SIZEOF); }
@@ -317,7 +319,7 @@ QCHAR                   [^"\n]
     BEGIN(INITIAL);
     return SLIT;
 }
-<slit>\\\n              { ++yyline; yycolumn = 1U; }
+<slit>\\{NL}            { ++yyline; yycolumn = 1U; }
 <slit>.                 { reportError(); }
 
 "->"                    { TOKEN(ARR_OP); }
@@ -342,17 +344,17 @@ QCHAR                   [^"\n]
 "^="                    { TOKEN(XOREQ_OP); }
 "|="                    { TOKEN(OREQ_OP); }
 
-^[[:space:]]{-}[\n]*# {
+^[[:space:]]{-}[\n\r]*# {
     startTok = yylval;
     startTok.text.token = DIRECTIVE;
     startLoc = yylloc;
     BEGIN(directive);
 }
-<directive>\\\n {
+<directive>\\{NL} {
     ++yyline;
     yycolumn = 1U;
 }
-<directive>\n {
+<directive>{NL} {
     startTok.text.len = yyoffset - startTok.text.from - 1;
     startLoc.last_line = yylloc.last_line;
     startLoc.last_column = yylloc.last_column;
@@ -364,7 +366,7 @@ QCHAR                   [^"\n]
 }
 <directive>"/*"         BEGIN(dirmlcomment);
 <dirmlcomment>"*/"      BEGIN(directive);
-<dirmlcomment>\n        { ++yyline; yycolumn = 1U; }
+<dirmlcomment>{NL}      { ++yyline; yycolumn = 1U; }
 <dirmlcomment>.         ;
 <directive>HEADERNAME   ;
 <directive>.            ;
@@ -375,7 +377,7 @@ QCHAR                   [^"\n]
     startLoc = yylloc;
     BEGIN(slcomment);
 }
-<slcomment>\n {
+<slcomment>{NL} {
     startTok.text.len = yyoffset - startTok.text.from - 1;
     startLoc.last_line = yylloc.last_line;
     startLoc.last_column = yylloc.last_column;
@@ -401,7 +403,7 @@ QCHAR                   [^"\n]
 
     BEGIN(INITIAL);
 }
-<mlcomment>\n           { ++yyline; yycolumn = 1U; }
+<mlcomment>{NL}         { ++yyline; yycolumn = 1U; }
 <mlcomment>.            ;
 
 "..."                   { TOKEN(DOTS); }

@@ -50,6 +50,7 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
 
 TreeBuilder *tb = nullptr;
 static std::string fileName;
+static bool hitError;
 
 %}
 
@@ -1473,11 +1474,13 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
 
     ::fileName = fileName;
 
+    hitError = false;
+
     yy_scan_bytes(contents.data(), contents.size());
 
     // parse through the input until there is no more:
     const bool failed = (yyparse() != 0);
-    tb.finish(failed);
+    tb.finish(failed || hitError);
 
     return tb;
 }
@@ -1488,4 +1491,5 @@ yyerror(const char s[])
     std::cout << fileName << ':'
               << yylloc.first_line << ':' << yylloc.first_column
               << ": parse error: " << s << std::endl;
+    hitError = true;
 }

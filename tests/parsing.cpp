@@ -13,6 +13,11 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
     CHECK_FALSE(parse("\t\n \t \n").hasFailed());
 }
 
+TEST_CASE("Non-UNIX EOLs are allowed", "[parser]")
+{
+    CHECK_FALSE(parse("int\r\na\r;\n").hasFailed());
+}
+
 TEST_CASE("Top-level macros are parsed successfully", "[parser][extensions]")
 {
     CHECK_FALSE(parse("TSTATIC_DEFS(int func(type *var);)").hasFailed());
