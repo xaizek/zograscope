@@ -11,6 +11,7 @@
 enum { tabWidth = 4 };
 
 std::size_t yyoffset;
+std::size_t yylineoffset;
 std::size_t yyline;
 std::size_t yycolumn;
 
@@ -34,7 +35,12 @@ static YYLTYPE startLoc;
     BEGIN(INITIAL); \
     TOKEN(t)
 
-void yyerror(const char s[]);
+#define ADVANCE_LINE() \
+    ++yyline; \
+    yycolumn = 1U; \
+    yylineoffset = yyoffset;
+
+void yyerror(const char s[], int exactColumn);
 
 static void reportError();
 
@@ -213,7 +219,7 @@ NL                      \n|\r|\r\n
 
 [ ]                     ;
 \t                      { yycolumn += tabWidth - (yycolumn - 1)%tabWidth; }
-{NL}                    { ++yyline; yycolumn = 1U; }
+{NL}                    { ADVANCE_LINE(); }
 <INITIAL,beforeparen>"case"                  { KW(CASE); }
 <INITIAL,beforeparen>"default"               { KW(DEFAULT); }
 <INITIAL,beforeparen>"sizeof"                { KW(SIZEOF); }
@@ -320,7 +326,7 @@ NL                      \n|\r|\r\n
     BEGIN(INITIAL);
     return SLIT;
 }
-<slit>\\{NL}            { ++yyline; yycolumn = 1U; }
+<slit>\\{NL}            { ADVANCE_LINE(); }
 <slit>.                 { reportError(); }
 
 "->"                    { TOKEN(ARR_OP); }
@@ -352,8 +358,7 @@ NL                      \n|\r|\r\n
     BEGIN(directive);
 }
 <directive>\\{NL} {
-    ++yyline;
-    yycolumn = 1U;
+    ADVANCE_LINE();
 }
 <directive>{NL} {
     startTok.text.len = yyoffset - startTok.text.from - 1;
@@ -361,13 +366,12 @@ NL                      \n|\r|\r\n
     startLoc.last_column = yylloc.last_column;
     tb->addPostponed(startTok.text, startLoc);
 
-    ++yyline;
-    yycolumn = 1U;
+    ADVANCE_LINE();
     BEGIN(INITIAL);
 }
 <directive>"/*"         BEGIN(dirmlcomment);
 <dirmlcomment>"*/"      BEGIN(directive);
-<dirmlcomment>{NL}      { ++yyline; yycolumn = 1U; }
+<dirmlcomment>{NL}      ADVANCE_LINE();
 <dirmlcomment>.         ;
 <directive>HEADERNAME   ;
 <directive>.            ;
@@ -384,8 +388,7 @@ NL                      \n|\r|\r\n
     startLoc.last_column = yylloc.last_column;
     tb->addPostponed(startTok.text, startLoc);
 
-    ++yyline;
-    yycolumn = 1U;
+    ADVANCE_LINE();
     BEGIN(INITIAL);
 }
 <slcomment>.            ;
@@ -404,7 +407,7 @@ NL                      \n|\r|\r\n
 
     BEGIN(INITIAL);
 }
-<mlcomment>{NL}         { ++yyline; yycolumn = 1U; }
+<mlcomment>{NL}         { ADVANCE_LINE(); }
 <mlcomment>.            ;
 
 "..."                   { TOKEN(DOTS); }
@@ -431,7 +434,7 @@ reportError()
                 '>';
     }
 
-    yyerror(error.c_str());
+    yyerror(error.c_str(), yyoffset - yylineoffset);
 }
 
 void

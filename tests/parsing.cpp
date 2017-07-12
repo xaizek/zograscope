@@ -1,5 +1,9 @@
 #include "Catch/catch.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <iostream>
+
 #include "TreeBuilder.hpp"
 #include "parser.hpp"
 #include "tree.hpp"
@@ -16,6 +20,13 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
 TEST_CASE("Non-UNIX EOLs are allowed", "[parser]")
 {
     CHECK_FALSE(parse("int\r\na\r;\n").hasFailed());
+}
+
+TEST_CASE("Error message counts tabulation as single character", "[parser]")
+{
+    StreamCapture coutCapture(std::cout);
+    CHECK(parse("\t\x01;").hasFailed());
+    REQUIRE(boost::starts_with(coutCapture.get(), "<input>:1:2:"));
 }
 
 TEST_CASE("Top-level macros are parsed successfully", "[parser][extensions]")

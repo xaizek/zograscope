@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string>
 
-void yyerror(const char s[]);
+void yyerror(const char s[], int exactColumn = -1);
 
 static PNode *
 takeFirst(YYSTYPE x, YYSTYPE)
@@ -1459,6 +1459,8 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
 {
     extern std::size_t yyoffset;
     yyoffset = 0U;
+    extern std::size_t yylineoffset;
+    yylineoffset = 0U;
     extern std::size_t yyline;
     yyline = 1U;
     extern std::size_t yycolumn;
@@ -1486,10 +1488,14 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
 }
 
 void
-yyerror(const char s[])
+yyerror(const char s[], int exactColumn)
 {
+    if (exactColumn == -1) {
+        exactColumn = yylloc.first_column;
+    }
+
     std::cout << fileName << ':'
-              << yylloc.first_line << ':' << yylloc.first_column
+              << yylloc.first_line << ':' << exactColumn
               << ": parse error: " << s << std::endl;
     hitError = true;
 }
