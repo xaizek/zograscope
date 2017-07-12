@@ -21,10 +21,25 @@
 
 namespace po = boost::program_options;
 
+struct Args
+{
+    std::vector<std::string> pos;
+    bool highlightMode;
+    bool debug;    //!< Whether grammar debugging is enabled.
+    bool sdebug;   //!< Whether stree debugging is enabled.
+    bool dumpTree; //!< Whether to dump trees.
+    bool dryRun;
+    bool color;
+    bool coarse;   //!< Whether to build coarse-grained tree.
+    bool timeReport;
+    bool noRefine;
+    bool gitDiff;
+};
+
+static boost::optional<Args> parseArgs(const std::vector<std::string> &argv);
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static boost::optional<Tree> buildTreeFromFile(const std::string &path,
-                                               bool coarse, bool dump,
-                                               bool sdebug, bool debug);
+                                               const Args &args);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -66,33 +81,14 @@ readFile(const std::string &path)
 int
 main(int argc, char *argv[])
 {
-    po::variables_map varMap;
-    try {
-        varMap = parseOptions({ argv + 1, argv + argc });
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << '\n';
+    Args args;
+    if (boost::optional<Args> a = parseArgs({ argv + 1, argv + argc })) {
+        args = *a;
+    } else {
         return EXIT_FAILURE;
     }
 
-    const auto args = varMap["positional"].as<std::vector<std::string>>();
-    if ((args.empty() || args.size() > 2U) && args.size() != 7U) {
-        std::cerr << "Wrong arguments\n";
-        return EXIT_FAILURE;
-    }
-
-    const bool highlightMode = (args.size() == 1U);
-    const bool debug = varMap.count("debug");
-    const bool sdebug = varMap.count("sdebug");
-    const bool dumpTree = varMap.count("dump-tree");
-    const bool dryRun = varMap.count("dry-run");
-    const bool color = varMap.count("color");
-    const bool coarse = varMap.count("coarse");
-    const bool timeReport = varMap.count("time-report");
-    const bool noRefine = varMap.count("no-refine");
-
-    const bool gitDiff = (args.size() == 7U);
-
-    if (color) {
+    if (args.color) {
         decor::enableDecorations();
     }
 
@@ -100,35 +96,31 @@ main(int argc, char *argv[])
     TimeReport tr;
 
     Tree treeA;
-    const std::string oldFile = (gitDiff ? args[1] : args[0]);
+    const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
     if (boost::optional<Tree> tree = (tr.measure("parsing1"),
-                                      buildTreeFromFile(oldFile, coarse,
-                                                        dumpTree,
-                                                        sdebug, debug))) {
+                                      buildTreeFromFile(oldFile, args))) {
         treeA = std::move(*tree);
     } else {
         return EXIT_FAILURE;
     }
 
-    if (highlightMode) {
-        if (!dryRun) {
+    if (args.highlightMode) {
+        if (!args.dryRun) {
             std::cout << printSource(*treeA.getRoot()) << '\n';
         }
         return EXIT_SUCCESS;
     }
 
     Tree treeB;
-    const std::string newFile = (gitDiff ? args[4] : args[1]);
+    const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
     if (boost::optional<Tree> tree = (tr.measure("parsing2"),
-                                      buildTreeFromFile(newFile, coarse,
-                                                        dumpTree,
-                                                        sdebug, debug))) {
+                                      buildTreeFromFile(newFile, args))) {
         treeB = std::move(*tree);
     } else {
         return EXIT_FAILURE;
     }
 
-    if (dryRun) {
+    if (args.dryRun) {
         return EXIT_SUCCESS;
     }
 
@@ -136,12 +128,12 @@ main(int argc, char *argv[])
     // markSatellites(*treeB.getRoot());
 
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
-    compare(T1, T2, tr, coarse, noRefine);
+    compare(T1, T2, tr, args.coarse, args.noRefine);
 
     Printer printer(*T1, *T2);
-    if (gitDiff) {
-        printer.addHeader({ args[3], args[6] });
-        printer.addHeader({ "a/" + args[0], "b/" + args[0] });
+    if (args.gitDiff) {
+        printer.addHeader({ args.pos[3], args.pos[6] });
+        printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });
     } else {
         printer.addHeader({ oldFile, newFile });
     }
@@ -150,11 +142,44 @@ main(int argc, char *argv[])
     // printTree("T1", *T1);
     // printTree("T2", *T2);
 
-    if (timeReport) {
+    if (args.timeReport) {
         std::cout << tr;
     }
 
     return EXIT_SUCCESS;
+}
+
+static boost::optional<Args>
+parseArgs(const std::vector<std::string> &argv)
+{
+    po::variables_map varMap;
+    try {
+        varMap = parseOptions(argv);
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << '\n';
+        return {};
+    }
+
+    Args args;
+
+    args.pos = varMap["positional"].as<std::vector<std::string>>();
+    if ((args.pos.empty() || args.pos.size() > 2U) && args.pos.size() != 7U) {
+        std::cerr << "Wrong arguments\n";
+        return {};
+    }
+
+    args.highlightMode = (args.pos.size() == 1U);
+    args.debug = varMap.count("debug");
+    args.sdebug = varMap.count("sdebug");
+    args.dumpTree = varMap.count("dump-tree");
+    args.dryRun = varMap.count("dry-run");
+    args.color = varMap.count("color");
+    args.coarse = varMap.count("coarse");
+    args.timeReport = varMap.count("time-report");
+    args.noRefine = varMap.count("no-refine");
+    args.gitDiff = (args.pos.size() == 7U);
+
+    return args;
 }
 
 /**
@@ -208,29 +233,26 @@ parseOptions(const std::vector<std::string> &args)
 /**
  * @brief Reads and parses a file to build its tree.
  *
- * @param path     Path to the file to read.
- * @param coarse   Whether to build coarse-grained tree.
- * @param dump     Whether to dump trees.
- * @param sdebug   Whether stree debugging is enabled.
- * @param debug    Whether grammar debugging is enabled.
+ * @param path  Path to the file to read.
+ * @param args  Arguments of the application.
  *
  * @returns Tree on success or empty optional on error.
  */
 static boost::optional<Tree>
-buildTreeFromFile(const std::string &path, bool coarse, bool dump, bool sdebug,
-                  bool debug)
+buildTreeFromFile(const std::string &path, const Args &args)
 {
     const std::string contents = readFile(path);
 
-    TreeBuilder tb = parse(contents, path, debug);
+    TreeBuilder tb = parse(contents, path, args.debug);
     if (tb.hasFailed()) {
         return {};
     }
 
-    Tree t = coarse ? Tree(contents, tb.makeSTree(contents, dump, sdebug))
-                    : Tree(contents, tb.getRoot());
+    Tree t = args.coarse
+           ? Tree(contents, tb.makeSTree(contents, args.dumpTree, args.sdebug))
+           : Tree(contents, tb.getRoot());
 
-    if (dump) {
+    if (args.dumpTree) {
         std::cout << "Tree of " << path << ":\n";
         print(*t.getRoot());
     }
