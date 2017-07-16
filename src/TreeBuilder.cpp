@@ -11,7 +11,7 @@
 
 #include "trees.hpp"
 
-static std::ostream &
+std::ostream &
 operator<<(std::ostream &os, SType stype)
 {
     switch (stype) {
@@ -114,7 +114,7 @@ print(const PNode *node, const std::string &contents)
     trees::print(std::cout, node,
                  [&contents](std::ostream &os, const PNode *node) {
                      os << contents.substr(node->value.from, node->value.len)
-                        << " (" << node->stype << ")\n";
+                        << " (SType::" << node->stype << ")\n";
                  });
 }
 

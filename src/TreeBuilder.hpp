@@ -6,6 +6,7 @@
 #include <cstddef>
 
 #include <deque>
+#include <iosfwd>
 #include <utility>
 #include <vector>
 
@@ -36,6 +37,8 @@ enum class SType
     WithInitializer,
     InitializerElement,
 };
+
+std::ostream & operator<<(std::ostream &os, SType stype);
 
 struct Location
 {

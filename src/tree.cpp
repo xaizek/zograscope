@@ -55,7 +55,7 @@ printNode(std::ostream &os, const Node *node)
        << (node->satellite ? "{S}" : "")
        << suffix
        << '<' << static_cast<int>(node->type) << '>'
-       << '<' << static_cast<int>(node->stype) << '>'
+       << ", SType::" << node->stype
        << '\n';
 }
 
