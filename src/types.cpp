@@ -1,6 +1,38 @@
 #include "types.hpp"
 
+#include <cassert>
+
+#include <ostream>
+
 #include "c11-parser.hpp"
+
+std::ostream &
+operator<<(std::ostream &os, Type type)
+{
+    switch (type) {
+        case Type::Virtual:            return (os << "Virtual");
+        case Type::Functions:          return (os << "Functions");
+        case Type::UserTypes:          return (os << "UserTypes");
+        case Type::Identifiers:        return (os << "Identifiers");
+        case Type::Jumps:              return (os << "Jumps");
+        case Type::Specifiers:         return (os << "Specifiers");
+        case Type::Types:              return (os << "Types");
+        case Type::LeftBrackets:       return (os << "LeftBrackets");
+        case Type::RightBrackets:      return (os << "RightBrackets");
+        case Type::Comparisons:        return (os << "Comparisons");
+        case Type::Operators:          return (os << "Operators");
+        case Type::Assignments:        return (os << "Assignments");
+        case Type::Directives:         return (os << "Directives");
+        case Type::Comments:           return (os << "Comments");
+        case Type::NonInterchangeable: return (os << "NonInterchangeable");
+        case Type::Constants:          return (os << "Constants");
+        case Type::Keywords:           return (os << "Keywords");
+        case Type::Other:              return (os << "Other");
+    }
+
+    assert("Unhandled enumeration item");
+    return (os << "<UNKNOWN>");
+}
 
 static Type *
 tokenMap()

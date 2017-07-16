@@ -1,6 +1,8 @@
 #ifndef TYPES_HPP__
 #define TYPES_HPP__
 
+#include <iosfwd>
+
 enum class Type
 {
     Virtual,
@@ -139,6 +141,8 @@ enum class Type
     // ARR_OP
     Other,
 };
+
+std::ostream & operator<<(std::ostream &os, Type type);
 
 Type tokenToType(int token);
 
