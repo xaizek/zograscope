@@ -34,6 +34,7 @@ enum class SType
     Expression,
     Declarator,
     Initializer,
+    InitializerList,
     Specifiers,
     WithInitializer,
     InitializerElement,

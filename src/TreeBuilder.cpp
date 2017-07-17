@@ -37,6 +37,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::Expression:          return (os << "Expression");
         case SType::Declarator:          return (os << "Declarator");
         case SType::Initializer:         return (os << "Initializer");
+        case SType::InitializerList:     return (os << "InitializerList");
         case SType::Specifiers:          return (os << "Specifiers");
         case SType::WithInitializer:     return (os << "WithInitializer");
         case SType::InitializerElement:  return (os << "InitializerElement");

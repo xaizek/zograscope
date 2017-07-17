@@ -341,7 +341,35 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
     CHECK(newMap == expected);
 }
 
-TEST_CASE("Initializer is decomposed", "[comparison][parsing]")
+TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Tree oldTree = makeTree(R"(
+        type var = {
+            .oldfield = oldValue,
+        };
+    )", true);
+    Tree newTree = makeTree(R"(
+        type var = {
+            .oldfield = oldValue,
+            .newField = newValue,
+        };
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
+}
+
+TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.

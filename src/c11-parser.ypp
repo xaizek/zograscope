@@ -1101,15 +1101,17 @@ initializer
 /*     initializer-list , designationopt initializer */
 initializer_list
     : designation initializer
-    { $$ = tb->addNode({ tb->addNode({ $1, $2 }) },
-                       SType::InitializerElement); }
+    { $$ = tb->addNode({ tb->addNode({ $1, $2 }, SType::InitializerElement) },
+                       SType::InitializerList); }
     | initializer
-    { $$ = tb->addNode({ $1 }, SType::InitializerElement); }
+    { $$ = tb->addNode({ tb->addNode({ $1 }, SType::InitializerElement) },
+                       SType::InitializerList); }
     | initializer_list ',' designation initializer
     { auto elem = tb->addNode({ $3, $4 }, SType::InitializerElement);
       $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), elem }); }
     | initializer_list ',' initializer
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), $3 }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                      tb->addNode({ $3 }, SType::InitializerElement) }); }
     ;
 
 /* (6.7.9) designation: */
