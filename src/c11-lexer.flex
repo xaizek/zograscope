@@ -364,7 +364,7 @@ NL                      \n|\r|\r\n
     startTok.text.len = yyoffset - startTok.text.from - 1;
     startLoc.last_line = yylloc.last_line;
     startLoc.last_column = yylloc.last_column;
-    tb->addPostponed(startTok.text, startLoc);
+    tb->addPostponed(startTok.text, startLoc, SType::Directive);
 
     ADVANCE_LINE();
     BEGIN(INITIAL);
@@ -386,7 +386,7 @@ NL                      \n|\r|\r\n
     startTok.text.len = yyoffset - startTok.text.from - 1;
     startLoc.last_line = yylloc.last_line;
     startLoc.last_column = yylloc.last_column;
-    tb->addPostponed(startTok.text, startLoc);
+    tb->addPostponed(startTok.text, startLoc, SType::Comment);
 
     ADVANCE_LINE();
     BEGIN(INITIAL);
@@ -403,7 +403,7 @@ NL                      \n|\r|\r\n
     startTok.text.len = yyoffset - startTok.text.from;
     startLoc.last_line = yylloc.last_line;
     startLoc.last_column = yylloc.last_column;
-    tb->addPostponed(startTok.text, startLoc);
+    tb->addPostponed(startTok.text, startLoc, SType::Comment);
 
     BEGIN(INITIAL);
 }

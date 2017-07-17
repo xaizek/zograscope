@@ -20,7 +20,8 @@ operator<<(std::ostream &os, SType stype)
         case SType::Declaration:         return (os << "Declaration");
         case SType::FunctionDeclaration: return (os << "FunctionDeclaration");
         case SType::FunctionDefinition:  return (os << "FunctionDefinition");
-        case SType::Postponed:           return (os << "Postponed");
+        case SType::Directive:           return (os << "Directive");
+        case SType::Comment:             return (os << "Comment");
         case SType::Macro:               return (os << "Macro");
         case SType::CompoundStatement:   return (os << "CompoundStatement");
         case SType::Separator:           return (os << "Separator");
@@ -55,7 +56,7 @@ TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
         children.reserve(value.postponedTo - value.postponedFrom);
         for (std::size_t i = value.postponedFrom; i < value.postponedTo; ++i) {
             nodes.emplace_back(postponed[i].value, postponed[i].loc,
-                               SType::Postponed, true);
+                               postponed[i].stype, true);
             children.push_back(&nodes.back());
         }
         nodes.emplace_back(value, loc, stype);
@@ -100,7 +101,7 @@ TreeBuilder::finish(bool failed)
     for (std::size_t i = postponed.size() - newPostponed; i < postponed.size();
          ++i) {
         nodes.emplace_back(postponed[i].value, postponed[i].loc,
-                           SType::Postponed, true);
+                           postponed[i].stype, true);
         children.push_back(&nodes.back());
     }
 

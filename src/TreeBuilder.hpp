@@ -17,7 +17,8 @@ enum class SType
     Declaration,
     FunctionDeclaration,
     FunctionDefinition,
-    Postponed,
+    Comment,
+    Directive,
     Macro,
     CompoundStatement,
     Separator,
@@ -112,6 +113,7 @@ class TreeBuilder
     {
         Text value;
         Location loc;
+        SType stype;
     };
 
 public:
@@ -168,9 +170,9 @@ public:
         return node;
     }
 
-    void addPostponed(Text value, const Location &loc)
+    void addPostponed(Text value, const Location &loc, SType stype)
     {
-        postponed.push_back({ value, loc });
+        postponed.push_back({ value, loc, stype });
         ++newPostponed;
     }
 
