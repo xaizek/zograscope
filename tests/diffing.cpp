@@ -101,6 +101,39 @@ TEST_CASE("Changes are detected in presence of comments",
           == State::Updated);
 }
 
+TEST_CASE("All postponed nodes are pulled into parents",
+          "[comparison][postponed]")
+{
+    Tree oldTree = makeTree(R"(
+        typedef struct
+        {
+            int a; // Comment 1.
+        }
+        str;
+    )");
+    Tree newTree = makeTree(R"(
+        typedef struct
+        {
+            int a; // Comment 1.
+            int b; // Comment 2.
+        }
+        str;
+    )");
+
+    ted(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) > 0);
+
+    CHECK(findNode(newTree, Type::Comments, "// Comment 2.")->state
+          == State::Inserted);
+}
+
 TEST_CASE("Fine reduction doesn't crash", "[comparison][reduction][crash]")
 {
     Tree oldTree = makeTree(R"(

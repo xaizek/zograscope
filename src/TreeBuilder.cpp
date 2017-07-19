@@ -73,7 +73,9 @@ TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
 PNode *
 TreeBuilder::addNode(std::vector<PNode *> children, SType stype)
 {
-    movePostponed(children[0], children, children.cbegin());
+    for (unsigned int i = children.size(); i != 0U; --i) {
+        movePostponed(children[i - 1U], children, children.cbegin() + (i - 1U));
+    }
     nodes.emplace_back(std::move(children), stype);
     return &nodes.back();
 }
@@ -181,9 +183,8 @@ void
 TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
                            std::vector<PNode *>::const_iterator insertPos)
 {
-    auto pos = std::partition_point(node->children.begin(),
-                                    node->children.end(),
-                                    [](PNode *n) { return n->postponed; });
+    auto pos = std::find_if_not(node->children.begin(), node->children.end(),
+                                [](PNode *n) { return n->postponed; });
     if (pos == node->children.begin()) {
         return;
     }
