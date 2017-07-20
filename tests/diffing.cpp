@@ -182,8 +182,8 @@ TEST_CASE("Fine reduction works", "[comparison][reduction]")
     reduceTreesFine(oldT, newT);
     CHECK(oldT != oldTree.getRoot());
     CHECK(newT != newTree.getRoot());
-    CHECK(countSatellites(*oldTree.getRoot()) == 25);
-    CHECK(countSatellites(*newTree.getRoot()) == 25);
+    CHECK(countSatellites(*oldTree.getRoot()) == 26);
+    CHECK(countSatellites(*newTree.getRoot()) == 26);
 }
 
 TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
@@ -233,13 +233,13 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
     reduceTreesFine(oldT, newT);
     distill(*oldT, *newT);
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
     CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
 }
 
 TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
@@ -399,7 +399,7 @@ TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
 
     CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
 }
 
 TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
@@ -422,13 +422,13 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
 
     distill(*oldTree.getRoot(), *newTree.getRoot());
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 2);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 2);
     CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 2);
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
 }
 
 TEST_CASE("Structure is decomposed", "[comparison][parsing]")

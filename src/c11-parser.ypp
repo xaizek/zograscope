@@ -547,9 +547,10 @@ declaration_specifier
 /*     init-declarator-list , init-declarator */
 init_declarator_list
     : init_declarator
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::Declarator); }
     | init_declarator_list ',' init_declarator
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                            tb->addNode($3, @3, SType::Declarator) }); }
     ;
 
 /* (6.7) init-declarator: */
@@ -1080,7 +1081,7 @@ direct_abstract_declarator
 /*     { initializer-list , } */
 initializer
     : assignment_expression
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::Initializer); }
     | '{' initializer_list '}'
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          $2,
