@@ -529,9 +529,9 @@ declaration
 /*     alignment-specifier declaration-specifiersopt */
 declaration_specifiers
     : declaration_specifier declaration_specifiers
-    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    { $$ = tb->prepend($2, tb->addNode($1, @1, SType::Specifiers)); }
     | declaration_specifier
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::Specifiers); }
     ;
 
 declaration_specifier
@@ -659,7 +659,8 @@ struct_or_union
 /*     struct-declaration-list struct-declaration */
 struct_declaration_list
     : struct_declaration
-    { $$ = tb->addNode($1, @1, SType::Declaration); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declaration) },
+                       SType::Declarations); }
     | struct_declaration_list struct_declaration
     { $$ = tb->append($1, tb->addNode($2, @2, SType::Declaration)); }
     ;
