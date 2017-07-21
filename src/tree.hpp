@@ -15,6 +15,8 @@ enum class State
     Updated
 };
 
+class SNode;
+
 struct Node
 {
     std::string label;

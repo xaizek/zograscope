@@ -52,7 +52,7 @@ private:
     std::streambuf *rdbuf;  //!< Original output buffer of the stream.
 };
 
-Tree makeTree(const std::string &str, bool stree = false);
+Tree makeTree(const std::string &str, bool coarse = false);
 
 const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});

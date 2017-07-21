@@ -4,18 +4,24 @@
 
 #include <functional>
 #include <string>
+#include <utility>
 
+#include "STree.hpp"
 #include "parser.hpp"
 #include "tree.hpp"
 
 Tree
-makeTree(const std::string &str, bool stree)
+makeTree(const std::string &str, bool coarse)
 {
     TreeBuilder tb = parse(str);
     REQUIRE_FALSE(tb.hasFailed());
-    return stree
-         ? Tree(str, tb.makeSTree(str))
-         : Tree(str, tb.getRoot());
+
+    if (!coarse) {
+        return Tree(str, tb.getRoot());
+    }
+
+    STree stree(std::move(tb), str);
+    return Tree(str, stree.getRoot());
 }
 
 const Node *

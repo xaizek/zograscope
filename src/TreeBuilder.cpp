@@ -5,11 +5,8 @@
 
 #include <deque>
 #include <functional>
-#include <iostream>
 #include <utility>
 #include <vector>
-
-#include "trees.hpp"
 
 std::ostream &
 operator<<(std::ostream &os, SType stype)
@@ -111,73 +108,6 @@ TreeBuilder::finish(bool failed)
 
     root->children.insert(root->children.cend(),
                           children.cbegin(), children.cend());
-}
-
-static void
-print(const PNode *node, const std::string &contents)
-{
-    trees::print(std::cout, node,
-                 [&contents](std::ostream &os, const PNode *node) {
-                     os << contents.substr(node->value.from, node->value.len)
-                        << " (SType::" << node->stype << ")\n";
-                 });
-}
-
-static PNode *
-findSNode(PNode *node)
-{
-    if (node->stype != SType::None) {
-        return node;
-    }
-
-    return node->children.size() == 1U
-         ? findSNode(node->children.front())
-         : nullptr;
-}
-
-SNode *
-TreeBuilder::makeSTree(const std::string &contents, bool dumpWhole,
-                       bool dumpUnclear)
-{
-    if (dumpWhole) {
-        print(root, contents);
-    }
-
-    PNode *rootNode = findSNode(root);
-    if (rootNode == nullptr) {
-        snodes.emplace_back(SNode{root, {}});
-        return &snodes[0];
-    }
-
-    std::function<SNode *(PNode *)> makeSNode = [&, this](PNode *node) {
-        auto isSNode = [](PNode *child) {
-            return (findSNode(child) != nullptr);
-        };
-        // If none of the children is SNode, then current node is a leaf SNode.
-        if (std::none_of(node->children.begin(), node->children.end(),
-                         isSNode)) {
-            snodes.emplace_back(SNode{node, {}});
-            return &snodes.back();
-        }
-
-        std::vector<SNode *> c;
-        c.reserve(node->children.size());
-        for (PNode *child : node->children) {
-            if (PNode *schild = findSNode(child)) {
-                c.push_back(makeSNode(schild));
-            } else {
-                if (dumpUnclear) {
-                    print(child, contents);
-                }
-                snodes.emplace_back(SNode{node->children[c.size()], {}});
-                c.push_back(&snodes.back());
-            }
-        }
-        snodes.emplace_back(SNode{node, std::move(c)});
-        return &snodes.back();
-    };
-
-    return makeSNode(rootNode);
 }
 
 void

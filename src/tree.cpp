@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "trees.hpp"
 #include "types.hpp"

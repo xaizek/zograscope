@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Printer.hpp"
+#include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "compare.hpp"
 #include "decoration.hpp"
@@ -257,9 +258,14 @@ buildTreeFromFile(const std::string &path, const Args &args)
         return {};
     }
 
-    Tree t = args.coarse
-           ? Tree(contents, tb.makeSTree(contents, args.dumpTree, args.sdebug))
-           : Tree(contents, tb.getRoot());
+    Tree t;
+
+    if (args.coarse) {
+        STree stree(std::move(tb), contents, args.dumpTree, args.sdebug);
+        t = Tree(contents, stree.getRoot());
+    } else {
+        t = Tree(contents, tb.getRoot());
+    }
 
     if (args.dumpTree) {
         std::cout << "Tree of " << path << ":\n";

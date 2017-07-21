@@ -103,12 +103,6 @@ private:
     }
 };
 
-struct SNode
-{
-    PNode *value;
-    std::vector<SNode *> children;
-};
-
 class TreeBuilder
 {
     struct Postponed
@@ -117,6 +111,13 @@ class TreeBuilder
         Location loc;
         SType stype;
     };
+
+public:
+    TreeBuilder() = default;
+    TreeBuilder(const TreeBuilder &rhs) = delete;
+    TreeBuilder(TreeBuilder &&rhs) = default;
+    TreeBuilder & operator=(const TreeBuilder &rhs) = delete;
+    TreeBuilder & operator=(TreeBuilder &&rhs) = delete;
 
 public:
     PNode * addNode(PNode *node, const Location &, SType stype = SType::None)
@@ -202,16 +203,12 @@ public:
         return failed;
     }
 
-    SNode * makeSTree(const std::string &contents, bool dumpWhole = false,
-                      bool dumpUnclear = false);
-
 private:
     void movePostponed(PNode *&node, std::vector<PNode *> &nodes,
                        std::vector<PNode *>::const_iterator insertPos);
 
 private:
     std::deque<PNode> nodes;
-    std::deque<SNode> snodes;
     PNode *root = nullptr;
     std::vector<Postponed> postponed;
     int newPostponed = 0;
