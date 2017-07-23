@@ -50,10 +50,10 @@ operator<<(std::ostream &os, SType stype)
 PNode *
 PNode::contract(PNode *node)
 {
-    if (node->empty() && node->children.size() == 1U &&
+    if (node->empty() && node->children.size() - node->movedChildren == 1U &&
         node->children.front()->empty()) {
         // TODO: we could reuse contracted nodes to save some memory
-        return contract(node->children.front());
+        return contract(node->children[node->movedChildren]);
     }
     return node;
 }
@@ -99,16 +99,19 @@ TreeBuilder::finish(bool failed)
         return;
     }
 
-    std::function<void(PNode *)> clean = [&](PNode *node) {
+    std::function<PNode * (PNode *)> clean = [&clean](PNode *node) {
         std::vector<PNode *> &children = node->children;
         children.erase(children.begin(),
                        children.begin() + node->movedChildren);
-        for (PNode *child : children) {
-            clean(child);
+        for (PNode *&child : children) {
+            child = clean(child);
         }
+
+        node->movedChildren = 0;
+        return PNode::contract(node);
     };
 
-    clean(root);
+    root = clean(root);
 
     std::vector<PNode *> children;
     children.reserve(newPostponed);
@@ -136,7 +139,8 @@ TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
     std::vector<PNode *> postponed(node->children.begin(), pos);
     node->movedChildren = postponed.size();
 
-    if (node->children.end() - pos == 1U && (*pos)->empty()) {
+    if (node->children.end() - pos == 1U && (*pos)->empty() &&
+        (*pos)->children.empty()) {
         (*pos)->stype = node->stype;
         node = *pos;
     }

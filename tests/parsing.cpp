@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <functional>
 #include <iostream>
 
 #include "TreeBuilder.hpp"
@@ -9,6 +10,8 @@
 #include "tree.hpp"
 
 #include "tests.hpp"
+
+static int countNodes(const Node &root);
 
 TEST_CASE("Empty input is OK", "[parser][extensions]")
 {
@@ -159,4 +162,43 @@ TEST_CASE("Trailing id in bitfield declarator is variable by default",
 {
     Tree tree = makeTree("struct s { int b : 1; };");
     CHECK(findNode(tree, Type::Identifiers, "b") != nullptr);
+}
+
+TEST_CASE("Single comment adds just one node to the tree",
+          "[parser][postponed]")
+{
+    Tree withoutComment = makeTree(R"(
+        void f()
+        {
+        }
+    )");
+    Tree withComment = makeTree(R"(
+        // Comment
+        void f()
+        {
+        }
+    )");
+    CHECK(countNodes(*withComment.getRoot()) ==
+          countNodes(*withoutComment.getRoot()) + 1);
+}
+
+static int
+countNodes(const Node &root)
+{
+    int count = 0;
+
+    std::function<void(const Node &)> visit = [&](const Node &node) {
+        if (node.next != nullptr) {
+            return visit(*node.next);
+        }
+
+        ++count;
+
+        for (const Node *child : node.children) {
+            visit(*child);
+        }
+    };
+
+    visit(root);
+    return count;
 }
