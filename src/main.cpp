@@ -109,7 +109,23 @@ run(const Args &args, TimeReport &tr)
         decor::enableDecorations();
     }
 
-    Tree treeA;
+    Tree treeA, treeB;
+    auto dumpTrees = [&args, &treeA, &treeB]() {
+        if (!args.dumpTree) {
+            return;
+        }
+
+        if (Node *root = treeA.getRoot()) {
+            std::cout << "Old tree:\n";
+            print(*root);
+        }
+
+        if (Node *root = treeB.getRoot()) {
+            std::cout << "New tree:\n";
+            print(*root);
+        }
+    };
+
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
     if (boost::optional<Tree> tree = (tr.measure("parsing1"),
                                       buildTreeFromFile(oldFile, args))) {
@@ -119,13 +135,13 @@ run(const Args &args, TimeReport &tr)
     }
 
     if (args.highlightMode) {
+        dumpTrees();
         if (!args.dryRun) {
             std::cout << printSource(*treeA.getRoot()) << '\n';
         }
         return EXIT_SUCCESS;
     }
 
-    Tree treeB;
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
     if (boost::optional<Tree> tree = (tr.measure("parsing2"),
                                       buildTreeFromFile(newFile, args))) {
@@ -135,6 +151,7 @@ run(const Args &args, TimeReport &tr)
     }
 
     if (args.dryRun) {
+        dumpTrees();
         return EXIT_SUCCESS;
     }
 
@@ -143,6 +160,8 @@ run(const Args &args, TimeReport &tr)
 
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
     compare(T1, T2, tr, args.coarse, args.noRefine);
+
+    dumpTrees();
 
     Printer printer(*T1, *T2);
     if (args.gitDiff) {
@@ -265,11 +284,6 @@ buildTreeFromFile(const std::string &path, const Args &args)
         t = Tree(contents, stree.getRoot());
     } else {
         t = Tree(contents, tb.getRoot());
-    }
-
-    if (args.dumpTree) {
-        std::cout << "Tree of " << path << ":\n";
-        print(*t.getRoot());
     }
 
     return t;
