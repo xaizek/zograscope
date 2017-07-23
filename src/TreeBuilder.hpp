@@ -89,18 +89,7 @@ struct PNode
     SType stype = SType::None;
     int movedChildren = 0;
 
-private:
-    // TODO: try contracting in TreeBuilder as well (this way we won't even
-    //       create extra node)
-    static PNode * contract(PNode *node)
-    {
-        if (node->empty() && node->children.size() == 1U &&
-            node->children.front()->empty()) {
-            // TODO: we could reuse contracted nodes to save some memory
-            return contract(node->children.front());
-        }
-        return node;
-    }
+    static PNode * contract(PNode *node);
 };
 
 class TreeBuilder

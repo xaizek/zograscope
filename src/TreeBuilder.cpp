@@ -45,6 +45,19 @@ operator<<(std::ostream &os, SType stype)
     return (os << "<UNKNOWN>");
 }
 
+// TODO: try contracting in TreeBuilder as well (this way we won't even
+//       create extra node)
+PNode *
+PNode::contract(PNode *node)
+{
+    if (node->empty() && node->children.size() == 1U &&
+        node->children.front()->empty()) {
+        // TODO: we could reuse contracted nodes to save some memory
+        return contract(node->children.front());
+    }
+    return node;
+}
+
 PNode *
 TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
 {
