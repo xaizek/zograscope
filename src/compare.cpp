@@ -9,7 +9,7 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
-static void refine(Node &root);
+static void refine(Node &node);
 
 void
 compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
@@ -79,25 +79,22 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 }
 
 static void
-refine(Node &root)
+refine(Node &node)
 {
-    std::function<void(Node &)> visit = [&](Node &node) {
-        if (node.satellite) {
-            return;
-        }
+    if (node.satellite) {
+        return;
+    }
 
-        if (node.line != 0 && node.col != 0 && node.state == State::Updated) {
-            node.state = State::Unchanged;
-            node.relative->state = State::Unchanged;
+    if (node.line != 0 && node.col != 0 && node.state == State::Updated) {
+        node.state = State::Unchanged;
+        node.relative->state = State::Unchanged;
 
-            Node *subT1 = node.next, *subT2 = node.relative->next;
-            reduceTreesFine(subT1, subT2);
-            ted(*subT1, *subT2);
-        }
+        Node *subT1 = node.next, *subT2 = node.relative->next;
+        reduceTreesFine(subT1, subT2);
+        ted(*subT1, *subT2);
+    }
 
-        for (Node *child : node.children) {
-            visit(*child);
-        }
-    };
-    visit(root);
+    for (Node *child : node.children) {
+        refine(*child);
+    }
 }
