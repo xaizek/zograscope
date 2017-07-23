@@ -374,6 +374,52 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
     CHECK(newMap == expected);
 }
 
+TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f()
+        {
+            column_data_t cdt = {
+                .entry = that,
+                .line_pos = old_pos,
+                .is_current = is_current,
+            };
+
+            cdt.column_offset = 1;
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f()
+        {
+            const column_data_t cdt = {
+                .entry = this,
+                .line_pos = i,
+                .is_current = 0,
+            };
+        }
+
+        void f()
+        {
+            column_data_t cdt = {
+                .entry = that,
+                .line_pos = old_pos,
+                .is_current = is_current,
+            };
+
+            cdt.column_offset = 2;
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+
+    // If functions matched correctly, only one leaf of the old tree will be
+    // removed.
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+}
+
 TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
@@ -645,6 +691,10 @@ countLeaves(const Node &root, State state)
     int count = 0;
 
     std::function<void(const Node &)> visit = [&](const Node &node) {
+        if (node.state == State::Unchanged && node.next != nullptr) {
+            return visit(*node.next);
+        }
+
         if (node.children.empty() && node.state == state) {
             ++count;
         }

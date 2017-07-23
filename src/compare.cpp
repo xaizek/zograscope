@@ -1,5 +1,8 @@
 #include "compare.hpp"
 
+#include <algorithm>
+#include <vector>
+
 #include "change-distilling.hpp"
 #include "time.hpp"
 #include "tree.hpp"
@@ -11,6 +14,13 @@ static void refine(Node &root);
 void
 compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 {
+    struct Match
+    {
+        Node *x;
+        Node *y;
+        float similarity;
+    };
+
     tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
 
     if (!coarse) {
@@ -25,6 +35,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
     };
 
+    std::vector<Match> matches;
+
     auto timer = tr.measure("reduction-and-diffing");
     for (Node *t1Child : T1->children) {
         if (t1Child->satellite) {
@@ -32,19 +44,34 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
         std::string subtree1 = printSubTree(*t1Child);
         for (Node *t2Child : T2->children) {
-            if (t2Child->satellite || t1Child->label != t2Child->label ||
-                diceCoefficient(subtree1, printSubTree(*t2Child)) < 0.6f) {
+            if (t2Child->satellite || t1Child->label != t2Child->label) {
                 continue;
             }
 
-            Node *subT1 = t1Child, *subT2 = t2Child;
-            reduceTreesFine(subT1, subT2);
-            distill(*subT1, *subT2);
-            refine(*subT1);
-            t1Child->satellite = true;
-            t2Child->satellite = true;
-            break;
+            const float similarity = diceCoefficient(subtree1,
+                                                     printSubTree(*t2Child));
+            if (similarity >= 0.6f) {
+                matches.push_back({ t1Child, t2Child, similarity });
+            }
         }
+    }
+
+    std::stable_sort(matches.begin(), matches.end(),
+                     [](const Match &a, const Match &b) {
+                         return b.similarity < a.similarity;
+                     });
+
+    for (const Match &match : matches) {
+        if (match.x->satellite || match.y->satellite) {
+            continue;
+        }
+
+        Node *subT1 = match.x, *subT2 = match.y;
+        reduceTreesFine(subT1, subT2);
+        distill(*subT1, *subT2);
+        refine(*subT1);
+        match.x->satellite = true;
+        match.y->satellite = true;
     }
 
     distill(*T1, *T2);
