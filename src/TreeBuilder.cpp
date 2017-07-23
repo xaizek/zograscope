@@ -50,8 +50,7 @@ operator<<(std::ostream &os, SType stype)
 PNode *
 PNode::contract(PNode *node)
 {
-    if (node->empty() && node->children.size() - node->movedChildren == 1U &&
-        node->children.front()->empty()) {
+    if (node->empty() && node->children.size() - node->movedChildren == 1U) {
         // TODO: we could reuse contracted nodes to save some memory
         return contract(node->children[node->movedChildren]);
     }
