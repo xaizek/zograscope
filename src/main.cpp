@@ -75,6 +75,10 @@ std::string
 readFile(const std::string &path)
 {
     std::ifstream ifile(path);
+    if (!ifile) {
+        throw std::runtime_error("Can't open " + path);
+    }
+
     std::ostringstream iss;
     iss << ifile.rdbuf();
     return iss.str();
