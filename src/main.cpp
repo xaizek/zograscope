@@ -76,7 +76,7 @@ readFile(const std::string &path)
 {
     std::ifstream ifile(path);
     if (!ifile) {
-        throw std::runtime_error("Can't open " + path);
+        throw std::runtime_error("Can't open file: " + path);
     }
 
     std::ostringstream iss;
@@ -85,7 +85,7 @@ readFile(const std::string &path)
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char *argv[]) try
 {
     Args args;
     if (boost::optional<Args> a = parseArgs({ argv + 1, argv + argc })) {
@@ -104,6 +104,11 @@ main(int argc, char *argv[])
     }
 
     return result;
+}
+catch (const std::exception &e)
+{
+    std::cerr << "ERROR: " << e.what() << '\n';
+    return EXIT_FAILURE;
 }
 
 static int
