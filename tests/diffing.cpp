@@ -420,6 +420,25 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
     CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
 }
 
+TEST_CASE("Function specifiers are detected as such", "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Tree oldTree = makeTree("TYPEMACRO void f();", true);
+    Tree newTree = makeTree("void f();", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
+}
+
 TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
