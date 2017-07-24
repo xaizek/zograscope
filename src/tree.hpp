@@ -26,6 +26,7 @@ struct Node
     int line = 0;
     int col = 0;
     Node *relative = nullptr;
+    Node *parent = nullptr;
     bool satellite = false;
     Type type = Type::Virtual;
     SType stype = SType::None;

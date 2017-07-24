@@ -189,7 +189,7 @@ postOrder(Node &node, std::vector<Node *> &v)
     }
 
     for (Node *child : node.children) {
-        child->relative = &node;
+        child->parent = &node;
         postOrder(*child, v);
     }
     node.poID = v.size();
@@ -200,7 +200,7 @@ std::vector<Node *>
 postOrder(Node &root)
 {
     std::vector<Node *> v;
-    root.relative = &root;
+    root.parent = &root;
     postOrder(root, v);
     return v;
 }
@@ -233,8 +233,8 @@ rootPos(Node &root, Node *&n)
         return root.children.begin();
     }
 
-    while (n->relative != &root) {
-        n = n->relative;
+    while (n->parent != &root) {
+        n = n->parent;
     }
     return std::find(root.children.begin(), root.children.end(), n);
 }
