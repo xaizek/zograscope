@@ -289,9 +289,9 @@ TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
         Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
 
-        Changes::Mixed,
+        Changes::Additions,
         Changes::Additions, Changes::Additions, Changes::Additions,
-        Changes::No,
+        Changes::Additions,
 
         Changes::No,
     };
@@ -330,9 +330,9 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
         Changes::No, Changes::No, Changes::No, Changes::No
     };
     std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
         Changes::Additions,
-        Changes::No,
+        Changes::Additions,
+        Changes::Additions,
         Changes::No,
         Changes::Mixed,
         Changes::No,
@@ -565,12 +565,16 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
 
     Tree oldTree = makeTree(R"(
         enum {
+            A,
+            B,
             Aa,
             Bb,
         };
     )", true);
     Tree newTree = makeTree(R"(
         enum {
+            A,
+            B,
             Ab,
             Zz
         };
@@ -578,13 +582,28 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
 
     distill(*oldTree.getRoot(), *newTree.getRoot());
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 2);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::Mixed,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::Additions,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
 }
 
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
@@ -616,7 +635,7 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
 
     CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 3);
 }
 
 TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
@@ -730,6 +749,120 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
     CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
+}
+
+TEST_CASE("Else branch addition", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f()
+        {
+            if(condition)
+            {
+                action2();
+            }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f()
+        {
+            if(condition)
+            {
+                action1();
+            }
+            else
+            {
+                action3();
+            }
+        }
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Else branch removal", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f()
+        {
+            if(condition)
+            {
+                action1();
+            }
+            else
+            {
+                action3();
+            }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f()
+        {
+            if(condition)
+            {
+                action2();
+            }
+        }
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::Deletions,
+        Changes::Deletions,
+        Changes::Deletions,
+        Changes::Deletions,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
 }
 
 static int

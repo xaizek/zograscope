@@ -1237,24 +1237,23 @@ expression_statement
 /*     switch ( expression ) statement */
 selection_statement
     : IF '(' expression ')' statement %prec "then"
-    { auto ifCond = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                  tb->addNode($2, @2, SType::Separator),
-                                  tb->addNode($3, @3, SType::Expression),
-                                  tb->addNode($4, @4, SType::Separator) },
-                                SType::IfCond);
-      auto ifThen = tb->addNode($5, @5);
-      $$ = tb->addNode({ ifCond, ifThen }, SType::IfStmt); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3, SType::IfExpr),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5, SType::IfThen) },
+                       SType::IfStmt); }
     | IF '(' expression ')' statement ELSE statement
-    { auto ifCond = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                  tb->addNode($2, @2, SType::Separator),
-                                  tb->addNode($3, @3, SType::Expression),
-                                  tb->addNode($4, @4, SType::Separator) },
-                                SType::IfCond);
-      auto ifThen = tb->addNode($5, @5);
-      auto ifElse = tb->addNode({ tb->addNode($6, @6, SType::Separator),
+    { auto ifElse = tb->addNode({ tb->addNode($6, @6, SType::Separator),
                                   tb->addNode($7, @7) },
                                 SType::IfElse);
-      $$ = tb->addNode({ ifCond, ifThen, ifElse }, SType::IfStmt); }
+      $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3, SType::IfExpr),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5, SType::IfThen),
+                         ifElse },
+                       SType::IfStmt); }
     | SWITCH '(' expression ')' statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),

@@ -31,6 +31,7 @@ struct Node
     Type type = Type::Virtual;
     SType stype = SType::None;
     Node *next = nullptr;
+    int valueChild = -1;
 };
 
 class Tree

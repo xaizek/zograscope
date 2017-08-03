@@ -53,11 +53,53 @@ static void
 markNode(Node &node, State state)
 {
     node.state = state;
+
+    State leafState = (state == State::Updated ? State::Unchanged : state);
+
     for (Node *child : node.children) {
-        if (child->satellite && child->stype == SType::None) {
-            child->state = state;
+        child->parent = &node;
+        if (child->satellite) {
+            if (child->stype == SType::None) {
+                child->state = leafState;
+            } else if (node.valueChild >= 0) {
+                child->state = leafState;
+            } else if (child->relative == nullptr) {
+                child->state = leafState;
+            }
         }
     }
+}
+
+static int
+countLeaves(const Node *node)
+{
+    if (node->stype == SType::Separator) {
+        return 0;
+    }
+
+    if (node->children.empty()) {
+        return 1;
+    }
+
+    int count = 0;
+    for (const Node *child : node->children) {
+        count += countLeaves(child);
+    }
+    return count;
+}
+
+static int
+countSatelliteNodes(const Node *node)
+{
+    if (node->satellite) {
+        return (node->stype == SType::Separator ? 0 : countLeaves(node));
+    }
+
+    int count = 0;
+    for (const Node *child : node->children) {
+        count += countSatelliteNodes(child);
+    }
+    return count;
 }
 
 void
@@ -186,6 +228,12 @@ distill(Node &T1, Node &T2)
                                                 [](const Node *n) {
                                                     return n->children.empty();
                                                 });
+
+                    int xExtra = countSatelliteNodes(x);
+                    int yExtra = countSatelliteNodes(y);
+                    xLeaves += xExtra;
+                    yLeaves += yExtra;
+                    common += std::min(xExtra, yExtra);
 
                     float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
 

@@ -147,10 +147,23 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
         n.children.reserve(node->children.size());
         for (SNode *child : node->children) {
             n.children.emplace_back(visit(child));
-            if (!n.children.back()->satellite && n.label.empty()) {
-                n.label = n.children.back()->label;
-            }
         }
+
+        auto valueChild = std::find_if(node->children.begin(),
+                                       node->children.end(),
+                                       [](SNode *n) {
+                                           return n->value->stype ==
+                                                  SType::FunctionDeclaration
+                                               || n->value->stype ==
+                                                  SType::IfExpr;
+                                       });
+        if (valueChild != node->children.end()) {
+            n.label = materializePTree(contents, (*valueChild)->value);
+            n.valueChild = valueChild - node->children.begin();
+        } else {
+            n.valueChild = -1;
+        }
+
         return &n;
     };
 
