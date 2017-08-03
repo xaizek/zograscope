@@ -116,6 +116,10 @@ distill(Node &T1, Node &T2)
     std::vector<Node *> po1 = postOrderAndInit(T1);
     std::vector<Node *> po2 = postOrderAndInit(T2);
 
+    auto unmatchedInternal = [](Node *node) {
+        return !node->children.empty() && node->relative == nullptr;
+    };
+
     auto commonAreaSize = [&](const Match &m) {
         if (m.common >= 0) {
             return m.common;
@@ -216,70 +220,70 @@ distill(Node &T1, Node &T2)
     };
 
     for (Node *x : po1) {
-        if (!x->children.empty() && x->relative == nullptr) {
-            for (Node *y : po2) {
-                if (!y->children.empty() && y->relative == nullptr) {
-                    if (!canMatch(x, y)) {
-                        continue;
-                    }
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
 
-                    const int xFrom = lml(x);
-                    int common = 0;
-                    int yLeaves = 0;
-                    for (int i = lml(y); i < y->poID; ++i) {
-                        if (!po2[i]->children.empty()) {
-                            continue;
-                        }
-                        ++yLeaves;
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
 
-                        if (po2[i]->relative == nullptr) {
-                            continue;
-                        }
+            const int xFrom = lml(x);
+            int common = 0;
+            int yLeaves = 0;
+            for (int i = lml(y); i < y->poID; ++i) {
+                if (!po2[i]->children.empty()) {
+                    continue;
+                }
+                ++yLeaves;
 
-                        if (po2[i]->relative->poID >= xFrom &&
-                            po2[i]->relative->poID < x->poID) {
-                            ++common;
-                        }
-                    }
+                if (po2[i]->relative == nullptr) {
+                    continue;
+                }
 
-                    int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
-                                                [](const Node *n) {
-                                                    return n->children.empty();
-                                                });
-
-                    int xExtra = countSatelliteNodes(x);
-                    int yExtra = countSatelliteNodes(y);
-                    xLeaves += xExtra;
-                    yLeaves += yExtra;
-                    common += std::min(xExtra, yExtra);
-
-                    float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
-
-                    float similarity2 =
-                        static_cast<float>(common)/std::max(xLeaves, yLeaves);
-                    if (similarity2 < t) {
-                        continue;
-                    }
-
-                    float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
-                    if (similarity1 < 0.6f && similarity2 < 0.8f) {
-                        continue;
-                    }
-
-                    State state = (similarity1 == 1.0f &&
-                                   x->label == y->label &&
-                                   similarity2 == 1.0f)
-                                ? State::Unchanged
-                                : State::Updated;
-                    x->state = state;
-                    y->state = state;
-
-                    x->relative = y;
-                    y->relative = x;
-
-                    break;
+                if (po2[i]->relative->poID >= xFrom &&
+                    po2[i]->relative->poID < x->poID) {
+                    ++common;
                 }
             }
+
+            int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
+                                        [](const Node *n) {
+                                            return n->children.empty();
+                                        });
+
+            int xExtra = countSatelliteNodes(x);
+            int yExtra = countSatelliteNodes(y);
+            xLeaves += xExtra;
+            yLeaves += yExtra;
+            common += std::min(xExtra, yExtra);
+
+            float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
+
+            float similarity2 =
+                static_cast<float>(common)/std::max(xLeaves, yLeaves);
+            if (similarity2 < t) {
+                continue;
+            }
+
+            float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
+            if (similarity1 < 0.6f && similarity2 < 0.8f) {
+                continue;
+            }
+
+            State state = (similarity1 == 1.0f &&
+                           x->label == y->label &&
+                           similarity2 == 1.0f)
+                        ? State::Unchanged
+                        : State::Updated;
+            x->state = state;
+            y->state = state;
+
+            x->relative = y;
+            y->relative = x;
+
+            break;
         }
     }
 
