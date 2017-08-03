@@ -110,12 +110,17 @@ distill(Node &T1, Node &T2)
         Node *x;
         Node *y;
         float similarity;
+        mutable int common;
     };
 
     std::vector<Node *> po1 = postOrderAndInit(T1);
     std::vector<Node *> po2 = postOrderAndInit(T2);
 
     auto commonAreaSize = [&](const Match &m) {
+        if (m.common >= 0) {
+            return m.common;
+        }
+
         int size = 1;
         int i = m.x->poID - 1;
         int j = m.y->poID - 1;
@@ -133,6 +138,7 @@ distill(Node &T1, Node &T2)
             ++j;
         }
 
+        m.common = size;
         return size;
     };
 
@@ -154,7 +160,7 @@ distill(Node &T1, Node &T2)
 
             const float similarity = diceCoefficient(x->label, y->label);
             if (similarity >= 0.6f) {
-                matches.push_back({ x, y, similarity });
+                matches.push_back({ x, y, similarity, -1 });
             }
         }
     }
