@@ -142,6 +142,18 @@ distill(Node &T1, Node &T2)
         return size;
     };
 
+    std::vector<DiceString> dice1;
+    dice1.reserve(po1.size());
+    for (Node *x : po1) {
+        dice1.push_back(x->label);
+    }
+
+    std::vector<DiceString> dice2;
+    dice2.reserve(po2.size());
+    for (Node *x : po2) {
+        dice2.push_back(x->label);
+    }
+
     std::vector<Match> matches;
 
     for (Node *x : po1) {
@@ -158,7 +170,7 @@ distill(Node &T1, Node &T2)
                 continue;
             }
 
-            const float similarity = diceCoefficient(x->label, y->label);
+            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
             if (similarity >= 0.6f) {
                 matches.push_back({ x, y, similarity, -1 });
             }
@@ -249,7 +261,7 @@ distill(Node &T1, Node &T2)
                         continue;
                     }
 
-                    float similarity1 = diceCoefficient(x->label, y->label);
+                    float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
                     if (similarity1 < 0.6f && similarity2 < 0.8f) {
                         continue;
                     }
