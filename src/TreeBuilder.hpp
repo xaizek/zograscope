@@ -38,6 +38,7 @@ enum class SType
     InitializerList,
     Specifiers,
     WithInitializer,
+    WithoutInitializer,
     InitializerElement,
 };
 

@@ -38,6 +38,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::InitializerList:     return (os << "InitializerList");
         case SType::Specifiers:          return (os << "Specifiers");
         case SType::WithInitializer:     return (os << "WithInitializer");
+        case SType::WithoutInitializer:  return (os << "WithoutInitializer");
         case SType::InitializerElement:  return (os << "InitializerElement");
     }
 

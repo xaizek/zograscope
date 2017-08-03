@@ -559,7 +559,7 @@ init_declarator_list
 /*     declarator = initializer */
 init_declarator
     : declarator
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::WithoutInitializer); }
     | declarator '=' initializer
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator),
                          tb->addNode($2, @2, SType::Separator),

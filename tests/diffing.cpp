@@ -678,6 +678,34 @@ TEST_CASE("Compound statement doesn't unite statements",
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
 }
 
+TEST_CASE("Declarations differ by whether they have initializers",
+          "[comparison][parsing]")
+{
+    // This is more of a parsing test, but it's easier and more reliable to test
+    // it by comparison.
+
+    Tree oldTree = makeTree(R"(
+        void f() {
+            int a = {};
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            int a;
+        }
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) > 0);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) > 0);
+}
+
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 {
     Tree oldTree = makeTree(R"(
