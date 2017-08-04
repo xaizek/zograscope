@@ -971,6 +971,78 @@ TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
     CHECK(newMap == expectedNew);
 }
 
+TEST_CASE("Functions are matched by content also", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        entries_t f() {
+            entries_t parent_dirs = {};
+            char *path;
+            int len, i;
+            char **list;
+
+            list = list_all_files(path, &len);
+
+            free(path);
+            free_string_array(list, len);
+
+            return parent_dirs;
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        entries_t f() {
+            entries_t parent_dirs = g();
+            if(parent_dirs.nentries < 0) {
+                return parent_dirs;
+            }
+
+            return parent_dirs;
+        }
+
+        entries_t g() {
+            entries_t siblings = {};
+            char *path;
+            int len, i;
+            char **list;
+
+            list = list_all_files(path, &len);
+
+            free(path);
+            free_string_array(list, len);
+
+            return siblings;
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::Mixed, Changes::Mixed,
+        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No,
+        Changes::Deletions,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::Additions, Changes::Additions, Changes::Additions,
+        Changes::Additions, Changes::Additions,
+        Changes::No,
+        Changes::Additions, Changes::Additions,
+        Changes::No,
+        Changes::Mixed, Changes::Mixed,
+        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
+        Changes::No, Changes::No, Changes::No, Changes::No,
+        Changes::Additions,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

@@ -44,13 +44,14 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
         std::string subtree1 = printSubTree(*t1Child);
         for (Node *t2Child : T2->children) {
-            if (t2Child->satellite || t1Child->label != t2Child->label) {
+            if (t2Child->satellite) {
                 continue;
             }
 
             const float similarity = diceCoefficient(subtree1,
                                                      printSubTree(*t2Child));
-            if (similarity >= 0.6f) {
+            if ((t1Child->label == t2Child->label && similarity >= 0.6f) ||
+                (t1Child->label != t2Child->label && similarity >= 0.8f)) {
                 matches.push_back({ t1Child, t2Child, similarity });
             }
         }
