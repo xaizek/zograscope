@@ -914,6 +914,63 @@ TEST_CASE("Preserved child preserves its parent", "[comparison]")
     CHECK(newMap == expectedNew);
 }
 
+TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+            nread = fscanf(f, "%30d\n", &num);
+            if(nread != 1) {
+                assert(fsetpos(f, &pos) == 0 && "Failed");
+                return -1;
+            }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            if(c == EOF) {
+                return -1;
+            }
+
+            nread = fscanf(f, "%30d\n", &num);
+            if(nread != 1) {
+                fsetpos(f, &pos);
+                return -1;
+            }
+        }
+    )", true);
+
+    distill(*oldTree.getRoot(), *newTree.getRoot());
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Deletions,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

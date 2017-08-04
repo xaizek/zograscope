@@ -16,6 +16,7 @@ postOrderAndInit(Node &node, std::vector<Node *> &v)
     }
 
     node.relative = nullptr;
+    node.parent = nullptr;
 
     for (Node *child : node.children) {
         postOrderAndInit(*child, v);
@@ -47,6 +48,38 @@ canMatch(const Node *x, const Node *y)
     }
 
     return true;
+}
+
+static void
+clear(Node *node)
+{
+    if (node->satellite) {
+        return;
+    }
+
+    node->relative = nullptr;
+    node->state = State::Unchanged;
+
+    for (Node *child : node->children) {
+        clear(child);
+    }
+}
+
+static void
+unbind(Node *node)
+{
+    if (node->children.empty()) {
+        return;
+    }
+
+    if (Node *relative = node->relative) {
+        node->relative = nullptr;
+        unbind(relative);
+    }
+
+    for (Node *child : node->children) {
+        unbind(child);
+    }
 }
 
 static void
@@ -280,6 +313,8 @@ distill(Node &T1, Node &T2)
                                similarity2 == 1.0f)
                             ? State::Unchanged
                             : State::Updated;
+                markNode(*x, state);
+                markNode(*y, state);
                 x->state = state;
                 y->state = state;
 
@@ -340,6 +375,31 @@ distill(Node &T1, Node &T2)
             }
         }
     };
+
+    distillLeafs();
+    distillInternal();
+    distillInternalExtra();
+
+    clear(&T1);
+    clear(&T2);
+
+    std::stable_sort(matches.begin(), matches.end(),
+                     [&](const Match &a, const Match &b) {
+                         if (std::fabs(a.similarity - b.similarity) < 0.01f) {
+                             bool forA = (a.x->parent ? a.x->parent->relative : nullptr)
+                                      == a.y->parent;
+                             bool forB = (b.x->parent ? b.x->parent->relative : nullptr)
+                                      == b.y->parent;
+                             const int commonB = commonAreaSize(b);
+                             const int commonA = commonAreaSize(a);
+                             if (commonA == commonB) {
+                                 return forB < forA;
+                             } else {
+                                 return commonB < commonA;
+                             }
+                         }
+                         return b.similarity < a.similarity;
+                     });
 
     distillLeafs();
     distillInternal();
