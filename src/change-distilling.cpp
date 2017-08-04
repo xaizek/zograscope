@@ -291,8 +291,59 @@ distill(Node &T1, Node &T2)
         }
     };
 
+    auto distillInternalExtra = [&]() {
+        // once we have matched internal nodes properly, do second pass matching
+        // internal nodes that have at least one common leaf
+        for (Node *x : po1) {
+            if (!unmatchedInternal(x)) {
+                continue;
+            }
+
+            for (Node *y : po2) {
+                if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                    continue;
+                }
+
+                const int xFrom = lml(x);
+                int common = 0;
+                for (int i = lml(y); i < y->poID; ++i) {
+                    if (!po2[i]->children.empty()) {
+                        continue;
+                    }
+
+                    if (po2[i]->relative == nullptr) {
+                        continue;
+                    }
+
+                    if (po2[i]->relative->poID >= xFrom &&
+                        po2[i]->relative->poID < x->poID) {
+                        ++common;
+                        break;
+                    }
+                }
+
+                if (common == 0) {
+                    continue;
+                }
+
+                float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
+                if (similarity1 < 0.6f) {
+                    continue;
+                }
+
+                markNode(*x, State::Unchanged);
+                markNode(*y, State::Unchanged);
+                x->relative = y;
+                y->relative = x;
+
+                break;
+            }
+        }
+    };
+
     distillLeafs();
     distillInternal();
+    distillInternalExtra();
 
     for (Node *x : po1) {
         if (x->relative == nullptr) {
