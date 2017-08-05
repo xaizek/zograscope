@@ -187,10 +187,10 @@ Printer::print()
                                  - msg.size()/2;
                     int rightFill = wholeWidth - (leftFill + msg.size());
 
-                    std::cout << std::right << std::setfill('-')
-                              << (245_fg << std::setw(leftFill) << "")
+                    std::cout << std::right << std::setfill('.')
+                              << (251_fg << std::setw(leftFill) << "")
                               << msg
-                              << (245_fg << std::setw(rightFill) << "")
+                              << (251_fg << std::setw(rightFill) << "")
                               << '\n' << std::setfill(' ');
                 }
                 continue;
