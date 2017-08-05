@@ -31,7 +31,7 @@ struct Args
     bool dumpTree; //!< Whether to dump trees.
     bool dryRun;
     bool color;
-    bool coarse;   //!< Whether to build coarse-grained tree.
+    bool fine;     //!< Whether to build only fine-grained tree.
     bool timeReport;
     bool noRefine;
     bool gitDiff;
@@ -168,7 +168,7 @@ run(const Args &args, TimeReport &tr)
     // markSatellites(*treeB.getRoot());
 
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
-    compare(T1, T2, tr, args.coarse, args.noRefine);
+    compare(T1, T2, tr, !args.fine, args.noRefine);
 
     dumpTrees();
 
@@ -212,7 +212,7 @@ parseArgs(const std::vector<std::string> &argv)
     args.dumpTree = varMap.count("dump-tree");
     args.dryRun = varMap.count("dry-run");
     args.color = varMap.count("color");
-    args.coarse = varMap.count("coarse");
+    args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
     args.noRefine = varMap.count("no-refine");
     args.gitDiff = (args.pos.size() == 7U);
@@ -249,7 +249,7 @@ parseOptions(const std::vector<std::string> &args)
         ("debug",        "enable debugging of grammar")
         ("sdebug",       "enable debugging of strees")
         ("dump-tree",    "display tree(s)")
-        ("coarse",       "use coarse-grained tree")
+        ("fine-only",    "use only fine-grained tree")
         ("time-report",  "report time spent on different activities")
         ("color",        "force colorization of output")
         ("no-refine",    "do not refine coarse results");
@@ -288,11 +288,11 @@ buildTreeFromFile(const std::string &path, const Args &args)
 
     Tree t;
 
-    if (args.coarse) {
+    if (args.fine) {
+        t = Tree(contents, tb.getRoot());
+    } else {
         STree stree(std::move(tb), contents, args.dumpTree, args.sdebug);
         t = Tree(contents, stree.getRoot());
-    } else {
-        t = Tree(contents, tb.getRoot());
     }
 
     return t;
