@@ -134,6 +134,19 @@ Printer::print()
 
     auto title = 231_fg + decor::bold;
 
+    auto separator = [&]() {
+        std::cout << std::setfill('~')
+                  << std::setw(lWidth + 1 + 1 + maxLeftWidth + 1)
+                  << (231_fg << "")
+                  << (decor::bold << '!')
+                  << std::setw(rWidth + 1 + 1 + maxRightWidth + 1)
+                  << (231_fg << "")
+                  << std::setfill(' ')
+                  << '\n';
+    };
+
+    separator();
+
     std::string leftMarker = ' ' + std::string(lWidth - 1, '-') + "  ";
     std::string rightMarker = ' ' + std::string(rWidth - 1, '+') + "  ";
     for (const Header &hdr : headers) {
@@ -148,6 +161,8 @@ Printer::print()
     }
 
     decor::Decoration lineNo = decor::white_bg + decor::black_fg;
+
+    separator();
 
     i = 0U;
     j = 0U;
