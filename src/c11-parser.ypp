@@ -1370,7 +1370,8 @@ jump_statement
 program
     : translation_unit { tb->setRoot($1); }
     /* This is effectively grammar extension that allows for empty input. */
-    | END              { tb->setRoot(tb->addNode()); };
+    | END
+    { tb->setRoot(tb->addNode({}, SType::TranslationUnit)); };
 
 /* (6.9) translation-unit: */
 /*     external-declaration */

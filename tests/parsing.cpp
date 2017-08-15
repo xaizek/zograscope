@@ -18,6 +18,9 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
     CHECK_FALSE(parse("").hasFailed());
     CHECK_FALSE(parse("      ").hasFailed());
     CHECK_FALSE(parse("\t\n \t \n").hasFailed());
+
+    Tree tree = makeTree("");
+    CHECK(tree.getRoot()->stype == SType::TranslationUnit);
 }
 
 TEST_CASE("Non-UNIX EOLs are allowed", "[parser]")
