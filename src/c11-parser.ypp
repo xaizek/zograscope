@@ -62,7 +62,7 @@ extern TreeBuilder *tb;
 }
 
 %glr-parser
-%error-verbose
+%define parse.error verbose
 /* %define lr.type ielr */
 %locations
 
