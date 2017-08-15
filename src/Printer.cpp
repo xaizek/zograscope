@@ -12,6 +12,7 @@
 #include "dtl/dtl.hpp"
 
 #include "decoration.hpp"
+#include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
@@ -73,17 +74,21 @@ Printer::addHeader(Header header)
 }
 
 void
-Printer::print()
+Printer::print(TimeReport &tr)
 {
     using namespace decor::literals;
 
     static std::string empty;
 
-    std::vector<std::string> l = split(printSource(left), '\n');
-    std::vector<std::string> r = split(printSource(right), '\n');
+    std::vector<std::string> l = (tr.measure("left-highlight"),
+                                  split(printSource(left), '\n'));
+    std::vector<std::string> r = (tr.measure("right-highlight"),
+                                  split(printSource(right), '\n'));
 
     // TODO: need to do comparison without highlighting or it skews results
-    std::vector<DiffLine> diff = dtlCompare(l, r);
+    std::vector<DiffLine> diff = (tr.measure("compare"), dtlCompare(l, r));
+
+    auto timer = tr.measure("printing");
 
     unsigned int maxLeftWidth = 0U;
     unsigned int maxRightWidth = 0U;

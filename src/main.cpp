@@ -179,7 +179,7 @@ run(const Args &args, TimeReport &tr)
     } else {
         printer.addHeader({ oldFile, newFile });
     }
-    tr.measure("printing"), printer.print();
+    printer.print(tr);
 
     // printTree("T1", *T1);
     // printTree("T2", *T2);

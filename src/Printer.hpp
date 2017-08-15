@@ -5,6 +5,7 @@
 #include <vector>
 
 class Node;
+class TimeReport;
 
 class Printer
 {
@@ -19,7 +20,7 @@ public:
 
 public:
     void addHeader(Header header);
-    void print();
+    void print(TimeReport &tr);
 
 private:
     Node &left;
