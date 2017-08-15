@@ -103,7 +103,7 @@ coverage: check $(bin)
 	find $(out_dir)/ -name '*.o' -exec gcov -p {} + > $(out_dir)/gcov.out \
 	|| (cat $(out_dir)/gcov.out && false)
 	uncov-gcov --root . --no-gcov --capture-worktree --exclude tests \
-	| uncov new
+	    --exclude third-party | uncov new
 	find . -name '*.gcov' -delete
 
 man: docs/$(NAME).1
