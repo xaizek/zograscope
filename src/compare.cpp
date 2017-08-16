@@ -19,6 +19,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         Node *x;
         Node *y;
         float similarity;
+        bool identical;
     };
 
     tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
@@ -48,17 +49,25 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
                 continue;
             }
 
-            const float similarity = diceCoefficient(subtree1,
-                                                     printSubTree(*t2Child));
+            // XXX: here mismatched lables are included in similarity
+            //      measurement, which affects it negatively
+            std::string subtree2 = printSubTree(*t2Child);
+            const bool identical = (subtree1 == subtree2);
+            const float similarity = identical
+                                   ? 1.0f
+                                   : diceCoefficient(subtree1, subtree2);
             if ((t1Child->label == t2Child->label && similarity >= 0.6f) ||
                 (t1Child->label != t2Child->label && similarity >= 0.8f)) {
-                matches.push_back({ t1Child, t2Child, similarity });
+                matches.push_back({ t1Child, t2Child, similarity, identical });
             }
         }
     }
 
     std::stable_sort(matches.begin(), matches.end(),
                      [](const Match &a, const Match &b) {
+                         if (a.identical || b.identical) {
+                             return b.identical < a.identical;
+                         }
                          return b.similarity < a.similarity;
                      });
 
