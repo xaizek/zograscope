@@ -327,6 +327,15 @@ distill(Node &T1, Node &T2)
     };
 
     auto distillInternalExtra = [&]() {
+        struct Match
+        {
+            Node *x;
+            Node *y;
+            int common;
+        };
+
+        std::vector<Match> matches;
+
         // once we have matched internal nodes properly, do second pass matching
         // internal nodes that have at least one common leaf
         for (Node *x : po1) {
@@ -353,26 +362,29 @@ distill(Node &T1, Node &T2)
                     if (po2[i]->relative->poID >= xFrom &&
                         po2[i]->relative->poID < x->poID) {
                         ++common;
-                        break;
                     }
                 }
 
-                if (common == 0) {
-                    continue;
+                const float similarity = dice1[x->poID].compare(dice2[y->poID]);
+                if (common > 0 && similarity >= 0.5f) {
+                    matches.push_back({ x, y, common });
                 }
-
-                float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
-                if (similarity1 < 0.6f) {
-                    continue;
-                }
-
-                markNode(*x, State::Unchanged);
-                markNode(*y, State::Unchanged);
-                x->relative = y;
-                y->relative = x;
-
-                break;
             }
+        }
+
+        std::stable_sort(matches.begin(), matches.end(),
+                        [&](const Match &a, const Match &b) {
+                            return b.common < a.common;
+                        });
+
+        for (const Match &match : matches) {
+            if (match.x->relative != nullptr || match.y->relative != nullptr) {
+                continue;
+            }
+            markNode(*match.x, State::Unchanged);
+            markNode(*match.y, State::Unchanged);
+            match.x->relative = match.y;
+            match.y->relative = match.x;
         }
     };
 
