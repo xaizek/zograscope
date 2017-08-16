@@ -3,7 +3,6 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -19,23 +18,6 @@
 
 // TODO: colors should reside in some configuration file, it's very inconvenient
 //       to have to recompile the tool to experiment with coloring.
-
-class IntMatrix
-{
-public:
-    IntMatrix(int n, int m) : m(m), data(new int[n*m])
-    {
-    }
-
-    int & operator()(int i, int j)
-    {
-        return data.get()[i*m + j];
-    }
-
-private:
-    const int m;
-    std::unique_ptr<int[]> data;
-};
 
 enum class Diff
 {
