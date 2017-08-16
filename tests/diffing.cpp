@@ -21,7 +21,6 @@ enum class Changes
 };
 
 static int countLeaves(const Node &root, State state);
-static int countSatellites(const Node &root);
 static std::vector<Changes> makeChangeMap(Node &root);
 
 TEST_CASE("Comment is marked as unmodified", "[comparison][postponed]")
@@ -132,58 +131,6 @@ TEST_CASE("All postponed nodes are pulled into parents",
 
     CHECK(findNode(newTree, Type::Comments, "// Comment 2.")->state
           == State::Inserted);
-}
-
-TEST_CASE("Fine reduction doesn't crash", "[comparison][reduction][crash]")
-{
-    Tree oldTree = makeTree(R"(
-        void func()
-        {
-            /* Comment. */
-            func();
-            func();
-        }
-    )");
-    Tree newTree = makeTree(R"(
-        void func()
-        {
-            func();
-        }
-    )");
-
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    reduceTreesFine(oldT, newT);
-}
-
-TEST_CASE("Fine reduction works", "[comparison][reduction]")
-{
-    Tree oldTree = makeTree(R"(
-        int a;
-
-        const cmd_add_t cmds_list[] = {
-            { .name = "",                  .abbr = NULL,    .id = COM_GOTO,
-              .descr = "navigate to specific line",
-              .flags = HAS_RANGE | HAS_COMMENT,
-              .handler = &goto_cmd,        .min_args = 0,   .max_args = 0, },
-        };
-    )");
-    Tree newTree = makeTree(R"(
-        int a;
-
-        const cmd_add_t cmds_list[] = {
-            { .name = "",                  .abbr = NULL,    .id = COM_GOTO,
-              .descr = "navigate to specific line",
-              .flags = HAS_RANGE,
-              .handler = &goto_cmd,        .min_args = 0,   .max_args = 0, },
-        };
-    )");
-
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    reduceTreesFine(oldT, newT);
-    CHECK(oldT != oldTree.getRoot());
-    CHECK(newT != newTree.getRoot());
-    CHECK(countSatellites(*oldTree.getRoot()) == 26);
-    CHECK(countSatellites(*newTree.getRoot()) == 26);
 }
 
 TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
@@ -1131,25 +1078,6 @@ countLeaves(const Node &root, State state)
         }
 
         if (node.children.empty() && node.state == state) {
-            ++count;
-        }
-
-        for (const Node *child : node.children) {
-            visit(*child);
-        }
-    };
-
-    visit(root);
-    return count;
-}
-
-static int
-countSatellites(const Node &root)
-{
-    int count = 0;
-
-    std::function<void(const Node &)> visit = [&](const Node &node) {
-        if (node.satellite) {
             ++count;
         }
 

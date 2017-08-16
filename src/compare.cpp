@@ -27,7 +27,6 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
     tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
 
     if (!coarse) {
-        tr.measure("fine-reduction"), reduceTreesFine(T1, T2);
         tr.measure("diffing"), ted(*T1, *T2);
         return;
     }
@@ -40,7 +39,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
     std::vector<Match> matches;
 
-    auto timer = tr.measure("reduction-and-diffing");
+    auto timer = tr.measure("distilling");
     for (Node *t1Child : T1->children) {
         if (t1Child->satellite) {
             continue;
@@ -79,7 +78,6 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
 
         Node *subT1 = match.x, *subT2 = match.y;
-        reduceTreesFine(subT1, subT2);
         distill(*subT1, *subT2);
         refine(*subT1);
         match.x->satellite = true;
@@ -102,7 +100,6 @@ refine(Node &node)
         node.relative->state = State::Unchanged;
 
         Node *subT1 = node.next, *subT2 = node.relative->next;
-        reduceTreesFine(subT1, subT2);
         ted(*subT1, *subT2);
     }
 
