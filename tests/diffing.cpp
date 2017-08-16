@@ -203,9 +203,8 @@ TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
         }
     )", true);
 
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    reduceTreesFine(oldT, newT);
-    distill(*oldT, *newT);
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
@@ -229,9 +228,8 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
         };
     )", true);
 
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    reduceTreesFine(oldT, newT);
-    distill(*oldT, *newT);
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
@@ -275,11 +273,11 @@ TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
         }
     )", true);
 
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    distill(*oldT, *newT);
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    std::vector<Changes> oldMap = makeChangeMap(*oldT);
-    std::vector<Changes> newMap = makeChangeMap(*newT);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
     std::vector<Changes> expectedOld = { Changes::No,
         Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
@@ -428,7 +426,8 @@ TEST_CASE("Function specifiers are detected as such", "[comparison][parsing]")
     Tree oldTree = makeTree("TYPEMACRO void f();", true);
     Tree newTree = makeTree("void f();", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
@@ -452,19 +451,30 @@ TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
     Tree newTree = makeTree(R"(
         type var = {
             .oldfield = oldValue,
-            .newField = newValue,
+            .newField = newValue
         };
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
 }
 
 TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
@@ -474,26 +484,50 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
 
     Tree oldTree = makeTree(R"(
         aggregate var = {
-            { .field = 1 },
-            { .another_field = 1 },
+            { .field =
+              1
+            }, { .another_field =
+              1
+            },
         };
     )", true);
     Tree newTree = makeTree(R"(
         aggregate var = {
-            { .field = 2 },
-            { .another_field = 2 },
+            { .field =
+              2
+            }, { .another_field =
+              2
+            },
         };
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 2);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Deletions,
+        Changes::No,
+        Changes::Deletions,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
 }
 
 TEST_CASE("Structure is decomposed", "[comparison][parsing]")
@@ -504,25 +538,45 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
     Tree oldTree = makeTree(R"(
         struct s {
             int a;
-            int b : 1;
+            int b :
+            1
+            ;
         };
     )", true);
     Tree newTree = makeTree(R"(
         struct s {
             int g;
-            int b : 2;
+            int b :
+            2
+            ;
         };
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 1);
-    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::Deletions,
+        Changes::No,
+        Changes::Deletions,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
 }
 
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
@@ -547,15 +601,31 @@ TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
         str;
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 2);
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
 }
 
 TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
@@ -580,7 +650,8 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
         };
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
@@ -627,7 +698,8 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -686,7 +758,8 @@ TEST_CASE("Compound statement doesn't unite statements",
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -714,7 +787,8 @@ TEST_CASE("Declarations differ by whether they have initializers",
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) > 0);
@@ -833,7 +907,8 @@ TEST_CASE("Else branch removal", "[comparison]")
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
@@ -886,7 +961,8 @@ TEST_CASE("Preserved child preserves its parent", "[comparison]")
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
@@ -939,7 +1015,8 @@ TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
