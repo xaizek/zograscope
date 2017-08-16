@@ -62,6 +62,8 @@ Printer::print(TimeReport &tr)
 
     static std::string empty;
 
+    auto diffingTimer = tr.measure("printing");
+
     std::vector<std::string> l = (tr.measure("left-highlight"),
                                   split(printSource(left), '\n'));
     std::vector<std::string> r = (tr.measure("right-highlight"),

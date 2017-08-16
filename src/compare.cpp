@@ -22,6 +22,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         bool identical;
     };
 
+    auto diffingTimer = tr.measure("diffing");
+
     tr.measure("coarse-reduction"), reduceTreesCoarse(T1, T2);
 
     if (!coarse) {

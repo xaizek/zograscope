@@ -1,13 +1,13 @@
 #ifndef TIME_HPP__
 #define TIME_HPP__
 
-#include <boost/optional.hpp>
-
 #include <chrono>
 #include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "trees.hpp"
 
 class TimeReport
 {
@@ -15,45 +15,93 @@ class TimeReport
 
     struct Measure
     {
-        Measure(std::string &&stage, clock::time_point start)
-            : stage(std::move(stage)), start(start)
-        {
-        }
-
+        bool measuring;
         std::string stage;
         clock::time_point start;
         clock::time_point end;
+        Measure *parent;
+
+        std::vector<Measure> children;
+
+        Measure(std::string &&stage, Measure *parent)
+            : measuring(true), stage(std::move(stage)), start(clock::now()),
+              parent(parent)
+        {
+        }
+
+        void stop()
+        {
+            if (!measuring) {
+                throw std::logic_error("Can't stop timer that isn't running");
+            }
+
+            end = clock::now();
+            measuring = false;
+        }
     };
 
     class ProxyTimer
     {
     public:
-        ProxyTimer(TimeReport &tr) : tr(tr) { }
+        ProxyTimer(TimeReport &tr) : tr(&tr), done(false) { }
+        ProxyTimer(ProxyTimer &&rhs) : tr(rhs.tr), done(rhs.done)
+        {
+            rhs.done = true;
+        }
         ~ProxyTimer() try
         {
-            tr.stop();
+            if (!done) {
+                tr->stop();
+            }
         } catch (...) {
             // Do not throw from a destructor.
         }
 
+        ProxyTimer & operator=(ProxyTimer &&rhs)
+        {
+            tr = rhs.tr;
+            done = rhs.done;
+            rhs.done = true;
+            return *this;
+        }
+
+    public:
+        void measure(std::string stage)
+        {
+            tr->stop();
+            done = true;
+
+            *this = tr->measure(std::move(stage));
+        }
+
     private:
-        TimeReport &tr;
+        TimeReport *tr;
+        bool done;
     };
 
     friend inline std::ostream &
     operator<<(std::ostream &os, const TimeReport &tr)
     {
+        struct MeasureTraits
+        {
+            static unsigned int size(const Measure *node)
+            {
+                return node->children.size();
+            }
+
+            static const Measure * getChild(const Measure *node, unsigned int i)
+            {
+                return &node->children[i];
+            }
+        };
+
         using msf = std::chrono::duration<float, std::milli>;
 
-        msf total(0);
-
-        for (const Measure &measure : tr.measures) {
-            msf duration = measure.end - measure.start;
-            total += duration;
-            os << measure.stage << " -- " << duration.count() << "ms\n";
-        }
-
-        os << "TOTAL == " << total.count() << "ms\n";
+        trees::printSetTraits<MeasureTraits>(os, &tr.root,
+                     [](std::ostream &os, const Measure *m) {
+                         msf duration = m->end - m->start;
+                         os << m->stage << " -- " << duration.count() << "ms\n";
+                     });
 
         return os;
     }
@@ -67,23 +115,19 @@ public:
 
     void start(std::string stage)
     {
-        currentMeasure.emplace(std::move(stage), clock::now());
+        current->children.emplace_back(std::move(stage), current);
+        current = &current->children.back();
     }
 
     void stop()
     {
-        if (!currentMeasure) {
-            throw std::logic_error("Can't stop timer that isn't running");
-        }
-
-        currentMeasure->end = clock::now();
-        measures.push_back(*currentMeasure);
-        currentMeasure.reset();
+        current->stop();
+        current = current->parent;
     }
 
 private:
-    boost::optional<Measure> currentMeasure;
-    std::vector<Measure> measures;
+    Measure root {"Overall", nullptr};
+    Measure *current {&root};
 };
 
 #endif // TIME_HPP__

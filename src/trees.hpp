@@ -61,7 +61,15 @@ private:
 };
 
 template <typename N, typename F, typename T = TreeTraits<N>>
-void print(std::ostream &os, N *node, const F &nodePrinter)
+void
+print(std::ostream &os, N *node, const F &nodePrinter)
+{
+    Printer<N, F, T>(os, nodePrinter).print(node);
+}
+
+template <typename T, typename N, typename F>
+void
+printSetTraits(std::ostream &os, N *node, const F &nodePrinter)
 {
     Printer<N, F, T>(os, nodePrinter).print(node);
 }

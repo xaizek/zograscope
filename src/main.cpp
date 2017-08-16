@@ -100,6 +100,7 @@ main(int argc, char *argv[]) try
     const int result = run(args, tr);
 
     if (args.timeReport) {
+        tr.stop();
         std::cout << tr;
     }
 
