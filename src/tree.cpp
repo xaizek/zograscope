@@ -141,6 +141,7 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
             n.line = leaf->line;
             n.col = leaf->col;
             n.next = materializeNode(tree, contents, node->value);
+            n.next->last = true;
             return &n;
         }
 
@@ -162,6 +163,19 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
             n.valueChild = valueChild - node->children.begin();
         } else {
             n.valueChild = -1;
+        }
+
+        // move certain nodes onto the next layer
+        if (n.stype == SType::FunctionDefinition ||
+            n.stype == SType::InitializerElement ||
+            n.stype == SType::InitializerList ||
+            n.stype == SType::Initializer ||
+            n.stype == SType::Declaration) {
+            Node &nextLevel = tree.makeNode();
+            nextLevel.next = &n;
+            nextLevel.stype = n.stype;
+            nextLevel.label = n.label.empty() ? printSubTree(n) : n.label;
+            return &nextLevel;
         }
 
         return &n;
@@ -221,6 +235,10 @@ postOrder(Node &root)
 static std::size_t
 hashNode(const Node *node)
 {
+    if (node->next != nullptr) {
+        return hashNode(node->next);
+    }
+
     const std::size_t hash = std::hash<std::string>()(node->label);
     return std::accumulate(node->children.cbegin(), node->children.cend(), hash,
                            [](std::size_t h, const Node *child) {
@@ -232,6 +250,10 @@ hashNode(const Node *node)
 static std::vector<std::size_t>
 hashChildren(const Node &node)
 {
+    if (node.next != nullptr) {
+        return hashChildren(*node.next);
+    }
+
     std::vector<std::size_t> hashes;
     hashes.reserve(node.children.size());
     for (const Node *child : node.children) {
@@ -287,6 +309,10 @@ printSubTree(const Node &root)
     std::string out;
 
     std::function<void(const Node &)> visit = [&](const Node &node) {
+        if (node.next != nullptr) {
+            return visit(*node.next);
+        }
+
         if (node.line != 0 && node.col != 0) {
             const std::vector<std::string> lines = split(node.label, '\n');
             out += node.label;

@@ -32,6 +32,7 @@ struct Node
     SType stype = SType::None;
     Node *next = nullptr;
     int valueChild = -1;
+    bool last = false;
 };
 
 class Tree

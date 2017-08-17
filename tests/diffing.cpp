@@ -265,24 +265,23 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
     )", true);
 
     TimeReport tr;
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    compare(oldT, newT, tr, true, false);
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
 
-    std::vector<Changes> oldMap = makeChangeMap(*oldT);
-    std::vector<Changes> newMap = makeChangeMap(*newT);
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
     std::vector<Changes> expectedOld = { Changes::No,
         Changes::No, Changes::No, Changes::No, Changes::No
     };
     std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
         Changes::Additions,
+        Changes::No,
+        Changes::No,
         Changes::Additions,
+        Changes::No,
+        Changes::No,
         Changes::Additions,
-        Changes::No,
-        Changes::Mixed,
-        Changes::No,
-        Changes::No,
-        Changes::No,
     };
 
     CHECK(oldMap == expectedOld);
@@ -654,7 +653,7 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
 
     CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 3);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
 }
 
 TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
@@ -797,7 +796,8 @@ TEST_CASE("Else branch addition", "[comparison]")
         }
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
@@ -1044,7 +1044,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
     std::vector<Changes> expectedOld = { Changes::No,
-        Changes::Mixed, Changes::Mixed,
+        Changes::Mixed, Changes::Deletions,
         Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::Deletions,
@@ -1056,7 +1056,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
         Changes::No,
         Changes::Additions, Changes::Additions,
         Changes::No,
-        Changes::Mixed, Changes::Mixed,
+        Changes::Mixed, Changes::Additions,
         Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::Additions,
@@ -1124,16 +1124,15 @@ makeChangeMap(Node &root)
 
     int line;
     std::function<void(Node &)> visit = [&](Node &node) {
+        if (node.next != nullptr) {
+            if (node.state != State::Unchanged) {
+                mark(*node.next, node.state);
+            }
+            return visit(*node.next);
+        }
+
         if (node.line != 0 && node.col != 0) {
             line = node.line - 1;
-
-            if (node.next != nullptr) {
-                if (node.state != State::Unchanged) {
-                    mark(*node.next, node.state);
-                }
-                return visit(*node.next);
-            }
-
             const std::vector<std::string> lines = split(node.label, '\n');
             updateMap(line, node);
             for (std::size_t i = 1U; i < lines.size(); ++i) {

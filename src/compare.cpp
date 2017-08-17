@@ -73,18 +73,50 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
                      });
 
     for (const Match &match : matches) {
-        if (match.x->satellite || match.y->satellite) {
+        if (match.x->relative != nullptr || match.y->relative != nullptr) {
             continue;
         }
 
         Node *subT1 = match.x, *subT2 = match.y;
         distill(*subT1, *subT2);
-        refine(*subT1);
-        match.x->satellite = true;
-        match.y->satellite = true;
+        match.x->satellite = match.identical;
+        match.y->satellite = match.identical;
+        match.x->relative = match.y;
+        match.y->relative = match.x;
     }
 
+    // flatten unmatched trees into parent tree of their roots before doing
+    // common distilling
+    for (Node *&c : T1->children) {
+        if (c->relative == nullptr && c->next != nullptr && !c->next->last) {
+            c = c->next;
+        }
+    }
+    for (Node *&c : T2->children) {
+        if (c->relative == nullptr && c->next != nullptr && !c->next->last) {
+            c = c->next;
+        }
+    }
     distill(*T1, *T2);
+
+    timer.measure("recursing");
+
+    std::function<void(Node *)> visit = [&](Node *node) {
+        for (Node *x : node->children) {
+            if (x->relative != nullptr && x->next != nullptr &&
+                x->relative->next != nullptr) {
+                if (!x->next->last && !x->satellite) {
+                    x->state = State::Unchanged;
+                    x->relative->state = State::Unchanged;
+                    compare(x->next, x->relative->next, tr, coarse, skipRefine);
+                }
+            } else {
+                visit(x);
+            }
+        }
+    };
+
+    visit(T1);
     refine(*T1);
 }
 
