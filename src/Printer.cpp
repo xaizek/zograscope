@@ -415,7 +415,7 @@ getHighlight(const Node &node)
         using namespace decor;
 
         case State::Deleted:  return 210_fg + inv + black_bg + bold;
-        case State::Inserted: return  84_fg + inv + black_bg + bold;
+        case State::Inserted: return  85_fg + inv + black_bg + bold;
         case State::Updated:  return 228_fg + inv + black_bg + bold;
 
         case State::Unchanged:
