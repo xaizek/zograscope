@@ -46,6 +46,10 @@ printNode(std::ostream &os, const Node *node)
         case State::Updated:   suffix = " (updated with " + l(node->relative->label) + "@" + std::to_string(node->relative->poID) + ")";  break;
     }
 
+    if (node->moved) {
+        suffix += " (moved)";
+    }
+
     if (node->relative != nullptr && node->state != State::Updated) {
         suffix += " (relative: " + l(node->relative->label) + "@" + std::to_string(node->relative->poID) + ")";
     }
@@ -325,4 +329,14 @@ printSubTree(const Node &root)
     visit(root);
 
     return out;
+}
+
+void
+markTreeAsMoved(Node *node)
+{
+    node->moved = true;
+
+    for (Node *child : node->children) {
+        markTreeAsMoved(child);
+    }
 }

@@ -3,12 +3,15 @@
 #include <algorithm>
 #include <vector>
 
+#include <dtl/dtl.hpp>
+
 #include "change-distilling.hpp"
 #include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static void detectMoves(Node *x);
 static void refine(Node &node);
 
 void
@@ -98,6 +101,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
     }
     distill(*T1, *T2);
+    detectMoves(T1);
 
     timer.measure("recursing");
 
@@ -118,6 +122,38 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
     visit(T1);
     refine(*T1);
+}
+
+static void
+detectMoves(Node *x)
+{
+    if (x->children.empty()) {
+        return;
+    }
+
+    auto cmp = [](Node *x, Node *y) {
+        return x->relative == y;
+    };
+
+    if (x->relative != nullptr) {
+        dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)>
+            diff(x->children, x->relative->children, cmp);
+        diff.compose();
+
+        for (const auto &d : diff.getSes().getSequence()) {
+            if (d.second.type == dtl::SES_DELETE) {
+                Node *node = x->children[d.second.beforeIdx - 1];
+                if (node->relative != nullptr) {
+                    markTreeAsMoved(node);
+                    markTreeAsMoved(node->relative);
+                }
+            }
+        }
+    }
+
+    for (Node *child : x->children) {
+        detectMoves(child);
+    }
 }
 
 static void

@@ -32,6 +32,7 @@ struct Node
     SType stype = SType::None;
     Node *next = nullptr;
     int valueChild = -1;
+    bool moved = false;
     bool last = false;
 };
 
@@ -71,5 +72,7 @@ std::vector<Node *> postOrder(Node &root);
 void reduceTreesCoarse(Node *T1, Node *T2);
 
 std::string printSubTree(const Node &root);
+
+void markTreeAsMoved(Node *node);
 
 #endif // TREE_HPP__

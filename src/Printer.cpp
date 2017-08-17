@@ -347,6 +347,9 @@ printSource(Node &root)
             if (node.state != State::Unchanged) {
                 mark(*node.next, node.state);
             }
+            if (node.moved) {
+                markTreeAsMoved(node.next);
+            }
             return visit(*node.next);
         }
 
@@ -416,9 +419,17 @@ getHighlight(const Node &node)
 
         case State::Deleted:  return 210_fg + inv + black_bg + bold;
         case State::Inserted: return  85_fg + inv + black_bg + bold;
-        case State::Updated:  return 228_fg + inv + black_bg + bold;
+        case State::Updated:
+            if (node.moved) {
+                return 213_fg + inv + black_bg + bold;
+            } else {
+                return 228_fg + inv + black_bg + bold;
+            }
 
         case State::Unchanged:
+            if (node.moved) {
+                return 117_fg + inv + bold;
+            }
             break;
     }
 

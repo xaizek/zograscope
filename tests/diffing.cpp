@@ -17,6 +17,7 @@ enum class Changes
     No,
     Additions,
     Deletions,
+    Moves,
     Mixed,
 };
 
@@ -271,7 +272,10 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
     std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No
+        Changes::No,
+        Changes::Moves,
+        Changes::Moves,
+        Changes::No
     };
     std::vector<Changes> expectedNew = { Changes::No,
         Changes::No,
@@ -279,8 +283,8 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
         Changes::No,
         Changes::No,
         Changes::Additions,
-        Changes::No,
-        Changes::No,
+        Changes::Moves,
+        Changes::Moves,
         Changes::Additions,
     };
 
@@ -745,6 +749,216 @@ TEST_CASE("Declarations differ by whether they have initializers",
     CHECK(countLeaves(*newTree.getRoot(), State::Inserted) > 0);
 }
 
+TEST_CASE("Declarations with and without initializer are not the same",
+          "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        int
+            a
+            ;
+    )", true);
+    Tree newTree = makeTree(R"(
+        int
+            a
+            =
+            10
+            ;
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::Deletions,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Move detection isn't thrown off by large changes",
+          "[comparison][moves]")
+{
+    Tree oldTree = makeTree(R"(
+        void f()
+        {
+            stmt1;
+            stmt2;
+            stmt3;
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f()
+        {
+            stmt1;
+            {
+                call();
+                call();
+                call();
+                call();
+                call();
+                call();
+                call();
+                stmt2;
+            }
+            stmt3;
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Moves,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Moves,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Move detection works on top level", "[comparison][moves]")
+{
+    Tree oldTree = makeTree(R"(
+        #include "this.h"
+        #include "bla.h"
+
+        #include "some.h"
+        #include "file.h"
+        #include "here.h"
+    )", true);
+    Tree newTree = makeTree(R"(
+        #include "bla.h"
+        #include "this.h"
+
+        #include "here.h"
+        #include "file.h"
+        #include "some.h"
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::Moves,
+        Changes::No,
+        Changes::No,
+        Changes::Moves,
+        Changes::Moves,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::Moves,
+        Changes::No,
+        Changes::No,
+        Changes::Moves,
+        Changes::Moves,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+            if (cond) {
+                a = b;
+                b = c;
+            }
+        }
+
+        void g() {
+            if (cond) {
+                int a;
+                int b;
+            }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            a = b;
+            if (cond) {
+                b = c;
+            }
+        }
+
+        void g() {
+            int a;
+            if (cond) {
+                int b;
+            }
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No, Changes::No,
+        Changes::Moves,
+        Changes::No, Changes::No, Changes::No,
+        Changes::No, Changes::No, Changes::No,
+        Changes::Moves,
+        Changes::No, Changes::No, Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::Moves,
+        Changes::No, Changes::No, Changes::No,
+        Changes::No, Changes::No, Changes::No,
+        Changes::Moves,
+        Changes::No, Changes::No, Changes::No, Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 {
     Tree oldTree = makeTree(R"(
@@ -1102,10 +1316,11 @@ makeChangeMap(Node &root)
 
         Changes change = Changes::No;
         switch (node.state) {
-            case State::Unchanged: change = Changes::No; break;
-            case State::Deleted:   change = Changes::Deletions; break;
-            case State::Inserted:  change = Changes::Additions; break;
-            case State::Updated:   change = Changes::Mixed; break;
+            case State::Unchanged:
+                change = (node.moved ? Changes::Moves : Changes::No); break;
+            case State::Deleted:  change = Changes::Deletions; break;
+            case State::Inserted: change = Changes::Additions; break;
+            case State::Updated:  change = Changes::Mixed; break;
         }
 
         if (map[line] == Changes::No) {
@@ -1127,6 +1342,9 @@ makeChangeMap(Node &root)
         if (node.next != nullptr) {
             if (node.state != State::Unchanged) {
                 mark(*node.next, node.state);
+            }
+            if (node.moved) {
+                markTreeAsMoved(node.next);
             }
             return visit(*node.next);
         }
