@@ -453,9 +453,9 @@ conditional_expression
     : logical_OR_expression
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | logical_OR_expression '?' expression ':' conditional_expression
-    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
-                          tb->addNode($3, @3), tb->addNode($4, @4),
-                          tb->addNode($5, @5) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
     ;
 
 /* (6.5.16) assignment-expression: */
@@ -465,8 +465,8 @@ assignment_expression
     : conditional_expression
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | unary_expression assignment_operator assignment_expression
-    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
-                          tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) }); }
     ;
 
 /* (6.5.16) assignment-operator: one of */
@@ -1149,10 +1149,10 @@ designator
 /*     _Static_assert ( constant-expression , string-literal ) ; */
 static_assert_declaration
     : _STATIC_ASSERT '(' constant_expression ',' string_lit ')' ';'
-    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
-                          tb->addNode($3, @3), tb->addNode($4, @4),
-                          tb->addNode($5, @5), tb->addNode($6, @6),
-                          tb->addNode($7, @7) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6),
+                         tb->addNode($7, @7) }); }
     ;
 
 /* A.2.3 Statements */
@@ -1335,10 +1335,10 @@ iteration_statement
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
     | FOR '(' declaration ';' expression ')' statement
-    { $$ = tb->addNode({  tb->addNode($1, @1), tb->addNode($2, @2),
-                          tb->addNode($3, @3), tb->addNode($4, @4),
-                          tb->addNode($5, @5), tb->addNode($6, @6),
-                          tb->addNode($7, @7) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5), tb->addNode($6, @6),
+                         tb->addNode($7, @7) }); }
     | FOR '(' declaration ';' ')' statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
