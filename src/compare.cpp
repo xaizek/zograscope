@@ -11,6 +11,7 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static void markParents(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static void refine(Node &node);
 
@@ -101,6 +102,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
     }
     distill(*T1, *T2);
+    markParents(T1, nullptr);
+    markParents(T2, nullptr);
     detectMoves(T1);
 
     timer.measure("recursing");
@@ -125,8 +128,24 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 }
 
 static void
+markParents(Node *x, Node *parent)
+{
+    x->parent = parent;
+    for (Node *child : x->children) {
+        markParents(child, x);
+    }
+}
+
+static void
 detectMoves(Node *x)
 {
+    if (x->parent && x->relative && x->relative->parent &&
+        x->parent->relative != x->relative->parent) {
+        // Mark nodes which switched their parents as moved.
+        markTreeAsMoved(x);
+        markTreeAsMoved(x->relative);
+    }
+
     if (x->children.empty()) {
         return;
     }

@@ -42,6 +42,7 @@ enum class SType
     WithInitializer,
     WithoutInitializer,
     InitializerElement,
+    SwitchStmt,
 };
 
 std::ostream & operator<<(std::ostream &os, SType stype);

@@ -1165,12 +1165,12 @@ static_assert_declaration
 /*     iteration-statement */
 /*     jump-statement */
 statement
-    : labeled_statement    { $$ = tb->addNode($1, @1); }
-    | compound_statement   { $$ = tb->addNode($1, @1); }
-    | expression_statement { $$ = tb->addNode($1, @1); }
+    : labeled_statement    { $$ = tb->addNode($1, @1, SType::Statement); }
+    | compound_statement   { $$ = tb->addNode($1, @1, SType::Statement); }
+    | expression_statement { $$ = tb->addNode($1, @1, SType::Statement); }
     | selection_statement  { $$ = tb->addNode($1, @1); }
-    | iteration_statement  { $$ = tb->addNode($1, @1); }
-    | jump_statement       { $$ = tb->addNode($1, @1); }
+    | iteration_statement  { $$ = tb->addNode($1, @1, SType::Statement); }
+    | jump_statement       { $$ = tb->addNode($1, @1, SType::Statement); }
     ;
 
 /* (6.8.1) labeled-statement: */
@@ -1220,7 +1220,7 @@ block_item
     : declaration  %merge <decStmtMerge>
     { $$ = tb->addNode($1, @1, SType::Statement); }
     | statement    %merge <decStmtMerge>
-    { $$ = tb->addNode($1, @1, SType::Statement); }
+    { $$ = tb->addNode($1, @1); }
     ;
 
 /* (6.8.3) expression-statement: */
@@ -1258,7 +1258,8 @@ selection_statement
     | SWITCH '(' expression ')' statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+                         tb->addNode($5, @5) },
+                       SType::SwitchStmt); }
     ;
 
 /* (6.8.5) iteration-statement: */

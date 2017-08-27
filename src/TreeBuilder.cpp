@@ -42,6 +42,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::WithInitializer:     return (os << "WithInitializer");
         case SType::WithoutInitializer:  return (os << "WithoutInitializer");
         case SType::InitializerElement:  return (os << "InitializerElement");
+        case SType::SwitchStmt:          return (os << "SwitchStmt");
     }
 
     assert("Unhandled enumeration item");

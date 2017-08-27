@@ -1131,19 +1131,19 @@ TEST_CASE("Preserved child preserves its parent", "[comparison]")
     std::vector<Changes> expectedOld = { Changes::No,
         Changes::No,
         Changes::Deletions,
-        Changes::No,
-        Changes::No,
-        Changes::No,
+        Changes::Moves,
+        Changes::Moves,
+        Changes::Moves,
         Changes::No,
     };
     std::vector<Changes> expectedNew = { Changes::No,
         Changes::No,
         Changes::Additions,
-        Changes::No,
+        Changes::Moves,
         Changes::Additions,
-        Changes::No,
+        Changes::Moves,
         Changes::Additions,
-        Changes::No,
+        Changes::Moves,
         Changes::No,
     };
 
@@ -1274,6 +1274,46 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
         Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::No, Changes::No, Changes::No, Changes::No,
         Changes::Additions,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+            if (cond1) { }
+            else
+                if (cond3) { stmt; }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            if (cond1) { }
+            if (cond3) { stmt; }
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Deletions,
+        Changes::Moves,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Moves,
         Changes::No,
     };
 
