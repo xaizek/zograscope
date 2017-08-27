@@ -440,6 +440,8 @@ printSource(Node &root)
 
             const std::vector<std::string> lines = split(node.label, '\n');
             oss << (dec << lines.front());
+            col += lines.front().size();
+
             for (std::size_t i = 1U; i < lines.size(); ++i) {
                 std::size_t whitespaceLength =
                     lines[i].find_first_not_of(" \t");
@@ -449,10 +451,9 @@ printSource(Node &root)
                 oss << '\n' << lines[i].substr(0, whitespaceLength)
                             << (dec << lines[i].substr(whitespaceLength));
                 ++line;
+                col = 1 + lines[i].size();
                 colorPicker.advancedLine();
             }
-
-            col += node.label.size();
         }
 
         for (Node *child : node.children) {
