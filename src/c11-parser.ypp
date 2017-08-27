@@ -1198,7 +1198,8 @@ compound_statement
                          tb->addNode($3, @3, SType::Separator) },
                        SType::CompoundStatement); }
     | '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator) },
                        SType::CompoundStatement); }
     ;
 
