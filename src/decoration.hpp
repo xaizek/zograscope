@@ -92,6 +92,42 @@ public:
      */
     bool isEmpty() const;
 
+    /**
+     * @brief Compares two decorations for equality.
+     *
+     * @param lhs First decoration.
+     * @param rhs Second decoration.
+     *
+     * @returns @c true if equal, @c false otherwise.
+     */
+    friend inline
+    bool operator==(const Decoration &lhs, const Decoration &rhs)
+    {
+        auto equal = [](Decoration *a, Decoration *b) {
+            return (a == nullptr && b == nullptr)
+                || (a != nullptr && b != nullptr && *a == *b);
+        };
+
+        return lhs.decorator == rhs.decorator
+            && lhs.intDecorator == rhs.intDecorator
+            && equal(lhs.lhs.get(), rhs.lhs.get())
+            && equal(lhs.rhs.get(), rhs.rhs.get());
+    }
+
+    /**
+     * @brief Compares two decorations for inequality.
+     *
+     * @param lhs First decoration.
+     * @param rhs Second decoration.
+     *
+     * @returns @c true if not equal, @c false otherwise.
+     */
+    friend inline
+    bool operator!=(const Decoration &lhs, const Decoration &rhs)
+    {
+        return !(lhs == rhs);
+    }
+
 private:
     /**
      * @brief Decoration function (can be nullptr).

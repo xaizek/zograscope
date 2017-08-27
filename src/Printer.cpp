@@ -329,6 +329,56 @@ dtlCompare(const std::vector<std::string> &l, const std::vector<std::string> &r)
     return diffSeq;
 }
 
+namespace {
+
+class ColorPicker
+{
+public:
+    void setNode(const Node &node)
+    {
+        prevNode = currNode;
+        currNode = &node;
+
+        prevHighlight = std::move(currHighlight);
+        currHighlight = ::getHighlight(*currNode);
+    }
+
+    void advancedLine()
+    {
+        prevNode = nullptr;
+    }
+
+    const decor::Decoration & getHighlight() const
+    {
+        return currHighlight;
+    }
+
+    decor::Decoration getFillHighlight()
+    {
+        if (prevNode == nullptr) {
+            return decor::none;
+        }
+
+        if (prevHighlight == currHighlight) {
+            return currHighlight;
+        }
+
+        if (prevNode->moved || currNode->moved) {
+            return (currNode->moved ? prevHighlight : currHighlight);
+        }
+
+        return decor::none;
+    }
+
+private:
+    decor::Decoration currHighlight;
+    decor::Decoration prevHighlight;
+    const Node *currNode = nullptr;
+    const Node *prevNode = nullptr;
+};
+
+}
+
 std::string
 printSource(Node &root)
 {
@@ -342,6 +392,7 @@ printSource(Node &root)
     };
 
     int line = 1, col = 1;
+    ColorPicker colorPicker;
     std::function<void(Node &)> visit = [&](Node &node) {
         if (node.next != nullptr) {
             if (node.state != State::Unchanged) {
@@ -354,9 +405,19 @@ printSource(Node &root)
         }
 
         if (node.line != 0 && node.col != 0) {
+            colorPicker.setNode(node);
+
+            decor::Decoration fillHighlight;
+            // don't do filling across lines
+            if (node.line == line) {
+                fillHighlight = colorPicker.getFillHighlight();
+                oss << fillHighlight;
+            }
+
             while (node.line > line) {
                 oss << '\n';
                 ++line;
+                colorPicker.advancedLine();
                 col = 1;
             }
 
@@ -365,7 +426,11 @@ printSource(Node &root)
                 ++col;
             }
 
-            decor::Decoration dec = getHighlight(node);
+            if (fillHighlight != decor::none) {
+                oss << decor::def;
+            }
+
+            const decor::Decoration &dec = colorPicker.getHighlight();
 
             // if (node.state != State::Unchanged) {
             //     oss << (dec << '[') << node.label << (dec << ']');
@@ -384,6 +449,7 @@ printSource(Node &root)
                 oss << '\n' << lines[i].substr(0, whitespaceLength)
                             << (dec << lines[i].substr(whitespaceLength));
                 ++line;
+                colorPicker.advancedLine();
             }
 
             col += node.label.size();
