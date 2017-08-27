@@ -140,23 +140,23 @@ renameCost(const Node *n1, const Node *n2)
 
     return Wren;
 
-    std::string n1l;
-    int a = 0, b = 0;
-    for (const Node *child : n1->children) {
-        if (child->satellite) {
-            n1l += child->label;
-            ++a;
-        }
-    }
-    std::string n2l;
-    for (const Node *child : n2->children) {
-        if (child->satellite) {
-            n2l += child->label;
-            ++b;
-        }
-    }
-    const bool identicalRename = (n1->label == n2->label && n1l == n2l && n1->children.size() == n2->children.size());
-    return (identicalRename ? 0 : Wren);
+    // std::string n1l;
+    // int a = 0, b = 0;
+    // for (const Node *child : n1->children) {
+    //     if (child->satellite) {
+    //         n1l += child->label;
+    //         ++a;
+    //     }
+    // }
+    // std::string n2l;
+    // for (const Node *child : n2->children) {
+    //     if (child->satellite) {
+    //         n2l += child->label;
+    //         ++b;
+    //     }
+    // }
+    // const bool identicalRename = (n1->label == n2->label && n1l == n2l && n1->children.size() == n2->children.size());
+    // return (identicalRename ? 0 : Wren);
 }
 
 static void
