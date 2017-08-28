@@ -1,6 +1,7 @@
 #include "Catch/catch.hpp"
 
 #include <functional>
+#include <ostream>
 
 #include "TreeBuilder.hpp"
 #include "change-distilling.hpp"
@@ -23,6 +24,7 @@ enum class Changes
 
 static int countLeaves(const Node &root, State state);
 static std::vector<Changes> makeChangeMap(Node &root);
+static std::ostream & operator<<(std::ostream &os, Changes changes);
 
 TEST_CASE("Comment is marked as unmodified", "[comparison][postponed]")
 {
@@ -1405,4 +1407,18 @@ makeChangeMap(Node &root)
     visit(root);
 
     return map;
+}
+
+static std::ostream &
+operator<<(std::ostream &os, Changes changes)
+{
+    switch (changes) {
+        case Changes::No:        return (os << "No");
+        case Changes::Additions: return (os << "Additions");
+        case Changes::Deletions: return (os << "Deletions");
+        case Changes::Moves:     return (os << "Moves");
+        case Changes::Mixed:     return (os << "Mixed");
+    }
+
+    return (os << "Unknown Changes value");
 }
