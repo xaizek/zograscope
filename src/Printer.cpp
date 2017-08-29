@@ -484,18 +484,28 @@ getHighlight(const Node &node)
     switch (node.state) {
         using namespace decor;
 
-        case State::Deleted:  return 210_fg + inv + black_bg + bold;
-        case State::Inserted: return  85_fg + inv + black_bg + bold;
+        case State::Deleted:
+            if (node.moved) {
+                return 204_fg + inv + black_bg + bold;
+            } else {
+                return 210_fg + inv + black_bg + bold;
+            }
+        case State::Inserted:
+            if (node.moved) {
+                return 48_fg + inv + black_bg + bold;
+            } else {
+                return 85_fg + inv + black_bg + bold;
+            }
         case State::Updated:
             if (node.moved) {
-                return 213_fg + inv + black_bg + bold;
+                return 227_fg + inv + black_bg + bold;
             } else {
                 return 228_fg + inv + black_bg + bold;
             }
 
         case State::Unchanged:
             if (node.moved) {
-                return 117_fg + inv + bold;
+                return 81_fg + inv + bold;
             }
             break;
     }
