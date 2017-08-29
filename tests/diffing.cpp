@@ -18,6 +18,7 @@ enum class Changes
     No,
     Additions,
     Deletions,
+    Updates,
     Moves,
     Mixed,
 };
@@ -621,7 +622,7 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
         Changes::No,
         Changes::No,
         Changes::Mixed,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
     };
 
@@ -1023,7 +1024,7 @@ TEST_CASE("Else branch addition", "[comparison]")
         Changes::No,
         Changes::No,
         Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
         Changes::No,
     };
@@ -1032,7 +1033,7 @@ TEST_CASE("Else branch addition", "[comparison]")
         Changes::No,
         Changes::No,
         Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
         Changes::Additions,
         Changes::Additions,
@@ -1081,7 +1082,7 @@ TEST_CASE("Else branch removal", "[comparison]")
         Changes::No,
         Changes::No,
         Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
         Changes::Deletions,
         Changes::Deletions,
@@ -1094,7 +1095,7 @@ TEST_CASE("Else branch removal", "[comparison]")
         Changes::No,
         Changes::No,
         Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
         Changes::No,
     };
@@ -1347,17 +1348,17 @@ TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
 
     std::vector<Changes> expectedOld = { Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
         Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
     };
     std::vector<Changes> expectedNew = { Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
         Changes::No,
-        Changes::Mixed,
+        Changes::Updates,
         Changes::No,
     };
 
@@ -1404,7 +1405,7 @@ makeChangeMap(Node &root)
                 change = (node.moved ? Changes::Moves : Changes::No); break;
             case State::Deleted:  change = Changes::Deletions; break;
             case State::Inserted: change = Changes::Additions; break;
-            case State::Updated:  change = Changes::Mixed; break;
+            case State::Updated:  change = Changes::Updates; break;
         }
 
         if (map[line] == Changes::No) {
@@ -1458,6 +1459,7 @@ operator<<(std::ostream &os, Changes changes)
         case Changes::No:        return (os << "No");
         case Changes::Additions: return (os << "Additions");
         case Changes::Deletions: return (os << "Deletions");
+        case Changes::Updates:   return (os << "Updates");
         case Changes::Moves:     return (os << "Moves");
         case Changes::Mixed:     return (os << "Mixed");
     }
