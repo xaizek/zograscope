@@ -26,9 +26,10 @@ struct Args
 {
     std::vector<std::string> pos;
     bool highlightMode;
-    bool debug;    //!< Whether grammar debugging is enabled.
-    bool sdebug;   //!< Whether stree debugging is enabled.
-    bool dumpTree; //!< Whether to dump trees.
+    bool debug;     //!< Whether grammar debugging is enabled.
+    bool sdebug;    //!< Whether stree debugging is enabled.
+    bool dumpSTree; //!< Whether to dump strees.
+    bool dumpTree;  //!< Whether to dump trees.
     bool dryRun;
     bool color;
     bool fine;     //!< Whether to build only fine-grained tree.
@@ -210,6 +211,7 @@ parseArgs(const std::vector<std::string> &argv)
     args.highlightMode = (args.pos.size() == 1U);
     args.debug = varMap.count("debug");
     args.sdebug = varMap.count("sdebug");
+    args.dumpSTree = varMap.count("dump-stree");
     args.dumpTree = varMap.count("dump-tree");
     args.dryRun = varMap.count("dry-run");
     args.color = varMap.count("color");
@@ -246,14 +248,15 @@ parseOptions(const std::vector<std::string> &args)
     po::options_description cmdlineOptions;
 
     cmdlineOptions.add_options()
-        ("dry-run",      "just parse")
-        ("debug",        "enable debugging of grammar")
-        ("sdebug",       "enable debugging of strees")
-        ("dump-tree",    "display tree(s)")
-        ("fine-only",    "use only fine-grained tree")
-        ("time-report",  "report time spent on different activities")
-        ("color",        "force colorization of output")
-        ("no-refine",    "do not refine coarse results");
+        ("dry-run",     "just parse")
+        ("debug",       "enable debugging of grammar")
+        ("sdebug",      "enable debugging of strees")
+        ("dump-stree",  "display stree(s)")
+        ("dump-tree",   "display tree(s)")
+        ("fine-only",   "use only fine-grained tree")
+        ("time-report", "report time spent on different activities")
+        ("color",       "force colorization of output")
+        ("no-refine",   "do not refine coarse results");
 
     po::options_description allOptions;
     allOptions.add(cmdlineOptions).add(hiddenOpts);
@@ -292,7 +295,7 @@ buildTreeFromFile(const std::string &path, const Args &args)
     if (args.fine) {
         t = Tree(contents, tb.getRoot());
     } else {
-        STree stree(std::move(tb), contents, args.dumpTree, args.sdebug);
+        STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug);
         t = Tree(contents, stree.getRoot());
     }
 
