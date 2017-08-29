@@ -621,7 +621,7 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
         Changes::No,
         Changes::No,
         Changes::Mixed,
-        Changes::Additions,
+        Changes::Mixed,
         Changes::No,
     };
 
@@ -775,12 +775,12 @@ TEST_CASE("Declarations with and without initializer are not the same",
 
     std::vector<Changes> expectedOld = { Changes::No,
         Changes::No,
-        Changes::Deletions,
+        Changes::No,
         Changes::No,
     };
     std::vector<Changes> expectedNew = { Changes::No,
         Changes::No,
-        Changes::Additions,
+        Changes::No,
         Changes::Additions,
         Changes::Additions,
         Changes::No,
@@ -1316,6 +1316,48 @@ TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
         Changes::No,
         Changes::No,
         Changes::Moves,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        size_t
+            f();
+        void g(
+            size_t
+            param);
+    )", true);
+    Tree newTree = makeTree(R"(
+        int
+            f();
+        void g(
+            int
+            param);
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::Mixed,
+        Changes::No,
+        Changes::No,
+        Changes::Mixed,
         Changes::No,
     };
 

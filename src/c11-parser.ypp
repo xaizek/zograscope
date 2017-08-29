@@ -548,10 +548,9 @@ declaration_specifier
 /*     init-declarator-list , init-declarator */
 init_declarator_list
     : init_declarator
-    { $$ = tb->addNode($1, @1, SType::Declarator); }
+    { $$ = $1; }
     | init_declarator_list ',' init_declarator
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                            tb->addNode($3, @3, SType::Declarator) }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), $3 }); }
     ;
 
 /* (6.7) init-declarator: */
@@ -559,12 +558,14 @@ init_declarator_list
 /*     declarator = initializer */
 init_declarator
     : declarator
-    { $$ = tb->addNode($1, @1, SType::WithoutInitializer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::WithoutInitializer) },
+                       SType::Declarator); }
     | declarator '=' initializer
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator),
-                         tb->addNode($2, @2, SType::Separator),
-                         $3 },
-                       SType::WithInitializer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::WithoutInitializer),
+                         tb->addNode({ tb->addNode($2, @2, SType::Separator),
+                                       $3 },
+                                     SType::WithoutInitializer) },
+                       SType::Declarator); }
     ;
 
 /* (6.7.1) storage-class-specifier: */

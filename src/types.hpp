@@ -146,4 +146,6 @@ std::ostream & operator<<(std::ostream &os, Type type);
 
 Type tokenToType(int token);
 
+Type canonizeType(Type type);
+
 #endif // TYPES_HPP__

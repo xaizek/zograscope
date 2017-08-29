@@ -182,7 +182,7 @@ TEST_CASE("Single comment adds just one node to the tree",
         }
     )");
     CHECK(countNodes(*withComment.getRoot()) ==
-          countNodes(*withoutComment.getRoot()) + 1);
+          countNodes(*withoutComment.getRoot()) + 2);
 }
 
 static int

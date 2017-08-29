@@ -166,3 +166,13 @@ tokenToType(int token)
 
     return map[token];
 }
+
+Type
+canonizeType(Type type)
+{
+    if (type == Type::UserTypes) {
+        return Type::Types;
+    }
+
+    return type;
+}

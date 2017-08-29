@@ -103,11 +103,17 @@ materializeLabel(const std::string &contents, const PNode *node)
 static Node *
 materializeNode(Tree &tree, const std::string &contents, const PNode *node)
 {
+    const Type type = tokenToType(node->value.token);
+
+    if (type == Type::Virtual && node->children.size() == 1U) {
+        return materializeNode(tree, contents, node->children[0]);
+    }
+
     Node &n = tree.makeNode();
     n.label = materializeLabel(contents, node);
     n.line = node->line;
     n.col = node->col;
-    n.type = tokenToType(node->value.token);
+    n.type = type;
     // This is for debugging purposes on dumping tree.
     n.stype = node->stype;
 
@@ -146,6 +152,7 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
             n.col = leaf->col;
             n.next = materializeNode(tree, contents, node->value);
             n.next->last = true;
+            n.type = n.next->type;
             return &n;
         }
 

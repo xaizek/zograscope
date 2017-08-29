@@ -128,13 +128,16 @@ renameCost(const Node *n1, const Node *n2)
         return 0;
     }
 
-    if (n1->type >= Type::NonInterchangeable ||
-        n2->type >= Type::NonInterchangeable ||
-        n1->type != n2->type) {
+    const Type type1 = canonizeType(n1->type);
+    const Type type2 = canonizeType(n2->type);
+
+    if (type1 >= Type::NonInterchangeable ||
+        type2 >= Type::NonInterchangeable ||
+        type1 != type2) {
         return Wch;
     }
 
-    if (n1->type == Type::Virtual) {
+    if (type1 == Type::Virtual) {
         return (n1->stype == n2->stype) ? Wren : Wch;
     }
 

@@ -37,13 +37,16 @@ postOrderAndInit(Node &root)
 static bool
 canMatch(const Node *x, const Node *y)
 {
-    if (x->type >= Type::NonInterchangeable ||
-        y->type >= Type::NonInterchangeable ||
-        x->type != y->type) {
+    const Type xType = canonizeType(x->type);
+    const Type yType = canonizeType(y->type);
+
+    if (xType >= Type::NonInterchangeable ||
+        yType >= Type::NonInterchangeable ||
+        xType != yType) {
         return false;
     }
 
-    if (x->type == Type::Virtual && x->stype != y->stype) {
+    if (xType == Type::Virtual && x->stype != y->stype) {
         return false;
     }
 
@@ -208,7 +211,9 @@ distill(Node &T1, Node &T2)
             }
 
             const float similarity = dice1[x->poID].compare(dice2[y->poID]);
-            if (similarity >= 0.6f) {
+            if (similarity >= 0.6f ||
+                (x->type != Type::Virtual && y->type != Type::Virtual &&
+                 x->children.empty() && y->children.empty())) {
                 matches.push_back({ x, y, similarity, -1 });
             }
         }
