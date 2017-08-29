@@ -49,6 +49,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
             continue;
         }
         std::string subtree1 = printSubTree(*t1Child);
+        DiceString subtree1Dice = subtree1;
         for (Node *t2Child : T2->children) {
             if (t2Child->satellite) {
                 continue;
@@ -57,10 +58,11 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
             // XXX: here mismatched lables are included in similarity
             //      measurement, which affects it negatively
             std::string subtree2 = printSubTree(*t2Child);
+            DiceString subtree2Dice = subtree2;
             const bool identical = (subtree1 == subtree2);
             const float similarity = identical
                                    ? 1.0f
-                                   : diceCoefficient(subtree1, subtree2);
+                                   : subtree1Dice.compare(subtree2Dice);
             if ((t1Child->label == t2Child->label && similarity >= 0.6f) ||
                 (t1Child->label != t2Child->label && similarity >= 0.8f)) {
                 matches.push_back({ t1Child, t2Child, similarity, identical });

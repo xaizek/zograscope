@@ -4,5 +4,6 @@
 
 TEST_CASE("Different strings are recognized as different", "[utils][dice]")
 {
-    REQUIRE(diceCoefficient("abc", "abd") < 1.0f);
+    DiceString diceB("abd");
+    REQUIRE(DiceString("abc").compare(diceB) < 1.0f);
 }

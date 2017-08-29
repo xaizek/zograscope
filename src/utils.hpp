@@ -43,12 +43,4 @@ split(const std::string &str, char with)
     return results;
 }
 
-inline float
-diceCoefficient(const std::string &a, const std::string &b)
-{
-    // XXX: this is much faster with caching!
-    DiceString diceB = b;
-    return DiceString(a).compare(diceB);
-}
-
 #endif // UTILS_HPP__
