@@ -16,6 +16,7 @@
 #include "types.hpp"
 #include "utils.hpp"
 
+static void printTree(const Node *node, std::vector<bool> &trace, int depth);
 static void printNode(std::ostream &os, const Node *node);
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
@@ -24,7 +25,41 @@ static bool areIdentical(const Node *l, const Node *r);
 void
 print(const Node &node)
 {
-    trees::print(std::cout, &node, &printNode);
+    std::vector<bool> trace;
+    printTree(&node, trace, 0);
+}
+
+static void
+printTree(const Node *node, std::vector<bool> &trace, int depth)
+{
+    std::cout << (trace.empty() ? "--- " : "    ");
+
+    for (unsigned int i = 0U, n = trace.size(); i < n; ++i) {
+        bool last = (i == n - 1U);
+        if (trace[i]) {
+            std::cout << (last ? "`-- " : "    ");
+        } else {
+            std::cout << (last ? "|-- " : "|   ");
+        }
+    }
+
+    std::cout << depth << " | ";
+    printNode(std::cout, node);
+
+    trace.push_back(false);
+    for (unsigned int i = 0U, n = node->children.size(); i < n; ++i) {
+        Node *child = node->children[i];
+
+        trace.back() = (i == n - 1U);
+        printTree(child, trace, depth);
+
+        if (child->next != nullptr && !child->next->last) {
+            trace.push_back(true);
+            printTree(child->next, trace, depth + 1);
+            trace.pop_back();
+        }
+    }
+    trace.pop_back();
 }
 
 static void
