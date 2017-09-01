@@ -115,7 +115,7 @@ docs/$(NAME).1: force | $(out_dir)/docs
 	       -V app=$(NAME) \
 	       -V footer="$(NAME) v0.1" \
 	       -V date="$$(date +'%B %d, %Y')" \
-	       -V author='xaizek <xaizek@openmailbox.org>' \
+	       -V author='xaizek <xaizek@posteo.net>' \
 	       -s -o $@ $(sort $(wildcard docs/*.md))
 
 # target that doesn't exist and used to force rebuild
