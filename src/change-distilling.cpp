@@ -40,6 +40,10 @@ canMatch(const Node *x, const Node *y)
     const Type xType = canonizeType(x->type);
     const Type yType = canonizeType(y->type);
 
+    if (xType != Type::Virtual && xType == yType && x->label == y->label) {
+        return true;
+    }
+
     if (xType >= Type::NonInterchangeable ||
         yType >= Type::NonInterchangeable ||
         xType != yType) {

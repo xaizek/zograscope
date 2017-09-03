@@ -1366,6 +1366,54 @@ TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
     CHECK(newMap == expectedNew);
 }
 
+TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+            if(cond1) {
+                int a;
+            } else if(cond2)
+                ;
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            if(cond1) {
+                int a;
+                int b;
+            } else if(cond2)
+                ;
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+        Changes::Additions,
+        Changes::No,
+        Changes::No,
+        Changes::No,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
