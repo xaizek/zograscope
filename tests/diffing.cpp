@@ -1414,6 +1414,45 @@ TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
     CHECK(newMap == expectedNew);
 }
 
+TEST_CASE("Returns with and without value aren't matched",
+          "[comparison][parsing]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+            return 1;
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            if (cond) {
+                return;
+            }
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+
+    std::vector<Changes> expectedOld = { Changes::No,
+        Changes::Deletions,
+        Changes::Deletions,
+        Changes::Deletions,
+    };
+    std::vector<Changes> expectedNew = { Changes::No,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+        Changes::Additions,
+    };
+
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

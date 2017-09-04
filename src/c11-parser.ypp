@@ -1169,9 +1169,9 @@ statement
     : labeled_statement    { $$ = tb->addNode($1, @1, SType::Statement); }
     | compound_statement   { $$ = tb->addNode($1, @1, SType::Statement); }
     | expression_statement { $$ = tb->addNode($1, @1, SType::Statement); }
-    | selection_statement  { $$ = tb->addNode($1, @1); }
+    | selection_statement
     | iteration_statement  { $$ = tb->addNode($1, @1, SType::Statement); }
-    | jump_statement       { $$ = tb->addNode($1, @1, SType::Statement); }
+    | jump_statement
     ;
 
 /* (6.8.1) labeled-statement: */
@@ -1356,16 +1356,19 @@ iteration_statement
 jump_statement
     : GOTO ID ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+                         tb->addNode($3, @3) }, SType::GotoStmt); }
     | CONTINUE ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::ContinueStmt); }
     | BREAK ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::BreakStmt); }
     | RETURN expression ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+                         tb->addNode($3, @3) }, SType::ReturnValueStmt); }
     | RETURN ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::ReturnNothingStmt); }
     ;
 
 /* A.2.4 External definitions */

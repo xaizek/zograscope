@@ -43,6 +43,11 @@ operator<<(std::ostream &os, SType stype)
         case SType::WithoutInitializer:  return (os << "WithoutInitializer");
         case SType::InitializerElement:  return (os << "InitializerElement");
         case SType::SwitchStmt:          return (os << "SwitchStmt");
+        case SType::GotoStmt:            return (os << "GotoStmt");
+        case SType::ContinueStmt:        return (os << "ContinueStmt");
+        case SType::BreakStmt:           return (os << "BreakStmt");
+        case SType::ReturnValueStmt:     return (os << "ReturnValueStmt");
+        case SType::ReturnNothingStmt:   return (os << "ReturnNothingStmt");
     }
 
     assert("Unhandled enumeration item");

@@ -43,6 +43,11 @@ enum class SType
     WithoutInitializer,
     InitializerElement,
     SwitchStmt,
+    GotoStmt,
+    ContinueStmt,
+    BreakStmt,
+    ReturnValueStmt,
+    ReturnNothingStmt,
 };
 
 std::ostream & operator<<(std::ostream &os, SType stype);
