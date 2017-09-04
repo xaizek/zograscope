@@ -24,6 +24,12 @@ enum class Changes
 };
 
 static int countLeaves(const Node &root, State state);
+static void diffSources(const std::string &left, const std::string &right,
+                        bool skipRefine);
+static std::pair<std::string, std::vector<Changes>>
+extractExpectations(const std::string &src);
+static std::pair<std::string, std::string> splitAt(const std::string &s,
+                                                   const std::string &delim);
 static std::vector<Changes> makeChangeMap(Node &root);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
 
@@ -193,136 +199,78 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
 
 TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f() {
             while (condition1) {
                 if (condition2) {
-                    (void)ioe_errlst_append(&args->result.errors, dst, errno,
-                            "Write to destination file failed");
+                    (void)ioe_errlst_append(&args->result.errors, dst,
+                           errno, "Write to destination file failed");
                     error = 1;
                     break;
                 }
             }
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f() {
-                while (condition1) {
-                    if (condition2) {
-                        (void)ioe_errlst_append(&args->result.errors, dst,
-                                errno, "Write to destination file failed");
-                        error = 1;
-                        break;
-                    }
-                }
-
-                if (fflush(out) != 0) {
-                    (void)ioe_errlst_append(&args->result.errors, dst, errno,
-                            "Write to destination file failed");
+            while (condition1) {
+                if (condition2) {
+                    (void)ioe_errlst_append(&args->result.errors, dst,
+                            errno, "Write to destination file failed");
                     error = 1;
+                    break;
                 }
+            }
+
+            if (fflush(out) != 0) {                                /// Additions
+                (void)ioe_errlst_append(&args->result.errors, dst, /// Additions
+                       errno, "Write to destination file failed"); /// Additions
+                error = 1;                                         /// Additions
+            }                                                      /// Additions
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
-
-        Changes::Additions,
-        Changes::Additions, Changes::Additions, Changes::Additions,
-        Changes::Additions,
-
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Only similar enough functions are matched", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         int f() {
-            int i = 3;
-            return i;
+            int i = 3;             /// Moves
+            return i;              /// Moves
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         int f() {
-            return f_internal();
+            return f_internal();   /// Additions
         }
 
-        static int f_internal() {
-            int i = 3;
-            return i;
-        }
-    )", true);
+        static int f_internal() {  /// Additions
+            int i = 3;             /// Moves
+            return i;              /// Moves
+        }                          /// Additions
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::Moves,
-        Changes::No
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::Moves,
-        Changes::Moves,
-        Changes::Additions,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f(int a,
-               int b)
+               int b)  /// Mixed
         {
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f(int a,
-               int c)
+               int c)  /// Mixed
         {
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    Node *oldT = oldTree.getRoot(), *newT = newTree.getRoot();
-    compare(oldT, newT, tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldT);
-    std::vector<Changes> newMap = makeChangeMap(*newT);
-
-    std::vector<Changes> expected = { Changes::No,
-        Changes::No, Changes::Mixed, Changes::No, Changes::No
-    };
-
-    CHECK(oldMap == expected);
-    CHECK(newMap == expected);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
@@ -396,38 +344,19 @@ TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         type var = {
             .oldfield = oldValue,
         };
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         type var = {
             .oldfield = oldValue,
-            .newField = newValue
+            .newField = newValue   /// Additions
         };
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
@@ -435,52 +364,26 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         aggregate var = {
             { .field =
-              1
+              1                    /// Deletions
             }, { .another_field =
-              1
+              1                    /// Deletions
             },
         };
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         aggregate var = {
             { .field =
-              2
+              2                    /// Additions
             }, { .another_field =
-              2
+              2                    /// Additions
             },
         };
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Deletions,
-        Changes::No,
-        Changes::Deletions,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Structure is decomposed", "[comparison][parsing]")
@@ -488,48 +391,24 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         struct s {
-            int a;
+            int a;   /// Deletions
             int b :
-            1
+            1        /// Deletions
             ;
         };
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         struct s {
-            int g;
+            int g;   /// Additions
             int b :
-            2
+            2        /// Additions
             ;
         };
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::Deletions,
-        Changes::No,
-        Changes::Deletions,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
@@ -537,48 +416,24 @@ TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         typedef struct
         {
             int a;
         }
         str;
-    )", true);
-    Tree newTree = makeTree(R"(
-        // Comment
+    )";
+    std::string right = R"(
+        // Comment      /// Additions
         typedef struct
         {
             int a;
-            int b;
+            int b;      /// Additions
         }
         str;
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
@@ -586,48 +441,24 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         enum {
             A,
             B,
-            Aa,
-            Bb,
+            Aa,  /// Mixed
+            Bb,  /// Mixed
         };
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         enum {
             A,
             B,
-            Ab,
-            Zz
+            Ab,  /// Mixed
+            Zz   /// Updates
         };
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Mixed,
-        Changes::Mixed,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Mixed,
-        Changes::Updates,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
@@ -755,211 +586,110 @@ TEST_CASE("Declarations differ by whether they have initializers",
 TEST_CASE("Declarations with and without initializer are not the same",
           "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         int
             a
             ;
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         int
             a
-            =
-            10
+            =   /// Additions
+            10  /// Additions
             ;
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Move detection isn't thrown off by large changes",
           "[comparison][moves]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f()
         {
             stmt1;
-            stmt2;
+            stmt2;       /// Moves
             stmt3;
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f()
         {
             stmt1;
-            {
-                call();
-                call();
-                call();
-                call();
-                call();
-                call();
-                call();
-                stmt2;
-            }
+            {            /// Additions
+                call();  /// Additions
+                call();  /// Additions
+                call();  /// Additions
+                call();  /// Additions
+                call();  /// Additions
+                call();  /// Additions
+                call();  /// Additions
+                stmt2;   /// Moves
+            }            /// Additions
             stmt3;
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Moves,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Move detection works on top level", "[comparison][moves]")
 {
-    Tree oldTree = makeTree(R"(
-        #include "this.h"
+    std::string left = R"(
+        #include "this.h"  /// Moves
         #include "bla.h"
 
-        #include "some.h"
-        #include "file.h"
+        #include "some.h"  /// Moves
+        #include "file.h"  /// Moves
         #include "here.h"
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         #include "bla.h"
-        #include "this.h"
+        #include "this.h"  /// Moves
 
         #include "here.h"
-        #include "file.h"
-        #include "some.h"
-    )", true);
+        #include "file.h"  /// Moves
+        #include "some.h"  /// Moves
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::Moves,
-        Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::Moves,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::Moves,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f() {
             if (cond) {
-                a = b;
+                a = b;   /// Moves
                 b = c;
             }
         }
 
         void g() {
             if (cond) {
-                int a;
+                int a;   /// Moves
                 int b;
             }
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f() {
-            a = b;
+            a = b;       /// Moves
             if (cond) {
                 b = c;
             }
         }
 
         void g() {
-            int a;
+            int a;       /// Moves
             if (cond) {
                 int b;
             }
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No, Changes::No,
-        Changes::Moves,
-        Changes::No, Changes::No, Changes::No,
-        Changes::No, Changes::No, Changes::No,
-        Changes::Moves,
-        Changes::No, Changes::No, Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::No, Changes::No, Changes::No,
-        Changes::No, Changes::No, Changes::No,
-        Changes::Moves,
-        Changes::No, Changes::No, Changes::No, Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
@@ -990,233 +720,117 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 
 TEST_CASE("Else branch addition", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f()
         {
             if(condition)
             {
-                action2();
+                action2();  /// Updates
             }
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f()
         {
             if(condition)
             {
-                action1();
+                action1();  /// Updates
             }
-            else
-            {
-                action3();
-            }
+            else            /// Additions
+            {               /// Additions
+                action3();  /// Additions
+            }               /// Additions
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Updates,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Updates,
-        Changes::No,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Else branch removal", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f()
         {
             if(condition)
             {
-                action1();
+                action1();  /// Updates
             }
-            else
-            {
-                action3();
-            }
+            else            /// Deletions
+            {               /// Deletions
+                action3();  /// Deletions
+            }               /// Deletions
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f()
         {
             if(condition)
             {
-                action2();
+                action2();  /// Updates
             }
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Updates,
-        Changes::No,
-        Changes::Deletions,
-        Changes::Deletions,
-        Changes::Deletions,
-        Changes::Deletions,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Updates,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Preserved child preserves its parent", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f() {
-            if (cond)
-            {
-                computation();
-            }
+            if (cond)           /// Deletions
+            {                   /// Moves
+                computation();  /// Moves
+            }                   /// Moves
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f() {
-            if (a < 88)
-            {
-                newstep();
-                computation();
-                newstep();
-            }
+            if (a < 88)         /// Additions
+            {                   /// Moves
+                newstep();      /// Additions
+                computation();  /// Moves
+                newstep();      /// Additions
+            }                   /// Moves
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::Deletions,
-        Changes::Moves,
-        Changes::Moves,
-        Changes::Moves,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::Moves,
-        Changes::Additions,
-        Changes::Moves,
-        Changes::Additions,
-        Changes::Moves,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f() {
             nread = fscanf(f, "%30d\n", &num);
             if(nread != 1) {
-                assert(fsetpos(f, &pos) == 0 && "Failed");
+                assert(fsetpos(f, &pos) == 0 && "Failed");  /// Deletions
                 return -1;
             }
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f() {
-            if(c == EOF) {
-                return -1;
-            }
+            if(c == EOF) {                                  /// Additions
+                return -1;                                  /// Additions
+            }                                               /// Additions
 
             nread = fscanf(f, "%30d\n", &num);
             if(nread != 1) {
-                fsetpos(f, &pos);
+                fsetpos(f, &pos);                           /// Additions
                 return -1;
             }
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Deletions,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Functions are matched by content also", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
-        entries_t f() {
-            entries_t parent_dirs = {};
+    std::string left = R"(
+        entries_t f() {                         /// Mixed
+            entries_t parent_dirs = {};         /// Deletions
             char *path;
             int len, i;
             char **list;
@@ -1226,21 +840,21 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
             free(path);
             free_string_array(list, len);
 
-            return parent_dirs;
+            return parent_dirs;                 /// Deletions
         }
-    )", true);
-    Tree newTree = makeTree(R"(
-        entries_t f() {
-            entries_t parent_dirs = g();
-            if(parent_dirs.nentries < 0) {
-                return parent_dirs;
-            }
+    )";
+    std::string right = R"(
+        entries_t f() {                         /// Additions
+            entries_t parent_dirs = g();        /// Additions
+            if(parent_dirs.nentries < 0) {      /// Additions
+                return parent_dirs;             /// Additions
+            }                                   /// Additions
 
-            return parent_dirs;
-        }
+            return parent_dirs;                 /// Additions
+        }                                       /// Additions
 
-        entries_t g() {
-            entries_t siblings = {};
+        entries_t g() {                         /// Mixed
+            entries_t siblings = {};            /// Additions
             char *path;
             int len, i;
             char **list;
@@ -1250,207 +864,92 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
             free(path);
             free_string_array(list, len);
 
-            return siblings;
+            return siblings;                    /// Additions
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::Mixed, Changes::Deletions,
-        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No,
-        Changes::Deletions,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::Additions, Changes::Additions, Changes::Additions,
-        Changes::Additions, Changes::Additions,
-        Changes::No,
-        Changes::Additions, Changes::Additions,
-        Changes::No,
-        Changes::Mixed, Changes::Additions,
-        Changes::No, Changes::No, Changes::No, Changes::No, Changes::No,
-        Changes::No, Changes::No, Changes::No, Changes::No,
-        Changes::Additions,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f() {
             if (cond1) { }
-            else
-                if (cond3) { stmt; }
+            else                      /// Deletions
+                if (cond3) { stmt; }  /// Moves
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f() {
             if (cond1) { }
-            if (cond3) { stmt; }
+            if (cond3) { stmt; }      /// Moves
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Deletions,
-        Changes::Moves,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Moves,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
-        size_t
+    std::string left = R"(
+        size_t       /// Updates
             f();
         void g(
-            size_t
+            size_t   /// Updates
             param);
-    )", true);
-    Tree newTree = makeTree(R"(
-        int
+    )";
+    std::string right = R"(
+        int          /// Updates
             f();
         void g(
-            int
+            int      /// Updates
             param);
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::Updates,
-        Changes::No,
-        Changes::No,
-        Changes::Updates,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::Updates,
-        Changes::No,
-        Changes::No,
-        Changes::Updates,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    std::string left = R"(
         void f() {
             if(cond1) {
                 int a;
             } else if(cond2)
                 ;
         }
-    )", true);
-    Tree newTree = makeTree(R"(
+    )";
+    std::string right = R"(
         void f() {
             if(cond1) {
                 int a;
-                int b;
+                int b;        /// Additions
             } else if(cond2)
                 ;
         }
-    )", true);
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-        Changes::Additions,
-        Changes::No,
-        Changes::No,
-        Changes::No,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, true);
 }
 
 TEST_CASE("Returns with and without value aren't matched",
           "[comparison][parsing]")
 {
-    Tree oldTree = makeTree(R"(
-        void f() {
-            return 1;
-        }
-    )", true);
-    Tree newTree = makeTree(R"(
-        void f() {
-            if (cond) {
-                return;
-            }
-        }
-    )", true);
+    std::string left = R"(
+        void f() {       /// Deletions
+            return 1;    /// Deletions
+        }                /// Deletions
+    )";
+    std::string right = R"(
+        void f() {       /// Additions
+            if (cond) {  /// Additions
+                return;  /// Additions
+            }            /// Additions
+        }                /// Additions
+    )";
 
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
-
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-
-    std::vector<Changes> expectedOld = { Changes::No,
-        Changes::Deletions,
-        Changes::Deletions,
-        Changes::Deletions,
-    };
-    std::vector<Changes> expectedNew = { Changes::No,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-        Changes::Additions,
-    };
-
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+    diffSources(left, right, false);
 }
 
 static int
@@ -1474,6 +973,93 @@ countLeaves(const Node &root, State state)
 
     visit(root);
     return count;
+}
+
+static void
+diffSources(const std::string &left, const std::string &right, bool skipRefine)
+{
+    std::string cleanedLeft, cleanedRight;
+    std::vector<Changes> expectedOld, expectedNew;
+    std::tie(cleanedLeft, expectedOld) = extractExpectations(left);
+    std::tie(cleanedRight, expectedNew) = extractExpectations(right);
+
+    Tree oldTree = makeTree(cleanedLeft, true);
+    Tree newTree = makeTree(cleanedRight, true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
+
+    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
+    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+    CHECK(oldMap == expectedOld);
+    CHECK(newMap == expectedNew);
+}
+
+static std::pair<std::string, std::vector<Changes>>
+extractExpectations(const std::string &src)
+{
+    std::vector<std::string> lines = split(src, '\n');
+
+    auto allSpaces = [](const std::string &str) {
+        return (str.find_first_not_of(' ') == std::string::npos);
+    };
+
+    while (!lines.empty() && allSpaces(lines.back())) {
+        lines.pop_back();
+    }
+
+    std::vector<Changes> changes;
+    changes.reserve(lines.size());
+
+    std::string cleanedSrc;
+    cleanedSrc.reserve(src.length());
+
+    for (const std::string &line : lines) {
+        std::string src, expectation;
+        std::tie(src, expectation) = splitAt(line, "/// ");
+
+        cleanedSrc += src;
+        cleanedSrc += '\n';
+
+        if (expectation == "" || expectation == "No") {
+            changes.push_back(Changes::No);
+        } else if (expectation == "Additions") {
+            changes.push_back(Changes::Additions);
+        } else if (expectation == "Deletions") {
+            changes.push_back(Changes::Deletions);
+        } else if (expectation == "Updates") {
+            changes.push_back(Changes::Updates);
+        } else if (expectation == "Moves") {
+            changes.push_back(Changes::Moves);
+        } else if (expectation == "Mixed") {
+            changes.push_back(Changes::Mixed);
+        } else {
+            REQUIRE_FALSE(true);
+        }
+    }
+
+    return { cleanedSrc, changes };
+}
+
+/**
+ * @brief Splits string in two parts at the leftmost delimiter.
+ *
+ * @param s String to split.
+ * @param delim Delimiter, which separates left and right parts of the string.
+ *
+ * @returns Pair of left and right string parts.
+ *
+ * @throws std::runtime_error On failure to find delimiter in the string.
+ */
+static std::pair<std::string, std::string>
+splitAt(const std::string &s, const std::string &delim)
+{
+    const std::string::size_type pos = s.find(delim);
+    if (pos == std::string::npos) {
+        return { s, std::string() };
+    }
+
+    return { s.substr(0, pos), s.substr(pos + delim.length()) };
 }
 
 static std::vector<Changes>
