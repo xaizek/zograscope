@@ -199,7 +199,7 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
 
 TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {
             while (condition1) {
                 if (condition2) {
@@ -210,8 +210,7 @@ TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
                 }
             }
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {
             while (condition1) {
                 if (condition2) {
@@ -228,20 +227,17 @@ TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
                 error = 1;                                         /// Additions
             }                                                      /// Additions
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Only similar enough functions are matched", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         int f() {
             int i = 3;             /// Moves
             return i;              /// Moves
         }
-    )";
-    std::string right = R"(
+    )", R"(
         int f() {
             return f_internal();   /// Additions
         }
@@ -250,27 +246,22 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
             int i = 3;             /// Moves
             return i;              /// Moves
         }                          /// Additions
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f(int a,
                int b)  /// Mixed
         {
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f(int a,
                int c)  /// Mixed
         {
         }
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
@@ -344,19 +335,16 @@ TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    std::string left = R"(
+    diffSources(R"(
         type var = {
             .oldfield = oldValue,
         };
-    )";
-    std::string right = R"(
+    )", R"(
         type var = {
             .oldfield = oldValue,
             .newField = newValue   /// Additions
         };
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
@@ -364,7 +352,7 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    std::string left = R"(
+    diffSources(R"(
         aggregate var = {
             { .field =
               1                    /// Deletions
@@ -372,8 +360,7 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
               1                    /// Deletions
             },
         };
-    )";
-    std::string right = R"(
+    )", R"(
         aggregate var = {
             { .field =
               2                    /// Additions
@@ -381,9 +368,7 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
               2                    /// Additions
             },
         };
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Structure is decomposed", "[comparison][parsing]")
@@ -391,24 +376,21 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    std::string left = R"(
+    diffSources(R"(
         struct s {
             int a;   /// Deletions
             int b :
             1        /// Deletions
             ;
         };
-    )";
-    std::string right = R"(
+    )", R"(
         struct s {
             int g;   /// Additions
             int b :
             2        /// Additions
             ;
         };
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
@@ -416,14 +398,13 @@ TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    std::string left = R"(
+    diffSources(R"(
         typedef struct
         {
             int a;
         }
         str;
-    )";
-    std::string right = R"(
+    )", R"(
         // Comment      /// Additions
         typedef struct
         {
@@ -431,9 +412,7 @@ TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
             int b;      /// Additions
         }
         str;
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
@@ -441,24 +420,21 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
     // This is more of a parsing test, but it's easier and more reliable to test
     // it by comparison.
 
-    std::string left = R"(
+    diffSources(R"(
         enum {
             A,
             B,
             Aa,  /// Mixed
             Bb,  /// Mixed
         };
-    )";
-    std::string right = R"(
+    )", R"(
         enum {
             A,
             B,
             Ab,  /// Mixed
             Zz   /// Updates
         };
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
@@ -586,34 +562,30 @@ TEST_CASE("Declarations differ by whether they have initializers",
 TEST_CASE("Declarations with and without initializer are not the same",
           "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         int
             a
             ;
-    )";
-    std::string right = R"(
+    )", R"(
         int
             a
             =   /// Additions
             10  /// Additions
             ;
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Move detection isn't thrown off by large changes",
           "[comparison][moves]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f()
         {
             stmt1;
             stmt2;       /// Moves
             stmt3;
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f()
         {
             stmt1;
@@ -629,36 +601,31 @@ TEST_CASE("Move detection isn't thrown off by large changes",
             }            /// Additions
             stmt3;
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Move detection works on top level", "[comparison][moves]")
 {
-    std::string left = R"(
+    diffSources(R"(
         #include "this.h"  /// Moves
         #include "bla.h"
 
         #include "some.h"  /// Moves
         #include "file.h"  /// Moves
         #include "here.h"
-    )";
-    std::string right = R"(
+    )", R"(
         #include "bla.h"
         #include "this.h"  /// Moves
 
         #include "here.h"
         #include "file.h"  /// Moves
         #include "some.h"  /// Moves
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {
             if (cond) {
                 a = b;   /// Moves
@@ -672,8 +639,7 @@ TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
                 int b;
             }
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {
             a = b;       /// Moves
             if (cond) {
@@ -687,9 +653,7 @@ TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
                 int b;
             }
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
@@ -720,7 +684,7 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 
 TEST_CASE("Else branch addition", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f()
         {
             if(condition)
@@ -728,8 +692,7 @@ TEST_CASE("Else branch addition", "[comparison]")
                 action2();  /// Updates
             }
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f()
         {
             if(condition)
@@ -741,14 +704,12 @@ TEST_CASE("Else branch addition", "[comparison]")
                 action3();  /// Additions
             }               /// Additions
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Else branch removal", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f()
         {
             if(condition)
@@ -760,8 +721,7 @@ TEST_CASE("Else branch removal", "[comparison]")
                 action3();  /// Deletions
             }               /// Deletions
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f()
         {
             if(condition)
@@ -769,22 +729,19 @@ TEST_CASE("Else branch removal", "[comparison]")
                 action2();  /// Updates
             }
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Preserved child preserves its parent", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {
             if (cond)           /// Deletions
             {                   /// Moves
                 computation();  /// Moves
             }                   /// Moves
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {
             if (a < 88)         /// Additions
             {                   /// Moves
@@ -793,14 +750,12 @@ TEST_CASE("Preserved child preserves its parent", "[comparison]")
                 newstep();      /// Additions
             }                   /// Moves
         }
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {
             nread = fscanf(f, "%30d\n", &num);
             if(nread != 1) {
@@ -808,8 +763,7 @@ TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
                 return -1;
             }
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {
             if(c == EOF) {                                  /// Additions
                 return -1;                                  /// Additions
@@ -821,14 +775,12 @@ TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
                 return -1;
             }
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Functions are matched by content also", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         entries_t f() {                         /// Mixed
             entries_t parent_dirs = {};         /// Deletions
             char *path;
@@ -842,8 +794,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
 
             return parent_dirs;                 /// Deletions
         }
-    )";
-    std::string right = R"(
+    )", R"(
         entries_t f() {                         /// Additions
             entries_t parent_dirs = g();        /// Additions
             if(parent_dirs.nentries < 0) {      /// Additions
@@ -866,61 +817,52 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
 
             return siblings;                    /// Additions
         }
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {
             if (cond1) { }
             else                      /// Deletions
                 if (cond3) { stmt; }  /// Moves
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {
             if (cond1) { }
             if (cond3) { stmt; }      /// Moves
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         size_t       /// Updates
             f();
         void g(
             size_t   /// Updates
             param);
-    )";
-    std::string right = R"(
+    )", R"(
         int          /// Updates
             f();
         void g(
             int      /// Updates
             param);
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {
             if(cond1) {
                 int a;
             } else if(cond2)
                 ;
         }
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {
             if(cond1) {
                 int a;
@@ -928,28 +870,23 @@ TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
             } else if(cond2)
                 ;
         }
-    )";
-
-    diffSources(left, right, true);
+    )", true);
 }
 
 TEST_CASE("Returns with and without value aren't matched",
           "[comparison][parsing]")
 {
-    std::string left = R"(
+    diffSources(R"(
         void f() {       /// Deletions
             return 1;    /// Deletions
         }                /// Deletions
-    )";
-    std::string right = R"(
+    )", R"(
         void f() {       /// Additions
             if (cond) {  /// Additions
                 return;  /// Additions
             }            /// Additions
         }                /// Additions
-    )";
-
-    diffSources(left, right, false);
+    )", false);
 }
 
 static int
