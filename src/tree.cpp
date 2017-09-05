@@ -190,6 +190,29 @@ Tree::Tree(const std::string &contents, const PNode *node)
     root = materializeNode(*this, contents, node);
 }
 
+static bool
+isValueSNode(const SNode *n)
+{
+    return n->value->stype == SType::FunctionDeclaration
+        || n->value->stype == SType::IfExpr;
+}
+
+static bool
+isLayerBreak(SType stype)
+{
+    switch (stype) {
+        case SType::FunctionDefinition:
+        case SType::InitializerElement:
+        case SType::InitializerList:
+        case SType::Initializer:
+        case SType::Declaration:
+            return true;
+
+        default:
+            return false;
+    };
+}
+
 static Node *
 materializeNode(Tree &tree, const std::string &contents, const SNode *node)
 {
@@ -223,12 +246,7 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
 
         auto valueChild = std::find_if(node->children.begin(),
                                        node->children.end(),
-                                       [](SNode *n) {
-                                           return n->value->stype ==
-                                                  SType::FunctionDeclaration
-                                               || n->value->stype ==
-                                                  SType::IfExpr;
-                                       });
+                                       &isValueSNode);
         if (valueChild != node->children.end()) {
             n.label = materializePTree(contents, (*valueChild)->value);
             n.valueChild = valueChild - node->children.begin();
@@ -237,11 +255,7 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
         }
 
         // move certain nodes onto the next layer
-        if (n.stype == SType::FunctionDefinition ||
-            n.stype == SType::InitializerElement ||
-            n.stype == SType::InitializerList ||
-            n.stype == SType::Initializer ||
-            n.stype == SType::Declaration) {
+        if (isLayerBreak(n.stype)) {
             Node &nextLevel = tree.makeNode();
             nextLevel.next = &n;
             nextLevel.stype = n.stype;
