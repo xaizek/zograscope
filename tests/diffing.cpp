@@ -925,6 +925,23 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
     )", false);
 }
 
+TEST_CASE("Assignment is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            var = func(arg, arg,
+                       p->dir_field  /// Deletions
+            );
+        }
+    )", R"(
+        void f() {
+            var = func(arg, arg,
+                       dir           /// Additions
+            );
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

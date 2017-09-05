@@ -52,6 +52,7 @@ enum class SType
     ArgumentList,
     Argument,
     CallExpr,
+    AssignmentExpr,
 };
 
 std::ostream & operator<<(std::ostream &os, SType stype);

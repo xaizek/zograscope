@@ -470,8 +470,10 @@ assignment_expression
     : conditional_expression
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | unary_expression assignment_operator assignment_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3) },
+                       SType::AssignmentExpr); }
     ;
 
 /* (6.5.16) assignment-operator: one of */

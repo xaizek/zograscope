@@ -52,6 +52,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::ArgumentList:        return (os << "ArgumentList");
         case SType::Argument:            return (os << "Argument");
         case SType::CallExpr:            return (os << "CallExpr");
+        case SType::AssignmentExpr:      return (os << "AssignmentExpr");
     }
 
     assert("Unhandled enumeration item");
