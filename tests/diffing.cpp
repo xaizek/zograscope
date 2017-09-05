@@ -942,6 +942,28 @@ TEST_CASE("Assignment is decomposed", "[comparison][parsing]")
     )", false);
 }
 
+TEST_CASE("Nesting of calls is considered on comparison",
+          "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            if (call(
+                     val        /// Deletions
+            )) {
+                return;
+            }
+        }
+    )", R"(
+        void f() {
+            if (call(
+                     func(val)  /// Additions
+            )) {
+                return;
+            }
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
