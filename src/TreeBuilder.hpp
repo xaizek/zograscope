@@ -25,6 +25,7 @@ enum class SType
     Separator,
     Statements,
     Statement,
+    ExprStatement,
     IfStmt,
     IfExpr,
     IfCond,
@@ -48,6 +49,9 @@ enum class SType
     BreakStmt,
     ReturnValueStmt,
     ReturnNothingStmt,
+    ArgumentList,
+    Argument,
+    CallExpr,
 };
 
 std::ostream & operator<<(std::ostream &os, SType stype);

@@ -215,8 +215,11 @@ postfix_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     | postfix_expression '(' argument_expression_list ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Separator),
+                         $3,
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::CallExpr); }
     | postfix_expression '.' ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
@@ -260,9 +263,11 @@ asm_argument_list
 /*     argument-expression-list , assignment-expression */
 argument_expression_list
     : expr_or_type
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Argument) },
+                       SType::ArgumentList); }
     | argument_expression_list ',' expr_or_type
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                            tb->addNode($3, @3, SType::Argument) }); }
     ;
 
 /* This is an extension to make macros like va_arg() work. */
@@ -1168,7 +1173,7 @@ static_assert_declaration
 statement
     : labeled_statement    { $$ = tb->addNode($1, @1, SType::Statement); }
     | compound_statement
-    | expression_statement { $$ = tb->addNode($1, @1, SType::Statement); }
+    | expression_statement
     | selection_statement
     | iteration_statement  { $$ = tb->addNode($1, @1, SType::Statement); }
     | jump_statement
@@ -1228,9 +1233,10 @@ block_item
 /*     expressionopt ; */
 expression_statement
     : ';'
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::ExprStatement); }
     | expression ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ $1, tb->addNode($2, @2, SType::Separator) },
+                       SType::ExprStatement); }
     ;
 
 /* (6.8.4) selection-statement: */

@@ -224,6 +224,7 @@ isLayerBreak(SType stype)
         case SType::InitializerList:
         case SType::Initializer:
         case SType::Declaration:
+        case SType::ExprStatement:
             return true;
 
         default:

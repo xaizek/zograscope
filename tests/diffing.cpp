@@ -689,7 +689,7 @@ TEST_CASE("Else branch addition", "[comparison]")
         {
             if(condition)
             {
-                action2();  /// Updates
+                action2();  /// Mixed
             }
         }
     )", R"(
@@ -697,7 +697,7 @@ TEST_CASE("Else branch addition", "[comparison]")
         {
             if(condition)
             {
-                action1();  /// Updates
+                action1();  /// Mixed
             }
             else            /// Additions
             {               /// Additions
@@ -714,7 +714,7 @@ TEST_CASE("Else branch removal", "[comparison]")
         {
             if(condition)
             {
-                action1();  /// Updates
+                action1();  /// Mixed
             }
             else            /// Deletions
             {               /// Deletions
@@ -726,7 +726,7 @@ TEST_CASE("Else branch removal", "[comparison]")
         {
             if(condition)
             {
-                action2();  /// Updates
+                action2();  /// Mixed
             }
         }
     )", true);
@@ -904,6 +904,23 @@ TEST_CASE("Curly braces are considered part of if block",
         {
             if (cond) {
             }
+        }
+    )", false);
+}
+
+TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            func(arg, arg,
+                 structure->field    /// Deletions
+            );
+        }
+    )", R"(
+        void f() {
+            func(arg, arg,
+                 process(structure)  /// Additions
+            );
         }
     )", false);
 }

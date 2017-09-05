@@ -25,6 +25,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::Separator:           return (os << "Separator");
         case SType::Statements:          return (os << "Statements");
         case SType::Statement:           return (os << "Statement");
+        case SType::ExprStatement:       return (os << "ExprStatement");
         case SType::IfStmt:              return (os << "IfStmt");
         case SType::IfExpr:              return (os << "IfExpr");
         case SType::IfCond:              return (os << "IfCond");
@@ -48,6 +49,9 @@ operator<<(std::ostream &os, SType stype)
         case SType::BreakStmt:           return (os << "BreakStmt");
         case SType::ReturnValueStmt:     return (os << "ReturnValueStmt");
         case SType::ReturnNothingStmt:   return (os << "ReturnNothingStmt");
+        case SType::ArgumentList:        return (os << "ArgumentList");
+        case SType::Argument:            return (os << "Argument");
+        case SType::CallExpr:            return (os << "CallExpr");
     }
 
     assert("Unhandled enumeration item");
