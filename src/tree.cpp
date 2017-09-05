@@ -191,6 +191,24 @@ Tree::Tree(const std::string &contents, const PNode *node)
 }
 
 static bool
+shouldSplice(SType parent, SType child)
+{
+    if (parent == SType::IfThen || parent == SType::IfElse) {
+        if (child == SType::CompoundStatement) {
+            return true;
+        }
+    }
+
+    if (parent == SType::IfStmt) {
+        if (child == SType::IfThen) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool
 isValueSNode(const SNode *n)
 {
     return n->value->stype == SType::FunctionDeclaration
@@ -241,7 +259,15 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
 
         n.children.reserve(node->children.size());
         for (SNode *child : node->children) {
-            n.children.emplace_back(visit(child));
+            Node *newChild = visit(child);
+
+            if (shouldSplice(node->value->stype, child->value->stype)) {
+                n.children.insert(n.children.cend(),
+                                  newChild->children.cbegin(),
+                                  newChild->children.cend());
+            } else {
+                n.children.emplace_back(newChild);
+            }
         }
 
         auto valueChild = std::find_if(node->children.begin(),

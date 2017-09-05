@@ -1167,7 +1167,7 @@ static_assert_declaration
 /*     jump-statement */
 statement
     : labeled_statement    { $$ = tb->addNode($1, @1, SType::Statement); }
-    | compound_statement   { $$ = tb->addNode($1, @1, SType::Statement); }
+    | compound_statement
     | expression_statement { $$ = tb->addNode($1, @1, SType::Statement); }
     | selection_statement
     | iteration_statement  { $$ = tb->addNode($1, @1, SType::Statement); }

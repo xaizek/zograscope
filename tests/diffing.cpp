@@ -737,18 +737,18 @@ TEST_CASE("Preserved child preserves its parent", "[comparison]")
     diffSources(R"(
         void f() {
             if (cond)           /// Deletions
-            {                   /// Moves
+            {                   /// Deletions
                 computation();  /// Moves
-            }                   /// Moves
+            }                   /// Deletions
         }
     )", R"(
         void f() {
             if (a < 88)         /// Additions
-            {                   /// Moves
+            {                   /// Additions
                 newstep();      /// Additions
                 computation();  /// Moves
                 newstep();      /// Additions
-            }                   /// Moves
+            }                   /// Additions
         }
     )", false);
 }
@@ -886,6 +886,25 @@ TEST_CASE("Returns with and without value aren't matched",
                 return;  /// Additions
             }            /// Additions
         }                /// Additions
+    )", false);
+}
+
+TEST_CASE("Curly braces are considered part of if block",
+          "[comparison][splicing]")
+{
+    diffSources(R"(
+        void f()
+        {
+            if (cond) {
+                int a;   /// Deletions
+            }
+        }
+    )", R"(
+        void f()
+        {
+            if (cond) {
+            }
+        }
     )", false);
 }
 
