@@ -21,7 +21,6 @@ static void printTree(const Node *node, std::vector<bool> &trace, int depth);
 static void printNode(std::ostream &os, const Node *node);
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
-static bool areIdentical(const Node *l, const Node *r);
 
 void
 print(const Node &node)
@@ -398,22 +397,6 @@ reduceTreesCoarse(Node *T1, Node *T2)
             }
         }
     }
-}
-
-static bool
-areIdentical(const Node *l, const Node *r)
-{
-    if (l->label != r->label || l->children.size() != r->children.size()) {
-        return false;
-    }
-
-    for (unsigned int i = 0; i < l->children.size(); ++i) {
-        if (!areIdentical(l->children[i], r->children[i])) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 std::string
