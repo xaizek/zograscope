@@ -667,6 +667,24 @@ TEST_CASE("Move detection doesn't falsely mark root children moved",
     )", true);
 }
 
+TEST_CASE("Unmoved statement is detected as such", "[comparison][moves]")
+{
+    diffSources(R"(
+        void f() {
+            int i;
+            int j;        /// Moves
+        }
+    )", R"(
+        void f() {
+            int i;
+
+            if (!flag) {  /// Additions
+                int j;    /// Moves
+            }             /// Additions
+        }
+    )", true);
+}
+
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 {
     Tree oldTree = makeTree(R"(

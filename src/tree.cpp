@@ -427,12 +427,29 @@ printSubTree(const Node &root)
     return out;
 }
 
+bool
+isUnmovable(const Node *x)
+{
+    return x->stype == SType::Statements
+        || (x->stype == SType::Statement && x->type == Type::Virtual);
+}
+
+static void
+markTreeAsMovedI(Node *node)
+{
+    node->moved = !isUnmovable(node);
+
+    for (Node *child : node->children) {
+        markTreeAsMovedI(child);
+    }
+}
+
 void
 markTreeAsMoved(Node *node)
 {
-    node->moved = true;
-
-    for (Node *child : node->children) {
-        markTreeAsMoved(child);
+    if (isUnmovable(node)) {
+        return;
     }
+
+    markTreeAsMovedI(node);
 }

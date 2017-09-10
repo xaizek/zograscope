@@ -133,8 +133,11 @@ static void
 markParents(Node *x, Node *parent)
 {
     x->parent = parent;
+    if (!isUnmovable(x)) {
+        parent = x;
+    }
     for (Node *child : x->children) {
-        markParents(child, x);
+        markParents(child, parent);
     }
 }
 
@@ -142,7 +145,9 @@ static void
 detectMoves(Node *x)
 {
     if (x->parent && x->relative && x->relative->parent &&
-        x->parent->relative != x->relative->parent) {
+        x->parent && x->relative && x->relative->parent &&
+        x->parent->relative != x->relative->parent &&
+        !isUnmovable(x)) {
         // Mark nodes which switched their parents as moved.
         markTreeAsMoved(x);
         markTreeAsMoved(x->relative);
@@ -156,7 +161,7 @@ detectMoves(Node *x)
         return x->relative == y;
     };
 
-    if (x->relative != nullptr) {
+    if (x->relative != nullptr && !isUnmovable(x)) {
         dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)>
             diff(x->children, x->relative->children, cmp);
         diff.compose();
