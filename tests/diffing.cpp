@@ -656,6 +656,17 @@ TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
     )", true);
 }
 
+TEST_CASE("Move detection doesn't falsely mark root children moved",
+          "[comparison][moves]")
+{
+    diffSources(R"(
+        #include <stdio.h>
+    )", R"(
+        #include <stdio.h>
+        long_string_of_some_words_to_throw_off_comparison var;  /// Additions
+    )", true);
+}
+
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 {
     Tree oldTree = makeTree(R"(

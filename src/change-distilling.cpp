@@ -142,6 +142,12 @@ countSatelliteNodes(const Node *node)
     return count;
 }
 
+static bool
+alwaysMatches(const Node *node)
+{
+    return (node->stype == SType::TranslationUnit);
+}
+
 void
 distill(Node &T1, Node &T2)
 {
@@ -274,54 +280,60 @@ distill(Node &T1, Node &T2)
                     continue;
                 }
 
-                const int xFrom = lml(x);
-                int common = 0;
-                int yLeaves = 0;
-                for (int i = lml(y); i < y->poID; ++i) {
-                    if (!po2[i]->children.empty()) {
+                State state;
+                if (!alwaysMatches(y)) {
+                    const int xFrom = lml(x);
+                    int common = 0;
+                    int yLeaves = 0;
+                    for (int i = lml(y); i < y->poID; ++i) {
+                        if (!po2[i]->children.empty()) {
+                            continue;
+                        }
+                        ++yLeaves;
+
+                        if (po2[i]->relative == nullptr) {
+                            continue;
+                        }
+
+                        if (po2[i]->relative->poID >= xFrom &&
+                            po2[i]->relative->poID < x->poID) {
+                            ++common;
+                        }
+                    }
+
+                    int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
+                                                [](const Node *n) {
+                                                    return n->children.empty();
+                                                });
+
+                    int xExtra = countSatelliteNodes(x);
+                    int yExtra = countSatelliteNodes(y);
+                    xLeaves += xExtra;
+                    yLeaves += yExtra;
+                    common += std::min(xExtra, yExtra);
+
+                    float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
+
+                    float similarity2 =
+                        static_cast<float>(common)/std::max(xLeaves, yLeaves);
+                    if (similarity2 < t) {
                         continue;
                     }
-                    ++yLeaves;
 
-                    if (po2[i]->relative == nullptr) {
+                    float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
+                    if (similarity1 < 0.6f && similarity2 < 0.8f) {
                         continue;
                     }
 
-                    if (po2[i]->relative->poID >= xFrom &&
-                        po2[i]->relative->poID < x->poID) {
-                        ++common;
-                    }
+                    state = (similarity1 == 1.0f &&
+                             x->label == y->label &&
+                             similarity2 == 1.0f)
+                          ? State::Unchanged
+                          : State::Updated;
+                } else {
+                    state = State::Unchanged;
                 }
 
-                int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
-                                            [](const Node *n) {
-                                                return n->children.empty();
-                                            });
-
-                int xExtra = countSatelliteNodes(x);
-                int yExtra = countSatelliteNodes(y);
-                xLeaves += xExtra;
-                yLeaves += yExtra;
-                common += std::min(xExtra, yExtra);
-
-                float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
-
-                float similarity2 =
-                    static_cast<float>(common)/std::max(xLeaves, yLeaves);
-                if (similarity2 < t) {
-                    continue;
-                }
-
-                float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
-                if (similarity1 < 0.6f && similarity2 < 0.8f) {
-                    continue;
-                }
-
-                State state = (similarity1 == 1.0f &&
-                               x->label == y->label &&
-                               similarity2 == 1.0f)
-                            ? State::Unchanged
-                            : State::Updated;
                 markNode(*x, state);
                 markNode(*y, state);
                 x->state = state;
