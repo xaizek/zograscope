@@ -53,6 +53,8 @@ enum class SType
     Argument,
     CallExpr,
     AssignmentExpr,
+    PointerDecl,
+    DirectDeclarator,
     TemporaryContainer,
     Bundle,
 };

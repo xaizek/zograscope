@@ -1012,6 +1012,27 @@ TEST_CASE("Removing enumeration element", "[comparison][parsing]")
     )", false);
 }
 
+TEST_CASE("Variable name isn't removed/added with initializer",
+          "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            const char
+                      *       /// Deletions
+                      ext;
+            ext = NULL;       /// Deletions
+        }
+    )", R"(
+        void f() {
+            const char
+                      *const  /// Additions
+                      ext
+                      = NULL  /// Additions
+                      ;
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

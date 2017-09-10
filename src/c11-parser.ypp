@@ -820,9 +820,12 @@ alignment_specifier
 /*     pointeropt direct-declarator */
 declarator
     : pointer direct_declarator
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::PointerDecl),
+                         tb->addNode($2, @2, SType::DirectDeclarator) },
+                       SType::Declarator); }
     | direct_declarator
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::DirectDeclarator) },
+                       SType::Declarator); }
     ;
 
 /* (6.7.6) direct-declarator: */
