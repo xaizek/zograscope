@@ -975,6 +975,43 @@ TEST_CASE("Nesting of calls is considered on comparison",
     )", false);
 }
 
+TEST_CASE("Removing enumeration element", "[comparison][parsing]")
+{
+    diffSources(R"(
+        enum {
+            UUE_FULL_RELOAD, /* Full view reload. */
+        };
+    )", R"(
+        enum {
+            UUE_FULL_RELOAD /* Full view reload. */
+        };
+    )", false);
+
+    diffSources(R"(
+        enum {
+            UUE_REDRAW,
+            UUE_RELOAD,      /* View reload. */
+            UUE_FULL_RELOAD, /* Full view reload. */  /// Deletions
+        };
+    )", R"(
+        enum {
+            UUE_REDRAW,
+            UUE_RELOAD,      /* View reload. */
+        };
+    )", false);
+
+    diffSources(R"(
+        enum {
+            UUE_RELOAD,      /* View reload. */
+            UUE_FULL_RELOAD, /* Full view reload. */  /// Deletions
+        };
+    )", R"(
+        enum {
+            UUE_RELOAD,      /* View reload. */
+        };
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

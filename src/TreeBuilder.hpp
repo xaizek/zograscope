@@ -53,6 +53,8 @@ enum class SType
     Argument,
     CallExpr,
     AssignmentExpr,
+    TemporaryContainer,
+    Bundle,
 };
 
 std::ostream & operator<<(std::ostream &os, SType stype);

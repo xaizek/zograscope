@@ -192,6 +192,10 @@ Tree::Tree(const std::string &contents, const PNode *node)
 static bool
 shouldSplice(SType parent, SType child)
 {
+    if (child == SType::TemporaryContainer) {
+        return true;
+    }
+
     if (parent == SType::IfThen || parent == SType::IfElse) {
         if (child == SType::CompoundStatement) {
             return true;

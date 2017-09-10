@@ -103,7 +103,7 @@ extern TreeBuilder *tb;
 %type <node> atomic_type_specifier struct_or_union_specifier enum_specifier
 %type <node> struct_declaration_list struct_declaration specifier_qualifier_list
 %type <node> struct_declarator_list struct_declarator
-%type <node> enumerator_list enumerator direct_declarator
+%type <node> enumerator_list enumerator_item enumerator direct_declarator
 %type <node> pointer type_qualifier_list parameter_type_list parameter_list
 %type <node> parameter_declaration identifier_list abstract_declarator
 %type <node> direct_abstract_declarator struct_or_union
@@ -725,9 +725,8 @@ struct_declarator
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
 
-/* (6.7.2.2) enum-specifier: */
+/* (6.7.2.2) enum-specifier (CHANGED): */
 /*     enum identifieropt { enumerator-list } */
-/*     enum identifieropt { enumerator-list , } */
 /*     enum identifier */
 enum_specifier
     : ENUM ID '{' enumerator_list '}'
@@ -742,34 +741,28 @@ enum_specifier
                          $3,
                          tb->addNode($4, @4, SType::Separator) },
                        SType::Declaration); }
-    | ENUM ID '{' enumerator_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
-                         $4,
-                         tb->addNode($5, @5, SType::Separator),
-                         tb->addNode($6, @6, SType::Separator) },
-                       SType::Declaration); }
-    | ENUM '{' enumerator_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
-                         $3,
-                         tb->addNode($4, @4, SType::Separator),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::Declaration); }
     | ENUM ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
 
-/* (6.7.2.2) enumerator-list: */
-/*     enumerator */
-/*     enumerator-list , enumerator */
+/* (6.7.2.2) enumerator-list (CHANGED): */
+/*     enumerator-item */
+/*     enumerator-list enumerator-item */
 enumerator_list
+    : enumerator_item
+    { $$ = tb->addNode({ $1 }, SType::TemporaryContainer); }
+    | enumerator_list enumerator_item
+    { $$ = tb->append($1, $2); }
+    ;
+
+enumerator_item
     : enumerator
-    { $$ = tb->addNode($1, @1, SType::Declarator); }
-    | enumerator_list ',' enumerator
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                            tb->addNode($3, @3, SType::Declarator) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator) },
+                       SType::Bundle); }
+    | enumerator ','
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator),
+                         tb->addNode($2, @2, SType::Separator) },
+                       SType::Bundle); }
     ;
 
 /* (6.7.2.2) enumerator: */
