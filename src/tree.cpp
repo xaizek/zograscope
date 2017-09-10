@@ -173,7 +173,6 @@ materializeNode(Tree &tree, const std::string &contents, const PNode *node)
     n.line = node->line;
     n.col = node->col;
     n.type = type;
-    // This is for debugging purposes on dumping tree.
     n.stype = node->stype;
 
     n.children.reserve(node->children.size());
