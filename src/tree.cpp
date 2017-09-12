@@ -124,7 +124,7 @@ printNode(std::ostream &os, const Node *node)
 }
 
 static std::string
-materializeLabel(const std::string &contents, const PNode *node)
+materializeLabel(const std::string &contents, const PNode *node, bool spelling)
 {
     // lexer also has such variable and they need to be synchronized (actually
     // we should pass this to lexer)
@@ -133,6 +133,7 @@ materializeLabel(const std::string &contents, const PNode *node)
     std::string label;
     label.reserve(node->value.len);
 
+    bool leadingWhitespace = false;
     int col = node->col;
     for (std::size_t i = node->value.from;
          i < node->value.from + node->value.len; ++i) {
@@ -142,16 +143,27 @@ materializeLabel(const std::string &contents, const PNode *node)
             case '\n':
                 col = 1;
                 label += '\n';
+                leadingWhitespace = !spelling
+                                 && node->stype == SType::Comment;
                 break;
             case '\t':
                 width = tabWidth - (col - 1)%tabWidth;
-                label.append(width, ' ');
                 col += width;
+                if (!leadingWhitespace) {
+                    label.append(width, ' ');
+                }
+                break;
+            case ' ':
+                ++col;
+                if (!leadingWhitespace) {
+                    label += ' ';
+                }
                 break;
 
             default:
                 ++col;
                 label += c;
+                leadingWhitespace = false;
                 break;
         }
     }
@@ -169,7 +181,10 @@ materializeNode(Tree &tree, const std::string &contents, const PNode *node)
     }
 
     Node &n = tree.makeNode();
-    n.label = materializeLabel(contents, node);
+    n.label = materializeLabel(contents, node, false);
+    n.spelling = node->stype == SType::Comment
+               ? materializeLabel(contents, node, true)
+               : n.label;
     n.line = node->line;
     n.col = node->col;
     n.type = type;
@@ -311,7 +326,7 @@ materializePTree(const std::string &contents, const PNode *node)
 
     std::function<void(const PNode *)> visit = [&](const PNode *node) {
         if (node->line != 0 && node->col != 0) {
-            out += materializeLabel(contents, node);
+            out += materializeLabel(contents, node, false);
         }
 
         for (const PNode *child : node->children) {

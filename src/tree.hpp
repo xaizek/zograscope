@@ -20,6 +20,7 @@ class SNode;
 struct Node
 {
     std::string label;
+    std::string spelling;
     std::vector<Node *> children;
     int poID = -1; // post-order ID
     State state = State::Unchanged;

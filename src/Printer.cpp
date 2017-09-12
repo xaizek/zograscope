@@ -438,7 +438,7 @@ printSource(Node &root)
             //     oss << node.label;
             // }
 
-            const std::vector<std::string> lines = split(node.label, '\n');
+            const std::vector<std::string> lines = split(node.spelling, '\n');
             oss << (dec << lines.front());
             col += lines.front().size();
 

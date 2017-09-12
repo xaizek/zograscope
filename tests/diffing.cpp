@@ -1051,6 +1051,17 @@ TEST_CASE("Variable name isn't removed/added with initializer",
     )", false);
 }
 
+TEST_CASE("Whitespace after newline in comments is ignored", "[comparison]")
+{
+    diffSources(R"(
+        /* line1
+         * line2 */
+    )", R"(
+          /* line1
+           * line2 */
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
