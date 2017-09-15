@@ -569,7 +569,9 @@ init_declarator
                        SType::Declarator); }
     | declarator '=' initializer
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::WithoutInitializer),
-                         tb->addNode({ tb->addNode($2, @2, SType::Separator),
+                         tb->addNode({ tb->addNode({ tb->addNode($2, @2,
+                                                     SType::Separator) },
+                                                   SType::Bundle),
                                        $3 },
                                      SType::WithoutInitializer) },
                        SType::Declarator); }

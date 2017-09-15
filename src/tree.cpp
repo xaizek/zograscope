@@ -445,6 +445,7 @@ bool
 isUnmovable(const Node *x)
 {
     return x->stype == SType::Statements
+        || x->stype == SType::Bundle
         || (x->stype == SType::Statement && x->type == Type::Virtual);
 }
 

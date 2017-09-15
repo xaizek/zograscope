@@ -575,6 +575,31 @@ TEST_CASE("Declarations with and without initializer are not the same",
     )", true);
 }
 
+TEST_CASE("Adding/removing/modifying initializers", "[comparison]")
+{
+    diffSources(R"(
+        char ARR1[] =
+                    "a"        /// Deletions
+                    ;
+
+        char ARR2[]
+                    = "a"      /// Deletions
+                    ;
+
+        const char ARR3[];
+    )", R"(
+        char ARR1[] =
+                    "b"        /// Additions
+                    ;
+
+        char ARR2[];
+
+        const char ARR3[]
+                        = "b"  /// Additions
+                        ;
+    )", true);
+}
+
 TEST_CASE("Move detection isn't thrown off by large changes",
           "[comparison][moves]")
 {
