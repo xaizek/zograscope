@@ -890,6 +890,36 @@ TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
     )", true);
 }
 
+TEST_CASE("Removing/adding block braces don't make single statement moved",
+          "[comparison][moves]")
+{
+    diffSources(R"(
+        void f() {
+            if (1)
+                call();
+        }
+    )", R"(
+        void f() {
+            if (1) {
+                call();
+            }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            if (1) {
+                call();
+            }
+        }
+    )", R"(
+        void f() {
+            if (1)
+                call();
+        }
+    )", true);
+}
+
 TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
     diffSources(R"(

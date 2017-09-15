@@ -1171,12 +1171,19 @@ static_assert_declaration
 /*     iteration-statement */
 /*     jump-statement */
 statement
-    : labeled_statement    { $$ = tb->addNode($1, @1, SType::Statement); }
+    : labeled_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Statement) },
+                       SType::Statements); }
     | compound_statement
     | expression_statement
+    { $$ = tb->addNode({ $1 }, SType::Statements); }
     | selection_statement
-    | iteration_statement  { $$ = tb->addNode($1, @1, SType::Statement); }
+    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    | iteration_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Statement) },
+                       SType::Statements); }
     | jump_statement
+    { $$ = tb->addNode({ $1 }, SType::Statements); }
     ;
 
 /* (6.8.1) labeled-statement: */
