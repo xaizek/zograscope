@@ -76,6 +76,8 @@ std::string printSubTree(const Node &root);
 
 bool isUnmovable(const Node *x);
 
+bool hasMoveableItems(const Node *x);
+
 void markTreeAsMoved(Node *node);
 
 #endif // TREE_HPP__

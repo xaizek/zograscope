@@ -1230,10 +1230,8 @@ block_item_list
 /*     declaration */
 /*     statement */
 block_item
-    : declaration  %merge <decStmtMerge>
-    { $$ = tb->addNode($1, @1, SType::Statement); }
-    | statement    %merge <decStmtMerge>
-    { $$ = tb->addNode($1, @1); }
+    : declaration  %merge <decStmtMerge> { $$ = tb->addNode($1, @1); }
+    | statement    %merge <decStmtMerge> { $$ = tb->addNode($1, @1); }
     ;
 
 /* (6.8.3) expression-statement: */

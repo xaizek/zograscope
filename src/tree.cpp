@@ -206,6 +206,10 @@ Tree::Tree(const std::string &contents, const PNode *node)
 static bool
 shouldSplice(SType parent, SType child)
 {
+    if (parent == SType::Statements && child == SType::Statements) {
+        return true;
+    }
+
     if (child == SType::TemporaryContainer) {
         return true;
     }
@@ -449,6 +453,12 @@ isUnmovable(const Node *x)
         || (x->stype == SType::Statement && x->type == Type::Virtual);
 }
 
+bool
+hasMoveableItems(const Node *x)
+{
+    return (!isUnmovable(x) || x->stype == SType::Statements);
+}
+
 static void
 markTreeAsMovedI(Node *node)
 {
@@ -462,9 +472,7 @@ markTreeAsMovedI(Node *node)
 void
 markTreeAsMoved(Node *node)
 {
-    if (isUnmovable(node)) {
-        return;
+    if (hasMoveableItems(node)) {
+        markTreeAsMovedI(node);
     }
-
-    markTreeAsMovedI(node);
 }

@@ -161,7 +161,7 @@ detectMoves(Node *x)
         return x->relative == y;
     };
 
-    if (x->relative != nullptr && !isUnmovable(x)) {
+    if (x->relative != nullptr && hasMoveableItems(x)) {
         dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)>
             diff(x->children, x->relative->children, cmp);
         diff.compose();

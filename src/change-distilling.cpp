@@ -291,6 +291,12 @@ distill(Node &T1, Node &T2)
                         }
                         ++yLeaves;
 
+                        if (po2[i]->parent &&
+                            po2[i]->parent->relative == nullptr) {
+                            // Skip children of unmatched internal nodes.
+                            continue;
+                        }
+
                         if (po2[i]->relative == nullptr) {
                             continue;
                         }

@@ -648,6 +648,37 @@ TEST_CASE("Move detection works on top level", "[comparison][moves]")
     )", true);
 }
 
+TEST_CASE("Move detection works in a function", "[comparison][moves]")
+{
+    diffSources(R"(
+        void f() {
+            call1();  /// Moves
+            call2();
+            call3();
+        }
+    )", R"(
+        void f() {
+            call2();
+            call3();
+            call1();  /// Moves
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            int a;  /// Moves
+            int b;
+            int c;
+        }
+    )", R"(
+        void f() {
+            int b;
+            int c;
+            int a;  /// Moves
+        }
+    )", true);
+}
+
 TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
 {
     diffSources(R"(
