@@ -85,6 +85,16 @@ TEST_CASE("Multi-line string literals are parsed", "[parser]")
     CHECK_FALSE(parse(str).hasFailed());
 }
 
+TEST_CASE("Postponed nodes before string literals are preserved",
+          "[parser][postponed]")
+{
+    Tree tree = makeTree(R"(
+        const char *str = /*str*/ "";
+    )");
+
+    CHECK(findNode(tree, Type::Comments, "/*str*/") != nullptr);
+}
+
 TEST_CASE("Escaping of newline isn't rejected", "[parser]")
 {
     const char *const str = R"(

@@ -325,10 +325,11 @@ NL                      \n|\r|\r\n
 
 <slit>\" {
     startTok.text.len = yyoffset - startTok.text.from;
+    tb->markWithPostponed(startTok.text);
+
     yylval = startTok;
     yylloc = startLoc;
 
-    tb->markWithPostponed(startTok.text);
     BEGIN(INITIAL);
     return SLIT;
 }
