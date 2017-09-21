@@ -204,13 +204,16 @@ Tree::Tree(const std::string &contents, const PNode *node)
 }
 
 static bool
-shouldSplice(SType parent, SType child)
+shouldSplice(SType parent, Node *childNode)
 {
+    SType child = childNode->stype;
+
     if (parent == SType::Statements && child == SType::Statements) {
         return true;
     }
 
-    if (child == SType::TemporaryContainer) {
+    if (childNode->type == Type::Virtual &&
+        child == SType::TemporaryContainer) {
         return true;
     }
 
@@ -284,7 +287,7 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
         for (SNode *child : node->children) {
             Node *newChild = visit(child);
 
-            if (shouldSplice(node->value->stype, child->value->stype)) {
+            if (shouldSplice(node->value->stype, newChild)) {
                 n.children.insert(n.children.cend(),
                                   newChild->children.cbegin(),
                                   newChild->children.cend());

@@ -159,8 +159,10 @@ primary_expression
 
 /* Extension to accept concatenation of literals possibly with macros. */
 string_lit
-    : SLIT            { $$ = tb->addNode($1, @1); }
-    | ID              { $$ = tb->addNode($1, @1); }
+    : SLIT
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | ID
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
     | string_lit SLIT { $$ = tb->append($1, tb->addNode($2, @2)); }
     | string_lit ID   { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;

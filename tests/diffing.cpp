@@ -877,7 +877,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
             free(path);
             free_string_array(list, len);
 
-            return parent_dirs;                 /// Deletions
+            return parent_dirs;                 /// Mixed
         }
     )", R"(
         entries_t f() {                         /// Additions
@@ -900,7 +900,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
             free(path);
             free_string_array(list, len);
 
-            return siblings;                    /// Additions
+            return siblings;                    /// Mixed
         }
     )", false);
 }
