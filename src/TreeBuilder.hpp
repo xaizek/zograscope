@@ -20,6 +20,7 @@ enum class SType
     FunctionDefinition,
     Comment,
     Directive,
+    LineGlue,
     Macro,
     CompoundStatement,
     Separator,

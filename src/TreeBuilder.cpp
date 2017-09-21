@@ -19,6 +19,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::FunctionDeclaration: return (os << "FunctionDeclaration");
         case SType::FunctionDefinition:  return (os << "FunctionDefinition");
         case SType::Directive:           return (os << "Directive");
+        case SType::LineGlue:            return (os << "LineGlue");
         case SType::Comment:             return (os << "Comment");
         case SType::Macro:               return (os << "Macro");
         case SType::CompoundStatement:   return (os << "CompoundStatement");

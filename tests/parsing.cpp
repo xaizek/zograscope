@@ -85,6 +85,16 @@ TEST_CASE("Multi-line string literals are parsed", "[parser]")
     CHECK_FALSE(parse(str).hasFailed());
 }
 
+TEST_CASE("Escaping of newline isn't rejected", "[parser]")
+{
+    const char *const str = R"(
+        int \
+            a;
+    )";
+
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
 TEST_CASE("Macros without args after function declaration are parsed",
           "[parser]")
 {

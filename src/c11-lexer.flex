@@ -220,6 +220,12 @@ NL                      \n|\r|\r\n
 [ ]                     ;
 \t                      { yycolumn += tabWidth - (yycolumn - 1)%tabWidth; }
 {NL}                    { ADVANCE_LINE(); }
+\\{NL} {
+    yylval.text.len = 1;
+    yylloc.last_column = yylloc.first_column + 1;
+    tb->addPostponed(yylval.text, yylloc, SType::LineGlue);
+    ADVANCE_LINE();
+}
 <INITIAL,beforeparen>"case"                  { KW(CASE); }
 <INITIAL,beforeparen>"default"               { KW(DEFAULT); }
 <INITIAL,beforeparen>"sizeof"                { KW(SIZEOF); }
