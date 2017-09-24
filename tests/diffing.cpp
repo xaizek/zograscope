@@ -974,17 +974,17 @@ TEST_CASE("Moves in nested structures are detected meaningfully",
 TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
     diffSources(R"(
-        size_t       /// Updates
+        size_t                 /// Updates
             f();
         void g(
-            size_t   /// Updates
-            param);
+            size_t             /// Updates
+            long_param_name);
     )", R"(
-        int          /// Updates
+        int                    /// Updates
             f();
         void g(
-            int      /// Updates
-            param);
+            int                /// Updates
+            long_param_name);
     )", false);
 }
 
@@ -1058,6 +1058,19 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
             );
         }
     )", false);
+}
+
+TEST_CASE("Parameter list in prototypes is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void function(
+            void        /// Deletions
+        );
+    )", R"(
+        void function(
+            int i       /// Additions
+        );
+    )", true);
 }
 
 TEST_CASE("Assignment is decomposed", "[comparison][parsing]")

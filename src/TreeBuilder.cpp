@@ -52,6 +52,8 @@ operator<<(std::ostream &os, SType stype)
         case SType::ReturnNothingStmt:   return (os << "ReturnNothingStmt");
         case SType::ArgumentList:        return (os << "ArgumentList");
         case SType::Argument:            return (os << "Argument");
+        case SType::ParameterList:       return (os << "ParameterList");
+        case SType::Parameter:           return (os << "Parameter");
         case SType::CallExpr:            return (os << "CallExpr");
         case SType::AssignmentExpr:      return (os << "AssignmentExpr");
         case SType::PointerDecl:         return (os << "PointerDecl");

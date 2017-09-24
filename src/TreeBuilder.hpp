@@ -52,6 +52,8 @@ enum class SType
     ReturnNothingStmt,
     ArgumentList,
     Argument,
+    ParameterList,
+    Parameter,
     CallExpr,
     AssignmentExpr,
     PointerDecl,

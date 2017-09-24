@@ -880,8 +880,11 @@ direct_declarator
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | direct_declarator '(' parameter_type_list ')' %dprec 3
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::FunctionDeclaration); }
     | direct_declarator '(' identifier_list ')' %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
@@ -959,20 +962,23 @@ parameter_type_list
 /*     parameter-list , parameter-declaration */
 parameter_list
     : parameter_declaration
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | parameter_list ',' parameter_declaration
-    { $$ = tb->prepend($3, { tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->prepend($3, { tb->addNode($1, @1),
+                             tb->addNode($2, @2, SType::Separator) }); }
     ;
 
 /* (6.7.6) parameter-declaration: */
 /*     declaration-specifiers declarator */
 /*     declaration-specifiers abstract-declaratoropt */
 parameter_declaration
-    : declaration_specifiers declarator %dprec 3
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | declaration_specifiers abstract_declarator %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | declaration_specifiers  %dprec 1
+    : declaration_specifiers declarator           %dprec 3
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::Parameter); }
+    | declaration_specifiers abstract_declarator  %dprec 2
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::Parameter); }
+    | declaration_specifiers                      %dprec 1
     { $$ = tb->addNode($1, @1); }
     ;
 
