@@ -43,9 +43,9 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
     postOrderLeafs(x0.node, v);
 
     if (v.size() > 1U && (*(v.end() - 2))->value.token == ')') {
-        return x1.node;
+        return (x0.node->stype == SType::Declaration ? x1.node : x0.node);
     }
-    return x0.node;
+    return (x0.node->stype == SType::Declaration ? x0.node : x1.node);
 }
 
 TreeBuilder *tb = nullptr;
@@ -297,9 +297,9 @@ unary_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     | unary_operator cast_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | SIZEOF unary_expression  %dprec 1
+    | SIZEOF unary_expression  %dprec 2
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
-    | SIZEOF '(' type_name ')' %dprec 2
+    | SIZEOF '(' type_name ')' %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | _ALIGNOF '(' type_name ')'

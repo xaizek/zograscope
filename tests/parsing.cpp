@@ -75,6 +75,41 @@ TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
     CHECK(findNode(tree, Type::Comments, "// Comment1") != nullptr);
 }
 
+TEST_CASE("sizeof() expr is resolved to a builtin type", "[parser][conflicts]")
+{
+    Tree tree = makeTree(R"(
+        void f() {
+            sizeof(int);
+        }
+    )");
+
+    CHECK(findNode(tree, Type::Types, "int") != nullptr);
+}
+
+TEST_CASE("sizeof() is resolved to expression by default",
+          "[parser][conflicts]")
+{
+    Tree tree = makeTree(R"(
+        void f() {
+            sizeof(var);
+        }
+    )");
+
+    CHECK(findNode(tree, Type::Identifiers, "var") != nullptr);
+}
+
+TEST_CASE("Unary function call is resolved as such", "[parser][conflicts]")
+{
+    Tree tree = makeTree(R"(
+        void f() {
+            func(var);
+        }
+    )");
+
+    CHECK(findNode(tree, Type::Functions, "func") != nullptr);
+    CHECK(findNode(tree, Type::Identifiers, "var") != nullptr);
+}
+
 TEST_CASE("Multi-line string literals are parsed", "[parser]")
 {
     const char *const str = R"(

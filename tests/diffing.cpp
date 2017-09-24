@@ -102,8 +102,8 @@ TEST_CASE("Changes are detected in presence of comments",
 
     ted(*oldTree.getRoot(), *newTree.getRoot());
 
-    CHECK(findNode(oldTree, Type::UserTypes, "abc")->state == State::Updated);
-    CHECK(findNode(newTree, Type::UserTypes, "xyz")->state == State::Updated);
+    CHECK(findNode(oldTree, Type::Identifiers, "abc")->state == State::Updated);
+    CHECK(findNode(newTree, Type::Identifiers, "xyz")->state == State::Updated);
     CHECK(findNode(oldTree, Type::Comments, "// comment3")->state
           == State::Updated);
     CHECK(findNode(newTree, Type::Comments, "// comment4")->state
