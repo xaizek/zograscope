@@ -951,6 +951,26 @@ TEST_CASE("Removing/adding block braces don't make single statement moved",
     )", true);
 }
 
+TEST_CASE("Moves in nested structures are detected meaningfully",
+          "[comparison][moves]")
+{
+    diffSources(R"(
+        void f() {
+            if (cond1) {
+                stmt0;        /// Moves
+            }
+        }
+    )", R"(
+        void f() {
+            if (cond1) {
+                if (cond2) {  /// Additions
+                    stmt0;    /// Moves
+                }             /// Additions
+            }
+        }
+    )", true);
+}
+
 TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
     diffSources(R"(
