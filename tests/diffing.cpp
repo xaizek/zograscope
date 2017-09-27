@@ -1226,7 +1226,7 @@ TEST_CASE("If condition is matched separately from if-statement structure",
     diffSources(R"(
         void f() {
             if (
-                doit(1)   /// Deletions
+                doit(1)
             )
             {
                 stmt;     /// Moves
@@ -1235,7 +1235,8 @@ TEST_CASE("If condition is matched separately from if-statement structure",
     )", R"(
         void f() {
             if (
-                !doit(1)  /// Additions
+                !         /// Additions
+                doit(1)
             )
             {
                 return;   /// Additions

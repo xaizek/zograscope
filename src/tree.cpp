@@ -290,6 +290,10 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
             Node *newChild = visit(child);
 
             if (shouldSplice(node->value->stype, newChild)) {
+                if (newChild->next != nullptr) {
+                    newChild = newChild->next;
+                }
+
                 n.children.insert(n.children.cend(),
                                   newChild->children.cbegin(),
                                   newChild->children.cend());
