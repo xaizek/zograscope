@@ -1220,6 +1220,32 @@ TEST_CASE("Return statement with value is decomposed", "[comparison]")
     )", false);
 }
 
+TEST_CASE("If condition is matched separately from if-statement structure",
+          "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            if (
+                doit(1)   /// Deletions
+            )
+            {
+                stmt;     /// Moves
+            }
+        }
+    )", R"(
+        void f() {
+            if (
+                !doit(1)  /// Additions
+            )
+            {
+                return;   /// Additions
+            }
+
+            stmt;         /// Moves
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
