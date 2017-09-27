@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "decoration.hpp"
 #include "trees.hpp"
 
 static void print(const PNode *node, const std::string &contents);
@@ -35,11 +36,20 @@ STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
 static void
 print(const PNode *node, const std::string &contents)
 {
-    trees::print(std::cout, node,
-                 [&contents](std::ostream &os, const PNode *node) {
-                     os << contents.substr(node->value.from, node->value.len)
-                        << " (SType::" << node->stype << ")\n";
-                 });
+    using namespace decor;
+    using namespace decor::literals;
+
+    Decoration labelHi = 78_fg + bold;
+    Decoration stypeHi = 222_fg;
+
+    trees::print(std::cout, node, [&](std::ostream &os, const PNode *node) {
+        os << (labelHi << '`'
+                       << contents.substr(node->value.from, node->value.len)
+                       << '`')
+           << ", "
+           << (stypeHi << "SType::" << node->stype)
+           << '\n';
+    });
 }
 
 static PNode *
