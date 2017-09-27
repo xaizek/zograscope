@@ -1200,6 +1200,26 @@ TEST_CASE("Conditional expression is decomposed", "[comparison]")
     )", true);
 }
 
+TEST_CASE("Return statement with value is decomposed", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            return
+                   cond ? view->list_pos >= view->run_size :  /// Deletions
+                          view->list_pos > 0                  /// Moves
+                          ;
+        }
+    )", R"(
+        void f() {
+            return
+                   (                                          /// Additions
+                       view->list_pos > 0                     /// Moves
+                   )                                          /// Additions
+                   ;
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

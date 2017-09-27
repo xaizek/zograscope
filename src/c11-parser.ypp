@@ -1383,8 +1383,10 @@ jump_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::BreakStmt); }
     | RETURN expression ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }, SType::ReturnValueStmt); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::ReturnValueStmt); }
     | RETURN ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::ReturnNothingStmt); }
