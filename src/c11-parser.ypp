@@ -541,7 +541,7 @@ declaration_specifiers
     { $$ = tb->prepend($2, tb->addNode($1, @1, SType::Specifiers)); }
     | declaration_specifier
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers) },
-                       SType::Specifiers); }
+                       SType::TemporaryContainer); }
     ;
 
 declaration_specifier
