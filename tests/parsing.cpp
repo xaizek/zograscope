@@ -60,6 +60,7 @@ TEST_CASE("Conversion is not ambiguous", "[parser][conflicts]")
     CHECK_FALSE(parse("int a = (type)*a;").hasFailed());
     CHECK_FALSE(parse("int a = (type)+a;").hasFailed());
     CHECK_FALSE(parse("int a = (type)-a;").hasFailed());
+    CHECK_FALSE(parse("int a = (type)~a;").hasFailed());
 }
 
 TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
