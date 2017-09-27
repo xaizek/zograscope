@@ -462,7 +462,7 @@ conditional_expression
     | logical_OR_expression '?' expression ':' conditional_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+                         tb->addNode($5, @5) }, SType::ConditionExpr); }
     ;
 
 /* (6.5.16) assignment-expression: */

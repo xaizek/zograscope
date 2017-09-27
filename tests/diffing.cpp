@@ -1181,6 +1181,25 @@ TEST_CASE("Whitespace after newline in comments is ignored", "[comparison]")
     )", false);
 }
 
+TEST_CASE("Conditional expression is decomposed", "[comparison]")
+{
+    diffSources(R"(
+        const int a = cond
+                      ?
+                      yes1  /// Updates
+                      :
+                      no
+                      ;
+    )", R"(
+        const int a = cond
+                      ?
+                      yes2  /// Updates
+                      :
+                      no
+                      ;
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

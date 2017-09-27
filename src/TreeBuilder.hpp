@@ -56,6 +56,7 @@ enum class SType
     Parameter,
     CallExpr,
     AssignmentExpr,
+    ConditionExpr,
     PointerDecl,
     DirectDeclarator,
     TemporaryContainer,

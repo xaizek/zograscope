@@ -56,6 +56,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::Parameter:           return (os << "Parameter");
         case SType::CallExpr:            return (os << "CallExpr");
         case SType::AssignmentExpr:      return (os << "AssignmentExpr");
+        case SType::ConditionExpr:       return (os << "ConditionExpr");
         case SType::PointerDecl:         return (os << "PointerDecl");
         case SType::DirectDeclarator:    return (os << "DirectDeclarator");
         case SType::TemporaryContainer:  return (os << "TemporaryContainer");
