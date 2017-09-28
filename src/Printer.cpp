@@ -565,7 +565,7 @@ static bool
 isDiffable(const Node &node)
 {
     return node.relative != nullptr
-        && node.stype == SType::Comment
+        && (node.stype == SType::Comment || node.type == Type::StrConstants)
         && node.state == State::Updated;
 }
 
