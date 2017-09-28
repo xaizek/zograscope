@@ -104,14 +104,17 @@ enum class Type
     // MLCOMMENT
     Comments,
 
+    // SLIT
+    StrConstants,
+    // ICONST
+    IntConstants,
+    // FCONST
+    FPConstants,
+    // CHCONST
+    CharConstants,
+
     // This is a separator, all types below are not interchangeable.
     NonInterchangeable,
-
-    // SLIT
-    // ICONST
-    // FCONST
-    // CHCONST
-    Constants,
 
     // DEFAULT
     // RETURN

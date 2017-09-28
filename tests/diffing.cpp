@@ -188,13 +188,13 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
 
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
+    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
+    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 0);
 }
 
 TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
@@ -304,9 +304,9 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
 
     // If functions matched correctly, only one leaf of the old tree will be
-    // removed.
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
+    // updated.
+    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
+    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
 }
 
@@ -355,17 +355,17 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
     diffSources(R"(
         aggregate var = {
             { .field =
-              1                    /// Deletions
+              1                    /// Updates
             }, { .another_field =
-              1                    /// Deletions
+              1                    /// Updates
             },
         };
     )", R"(
         aggregate var = {
             { .field =
-              2                    /// Additions
+              2                    /// Updates
             }, { .another_field =
-              2                    /// Additions
+              2                    /// Updates
             },
         };
     )", true);
@@ -380,14 +380,14 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
         struct s {
             int a;   /// Deletions
             int b :
-            1        /// Deletions
+            1        /// Updates
             ;
         };
     )", R"(
         struct s {
             int g;   /// Additions
             int b :
-            2        /// Additions
+            2        /// Updates
             ;
         };
     )", false);
@@ -1244,6 +1244,37 @@ TEST_CASE("If condition is matched separately from if-statement structure",
 
             stmt;         /// Moves
         }
+    )", false);
+}
+
+TEST_CASE("Constants can be updated", "[comparison]")
+{
+    diffSources(R"(
+        int i =
+                1             /// Updates
+                ;
+        float f =
+                  1.0f        /// Updates
+                  ;
+        char c =
+                 'a'          /// Updates
+                 ;
+        char str[] =
+                     "this"   /// Updates
+                     ;
+    )", R"(
+        int i =
+                2             /// Updates
+                ;
+        float f =
+                  2.0f        /// Updates
+                  ;
+        char c =
+                 'b'          /// Updates
+                 ;
+        char str[] =
+                     "thus"   /// Updates
+                     ;
     )", false);
 }
 

@@ -525,7 +525,6 @@ getHighlight(const Node &node)
         case Type::Types:      return  85_fg;
         case Type::Directives: return 228_fg;
         case Type::Comments:   return 248_fg;
-        case Type::Constants:  return 219_fg;
         case Type::Functions:  return  81_fg;
 
         case Type::Jumps:
@@ -538,6 +537,11 @@ getHighlight(const Node &node)
         case Type::Operators:
         case Type::Comparisons:
             return 224_fg;
+        case Type::StrConstants:
+        case Type::IntConstants:
+        case Type::FPConstants:
+        case Type::CharConstants:
+            return 219_fg;
 
         case Type::Identifiers:
         case Type::Other:

@@ -25,7 +25,10 @@ operator<<(std::ostream &os, Type type)
         case Type::Directives:         return (os << "Directives");
         case Type::Comments:           return (os << "Comments");
         case Type::NonInterchangeable: return (os << "NonInterchangeable");
-        case Type::Constants:          return (os << "Constants");
+        case Type::StrConstants:       return (os << "StrConstants");
+        case Type::IntConstants:       return (os << "IntConstants");
+        case Type::FPConstants:        return (os << "FPConstants");
+        case Type::CharConstants:      return (os << "CharConstants");
         case Type::Keywords:           return (os << "Keywords");
         case Type::Other:              return (os << "Other");
     }
@@ -124,10 +127,10 @@ tokenMap()
     map[SLCOMMENT] = Type::Comments;
     map[MLCOMMENT] = Type::Comments;
 
-    map[SLIT]    = Type::Constants;
-    map[ICONST]  = Type::Constants;
-    map[FCONST]  = Type::Constants;
-    map[CHCONST] = Type::Constants;
+    map[SLIT]    = Type::StrConstants;
+    map[ICONST]  = Type::IntConstants;
+    map[FCONST]  = Type::FPConstants;
+    map[CHCONST] = Type::CharConstants;
 
     map[DEFAULT]        = Type::Keywords;
     map[RETURN]         = Type::Keywords;
