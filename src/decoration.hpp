@@ -2,10 +2,12 @@
 #define DECORATION_HPP__
 
 #include <functional>
-#include <memory>
 #include <iosfwd>
+#include <memory>
 #include <type_traits>
 #include <vector>
+
+#include <boost/variant.hpp>
 
 class Tests;
 
@@ -25,12 +27,17 @@ class Tests;
 namespace decor {
 
 /**
+ * @brief Type of argument passed to extra decorators.
+ */
+using arg_t = boost::variant<int>;
+
+/**
  * @brief Class describing single decoration or a combination of them.
  */
 class Decoration
 {
     using decorFunc = std::ostream & (*)(std::ostream &os);
-    using intDecorFunc = std::ostream & (*)(std::ostream &os, int n);
+    using extDecorFunc = std::ostream & (*)(std::ostream &os, arg_t arg);
 
 public:
     /**
@@ -42,10 +49,10 @@ public:
     /**
      * @brief Constructs decoration from an unary function.
      *
-     * @param intDecorator Decorating function.
-     * @param n Parameter for decorating function.
+     * @param extDecorator Decorating function.
+     * @param arg Parameter for decorating function.
      */
-    explicit Decoration(intDecorFunc intDecorator, int n);
+    explicit Decoration(extDecorFunc extDecorator, arg_t arg);
     /**
      * @brief Constructs a (deep) copy of a decoration.
      *
@@ -109,7 +116,7 @@ public:
         };
 
         return lhs.decorator == rhs.decorator
-            && lhs.intDecorator == rhs.intDecorator
+            && lhs.extDecorator == rhs.extDecorator
             && equal(lhs.lhs.get(), rhs.lhs.get())
             && equal(lhs.rhs.get(), rhs.rhs.get());
     }
@@ -136,11 +143,11 @@ private:
     /**
      * @brief Unary decoration function (can be nullptr).
      */
-    intDecorFunc intDecorator = nullptr;
+    extDecorFunc extDecorator = nullptr;
     /**
-     * @brief Parameter for intDecorator.
+     * @brief Parameter for extDecorator.
      */
-    int n;
+    arg_t arg;
     /**
      * @brief One of two decorations that compose this object.
      */
@@ -502,8 +509,8 @@ void disableDecorations();
 // TODO: document this
 namespace literals {
 
-    std::ostream & fg256(std::ostream &os, int n);
-    std::ostream & bg256(std::ostream &os, int n);
+    std::ostream & fg256(std::ostream &os, arg_t arg);
+    std::ostream & bg256(std::ostream &os, arg_t arg);
 
     inline Decoration operator""_fg(unsigned long long n)
     {

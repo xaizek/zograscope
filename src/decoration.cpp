@@ -6,6 +6,8 @@
 
 #include <ostream>
 
+#include <boost/variant.hpp>
+
 namespace {
 
 /**
@@ -94,7 +96,7 @@ const Decoration
     decor::white_bg   ([](ostr &os) -> ostr & { return os << C.white_bg();   });
 
 Decoration::Decoration(const Decoration &rhs)
-    : decorator(rhs.decorator), intDecorator(rhs.intDecorator), n(rhs.n),
+    : decorator(rhs.decorator), extDecorator(rhs.extDecorator), arg(rhs.arg),
       lhs(rhs.lhs == nullptr ? nullptr : new Decoration(*rhs.lhs)),
       rhs(rhs.rhs == nullptr ? nullptr : new Decoration(*rhs.rhs))
 {
@@ -104,8 +106,8 @@ Decoration::Decoration(decorFunc decorator) : decorator(decorator)
 {
 }
 
-Decoration::Decoration(intDecorFunc intDecorator, int n)
-    : intDecorator(intDecorator), n(n)
+Decoration::Decoration(extDecorFunc extDecorator, arg_t arg)
+    : extDecorator(extDecorator), arg(arg)
 {
 }
 
@@ -120,8 +122,8 @@ Decoration::operator=(const Decoration &rhs)
 {
     Decoration copy(rhs);
     std::swap(copy.decorator, this->decorator);
-    std::swap(copy.intDecorator, this->intDecorator);
-    std::swap(copy.n, this->n);
+    std::swap(copy.extDecorator, this->extDecorator);
+    std::swap(copy.arg, this->arg);
     std::swap(copy.lhs, this->lhs);
     std::swap(copy.rhs, this->rhs);
     return *this;
@@ -130,7 +132,7 @@ Decoration::operator=(const Decoration &rhs)
 std::ostream &
 Decoration::decorate(std::ostream &os) const
 {
-    if (decorator != nullptr || intDecorator != nullptr) {
+    if (decorator != nullptr || extDecorator != nullptr) {
         // Reset and preserve width field, so printing escape sequence doesn't
         // mess up formatting.
         const auto width = os.width({});
@@ -138,7 +140,7 @@ Decoration::decorate(std::ostream &os) const
         if (decorator != nullptr) {
             decorator(os);
         } else {
-            intDecorator(os, n);
+            extDecorator(os, arg);
         }
 
         static_cast<void>(os.width(width));
@@ -154,7 +156,7 @@ Decoration::decorate(std::ostream &os) const
 bool
 Decoration::isEmpty() const
 {
-    const bool noDecorator = (decorator == nullptr && intDecorator == nullptr);
+    const bool noDecorator = (decorator == nullptr && extDecorator == nullptr);
     const bool noChildren = (lhs == nullptr && rhs == nullptr);
     return (noDecorator && noChildren);
 }
@@ -188,12 +190,14 @@ decor::disableDecorations()
     C.disable();
 }
 
-std::ostream & literals::fg256(std::ostream &os, int n)
+std::ostream &
+literals::fg256(std::ostream &os, arg_t arg)
 {
-    return os << C.fg(n);
+    return os << C.fg(boost::get<int>(arg));
 }
 
-std::ostream & literals::bg256(std::ostream &os, int n)
+std::ostream &
+literals::bg256(std::ostream &os, arg_t arg)
 {
-    return os << C.bg(n);
+    return os << C.bg(boost::get<int>(arg));
 }
