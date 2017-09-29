@@ -494,26 +494,40 @@ getHighlight(const Node &node)
 
         case State::Deleted:
             if (node.moved) {
-                return 204_fg + inv + black_bg + bold;
+                return (204_fg + inv + black_bg + bold)
+                       .prefix("{:-"_lit)
+                       .suffix("-:}"_lit);
             } else {
-                return 210_fg + inv + black_bg + bold;
+                return (210_fg + inv + black_bg + bold)
+                       .prefix("{-"_lit)
+                       .suffix("-}"_lit);
             }
         case State::Inserted:
             if (node.moved) {
-                return 48_fg + inv + black_bg + bold;
+                return (48_fg + inv + black_bg + bold)
+                       .prefix("{:+"_lit)
+                       .suffix("+:}"_lit);
             } else {
-                return 85_fg + inv + black_bg + bold;
+                return (85_fg + inv + black_bg + bold)
+                       .prefix("{+"_lit)
+                       .suffix("+}"_lit);
             }
         case State::Updated:
             if (node.moved) {
-                return 227_fg + inv + black_bg + bold;
+                return (227_fg + inv + black_bg + bold)
+                       .prefix("{:#"_lit)
+                       .suffix("#:}"_lit);
             } else if (!isDiffable(node)) {
-                return 228_fg + inv + black_bg + bold;
+                return (228_fg + inv + black_bg + bold)
+                       .prefix("{#"_lit)
+                       .suffix("#}"_lit);
             }
 
         case State::Unchanged:
             if (node.moved) {
-                return 81_fg + inv + bold;
+                return (81_fg + inv + bold)
+                       .prefix("{:"_lit)
+                       .suffix(":}"_lit);
             }
             break;
     }
@@ -601,8 +615,12 @@ diffSpelling(const std::string &l, const std::string &r,
 
     std::ostringstream oss;
 
-    Decoration deleted = 210_fg + inv + black_bg + bold;
-    Decoration inserted = 85_fg + inv + black_bg + bold;
+    Decoration deleted = (210_fg + inv + black_bg + bold)
+                         .prefix("{-"_lit)
+                         .suffix("-}"_lit);
+    Decoration inserted = (85_fg + inv + black_bg + bold)
+                          .prefix("{+"_lit)
+                          .suffix("+}"_lit);
 
     const char *lastL = l.data(), *lastR = r.data();
 
