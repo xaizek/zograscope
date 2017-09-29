@@ -29,7 +29,7 @@ namespace decor {
 /**
  * @brief Type of argument passed to extra decorators.
  */
-using arg_t = boost::variant<int>;
+using arg_t = boost::variant<int, std::string>;
 
 /**
  * @brief Class describing single decoration or a combination of them.
@@ -512,6 +512,8 @@ namespace literals {
     std::ostream & fg256(std::ostream &os, arg_t arg);
     std::ostream & bg256(std::ostream &os, arg_t arg);
 
+    std::ostream & lit(std::ostream &os, arg_t arg);
+
     inline Decoration operator""_fg(unsigned long long n)
     {
         return Decoration(&fg256, n);
@@ -521,6 +523,12 @@ namespace literals {
     {
         return Decoration(&bg256, n);
     }
+
+    inline Decoration operator""_lit(const char s[], std::size_t)
+    {
+        return Decoration(&lit, s);
+    }
+
 }
 
 }

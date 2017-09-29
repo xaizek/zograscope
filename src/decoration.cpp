@@ -201,3 +201,9 @@ literals::bg256(std::ostream &os, arg_t arg)
 {
     return os << C.bg(boost::get<int>(arg));
 }
+
+std::ostream &
+literals::lit(std::ostream &os, arg_t arg)
+{
+    return os << boost::get<std::string>(arg);
+}
