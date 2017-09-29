@@ -333,7 +333,7 @@ NL                      \n|\r|\r\n
     BEGIN(INITIAL);
     return SLIT;
 }
-<slit>\\{NL}            { ADVANCE_LINE(); }
+<slit>\\?{NL}           { ADVANCE_LINE(); }
 <slit>.                 { reportError(); }
 
 "->"                    { TOKEN(ARR_OP); }
