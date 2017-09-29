@@ -100,6 +100,38 @@ public:
     bool isEmpty() const;
 
     /**
+     * @brief Sets prefix decoration.
+     *
+     * @param dec Prefix decoraiton.
+     *
+     * @returns @c *this.
+     */
+    Decoration & prefix(Decoration dec);
+
+    /**
+     * @brief Sets suffix decoration.
+     *
+     * @param dec Prefix decoraiton.
+     *
+     * @returns @c *this.
+     */
+    Decoration & suffix(Decoration dec);
+
+    /**
+     * @brief Retrieves prefix decoration.
+     *
+     * @returns The decoration or @c nullptr.
+     */
+    const Decoration * getPrefix() const;
+
+    /**
+     * @brief Retrieves suffix decoration.
+     *
+     * @returns The decoration or @c nullptr.
+     */
+    const Decoration * getSuffix() const;
+
+    /**
      * @brief Compares two decorations for equality.
      *
      * @param lhs First decoration.
@@ -156,6 +188,14 @@ private:
      * @brief Second decoration that composes this object.
      */
     std::unique_ptr<Decoration> rhs;
+    /**
+     * @brief Prefix decoration (used by ScopedDecoration).
+     */
+    std::unique_ptr<Decoration> pfx;
+    /**
+     * @brief Suffix decoration (used by ScopedDecoration).
+     */
+    std::unique_ptr<Decoration> sfx;
 };
 
 /**

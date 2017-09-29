@@ -17,6 +17,13 @@ class Colors
 {
 public:
     /**
+     * @brief Checks whether colors are enabled.
+     *
+     * @returns @c true if so, @c false otherwise.
+     */
+    bool isOn() const { return isAscii; }
+
+    /**
      * @brief Forces enabled state.
      */
     void enable() { isAscii = true; }
@@ -98,7 +105,9 @@ const Decoration
 Decoration::Decoration(const Decoration &rhs)
     : decorator(rhs.decorator), extDecorator(rhs.extDecorator), arg(rhs.arg),
       lhs(rhs.lhs == nullptr ? nullptr : new Decoration(*rhs.lhs)),
-      rhs(rhs.rhs == nullptr ? nullptr : new Decoration(*rhs.rhs))
+      rhs(rhs.rhs == nullptr ? nullptr : new Decoration(*rhs.rhs)),
+      pfx(rhs.pfx == nullptr ? nullptr : new Decoration(*rhs.pfx)),
+      sfx(rhs.sfx == nullptr ? nullptr : new Decoration(*rhs.sfx))
 {
 }
 
@@ -126,6 +135,8 @@ Decoration::operator=(const Decoration &rhs)
     std::swap(copy.arg, this->arg);
     std::swap(copy.lhs, this->lhs);
     std::swap(copy.rhs, this->rhs);
+    std::swap(copy.pfx, this->pfx);
+    std::swap(copy.sfx, this->sfx);
     return *this;
 }
 
@@ -161,11 +172,42 @@ Decoration::isEmpty() const
     return (noDecorator && noChildren);
 }
 
+Decoration &
+Decoration::prefix(Decoration dec)
+{
+    pfx.reset(new Decoration(std::move(dec)));
+    return *this;
+}
+
+Decoration &
+Decoration::suffix(Decoration dec)
+{
+    sfx.reset(new Decoration(std::move(dec)));
+    return *this;
+}
+
+const Decoration *
+Decoration::getPrefix() const
+{
+    return pfx.get();
+}
+
+const Decoration *
+Decoration::getSuffix() const
+{
+    return sfx.get();
+}
+
 std::ostream &
 ScopedDecoration::decorate(std::ostream &os) const
 {
     if (!decoration.isEmpty()) {
         os << decoration;
+        if (!C.isOn()) {
+            if (const Decoration *pfx = decoration.getPrefix()) {
+                os << *pfx;
+            }
+        }
     }
 
     for (const auto app : apps) {
@@ -173,6 +215,11 @@ ScopedDecoration::decorate(std::ostream &os) const
     }
 
     if (!decoration.isEmpty()) {
+        if (!C.isOn()) {
+            if (const Decoration *sfx = decoration.getSuffix()) {
+                os << *sfx;
+            }
+        }
         os << def;
     }
     return os;
