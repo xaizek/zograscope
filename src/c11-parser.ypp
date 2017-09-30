@@ -964,10 +964,12 @@ parameter_type_list
 /*     parameter-list , parameter-declaration */
 parameter_list
     : parameter_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Bundle) },
+                       SType::TemporaryContainer); }
     | parameter_list ',' parameter_declaration
-    { $$ = tb->prepend($3, { tb->addNode($1, @1),
-                             tb->addNode($2, @2, SType::Separator) }); }
+    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2, SType::Separator),
+                                        tb->addNode($3, @3) },
+                                      SType::Bundle)); }
     ;
 
 /* (6.7.6) parameter-declaration: */
@@ -981,7 +983,7 @@ parameter_declaration
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::Parameter); }
     | declaration_specifiers                      %dprec 1
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::Parameter); }
     ;
 
 /* (6.7.6) identifier-list: */
@@ -1081,7 +1083,8 @@ direct_abstract_declarator
                          tb->addNode($3, @3) }); }
     | direct_abstract_declarator '(' parameter_type_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+                         tb->addNode($3, @3), tb->addNode($4, @4) },
+                       SType::FunctionDeclaration); }
     | direct_abstract_declarator '(' ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
@@ -1461,7 +1464,8 @@ function_header
     /* { $$ = tb->addNode({ tb->addNode($2, @2), tb->addNode($3, @3), */
     /*                      tb->addNode($4, @4) }); } */
     : declaration_specifiers declarator %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
     /* This is an extension to allow function headers to be defined by a
      * macro. */
     | macro_invocation                  %dprec 2

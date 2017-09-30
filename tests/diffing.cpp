@@ -1060,7 +1060,7 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
     )", false);
 }
 
-TEST_CASE("Parameter list in prototypes is decomposed", "[comparison][parsing]")
+TEST_CASE("Parameter list of prototypes is decomposed", "[comparison][parsing]")
 {
     diffSources(R"(
         void function(
@@ -1070,6 +1070,31 @@ TEST_CASE("Parameter list in prototypes is decomposed", "[comparison][parsing]")
         void function(
             int i       /// Additions
         );
+    )", true);
+
+    diffSources(R"(
+        void func(const char str[]);
+    )", R"(
+        void func(const char str[]
+                  ,                   /// Additions
+                  int file_hi_only    /// Additions
+                  );
+    )", true);
+}
+
+TEST_CASE("Parameter list of definitions is decomposed",
+          "[comparison][parsing]")
+{
+    diffSources(R"(
+        void func(const char str[])
+        {
+        }
+    )", R"(
+        void func(
+            int file_hi_only         /// Additions
+            , const char str[])
+        {
+        }
     )", true);
 }
 

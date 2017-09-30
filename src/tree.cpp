@@ -243,6 +243,7 @@ static bool
 isLayerBreak(SType stype)
 {
     switch (stype) {
+        case SType::FunctionDeclaration:
         case SType::FunctionDefinition:
         case SType::InitializerElement:
         case SType::InitializerList:
