@@ -564,11 +564,11 @@ TEST_CASE("Declarations with and without initializer are not the same",
 {
     diffSources(R"(
         int
-            a
+            var
             ;
     )", R"(
         int
-            a
+            var
             =   /// Additions
             10  /// Additions
             ;
@@ -975,13 +975,13 @@ TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
     diffSources(R"(
         size_t                 /// Updates
-            f();
+            func();
         void g(
             size_t             /// Updates
             long_param_name);
     )", R"(
         int                    /// Updates
-            f();
+            func();
         void g(
             int                /// Updates
             long_param_name);
@@ -1300,6 +1300,45 @@ TEST_CASE("Constants can be updated", "[comparison]")
         char str[] =
                      "thus"   /// Updates
                      ;
+    )", false);
+}
+
+TEST_CASE("Top-level declarations aren't mixed", "[comparison]")
+{
+    diffSources(R"(
+        typedef struct {                              /// Deletions
+            view_t left;                              /// Deletions
+            view_t right;                             /// Deletions
+
+            int active_win; // 0 -- left, 1 -- right  /// Deletions
+            int only_mode;                            /// Deletions
+            preview_t preview;                        /// Deletions
+        } tab_t;                                      /// Deletions
+
+        typedef struct {                              /// Deletions
+            tab_t *tabs;                              /// Deletions
+            DA_INSTANCE(tabs);                        /// Deletions
+            int current;                              /// Deletions
+        } inner_tab_t;                                /// Deletions
+
+        static
+               tab_t                                  /// Updates
+               *tabs;
+    )", R"(
+        typedef struct {                              /// Additions
+            view_t view;                              /// Additions
+
+            preview_t preview;                        /// Additions
+        } tab_t;                                      /// Additions
+
+        static inner_tab_t * get_inner_tab(const view_t *view);          /// Additions
+        static int tabs_new_outer(void);                                 /// Additions
+        static tab_t * tabs_new_inner(inner_tab_t *itab, view_t *view);  /// Additions
+        static void tabs_goto_outer(int number);                         /// Additions
+
+        static
+               outer_tab_t                            /// Updates
+               *tabs;
     )", false);
 }
 

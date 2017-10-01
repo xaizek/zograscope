@@ -456,6 +456,13 @@ printSubTree(const Node &root)
 }
 
 bool
+canBeFlattened(const Node *parent, const Node *child)
+{
+    return child->stype != SType::Declaration
+        || parent->stype != SType::TranslationUnit;
+}
+
+bool
 isUnmovable(const Node *x)
 {
     return x->stype == SType::Statements

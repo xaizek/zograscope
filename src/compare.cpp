@@ -94,12 +94,14 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
     // flatten unmatched trees into parent tree of their roots before doing
     // common distilling
     for (Node *&c : T1->children) {
-        if (c->relative == nullptr && c->next != nullptr && !c->next->last) {
+        if (canBeFlattened(T1, c) &&
+            c->relative == nullptr && c->next != nullptr && !c->next->last) {
             c = c->next;
         }
     }
     for (Node *&c : T2->children) {
-        if (c->relative == nullptr && c->next != nullptr && !c->next->last) {
+        if (canBeFlattened(T2, c) &&
+            c->relative == nullptr && c->next != nullptr && !c->next->last) {
             c = c->next;
         }
     }
