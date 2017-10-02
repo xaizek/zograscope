@@ -252,6 +252,7 @@ isLayerBreak(SType stype)
         case SType::IfExpr:
         case SType::CallExpr:
         case SType::ExprStatement:
+        case SType::ReturnValueStmt:
         case SType::Parameter:
             return true;
 

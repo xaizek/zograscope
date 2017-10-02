@@ -877,7 +877,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
             free(path);
             free_string_array(list, len);
 
-            return parent_dirs;                 /// Mixed
+            return parent_dirs;                 /// Deletions
         }
     )", R"(
         entries_t f() {                         /// Additions
@@ -900,7 +900,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
             free(path);
             free_string_array(list, len);
 
-            return siblings;                    /// Mixed
+            return siblings;                    /// Additions
         }
     )", false);
 }
@@ -1339,6 +1339,20 @@ TEST_CASE("Top-level declarations aren't mixed", "[comparison]")
         static
                outer_tab_t                            /// Updates
                *tabs;
+    )", false);
+}
+
+TEST_CASE("Return with value is on a separate layer", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            return 0;
+        }
+    )", R"(
+        void f() {
+            for (i = 0; i < 1000; ++i) { }  /// Additions
+            return 0;
+        }
     )", false);
 }
 
