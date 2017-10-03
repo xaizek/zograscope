@@ -1356,6 +1356,21 @@ TEST_CASE("Return with value is on a separate layer", "[comparison]")
     )", false);
 }
 
+TEST_CASE("Translation unit is not moved", "[comparison]")
+{
+    diffSources(R"(
+        int a;
+
+        MACRO(      /// Deletions
+            int b;  /// Moves
+        )           /// Deletions
+    )", R"(
+        int a;
+
+        int b;      /// Moves
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

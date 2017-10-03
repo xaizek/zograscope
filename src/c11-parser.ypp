@@ -110,7 +110,7 @@ extern TreeBuilder *tb;
 %type <node> designation designator_list designator statement labeled_statement
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
-%type <node> translation_unit external_declaration function_definition
+%type <node> translation_unit top_level external_declaration function_definition
 %type <node> function_header macro_invocation expr_or_type asm_argument_list
 %type <node> meta_parameter_type_list meta_parameter_declaration
 %type <node> string_lit declaration_specifier
@@ -1409,9 +1409,13 @@ program
 /*     external-declaration */
 /*     translation-unit external-declaration */
 translation_unit
+    : top_level { $$ = tb->addNode($1, @1, SType::TranslationUnit); }
+    ;
+
+top_level
     : external_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TranslationUnit); }
-    | translation_unit external_declaration
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | top_level external_declaration
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -1424,7 +1428,7 @@ external_declaration
     | declaration
     { $$ = $1; }
     /* This are extensions for top-level macros and extern "C". */
-    | ID '(' translation_unit ')'
+    | ID '(' top_level ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) },
                        SType::Macro); }
@@ -1436,7 +1440,7 @@ external_declaration
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }, SType::Macro); }
-    | EXTERN SLIT '{' translation_unit '}'
+    | EXTERN SLIT '{' top_level '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }); }
