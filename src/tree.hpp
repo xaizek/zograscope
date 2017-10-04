@@ -35,6 +35,21 @@ struct Node
     int valueChild = -1;
     bool moved = false;
     bool last = false;
+
+    bool hasValue() const
+    {
+        return (valueChild >= 0);
+    }
+
+    Node * getValue()
+    {
+        return (valueChild >= 0 ? children[valueChild] : nullptr);
+    }
+
+    const Node * getValue() const
+    {
+        return (valueChild >= 0 ? children[valueChild] : nullptr);
+    }
 };
 
 class Tree
@@ -79,6 +94,8 @@ bool canBeFlattened(const Node *parent, const Node *child);
 bool isUnmovable(const Node *x);
 
 bool hasMoveableItems(const Node *x);
+
+bool isContainer(const Node *x);
 
 void markTreeAsMoved(Node *node);
 

@@ -16,9 +16,9 @@ postOrderAndInit(Node &node, std::vector<Node *> &v)
     }
 
     node.relative = nullptr;
-    node.parent = nullptr;
 
     for (Node *child : node.children) {
+        child->parent = &node;
         postOrderAndInit(*child, v);
     }
     node.poID = v.size();
@@ -30,6 +30,7 @@ static std::vector<Node *>
 postOrderAndInit(Node &root)
 {
     std::vector<Node *> v;
+    root.parent = nullptr;
     postOrderAndInit(root, v);
     return v;
 }
@@ -101,7 +102,7 @@ markNode(Node &node, State state)
         if (child->satellite) {
             if (child->stype == SType::None) {
                 child->state = leafState;
-            } else if (node.valueChild >= 0) {
+            } else if (node.hasValue()) {
                 child->state = leafState;
             } else if (child->relative == nullptr) {
                 child->state = leafState;
@@ -148,6 +149,48 @@ alwaysMatches(const Node *node)
     return (node->stype == SType::TranslationUnit);
 }
 
+static const Node *
+getParent(const Node *n)
+{
+    const Node *parent = n->parent;
+    if (parent != nullptr && isContainer(parent)) {
+        return parent->parent;
+    }
+    return parent;
+}
+
+static bool
+haveValues(const Node *x, const Node *y)
+{
+    return x != nullptr
+        && y != nullptr
+        && x->hasValue()
+        && y->hasValue();
+}
+
+static int
+rateMatch(const Node *x, const Node *y)
+{
+    const Node *xParent = getParent(x);
+    const Node *yParent = getParent(y);
+
+    if (haveValues(xParent, yParent)) {
+        if (xParent->getValue()->relative == yParent->getValue()) {
+            return 3;
+        }
+    }
+
+    if ((xParent ? xParent->relative : nullptr) != yParent) {
+        return 0;
+    }
+
+    if (yParent == nullptr) {
+        return xParent == nullptr ? 1 : 0;
+    }
+
+    return 2;
+}
+
 static void
 match(Node *x, Node *y, State state)
 {
@@ -176,32 +219,6 @@ distill(Node &T1, Node &T2)
 
     auto unmatchedInternal = [](Node *node) {
         return !node->children.empty() && node->relative == nullptr;
-    };
-
-    auto commonAreaSize = [&](const Match &m) {
-        if (m.common >= 0) {
-            return m.common;
-        }
-
-        int size = 1;
-        int i = m.x->poID - 1;
-        int j = m.y->poID - 1;
-        while (i >= 0 && j >= 0 && po1[i]->label == po2[j]->label) {
-            ++size;
-            --i;
-            --j;
-        }
-        i = m.x->poID + 1;
-        j = m.y->poID + 1;
-        while (i < (int)po1.size() && j > (int)po2.size() &&
-               po1[i]->label == po2[j]->label) {
-            ++size;
-            ++i;
-            ++j;
-        }
-
-        m.common = size;
-        return size;
     };
 
     std::vector<DiceString> dice1;
@@ -243,9 +260,6 @@ distill(Node &T1, Node &T2)
 
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const Match &a, const Match &b) {
-                         if (std::fabs(a.similarity - b.similarity) < 0.01f) {
-                             return commonAreaSize(b) < commonAreaSize(a);
-                         }
                          return b.similarity < a.similarity;
                      });
 
@@ -297,6 +311,20 @@ distill(Node &T1, Node &T2)
                     break;
                 }
 
+                const Node *xParent = getParent(x);
+                const Node *yParent = getParent(y);
+
+                // Containers are there to hold elements of their parent nodes
+                // and can be matched only to containers of matched parents.
+                if (isContainer(x) && haveValues(xParent, yParent) &&
+                    xParent->getValue()->relative != nullptr) {
+                    if (xParent->getValue()->relative != yParent->getValue()) {
+                        continue;
+                    }
+                    match(x, y, State::Unchanged);
+                    break;
+                }
+
                 const int xFrom = lml(x);
                 int common = 0;
                 int yLeaves = 0;
@@ -306,8 +334,8 @@ distill(Node &T1, Node &T2)
                     }
                     ++yLeaves;
 
-                    if (po2[i]->parent &&
-                        po2[i]->parent->relative == nullptr) {
+                    const Node *const parent = getParent(po2[i]);
+                    if (parent && parent->relative == nullptr) {
                         // Skip children of unmatched internal nodes.
                         continue;
                     }
@@ -423,26 +451,16 @@ distill(Node &T1, Node &T2)
     distillInternal();
     distillInternalExtra();
 
-    clear(&T1);
-    clear(&T2);
-
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const Match &a, const Match &b) {
                          if (std::fabs(a.similarity - b.similarity) < 0.01f) {
-                             bool forA = (a.x->parent ? a.x->parent->relative : nullptr)
-                                      == a.y->parent;
-                             bool forB = (b.x->parent ? b.x->parent->relative : nullptr)
-                                      == b.y->parent;
-                             const int commonB = commonAreaSize(b);
-                             const int commonA = commonAreaSize(a);
-                             if (commonA == commonB) {
-                                 return forB < forA;
-                             } else {
-                                 return commonB < commonA;
-                             }
+                             return rateMatch(b.x, b.y) < rateMatch(a.x, a.y);
                          }
                          return b.similarity < a.similarity;
                      });
+
+    clear(&T1);
+    clear(&T2);
 
     distillLeafs();
     distillInternal();

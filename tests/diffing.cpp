@@ -1371,6 +1371,50 @@ TEST_CASE("Translation unit is not moved", "[comparison]")
     )", false);
 }
 
+TEST_CASE("Matching parent value guides how leaves are matched", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            if (descr == NULL) {
+                statement;        /// Moves
+                return -1;
+            }
+        }
+    )", R"(
+        void f() {
+            if (cond) {           /// Additions
+                statement;        /// Moves
+                thisIsNewStmt;    /// Additions
+                return -1;        /// Additions
+            }                     /// Additions
+
+            if (descr == NULL) {
+                return -1;
+            }
+        }
+    )", false);
+
+    diffSources(R"(
+        void f() {
+            if (descr == NULL) {
+                statement;        /// Moves
+                return -1;
+            }
+        }
+    )", R"(
+        void f() {
+            if (cond) {           /// Additions
+                statement;        /// Moves
+                return -1;        /// Additions
+            }                     /// Additions
+
+            if (descr == NULL) {
+                return -1;
+            }
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

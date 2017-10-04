@@ -474,7 +474,13 @@ isUnmovable(const Node *x)
 bool
 hasMoveableItems(const Node *x)
 {
-    return (!isUnmovable(x) || x->stype == SType::Statements);
+    return (!isUnmovable(x) || isContainer(x));
+}
+
+bool
+isContainer(const Node *x)
+{
+    return (x->stype == SType::Statements);
 }
 
 static void
