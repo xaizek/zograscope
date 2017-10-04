@@ -8,6 +8,7 @@
 #include "TreeBuilder.hpp"
 #include "parser.hpp"
 #include "tree.hpp"
+#include "types.hpp"
 
 #include "tests.hpp"
 
@@ -99,16 +100,24 @@ TEST_CASE("sizeof() is resolved to expression by default",
     CHECK(findNode(tree, Type::Identifiers, "var") != nullptr);
 }
 
-TEST_CASE("Unary function call is resolved as such", "[parser][conflicts]")
+TEST_CASE("Declaration/statement conflict is resolved as expected",
+          "[parser][conflicts]")
 {
     Tree tree = makeTree(R"(
         void f() {
-            func(var);
+            stmt;
+            userType var;
+            func(arg);
         }
     )");
 
-    CHECK(findNode(tree, Type::Functions, "func") != nullptr);
+    CHECK(findNode(tree, Type::Identifiers, "stmt") != nullptr);
+
+    CHECK(findNode(tree, Type::UserTypes, "userType") != nullptr);
     CHECK(findNode(tree, Type::Identifiers, "var") != nullptr);
+
+    CHECK(findNode(tree, Type::Functions, "func") != nullptr);
+    CHECK(findNode(tree, Type::Identifiers, "arg") != nullptr);
 }
 
 TEST_CASE("Multi-line string literals are parsed", "[parser]")

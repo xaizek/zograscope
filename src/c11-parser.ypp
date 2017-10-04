@@ -42,6 +42,10 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
     std::vector<const PNode *> v;
     postOrderLeafs(x0.node, v);
 
+    if (v.size() == 2U) {
+        return (x0.node->stype == SType::Declaration ? x1.node : x0.node);
+    }
+
     if (v.size() > 1U && (*(v.end() - 2))->value.token == ')') {
         return (x0.node->stype == SType::Declaration ? x1.node : x0.node);
     }
@@ -1243,8 +1247,8 @@ block_item_list
 /*     declaration */
 /*     statement */
 block_item
-    : declaration  %merge <decStmtMerge> { $$ = tb->addNode($1, @1); }
-    | statement    %merge <decStmtMerge> { $$ = tb->addNode($1, @1); }
+    : declaration  %merge <decStmtMerge>
+    | statement    %merge <decStmtMerge>
     ;
 
 /* (6.8.3) expression-statement: */
