@@ -1415,6 +1415,23 @@ TEST_CASE("Matching parent value guides how leaves are matched", "[comparison]")
     )", false);
 }
 
+TEST_CASE("Expression is moved into if condition", "[comparison][moves]")
+{
+    // FIXME: semicolon shouldn't be marked as moved
+    diffSources(R"(
+        void f() {
+            magic_load(magic, NULL);     /// Moves
+        }
+    )", R"(
+        void f() {
+            if (                         /// Additions
+                magic_load(magic, NULL)  /// Moves
+                != 0)                    /// Additions
+            { }                          /// Additions
+        }
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

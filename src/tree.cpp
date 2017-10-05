@@ -483,6 +483,13 @@ isContainer(const Node *x)
     return (x->stype == SType::Statements);
 }
 
+bool
+isExpr(const Node *x)
+{
+    return x->stype == SType::ExprStatement
+        || x->stype == SType::IfExpr;
+}
+
 static void
 markTreeAsMovedI(Node *node)
 {

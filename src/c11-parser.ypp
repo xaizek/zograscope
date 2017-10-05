@@ -402,11 +402,26 @@ relational_expression
 /*     equality-expression != relational-expression */
 equality_expression
     : relational_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | equality_expression EQ_OP relational_expression
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { if ($1->children.size() == 1U) {
+          $$ = tb->addNode({ $1,
+                             tb->addNode($2, @2, SType::Separator),
+                             tb->addNode($3, @3) },
+                           SType::ComparisonExpr);
+      } else {
+          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                                tb->addNode($3, @3) });
+      } }
     | equality_expression NE_OP relational_expression
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { if ($1->children.size() == 1U) {
+          $$ = tb->addNode({ $1,
+                             tb->addNode($2, @2, SType::Separator),
+                             tb->addNode($3, @3) },
+                           SType::ComparisonExpr);
+      } else {
+          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                                tb->addNode($3, @3) });
+      } }
     ;
 
 /* (6.5.10) AND-expression: */
