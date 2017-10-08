@@ -107,7 +107,7 @@ extern TreeBuilder *tb;
 %type <node> constant primary_expression generic_selection generic_assoc_list
 %type <node> expression assignment_expression generic_association type_name
 %type <node> postfix_expression argument_expression_list initializer_list
-%type <node> unary_expression cast_expression unary_operator
+%type <node> unary_expression cast_expression unary_operator initializer_element
 %type <node> multiplicative_expression additive_expression shift_expression
 %type <node> relational_expression equality_expression AND_expression
 %type <node> exclusive_OR_expression inclusive_OR_expression
@@ -118,11 +118,11 @@ extern TreeBuilder *tb;
 %type <node> function_specifier alignment_specifier init_declarator initializer
 %type <node> atomic_type_specifier struct_or_union_specifier enum_specifier
 %type <node> struct_declaration_list struct_declaration specifier_qualifier_list
-%type <node> struct_declarator_list struct_declarator
+%type <node> struct_declarator_list struct_declarator initializer_element_comma
 %type <node> enumerator_list enumerator_item enumerator direct_declarator
 %type <node> pointer type_qualifier_list parameter_type_list parameter_list
 %type <node> parameter_declaration identifier_list abstract_declarator
-%type <node> direct_abstract_declarator struct_or_union
+%type <node> direct_abstract_declarator struct_or_union initializer_list_head
 %type <node> designation designator_list designator statement labeled_statement
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
@@ -213,7 +213,7 @@ generic_association
                          tb->addNode($3, @3) }); }
     ;
 
-/* (6.5.2) postfix-expression: */
+/* (6.5.2) postfix-expression (CHANGED): */
 /*     primary-expression */
 /*     postfix-expression [ expression ] */
 /*     postfix-expression ( argument-expression-listopt ) */
@@ -252,11 +252,6 @@ postfix_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
-    | '(' type_name ')' '{' initializer_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5), tb->addNode($6, @6),
-                         tb->addNode($7, @7) }); }
     /* This is an extension to work with __asm__ directive. */
     | __ASM__ '(' asm_argument_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
@@ -1126,7 +1121,7 @@ direct_abstract_declarator
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
 
-/* (6.7.9) initializer: */
+/* (6.7.9) initializer (CHANGED): */
 /*     assignment-expression */
 /*     { initializer-list } */
 /*     { initializer-list , } */
@@ -1138,12 +1133,6 @@ initializer
                                 $2,
                                 tb->addNode($3, @3, SType::Separator) },
                               SType::Initializer), $2); }
-    | '{' initializer_list ',' '}'
-    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                $2,
-                                tb->addNode($3, @3, SType::Separator),
-                                tb->addNode($4, @4, SType::Separator) },
-                              SType::Initializer), $2); }
     /* This is an extension to allow {} initializer. */
     | '{' '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
@@ -1153,18 +1142,43 @@ initializer
 /*     designationopt initializer */
 /*     initializer-list , designationopt initializer */
 initializer_list
+    : initializer_element
+    { $$ = tb->addNode({ $1 }, SType::InitializerList); }
+    | initializer_element_comma
+    { $$ = tb->addNode({ $1 }, SType::InitializerList); }
+    | initializer_list_head initializer_element
+    { $$ = tb->append($1, $2); }
+    | initializer_list_head initializer_element_comma
+    { $$ = tb->append($1, $2); }
+    ;
+
+initializer_list_head
+    : initializer_element_comma
+    { $$ = tb->addNode({ $1 }, SType::InitializerList); }
+    | initializer_list_head initializer_element_comma
+    { $$ = tb->append($1, $2); }
+    ;
+
+initializer_element
     : designation initializer
     { $$ = tb->addNode({ tb->addNode({ $1, $2 }, SType::InitializerElement) },
                        SType::InitializerList); }
     | initializer
     { $$ = tb->addNode({ tb->addNode({ $1 }, SType::InitializerElement) },
                        SType::InitializerList); }
-    | initializer_list ',' designation initializer
-    { auto elem = tb->addNode({ $3, $4 }, SType::InitializerElement);
-      $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), elem }); }
-    | initializer_list ',' initializer
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                      tb->addNode({ $3 }, SType::InitializerElement) }); }
+    ;
+
+initializer_element_comma
+    : designation initializer ','
+    { $$ = tb->addNode({ tb->addNode({ $1, $2,
+                                       tb->addNode($3, @3, SType::Separator) },
+                                     SType::InitializerElement) },
+                       SType::InitializerList); }
+    | initializer ','
+    { $$ = tb->addNode({ tb->addNode({ $1,
+                                       tb->addNode($2, @2, SType::Separator) },
+                                     SType::InitializerElement) },
+                       SType::InitializerList); }
     ;
 
 /* (6.7.9) designation: */

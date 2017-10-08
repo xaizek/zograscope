@@ -1454,6 +1454,21 @@ TEST_CASE("Postponed node in initializer is matched on adding elements",
     )", false);
 }
 
+TEST_CASE("Comma after initializer element is bundled with the element",
+          "[comparison]")
+{
+    diffSources(R"(
+        const char *list[] = {
+            "nlinks",           /// Deletions
+            "inode",
+        };
+    )", R"(
+        const char *list[] = {
+            "inode",
+        };
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
