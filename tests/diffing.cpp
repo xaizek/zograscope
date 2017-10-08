@@ -1432,6 +1432,28 @@ TEST_CASE("Expression is moved into if condition", "[comparison][moves]")
     )", false);
 }
 
+TEST_CASE("Postponed node in initializer is matched on adding elements",
+          "[comparison][postponed]")
+{
+    diffSources(R"(
+        const char *list[] = {
+        #ifndef MACRO
+            [SK_BY_NLINKS] = "nlinks",
+            [SK_BY_INODE]  = "inode",
+        #endif
+        };
+    )", R"(
+        const char *list[] = {
+        #ifndef MACRO
+            [SK_BY_NLINKS] = "nlinks",
+            [SK_BY_INODE]  = "inode",
+        #endif
+
+            [SK_BY_ID]     = ""         /// Additions
+        };
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

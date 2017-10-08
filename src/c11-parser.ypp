@@ -52,6 +52,18 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
     return (x0.node->stype == SType::Declaration ? x0.node : x1.node);
 }
 
+// Moves children of node after specified one, but before the last child into
+// specified child.
+static PNode *
+suckIn(PNode *node, PNode *child)
+{
+    auto pos = ++std::find(node->children.begin(), node->children.end(), child);
+    child->children.insert(child->children.cend(),
+                           pos, --node->children.end());
+    node->children.erase(pos, --node->children.end());
+    return node;
+}
+
 TreeBuilder *tb = nullptr;
 static std::string fileName;
 static bool hitError;
@@ -1122,16 +1134,16 @@ initializer
     : assignment_expression
     { $$ = tb->addNode($1, @1, SType::Initializer); }
     | '{' initializer_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         $2,
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::Initializer); }
+    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                                $2,
+                                tb->addNode($3, @3, SType::Separator) },
+                              SType::Initializer), $2); }
     | '{' initializer_list ',' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         $2,
-                         tb->addNode($3, @3, SType::Separator),
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::Initializer); }
+    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                                $2,
+                                tb->addNode($3, @3, SType::Separator),
+                                tb->addNode($4, @4, SType::Separator) },
+                              SType::Initializer), $2); }
     /* This is an extension to allow {} initializer. */
     | '{' '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
