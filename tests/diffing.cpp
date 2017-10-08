@@ -1480,6 +1480,23 @@ TEST_CASE("Comma after initializer element is bundled with the element",
     )", false);
 }
 
+TEST_CASE("Parameter moves are detected", "[comparison][moves]")
+{
+    diffSources(R"(
+        void f(
+               int a    /// Moves
+               ,
+               float b
+        );
+    )", R"(
+        void f(
+               float b
+               ,        /// Moves
+               int a    /// Moves
+        );
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

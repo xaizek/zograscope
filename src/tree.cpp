@@ -481,7 +481,9 @@ hasMoveableItems(const Node *x)
 bool
 isContainer(const Node *x)
 {
-    return (x->stype == SType::Statements);
+    return x->stype == SType::Statements
+        || x->stype == SType::Bundle
+        || x->stype == SType::BundleComma;
 }
 
 bool
