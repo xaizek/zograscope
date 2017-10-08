@@ -1161,23 +1161,29 @@ initializer_list_head
 
 initializer_element
     : designation initializer
-    { $$ = tb->addNode({ tb->addNode({ $1, $2 }, SType::InitializerElement) },
+    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1, $2 },
+                                                   SType::InitializerElement) },
+                                     SType::Bundle) },
                        SType::InitializerList); }
     | initializer
-    { $$ = tb->addNode({ tb->addNode({ $1 }, SType::InitializerElement) },
+    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1 },
+                                                   SType::InitializerElement) },
+                                     SType::Bundle) },
                        SType::InitializerList); }
     ;
 
 initializer_element_comma
     : designation initializer ','
-    { $$ = tb->addNode({ tb->addNode({ $1, $2,
+    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1, $2, },
+                                                   SType::InitializerElement),
                                        tb->addNode($3, @3, SType::Separator) },
-                                     SType::InitializerElement) },
+                                     SType::BundleComma) },
                        SType::InitializerList); }
     | initializer ','
-    { $$ = tb->addNode({ tb->addNode({ $1,
+    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1 },
+                                                   SType::InitializerElement),
                                        tb->addNode($2, @2, SType::Separator) },
-                                     SType::InitializerElement) },
+                                     SType::BundleComma) },
                        SType::InitializerList); }
     ;
 

@@ -62,6 +62,7 @@ enum class SType
     DirectDeclarator,
     TemporaryContainer,
     Bundle,
+    BundleComma,
 };
 
 std::ostream & operator<<(std::ostream &os, SType stype);

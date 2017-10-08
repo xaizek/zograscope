@@ -62,6 +62,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::DirectDeclarator:    return (os << "DirectDeclarator");
         case SType::TemporaryContainer:  return (os << "TemporaryContainer");
         case SType::Bundle:              return (os << "Bundle");
+        case SType::BundleComma:              return (os << "BundleComma");
     }
 
     assert("Unhandled enumeration item");

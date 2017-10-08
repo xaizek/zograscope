@@ -1467,6 +1467,17 @@ TEST_CASE("Comma after initializer element is bundled with the element",
             "inode",
         };
     )", false);
+
+    diffSources(R"(
+        const char *list[] = {
+            "long string value"
+            ,                    /// Deletions
+        };
+    )", R"(
+        const char *list[] = {
+            "long string value"
+        };
+    )", false);
 }
 
 static int
