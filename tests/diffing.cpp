@@ -1048,15 +1048,30 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
 {
     diffSources(R"(
         void f() {
-            func(arg, arg,
-                 structure->field    /// Deletions
+            func(arg, arg
+                 , structure->field    /// Deletions
             );
         }
     )", R"(
         void f() {
-            func(arg, arg,
-                 process(structure)  /// Additions
+            func(arg, arg
+                 , process(structure)  /// Additions
             );
+        }
+    )", false);
+}
+
+TEST_CASE("Comma is bundled to arguments", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            call(arg1, arg3);
+        }
+    )", R"(
+        void f() {
+            call(arg1
+                 , expr        /// Additions
+                 , arg3);
         }
     )", false);
 }
@@ -1103,14 +1118,14 @@ TEST_CASE("Assignment is decomposed", "[comparison][parsing]")
 {
     diffSources(R"(
         void f() {
-            var = func(arg, arg,
-                       p->dir_field  /// Deletions
+            var = func(arg, arg
+                       , p->dir_field  /// Deletions
             );
         }
     )", R"(
         void f() {
-            var = func(arg, arg,
-                       dir           /// Additions
+            var = func(arg, arg
+                       , dir           /// Additions
             );
         }
     )", false);

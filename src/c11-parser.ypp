@@ -279,8 +279,9 @@ argument_expression_list
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Argument) },
                        SType::ArgumentList); }
     | argument_expression_list ',' expr_or_type
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                            tb->addNode($3, @3, SType::Argument) }); }
+    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2, SType::Separator),
+                                        tb->addNode($3, @3, SType::Argument) },
+                                      SType::Bundle)); }
     ;
 
 /* This is an extension to make macros like va_arg() work. */
