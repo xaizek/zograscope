@@ -16,6 +16,7 @@
 enum class Changes
 {
     No,
+    Unchanged,
     Additions,
     Deletions,
     Updates,
@@ -1566,8 +1567,16 @@ extractExpectations(const std::string &src)
         cleanedSrc += src;
         cleanedSrc += '\n';
 
-        if (expectation == "" || expectation == "No") {
+        if (expectation == "") {
+            if (src.empty()) {
+                changes.push_back(Changes::No);
+            } else {
+                changes.push_back(Changes::Unchanged);
+            }
+        } else if (expectation == "No") {
             changes.push_back(Changes::No);
+        } else if (expectation == "Unchanged") {
+            changes.push_back(Changes::Unchanged);
         } else if (expectation == "Additions") {
             changes.push_back(Changes::Additions);
         } else if (expectation == "Deletions") {
@@ -1620,7 +1629,8 @@ makeChangeMap(Node &root)
         Changes change = Changes::No;
         switch (node.state) {
             case State::Unchanged:
-                change = (node.moved ? Changes::Moves : Changes::No); break;
+                change = (node.moved ? Changes::Moves : Changes::Unchanged);
+                break;
             case State::Deleted:  change = Changes::Deletions; break;
             case State::Inserted: change = Changes::Additions; break;
             case State::Updated:  change = Changes::Updates; break;
@@ -1675,6 +1685,7 @@ operator<<(std::ostream &os, Changes changes)
 {
     switch (changes) {
         case Changes::No:        return (os << "No");
+        case Changes::Unchanged: return (os << "Unchanged");
         case Changes::Additions: return (os << "Additions");
         case Changes::Deletions: return (os << "Deletions");
         case Changes::Updates:   return (os << "Updates");
