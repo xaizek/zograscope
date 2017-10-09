@@ -293,6 +293,12 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
 
             if (shouldSplice(node->value->stype, newChild)) {
                 if (newChild->next != nullptr) {
+                    // Make sure we don't splice last layer.
+                    if (newChild->next->last) {
+                        n.children.emplace_back(newChild);
+                        continue;
+                    }
+
                     newChild = newChild->next;
                 }
 

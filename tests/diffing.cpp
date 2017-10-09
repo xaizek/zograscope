@@ -1448,6 +1448,24 @@ TEST_CASE("Expression is moved into if condition", "[comparison][moves]")
     )", false);
 }
 
+TEST_CASE("Refining doesn't cause segfault", "[comparison][moves]")
+{
+    diffSources(R"(
+        void f() {
+            &stats->
+                    preview_cleanup  /// Updates
+                    ;
+        }
+    )", R"(
+        void f() {
+            &stats->
+                    preview          /// Updates
+                    .cleanup_cmd     /// Additions
+                    ;
+        }
+    )", false);
+}
+
 TEST_CASE("Postponed node in initializer is matched on adding elements",
           "[comparison][postponed]")
 {
