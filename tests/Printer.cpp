@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <boost/algorithm/string/trim.hpp>
+
 #include "Printer.hpp"
 #include "compare.hpp"
 #include "time.hpp"
@@ -9,6 +11,8 @@
 #include "utils.hpp"
 
 #include "tests.hpp"
+
+static std::string normalizeText(const std::string &s);
 
 TEST_CASE("Multiline tokens don't mess up positioning", "[printer]")
 {
@@ -34,14 +38,14 @@ TEST_CASE("Comment contents is compared", "[printer]")
     StreamCapture coutCapture(std::cout);
     printer.print(tr);
 
-    std::string expected =
-R"(~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- 1  // This is {-that-} comment. <  -                              
- -                               >  1  // This is {+this+} comment.
-)";
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1  // This is {-that-} comment. <  -
+         -                               >  1  // This is {+this+} comment.
+    )");
 
-    REQUIRE(coutCapture.get() == expected);
+    REQUIRE(normalizeText(coutCapture.get()) == expected);
 }
 
 TEST_CASE("String literal contents is compared", "[printer]")
@@ -64,15 +68,30 @@ TEST_CASE("String literal contents is compared", "[printer]")
     StreamCapture coutCapture(std::cout);
     printer.print(tr);
 
-    std::string expected =
-R"(~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- 1                                |  1  
- 2          char str[] = "this is |  2          char str[] = "this is
- 3          {-a-}                 <  -                               
- -                                >  3          {+the+}
- 4          string";              |  4          string";
-)";
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                |  1
+         2          char str[] = "this is |  2          char str[] = "this is
+         3          {-a-}                 <  -
+         -                                >  3          {+the+}
+         4          string";              |  4          string";
+    )");
 
-    REQUIRE(coutCapture.get() == expected);
+    REQUIRE(normalizeText(coutCapture.get()) == expected);
+}
+
+static std::string
+normalizeText(const std::string &s)
+{
+    std::string result;
+    for (std::string line : split(s, '\n')) {
+        boost::trim_if(line, boost::is_any_of("\r\n \t"));
+
+        if (!line.empty()) {
+            result += line;
+            result += '\n';
+        }
+    }
+    return result;
 }
