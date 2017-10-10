@@ -24,6 +24,19 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
     CHECK(tree.getRoot()->stype == SType::TranslationUnit);
 }
 
+TEST_CASE("Missing final newline is added", "[parser][extensions]")
+{
+    Tree tree;
+
+    tree = makeTree("\n// Comment");
+    CHECK(findNode(tree, Type::Comments, "// Comment") != nullptr);
+
+    // Parsing such line second time messed up state of the lexer and caused
+    // attempt to allocate (size_t)-1 bytes.
+    tree = makeTree("\n// Comment");
+    CHECK(findNode(tree, Type::Comments, "// Comment") != nullptr);
+}
+
 TEST_CASE("Non-UNIX EOLs are allowed", "[parser]")
 {
     CHECK_FALSE(parse("int\r\na\r;\n").hasFailed());
