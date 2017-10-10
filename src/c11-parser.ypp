@@ -1578,6 +1578,8 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
     const bool failed = (yyparse() != 0);
     tb.finish(failed || hitError);
 
+    yylex_destroy();
+
     return tb;
 }
 
