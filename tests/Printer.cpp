@@ -81,6 +81,42 @@ TEST_CASE("String literal contents is compared", "[printer]")
     REQUIRE(normalizeText(coutCapture.get()) == expected);
 }
 
+TEST_CASE("Comment contents is not marked as updated on move", "[printer]")
+{
+    Tree oldTree = makeTree(
+R"(void f() {
+    /* This is bad. */
+}
+    )");
+    Tree newTree = makeTree(
+R"(void f() {
+    {
+        /* Failure is bad. */
+    }
+}
+    )");
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot());
+    StreamCapture coutCapture(std::cout);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1  void f() {                 |  1  void f() {
+         -                             >  2      {+{+}
+         -                             >  3          /* {+Failure+} is bad. */
+         -                             >  4      {+}+}
+         2      /* {-This-} is bad. */ <  -
+         3  }                          |  5  }
+    )");
+
+    REQUIRE(normalizeText(coutCapture.get()) == expected);
+}
+
 static std::string
 normalizeText(const std::string &s)
 {

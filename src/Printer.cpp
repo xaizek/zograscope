@@ -493,35 +493,24 @@ getHighlight(const Node &node)
         using namespace decor;
 
         case State::Deleted:
-            if (node.moved) {
-                return (204_fg + inv + black_bg + bold)
-                       .prefix("{:-"_lit)
-                       .suffix("-:}"_lit);
-            } else {
-                return (210_fg + inv + black_bg + bold)
-                       .prefix("{-"_lit)
-                       .suffix("-}"_lit);
-            }
+            return (210_fg + inv + black_bg + bold)
+                   .prefix("{-"_lit)
+                   .suffix("-}"_lit);
         case State::Inserted:
-            if (node.moved) {
-                return (48_fg + inv + black_bg + bold)
-                       .prefix("{:+"_lit)
-                       .suffix("+:}"_lit);
-            } else {
-                return (85_fg + inv + black_bg + bold)
-                       .prefix("{+"_lit)
-                       .suffix("+}"_lit);
-            }
+            return (85_fg + inv + black_bg + bold)
+                   .prefix("{+"_lit)
+                   .suffix("+}"_lit);
         case State::Updated:
-            if (node.moved) {
-                return (227_fg + inv + black_bg + bold)
-                       .prefix("{:#"_lit)
-                       .suffix("#:}"_lit);
-            } else if (!isDiffable(node)) {
+            // TODO: things that were updated and moved at the same time need a
+            //       special color?
+            //       Or update kinda implies move, since it's obvious that there
+            //       was a match between nodes?
+            if (!isDiffable(node)) {
                 return (228_fg + inv + black_bg + bold)
                        .prefix("{#"_lit)
                        .suffix("#}"_lit);
             }
+            break;
 
         case State::Unchanged:
             if (node.moved) {
