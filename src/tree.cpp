@@ -19,8 +19,18 @@
 
 static void printTree(const Node *node, std::vector<bool> &trace, int depth);
 static void printNode(std::ostream &os, const Node *node);
+static Node * materializeSNode(Tree &tree, const std::string &contents,
+                               const SNode *node);
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
+static Node * materializePNode(Tree &tree, const std::string &contents,
+                               const PNode *node);
+static std::string materializeLabel(const std::string &contents,
+                                    const PNode *node, bool spelling);
+static void postOrder(Node &node, std::vector<Node *> &v);
+static std::vector<std::size_t> hashChildren(const Node &node);
+static std::size_t hashNode(const Node *node);
+static void markAsMoved(Node *node);
 
 void
 print(const Node &node)
@@ -123,84 +133,9 @@ printNode(std::ostream &os, const Node *node)
     os << '\n';
 }
 
-static std::string
-materializeLabel(const std::string &contents, const PNode *node, bool spelling)
-{
-    // lexer also has such variable and they need to be synchronized (actually
-    // we should pass this to lexer)
-    enum { tabWidth = 4 };
-
-    std::string label;
-    label.reserve(node->value.len);
-
-    bool leadingWhitespace = false;
-    int col = node->col;
-    for (std::size_t i = node->value.from;
-         i < node->value.from + node->value.len; ++i) {
-        switch (const char c = contents[i]) {
-            int width;
-
-            case '\n':
-                col = 1;
-                label += '\n';
-                leadingWhitespace = !spelling
-                                 && node->stype == SType::Comment;
-                break;
-            case '\t':
-                width = tabWidth - (col - 1)%tabWidth;
-                col += width;
-                if (!leadingWhitespace) {
-                    label.append(width, ' ');
-                }
-                break;
-            case ' ':
-                ++col;
-                if (!leadingWhitespace) {
-                    label += ' ';
-                }
-                break;
-
-            default:
-                ++col;
-                label += c;
-                leadingWhitespace = false;
-                break;
-        }
-    }
-
-    return label;
-}
-
-static Node *
-materializeNode(Tree &tree, const std::string &contents, const PNode *node)
-{
-    const Type type = tokenToType(node->value.token);
-
-    if (type == Type::Virtual && node->children.size() == 1U) {
-        return materializeNode(tree, contents, node->children[0]);
-    }
-
-    Node &n = tree.makeNode();
-    n.label = materializeLabel(contents, node, false);
-    n.spelling = node->stype == SType::Comment
-               ? materializeLabel(contents, node, true)
-               : n.label;
-    n.line = node->line;
-    n.col = node->col;
-    n.type = type;
-    n.stype = node->stype;
-
-    n.children.reserve(node->children.size());
-    for (const PNode *child : node->children) {
-        n.children.push_back(materializeNode(tree, contents, child));
-    }
-
-    return &n;
-}
-
 Tree::Tree(const std::string &contents, const PNode *node)
 {
-    root = materializeNode(*this, contents, node);
+    root = materializePNode(*this, contents, node);
 }
 
 static bool
@@ -261,8 +196,13 @@ isLayerBreak(SType stype)
     };
 }
 
+Tree::Tree(const std::string &contents, const SNode *node)
+{
+    root = materializeSNode(*this, contents, node);
+}
+
 static Node *
-materializeNode(Tree &tree, const std::string &contents, const SNode *node)
+materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
 {
     std::function<const PNode *(const PNode *)> lml = [&](const PNode *node) {
         return node->children.empty()
@@ -281,7 +221,7 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
             n.label = materializePTree(contents, node->value);
             n.line = leaf->line;
             n.col = leaf->col;
-            n.next = materializeNode(tree, contents, node->value);
+            n.next = materializePNode(tree, contents, node->value);
             n.next->last = true;
             n.type = n.next->type;
             return &n;
@@ -335,11 +275,6 @@ materializeNode(Tree &tree, const std::string &contents, const SNode *node)
     return visit(node);
 }
 
-Tree::Tree(const std::string &contents, const SNode *node)
-{
-    root = materializeNode(*this, contents, node);
-}
-
 static std::string
 materializePTree(const std::string &contents, const PNode *node)
 {
@@ -359,6 +294,90 @@ materializePTree(const std::string &contents, const PNode *node)
     return out;
 }
 
+static Node *
+materializePNode(Tree &tree, const std::string &contents, const PNode *node)
+{
+    const Type type = tokenToType(node->value.token);
+
+    if (type == Type::Virtual && node->children.size() == 1U) {
+        return materializePNode(tree, contents, node->children[0]);
+    }
+
+    Node &n = tree.makeNode();
+    n.label = materializeLabel(contents, node, false);
+    n.spelling = node->stype == SType::Comment
+               ? materializeLabel(contents, node, true)
+               : n.label;
+    n.line = node->line;
+    n.col = node->col;
+    n.type = type;
+    n.stype = node->stype;
+
+    n.children.reserve(node->children.size());
+    for (const PNode *child : node->children) {
+        n.children.push_back(materializePNode(tree, contents, child));
+    }
+
+    return &n;
+}
+
+static std::string
+materializeLabel(const std::string &contents, const PNode *node, bool spelling)
+{
+    // XXX: lexer also has such variable and they need to be synchronized
+    //      (actually we should pass this to lexer).
+    enum { tabWidth = 4 };
+
+    std::string label;
+    label.reserve(node->value.len);
+
+    bool leadingWhitespace = false;
+    int col = node->col;
+    for (std::size_t i = node->value.from;
+         i < node->value.from + node->value.len; ++i) {
+        switch (const char c = contents[i]) {
+            int width;
+
+            case '\n':
+                col = 1;
+                label += '\n';
+                leadingWhitespace = !spelling
+                                 && node->stype == SType::Comment;
+                break;
+            case '\t':
+                width = tabWidth - (col - 1)%tabWidth;
+                col += width;
+                if (!leadingWhitespace) {
+                    label.append(width, ' ');
+                }
+                break;
+            case ' ':
+                ++col;
+                if (!leadingWhitespace) {
+                    label += ' ';
+                }
+                break;
+
+            default:
+                ++col;
+                label += c;
+                leadingWhitespace = false;
+                break;
+        }
+    }
+
+    return label;
+}
+
+std::vector<Node *>
+postOrder(Node &root)
+{
+    std::vector<Node *> v;
+    root.parent = &root;
+    postOrder(root, v);
+    return v;
+}
+
 static void
 postOrder(Node &node, std::vector<Node *> &v)
 {
@@ -372,45 +391,6 @@ postOrder(Node &node, std::vector<Node *> &v)
     }
     node.poID = v.size();
     v.push_back(&node);
-}
-
-std::vector<Node *>
-postOrder(Node &root)
-{
-    std::vector<Node *> v;
-    root.parent = &root;
-    postOrder(root, v);
-    return v;
-}
-
-static std::size_t
-hashNode(const Node *node)
-{
-    if (node->next != nullptr) {
-        return hashNode(node->next);
-    }
-
-    const std::size_t hash = std::hash<std::string>()(node->label);
-    return std::accumulate(node->children.cbegin(), node->children.cend(), hash,
-                           [](std::size_t h, const Node *child) {
-                               boost::hash_combine(h, hashNode(child));
-                               return h;
-                           });
-}
-
-static std::vector<std::size_t>
-hashChildren(const Node &node)
-{
-    if (node.next != nullptr) {
-        return hashChildren(*node.next);
-    }
-
-    std::vector<std::size_t> hashes;
-    hashes.reserve(node.children.size());
-    for (const Node *child : node.children) {
-        hashes.push_back(hashNode(child));
-    }
-    return hashes;
 }
 
 void
@@ -436,6 +416,36 @@ reduceTreesCoarse(Node *T1, Node *T2)
             }
         }
     }
+}
+
+static std::vector<std::size_t>
+hashChildren(const Node &node)
+{
+    if (node.next != nullptr) {
+        return hashChildren(*node.next);
+    }
+
+    std::vector<std::size_t> hashes;
+    hashes.reserve(node.children.size());
+    for (const Node *child : node.children) {
+        hashes.push_back(hashNode(child));
+    }
+    return hashes;
+}
+
+static std::size_t
+hashNode(const Node *node)
+{
+    if (node->next != nullptr) {
+        return hashNode(node->next);
+    }
+
+    const std::size_t hash = std::hash<std::string>()(node->label);
+    return std::accumulate(node->children.cbegin(), node->children.cend(), hash,
+                           [](std::size_t h, const Node *child) {
+                               boost::hash_combine(h, hashNode(child));
+                               return h;
+                           });
 }
 
 std::string
@@ -499,20 +509,20 @@ isExpr(const Node *x)
         || x->stype == SType::IfExpr;
 }
 
-static void
-markTreeAsMovedI(Node *node)
-{
-    node->moved = !isUnmovable(node);
-
-    for (Node *child : node->children) {
-        markTreeAsMovedI(child);
-    }
-}
-
 void
 markTreeAsMoved(Node *node)
 {
     if (hasMoveableItems(node)) {
-        markTreeAsMovedI(node);
+        markAsMoved(node);
+    }
+}
+
+static void
+markAsMoved(Node *node)
+{
+    node->moved = !isUnmovable(node);
+
+    for (Node *child : node->children) {
+        markAsMoved(child);
     }
 }
