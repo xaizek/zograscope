@@ -87,14 +87,14 @@ treePrint(Node &root)
                 col = node.col;
             }
 
-            std::vector<std::string> spell = split(node.spelling, '\n');
+            std::vector<boost::string_ref> spell = split(node.spelling, '\n');
             col += spell.front().size();
-            lines.back() += std::move(spell.front());
+            lines.back() += spell.front().to_string();
 
             for (std::size_t i = 1U; i < spell.size(); ++i) {
                 ++line;
                 col = 1 + spell[i].size();
-                lines.emplace_back(std::move(spell[i]));
+                lines.emplace_back(spell[i]);
             }
         }
 

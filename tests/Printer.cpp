@@ -120,7 +120,8 @@ static std::string
 normalizeText(const std::string &s)
 {
     std::string result;
-    for (std::string line : split(s, '\n')) {
+    for (boost::string_ref sr : split(s, '\n')) {
+        std::string line = sr.to_string();
         boost::trim_if(line, boost::is_any_of("\r\n \t"));
 
         if (!line.empty()) {

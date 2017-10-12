@@ -29,7 +29,7 @@ static void diffSources(const std::string &left, const std::string &right,
                         bool skipRefine);
 static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src);
-static std::pair<std::string, std::string> splitAt(const std::string &s,
+static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
                                                    const std::string &delim);
 static std::vector<Changes> makeChangeMap(Node &root);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
@@ -1577,9 +1577,9 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine)
 static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src)
 {
-    std::vector<std::string> lines = split(src, '\n');
+    std::vector<boost::string_ref> lines = split(src, '\n');
 
-    auto allSpaces = [](const std::string &str) {
+    auto allSpaces = [](boost::string_ref str) {
         return (str.find_first_not_of(' ') == std::string::npos);
     };
 
@@ -1593,7 +1593,7 @@ extractExpectations(const std::string &src)
     std::string cleanedSrc;
     cleanedSrc.reserve(src.length());
 
-    for (const std::string &line : lines) {
+    for (boost::string_ref line : lines) {
         std::string src, expectation;
         std::tie(src, expectation) = splitAt(line, "/// ");
 
@@ -1639,14 +1639,15 @@ extractExpectations(const std::string &src)
  * @throws std::runtime_error On failure to find delimiter in the string.
  */
 static std::pair<std::string, std::string>
-splitAt(const std::string &s, const std::string &delim)
+splitAt(const boost::string_ref &s, const std::string &delim)
 {
     const std::string::size_type pos = s.find(delim);
     if (pos == std::string::npos) {
-        return { s, std::string() };
+        return { s.to_string(), std::string() };
     }
 
-    return { s.substr(0, pos), s.substr(pos + delim.length()) };
+    return { s.substr(0, pos).to_string(),
+             s.substr(pos + delim.length()).to_string() };
 }
 
 static std::vector<Changes>
@@ -1697,7 +1698,7 @@ makeChangeMap(Node &root)
 
         if (node.line != 0 && node.col != 0) {
             line = node.line - 1;
-            const std::vector<std::string> lines = split(node.label, '\n');
+            std::vector<boost::string_ref> lines = split(node.label, '\n');
             updateMap(line, node);
             for (std::size_t i = 1U; i < lines.size(); ++i) {
                 updateMap(++line, node);
