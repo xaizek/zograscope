@@ -356,13 +356,13 @@ distill(Node &T1, Node &T2)
                                                 return n->children.empty();
                                             });
 
+                float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
+
                 int xExtra = countSatelliteNodes(x);
                 int yExtra = countSatelliteNodes(y);
+                common += std::min(xExtra, yExtra);
                 xLeaves += xExtra;
                 yLeaves += yExtra;
-                common += std::min(xExtra, yExtra);
-
-                float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
 
                 float similarity2 =
                     static_cast<float>(common)/std::max(xLeaves, yLeaves);
