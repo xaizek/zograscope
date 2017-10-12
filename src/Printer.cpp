@@ -50,7 +50,7 @@ static std::string diffSpelling(const std::string &l, const std::string &r,
 static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::string getSpelling(const Node &node, const decor::Decoration &dec,
                                bool original);
-static unsigned int measureWidth(const std::string &s);
+static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
 
@@ -124,10 +124,12 @@ Printer::print(TimeReport &tr)
 
     // TODO: don't highlight lines that won't be displayed (it takes extra
     //       time).
-    std::vector<std::string> l = (tr.measure("left-highlight"),
-                                  split(printSource(left, true), '\n'));
-    std::vector<std::string> r = (tr.measure("right-highlight"),
-                                  split(printSource(right, false), '\n'));
+    const std::string ls = printSource(left, true);
+    const std::string rs = printSource(right, false);
+    std::vector<boost::string_ref> l = (tr.measure("left-highlight"),
+                                        split(ls, '\n'));
+    std::vector<boost::string_ref> r = (tr.measure("right-highlight"),
+                                        split(rs, '\n'));
 
     auto timer = tr.measure("printing");
 
@@ -214,27 +216,27 @@ Printer::print(TimeReport &tr)
     j = 0U;
     unsigned int ii = 0U;
     for (DiffLine d : diff) {
-        const std::string *ll = &empty;
-        const std::string *rl = &empty;
+        boost::string_ref ll = empty;
+        boost::string_ref rl = empty;
 
         const char *marker;
         switch (d.type) {
             case Diff::Left:
-                ll = &l[i++];
+                ll = l[i++];
                 marker = " < ";
                 break;
             case Diff::Right:
-                rl = &r[j++];
+                rl = r[j++];
                 marker = " > ";
                 break;
             case Diff::Identical:
-                ll = &l[i++];
-                rl = &r[j++];
+                ll = l[i++];
+                rl = r[j++];
                 marker = " | ";
                 break;
             case Diff::Different:
-                ll = &l[i++];
-                rl = &r[j++];
+                ll = l[i++];
+                rl = r[j++];
                 marker = " ~ ";
                 break;
             case Diff::Fold:
@@ -258,28 +260,28 @@ Printer::print(TimeReport &tr)
         }
 
         unsigned int width = (d.type == Diff::Right ? 0U : leftWidths[ii++]);
-        width = maxLeftWidth + (ll->size() - width);
+        width = maxLeftWidth + (ll.size() - width);
 
         if (d.type != Diff::Right) {
             std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ')
-                      << ' ' << std::left << std::setw(width) << *ll;
+                      << ' ' << std::left << std::setw(width) << ll;
         } else {
             std::cout << (lineNo << std::right << std::setw(lWidth + 1)
                                  << (noLineMarker(i) + ' '))
                       << ' ' << std::left << std::setw(width)
-                      << (235_bg << *ll);
+                      << (235_bg << ll);
         }
 
         std::cout << marker;
 
         if (d.type != Diff::Left) {
             std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ')
-                      << ' ' << *rl;
+                      << ' ' << rl;
         } else {
             std::cout << (lineNo << std::right << std::setw(rWidth + 1)
                                  << (noLineMarker(j) + ' '))
                       << ' ' << std::left << std::setw(maxRightWidth)
-                      << (235_bg << *rl);
+                      << (235_bg << rl);
         }
 
         std::cout << '\n';
@@ -495,8 +497,8 @@ printSource(Node &root, bool original)
             //     oss << node.label;
             // }
 
-            const std::vector<std::string> lines =
-                split(getSpelling(node, dec, original), '\n');
+            const std::string spelling = getSpelling(node, dec, original);
+            const std::vector<boost::string_ref> lines = split(spelling, '\n');
             oss << (dec << lines.front());
             col += lines.front().size();
 
@@ -765,19 +767,21 @@ getSpelling(const Node &node, const decor::Decoration &dec, bool original)
  * @returns The width.
  */
 static unsigned int
-measureWidth(const std::string &s)
+measureWidth(boost::string_ref s)
 {
     unsigned int valWidth = 0U;
-    const char *str = s.c_str();
-    while (*str != '\0') {
-        if (*str != '\033') {
+    while (!s.empty()) {
+        if (s.front() != '\033') {
             ++valWidth;
-            ++str;
+            s.remove_prefix(1);
             continue;
         }
 
-        const char *const next = std::strchr(str, 'm');
-        str = (next == nullptr) ? (str + std::strlen(str)) : (next + 1);
+        const auto width = s.find('m');
+        if (width == std::string::npos) {
+            break;
+        }
+        s.remove_prefix(width + 1U);
     }
     return valWidth;
 }
