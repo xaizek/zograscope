@@ -459,7 +459,6 @@ printSubTree(const Node &root)
         }
 
         if (node.line != 0 && node.col != 0) {
-            const std::vector<std::string> lines = split(node.label, '\n');
             out += node.label;
         }
 
