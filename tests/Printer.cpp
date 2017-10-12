@@ -41,8 +41,7 @@ TEST_CASE("Comment contents is compared", "[printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1  // This is {-that-} comment. <  -
-         -                               >  1  // This is {+this+} comment.
+         1  // This is {-that-} comment. ~  1  // This is {+this+} comment.
     )");
 
     REQUIRE(normalizeText(coutCapture.get()) == expected);

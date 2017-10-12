@@ -15,6 +15,8 @@ public:
 public:
     float compare(DiceString &other);
 
+    const std::string & str() const { return s; }
+
 private:
     const std::vector<short> & getBigrams();
 

@@ -41,8 +41,8 @@ struct DiffLine
 
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::vector<DiffLine> dtlCompare(const std::vector<std::string> &l,
-                                        const std::vector<std::string> &r);
+static std::vector<DiffLine> dtlCompare(std::vector<std::string> &&l,
+                                        std::vector<std::string> &&r);
 static decor::Decoration getHighlight(const Node &node);
 static bool isDiffable(const Node &node);
 static std::string diffSpelling(const std::string &l, const std::string &r,
@@ -51,6 +51,8 @@ static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::string getSpelling(const Node &node, const decor::Decoration &dec,
                                bool original);
 static unsigned int measureWidth(const std::string &s);
+
+static std::string empty;
 
 Printer::Printer(Node &left, Node &right) : left(left), right(right)
 {
@@ -62,22 +64,70 @@ Printer::addHeader(Header header)
     headers.emplace_back(std::move(header));
 }
 
+static std::vector<std::string>
+treePrint(Node &root)
+{
+    std::vector<std::string> lines;
+
+    int line = 0, col = 1;
+    std::function<void(Node &)> visit = [&](Node &node) {
+        if (node.next != nullptr) {
+            return visit(*node.next);
+        }
+
+        if (node.line != 0 && node.col != 0) {
+            if (node.line > line) {
+                lines.insert(lines.cend(), node.line - line, empty);
+                line = node.line;
+                col = 1;
+            }
+
+            if (node.col > col) {
+                lines.back().append(node.col - col, ' ');
+                col = node.col;
+            }
+
+            std::vector<std::string> spell = split(node.spelling, '\n');
+            col += spell.front().size();
+            lines.back() += std::move(spell.front());
+
+            for (std::size_t i = 1U; i < spell.size(); ++i) {
+                ++line;
+                col = 1 + spell[i].size();
+                lines.emplace_back(std::move(spell[i]));
+            }
+        }
+
+        for (Node *child : node.children) {
+            visit(*child);
+        }
+    };
+    visit(root);
+
+    return lines;
+}
+
 void
 Printer::print(TimeReport &tr)
 {
     using namespace decor::literals;
 
-    static std::string empty;
-
     auto diffingTimer = tr.measure("printing");
 
+    // Do comparison without highlighting as it skews alignment results.
+    std::vector<std::string> lp = (tr.measure("left-print"),
+                                   treePrint(left));
+    std::vector<std::string> rp = (tr.measure("right-print"),
+                                   treePrint(right));
+    std::vector<DiffLine> diff = (tr.measure("compare"),
+                                  dtlCompare(std::move(lp), std::move(rp)));
+
+    // TODO: don't highlight lines that won't be displayed (it takes extra
+    //       time).
     std::vector<std::string> l = (tr.measure("left-highlight"),
                                   split(printSource(left, true), '\n'));
     std::vector<std::string> r = (tr.measure("right-highlight"),
                                   split(printSource(right, false), '\n'));
-
-    // TODO: need to do comparison without highlighting or it skews results
-    std::vector<DiffLine> diff = (tr.measure("compare"), dtlCompare(l, r));
 
     auto timer = tr.measure("printing");
 
@@ -261,20 +311,20 @@ countWidth(int n)
 }
 
 static std::vector<DiffLine>
-dtlCompare(const std::vector<std::string> &l, const std::vector<std::string> &r)
+dtlCompare(std::vector<std::string> &&l, std::vector<std::string> &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
-    std::vector<DiceString> leftTrimmed;
-    leftTrimmed.reserve(l.size());
+    std::vector<DiceString> lt;
+    lt.reserve(l.size());
     for (const auto &s : l) {
-        leftTrimmed.emplace_back(s);
+        lt.emplace_back(std::move(s));
     }
 
-    std::vector<DiceString> rightTrimmed;
-    rightTrimmed.reserve(r.size());
+    std::vector<DiceString> rt;
+    rt.reserve(r.size());
     for (const auto &s : r) {
-        rightTrimmed.emplace_back(s);
+        rt.emplace_back(std::move(s));
     }
 
     auto cmp = [](DiceString &a, DiceString &b) {
@@ -282,7 +332,7 @@ dtlCompare(const std::vector<std::string> &l, const std::vector<std::string> &r)
     };
 
     dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)>
-        diff(leftTrimmed, rightTrimmed, cmp);
+        diff(lt, rt, cmp);
     diff.compose();
 
     size_type identicalLines = 0U;
@@ -306,7 +356,7 @@ dtlCompare(const std::vector<std::string> &l, const std::vector<std::string> &r)
     };
 
     auto handleSameLines = [&](size_type i, size_type j) {
-        if (l[i] == r[j]) {
+        if (lt[i].str() == rt[j].str()) {
             ++identicalLines;
             diffSeq.emplace_back(Diff::Identical);
         } else {
