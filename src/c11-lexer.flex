@@ -14,9 +14,14 @@ std::size_t yyoffset;
 std::size_t yylineoffset;
 std::size_t yyline;
 std::size_t yycolumn;
+const char *yybegin;
+const char *yyend;
 
 static YYSTYPE startTok;
 static YYLTYPE startLoc;
+
+#define YY_INPUT(buf, result, maxSize) \
+    do { (result) = yyinput((buf), (maxSize)); } while (false)
 
 #define YY_USER_ACTION \
     yylval.text = { yyoffset, yyleng, 0U, 0U, 0 }; \
@@ -42,6 +47,7 @@ static YYLTYPE startLoc;
 
 void yyerror(const char s[], int exactColumn);
 
+static std::size_t yyinput(char buf[], std::size_t maxSize);
 static void reportError();
 
 %}
@@ -426,6 +432,29 @@ NL                      \n|\r|\r\n
 . { reportError(); }
 
 %%
+
+static std::size_t
+yyinput(char buf[], std::size_t maxSize)
+{
+    static const char *const trailing = "\n";
+
+    if (yybegin == nullptr) {
+        return 0U;
+    }
+
+    const std::size_t count = std::min<std::size_t>(yyend - yybegin, maxSize);
+    char *end = std::copy_n(yybegin, count, buf);
+    const std::size_t copied = end - buf;
+
+    if (yybegin[copied] == '\0') {
+        yybegin = (yybegin == trailing ? nullptr : trailing);
+        yyend = (yybegin == nullptr ? nullptr : yybegin + strlen(yybegin));
+    } else {
+        yybegin += copied;
+    }
+
+    return copied;
+}
 
 static void
 reportError()

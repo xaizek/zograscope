@@ -1562,14 +1562,10 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
 
     hitError = false;
 
-    // FIXME: avoid extra copying by redefining YY_INPUT for the lexer.
-    std::string buf;
-    buf.reserve(contents.size() + 3U);
-    buf += contents;
-    buf += '\n';
-    buf += '\0';
-    buf += '\0';
-    yy_scan_buffer(&buf[0], buf.size());
+    extern const char *yybegin;
+    extern const char *yyend;
+    yybegin = contents.data();
+    yyend = yybegin + contents.size();
 
     // parse through the input until there is no more:
     const bool failed = (yyparse() != 0);
