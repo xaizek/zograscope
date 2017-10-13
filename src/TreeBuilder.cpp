@@ -69,8 +69,6 @@ operator<<(std::ostream &os, SType stype)
     return (os << "<UNKNOWN>");
 }
 
-// TODO: try contracting in TreeBuilder as well (this way we won't even
-//       create extra node)
 PNode *
 PNode::contract(PNode *node)
 {
@@ -110,6 +108,13 @@ TreeBuilder::addNode(std::vector<PNode *> children, SType stype)
     for (unsigned int i = children.size(); i != 0U; --i) {
         movePostponed(children[i - 1U], children, children.cbegin() + (i - 1U));
     }
+
+    // Contract nodes here to avoid creating node that will be thrown away later
+    // in PNode.
+    if (stype == SType::None && children.size() == 1U) {
+        return PNode::contract(children[0]);
+    }
+
     nodes.emplace_back(std::move(children), stype);
     return &nodes.back();
 }

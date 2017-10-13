@@ -411,25 +411,15 @@ relational_expression
 equality_expression
     : relational_expression
     | equality_expression EQ_OP relational_expression
-    { if ($1->children.size() == 1U) {
-          $$ = tb->addNode({ $1,
-                             tb->addNode($2, @2, SType::Separator),
-                             tb->addNode($3, @3) },
-                           SType::ComparisonExpr);
-      } else {
-          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                                tb->addNode($3, @3) });
-      } }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3) },
+                       SType::ComparisonExpr); }
     | equality_expression NE_OP relational_expression
-    { if ($1->children.size() == 1U) {
-          $$ = tb->addNode({ $1,
-                             tb->addNode($2, @2, SType::Separator),
-                             tb->addNode($3, @3) },
-                           SType::ComparisonExpr);
-      } else {
-          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                                tb->addNode($3, @3) });
-      } }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3) },
+                       SType::ComparisonExpr); }
     ;
 
 /* (6.5.10) AND-expression: */
