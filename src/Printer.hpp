@@ -28,6 +28,4 @@ private:
     std::vector<Header> headers;
 };
 
-std::string printSource(Node &root, bool original = true);
-
 #endif // PRINTER_HPP__

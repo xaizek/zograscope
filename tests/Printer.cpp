@@ -1,6 +1,7 @@
 #include "Catch/catch.hpp"
 
 #include <iostream>
+#include <string>
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -13,18 +14,6 @@
 #include "tests.hpp"
 
 static std::string normalizeText(const std::string &s);
-
-TEST_CASE("Multiline tokens don't mess up positioning", "[printer]")
-{
-    std::string input = R"(
-        /* line1
-         * line2 */  /* this */)";
-
-    Tree tree = makeTree(input);
-
-    std::string output = printSource(*tree.getRoot());
-    CHECK(split(output, '\n') == split(input, '\n'));
-}
 
 TEST_CASE("Comment contents is compared", "[printer]")
 {

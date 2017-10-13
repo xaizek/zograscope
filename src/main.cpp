@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "Highlighter.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
@@ -148,7 +149,7 @@ run(const Args &args, TimeReport &tr)
     if (args.highlightMode) {
         dumpTrees();
         if (!args.dryRun) {
-            std::cout << printSource(*treeA.getRoot()) << '\n';
+            std::cout << Highlighter().print(*treeA.getRoot()) << '\n';
         }
         return EXIT_SUCCESS;
     }
