@@ -291,6 +291,12 @@ TEST_CASE("All forms of struct/union declarations are recognized", "[parser]")
     CHECK_FALSE(parse("union name;").hasFailed());
 }
 
+TEST_CASE("Parameter declaration can be followed by a macro",
+          "[parser][extensions]")
+{
+    CHECK_FALSE(parse("void f(char *name attr);").hasFailed());
+}
+
 static int
 countNodes(const Node &root)
 {

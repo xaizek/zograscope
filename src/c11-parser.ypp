@@ -1005,7 +1005,7 @@ parameter_list
 /*     declaration-specifiers declarator */
 /*     declaration-specifiers abstract-declaratoropt */
 parameter_declaration
-    : declaration_specifiers declarator           %dprec 3
+    : declaration_specifiers declarator           %dprec 4
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::Parameter); }
     | declaration_specifiers abstract_declarator  %dprec 2
@@ -1013,6 +1013,12 @@ parameter_declaration
                        SType::Parameter); }
     | declaration_specifiers                      %dprec 1
     { $$ = tb->addNode($1, @1, SType::Parameter); }
+    /* This is an extension to allow attributes behind macros after
+       parameters. */
+    | declaration_specifiers declarator ID        %dprec 3
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3) },
+                       SType::Parameter); }
     ;
 
 /* (6.7.6) identifier-list: */
