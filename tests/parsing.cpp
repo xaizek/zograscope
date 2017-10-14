@@ -273,6 +273,14 @@ TEST_CASE("Single comment adds just one node to the tree",
           countNodes(*withoutComment.getRoot()) + 2);
 }
 
+TEST_CASE("Floating point suffix isn't parsed standalone", "[parser]")
+{
+    CHECK_FALSE(parse("float a = p+0;").hasFailed());
+    CHECK_FALSE(parse("float a = p+0.5;").hasFailed());
+    CHECK_FALSE(parse("double a = p+0;").hasFailed());
+    CHECK_FALSE(parse("double a = p-0.1;").hasFailed());
+}
+
 static int
 countNodes(const Node &root)
 {

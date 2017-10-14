@@ -148,11 +148,9 @@ FRACCONST               {DSEQ}?\.{DSEQ}|{DSEQ}\.
  /*     0x 0X */
 HPREFIX                 0[xX]
  /* (6.4.4.2) hexadecimal-floating-constant: */
- /*     hexadecimal-prefix hexadecimal-fractional-constant */
- /*     binary-exponent-part floating-suffixopt */
- /*     hexadecimal-prefix hexadecimal-digit-sequence */
- /*     binary-exponent-part floating-suffixopt */
-HFCONST                 {HPREFIX}{HFRAC}|{BEXP}{FSUFFIX}?|{HPREFIX}{HSEQ}|{BEXP}{FSUFFIX}?
+ /*     hexadecimal-prefix hexadecimal-fractional-constant binary-exponent-part floating-suffixopt */
+ /*     hexadecimal-prefix hexadecimal-digit-sequence binary-exponent-part floating-suffixopt */
+HFCONST                 {HPREFIX}{HFRAC}{BEXP}{FSUFFIX}?|{HPREFIX}{HSEQ}{BEXP}{FSUFFIX}?
  /* (6.4.4.1) unsigned-suffix: one of */
  /*     u U */
 USUFFIX                 [uU]
