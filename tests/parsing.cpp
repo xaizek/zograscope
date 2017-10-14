@@ -297,6 +297,12 @@ TEST_CASE("Parameter declaration can be followed by a macro",
     CHECK_FALSE(parse("void f(char *name attr);").hasFailed());
 }
 
+TEST_CASE("Function pointer can have its type modifiers",
+          "[parser][conflicts]")
+{
+    CHECK_FALSE(parse("int a = (LONG (WINAPI *)(HKEY))GPA();").hasFailed());
+}
+
 static int
 countNodes(const Node &root)
 {
