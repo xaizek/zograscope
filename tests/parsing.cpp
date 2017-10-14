@@ -281,6 +281,16 @@ TEST_CASE("Floating point suffix isn't parsed standalone", "[parser]")
     CHECK_FALSE(parse("double a = p-0.1;").hasFailed());
 }
 
+TEST_CASE("All forms of struct/union declarations are recognized", "[parser]")
+{
+    CHECK_FALSE(parse("struct { };").hasFailed());
+    CHECK_FALSE(parse("struct name { };").hasFailed());
+    CHECK_FALSE(parse("struct name;").hasFailed());
+    CHECK_FALSE(parse("union { };").hasFailed());
+    CHECK_FALSE(parse("union name { };").hasFailed());
+    CHECK_FALSE(parse("union name;").hasFailed());
+}
+
 static int
 countNodes(const Node &root)
 {

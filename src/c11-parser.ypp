@@ -677,6 +677,18 @@ struct_or_union_specifier
                        SType::Declaration); }
     | struct_or_union ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    /* These are extensions to allow structs and unions without members. */
+    | struct_or_union ID '{' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::Declaration); }
+    | struct_or_union '{' '}'
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::Declaration); }
     ;
 
 /* (6.7.2.1) struct-or-union: */
