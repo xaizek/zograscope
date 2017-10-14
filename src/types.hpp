@@ -10,7 +10,7 @@ enum class Type
     // FUNCTION
     Functions,
 
-    // TYPE
+    // TYPENAME
     UserTypes,
 
     // ID
