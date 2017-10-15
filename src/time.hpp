@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
