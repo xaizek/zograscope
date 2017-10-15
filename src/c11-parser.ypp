@@ -922,7 +922,11 @@ direct_declarator
     | direct_declarator '(' ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
-    /* This is an extension to allow macros and attributes. */
+    /* These are extensions to allow macros and attributes. */
+    | '(' ID pointer declarator ')' %dprec 2
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4),
+                         tb->addNode($5, @5) }); }
     | direct_declarator '(' parameter_type_list ')' macro_invocation %dprec 4
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),

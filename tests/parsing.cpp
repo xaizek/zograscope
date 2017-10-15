@@ -298,9 +298,10 @@ TEST_CASE("Parameter declaration can be followed by a macro",
 }
 
 TEST_CASE("Function pointer can have its type modifiers",
-          "[parser][conflicts]")
+          "[parser][conflicts][extensions]")
 {
     CHECK_FALSE(parse("int a = (LONG (WINAPI *)(HKEY))GPA();").hasFailed());
+    CHECK_FALSE(parse("void (_cdecl *fptr)();").hasFailed());
 }
 
 static int
