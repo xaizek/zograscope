@@ -314,6 +314,21 @@ TEST_CASE("Single argument in parameter list is recognized as type",
     CHECK(findNode(tree, Type::UserTypes, "C") != nullptr);
 }
 
+TEST_CASE("Function name token is identified when followed with whitespace",
+          "[parser]")
+{
+    Tree tree;
+
+    tree = makeTree("void f();");
+    CHECK(findNode(tree, Type::Functions, "f") != nullptr);
+
+    tree = makeTree("void f ();");
+    CHECK(findNode(tree, Type::Functions, "f") != nullptr);
+
+    tree = makeTree("void f\n();");
+    CHECK(findNode(tree, Type::Functions, "f") != nullptr);
+}
+
 static int
 countNodes(const Node &root)
 {

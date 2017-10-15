@@ -283,7 +283,7 @@ NL                      \n|\r|\r\n
     return ID;
 }
 
-{ID}"("    {
+{ID}[[:space:]]*"(" {
     BEGIN(beforeparen);
     yyoffset -= yyleng;
     yycolumn -= yyleng;
