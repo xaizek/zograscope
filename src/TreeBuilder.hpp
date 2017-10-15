@@ -106,7 +106,7 @@ struct PNode
         return value.from == 0U && value.len == 0U && stype == SType::None;
     }
 
-    Text value = { };
+    Text value = { 0U, 0U, 0U, 0U, 0 };
     std::vector<PNode *> children;
     int line = 0, col = 0;
     bool postponed = false;
