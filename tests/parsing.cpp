@@ -329,6 +329,21 @@ TEST_CASE("Function name token is identified when followed with whitespace",
     CHECK(findNode(tree, Type::Functions, "f") != nullptr);
 }
 
+TEST_CASE("Control-flow madcros are allowed", "[parser][extensions]")
+{
+    const char *const str = R"(
+        int f() {
+            MACRO(arg) {
+            }
+
+            MACRO(arg)
+                if (cond) action;
+        }
+    )";
+
+    CHECK_FALSE(parse(str).hasFailed());
+}
+
 static int
 countNodes(const Node &root)
 {

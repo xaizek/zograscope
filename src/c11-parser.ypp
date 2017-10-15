@@ -1307,8 +1307,12 @@ block_item_list
 /*     declaration */
 /*     statement */
 block_item
-    : declaration  %merge <decStmtMerge>
-    | statement    %merge <decStmtMerge>
+    : declaration  %merge <decStmtMerge>  %dprec 2
+    | statement    %merge <decStmtMerge>  %dprec 2
+    /* This is an extension to allow macros that define control-flow
+       statements. */
+    | macro_invocation statement          %dprec 1
+    { $$ = tb->addNode({ $1, $2 }, SType::Statements); }
     ;
 
 /* (6.8.3) expression-statement: */
