@@ -39,11 +39,36 @@ struct Args
     bool gitDiff;
 };
 
-static boost::optional<Args> parseArgs(const std::vector<std::string> &argv);
+template <typename T>
+class MoveOnCopy
+{
+public:
+    MoveOnCopy(T &&movable) : movable(std::move(movable))
+    {
+    }
+
+    MoveOnCopy(MoveOnCopy &rhs) : movable(std::move(rhs.movable))
+    {
+    }
+
+public:
+    operator T&&() const
+    {
+        return std::move(movable);
+    }
+
+private:
+    mutable T movable;
+};
+
+template <typename T>
+using optional_t = boost::optional<MoveOnCopy<T>>;
+
+static optional_t<Args> parseArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
 static po::variables_map parseOptions(const std::vector<std::string> &args);
-static boost::optional<Tree> buildTreeFromFile(const std::string &path,
-                                               const Args &args);
+static optional_t<Tree> buildTreeFromFile(const std::string &path,
+                                          const Args &args);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -90,7 +115,7 @@ int
 main(int argc, char *argv[]) try
 {
     Args args;
-    if (boost::optional<Args> a = parseArgs({ argv + 1, argv + argc })) {
+    if (optional_t<Args> &&a = parseArgs({ argv + 1, argv + argc })) {
         args = *a;
     } else {
         return EXIT_FAILURE;
@@ -139,9 +164,9 @@ run(const Args &args, TimeReport &tr)
     };
 
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
-    if (boost::optional<Tree> tree = (tr.measure("parsing1"),
-                                      buildTreeFromFile(oldFile, args))) {
-        treeA = std::move(*tree);
+    if (optional_t<Tree> &&tree = (tr.measure("parsing1"),
+                                   buildTreeFromFile(oldFile, args))) {
+        treeA = *tree;
     } else {
         return EXIT_FAILURE;
     }
@@ -155,9 +180,9 @@ run(const Args &args, TimeReport &tr)
     }
 
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
-    if (boost::optional<Tree> tree = (tr.measure("parsing2"),
-                                      buildTreeFromFile(newFile, args))) {
-        treeB = std::move(*tree);
+    if (optional_t<Tree> &&tree = (tr.measure("parsing2"),
+                                   buildTreeFromFile(newFile, args))) {
+        treeB = *tree;
     } else {
         return EXIT_FAILURE;
     }
@@ -190,7 +215,7 @@ run(const Args &args, TimeReport &tr)
     return EXIT_SUCCESS;
 }
 
-static boost::optional<Args>
+static optional_t<Args>
 parseArgs(const std::vector<std::string> &argv)
 {
     po::variables_map varMap;
@@ -221,7 +246,7 @@ parseArgs(const std::vector<std::string> &argv)
     args.noRefine = varMap.count("no-refine");
     args.gitDiff = (args.pos.size() == 7U);
 
-    return args;
+    return optional_t<Args>(std::move(args));
 }
 
 /**
@@ -281,7 +306,7 @@ parseOptions(const std::vector<std::string> &args)
  *
  * @returns Tree on success or empty optional on error.
  */
-static boost::optional<Tree>
+static optional_t<Tree>
 buildTreeFromFile(const std::string &path, const Args &args)
 {
     const std::string contents = readFile(path);
@@ -300,5 +325,5 @@ buildTreeFromFile(const std::string &path, const Args &args)
         t = Tree(contents, stree.getRoot());
     }
 
-    return t;
+    return optional_t<Tree>(std::move(t));
 }
