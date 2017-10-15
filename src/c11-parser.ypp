@@ -1531,7 +1531,7 @@ function_header
     /* : declaration_specifiers declarator declaration_list */
     /* { $$ = tb->addNode({ tb->addNode($2, @2), tb->addNode($3, @3), */
     /*                      tb->addNode($4, @4) }); } */
-    : declaration_specifiers declarator %dprec 1
+    : declaration_specifiers declarator %dprec 1 %merge <takeFirst>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::TemporaryContainer); }
     /* This is an extension to allow function headers to be defined by a

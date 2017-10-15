@@ -304,6 +304,16 @@ TEST_CASE("Function pointer can have its type modifiers",
     CHECK_FALSE(parse("void (_cdecl *fptr)();").hasFailed());
 }
 
+TEST_CASE("Single argument in parameter list is recognized as type",
+          "[parser][conflicts][extensions]")
+{
+    // This should be a macro, because parameters must be named, but that's not
+    // that important.
+    Tree tree = makeTree("void f(C) { }");
+    CHECK(findNode(tree, Type::Functions, "f") != nullptr);
+    CHECK(findNode(tree, Type::UserTypes, "C") != nullptr);
+}
+
 static int
 countNodes(const Node &root)
 {
