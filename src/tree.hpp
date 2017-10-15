@@ -36,6 +36,12 @@ struct Node
     bool moved = false;
     bool last = false;
 
+    Node() = default;
+    Node(const Node &rhs) = delete;
+    Node(Node &&rhs) = default;
+    Node & operator=(const Node &rhs) = delete;
+    Node & operator=(Node &&rhs) = default;
+
     bool hasValue() const
     {
         return (valueChild >= 0);
@@ -56,8 +62,13 @@ class Tree
 {
 public:
     Tree() = default;
+    Tree(const Tree &rhs) = delete;
+    Tree(Tree &&rhs) = default;
     Tree(const std::string &contents, const PNode *node);
     Tree(const std::string &contents, const SNode *node);
+
+    Tree & operator=(const Tree &rhs) = delete;
+    Tree & operator=(Tree &&rhs) = default;
 
 public:
     Node * getRoot()
