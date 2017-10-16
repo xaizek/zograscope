@@ -112,31 +112,45 @@ readFile(const std::string &path)
 }
 
 int
-main(int argc, char *argv[]) try
+main(int argc, char *argv[])
 {
     Args args;
-    if (optional_t<Args> &&a = parseArgs({ argv + 1, argv + argc })) {
-        args = *a;
-    } else {
-        return EXIT_FAILURE;
+    int result;
+
+    try {
+        if (optional_t<Args> &&a = parseArgs({ argv + 1, argv + argc })) {
+            args = *a;
+        } else {
+            return EXIT_FAILURE;
+        }
+
+        RedirectToPager redirectToPager;
+        TimeReport tr;
+
+        result = run(args, tr);
+
+        if (args.timeReport) {
+            tr.stop();
+            std::cout << tr;
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "ERROR: " << e.what() << '\n';
+        result = EXIT_FAILURE;
     }
 
-    RedirectToPager redirectToPager;
-    TimeReport tr;
-
-    const int result = run(args, tr);
-
-    if (args.timeReport) {
-        tr.stop();
-        std::cout << tr;
+    if (result != EXIT_SUCCESS && args.gitDiff) {
+        if (args.pos[5] == std::string(40U, '0')) {
+            execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
+                "--", args.pos[0].c_str(), static_cast<char *>(nullptr));
+            exit(127);
+        }
+        execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
+            args.pos[5].c_str(), "--", args.pos[0].c_str(),
+            static_cast<char *>(nullptr));
+        exit(127);
     }
 
     return result;
-}
-catch (const std::exception &e)
-{
-    std::cerr << "ERROR: " << e.what() << '\n';
-    return EXIT_FAILURE;
 }
 
 static int
