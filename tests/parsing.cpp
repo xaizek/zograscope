@@ -345,7 +345,7 @@ TEST_CASE("Function name token is identified when followed with whitespace",
     CHECK(findNode(tree, Type::Functions, "f") != nullptr);
 }
 
-TEST_CASE("Control-flow madcros are allowed", "[parser][extensions]")
+TEST_CASE("Control-flow macros are allowed", "[parser][extensions]")
 {
     const char *const str = R"(
         int f() {
@@ -354,6 +354,17 @@ TEST_CASE("Control-flow madcros are allowed", "[parser][extensions]")
 
             MACRO(arg)
                 if (cond) action;
+
+            switch (c){
+                case 'P':
+                    MACRO(arg)
+                        if (cond)
+                            break;
+            }
+
+            if (cond)
+                MACRO(arg)
+                    stmt;
         }
     )";
 

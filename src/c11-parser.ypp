@@ -110,7 +110,7 @@ extern TreeBuilder *tb;
 %type <node> unary_expression cast_expression unary_operator initializer_element
 %type <node> multiplicative_expression additive_expression shift_expression
 %type <node> relational_expression equality_expression AND_expression
-%type <node> exclusive_OR_expression inclusive_OR_expression
+%type <node> exclusive_OR_expression inclusive_OR_expression ext_statement
 %type <node> logical_AND_expression logical_OR_expression conditional_expression
 %type <node> assignment_operator constant_expression init_declarator_list
 %type <node> declaration static_assert_declaration declaration_specifiers
@@ -1265,18 +1265,18 @@ statement
     { $$ = tb->addNode({ $1 }, SType::Statements); }
     ;
 
-/* (6.8.1) labeled-statement: */
+/* (6.8.1) labeled-statement (CHANGED): */
 /*     identifier : statement */
 /*     case constant-expression : statement */
 /*     default : statement */
 labeled_statement
-    : ID ':' statement
+    : ID ':' ext_statement                        %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
-    | CASE constant_expression ':' statement
+    | CASE constant_expression ':' ext_statement  %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
-    | DEFAULT ':' statement
+    | DEFAULT ':' ext_statement                   %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     ;
@@ -1317,6 +1317,12 @@ block_item
     { $$ = tb->addNode({ $1, $2 }, SType::Statements); }
     ;
 
+ext_statement
+    : macro_invocation statement          %dprec 1
+    { $$ = tb->addNode({ $1, $2 }, SType::Statements); }
+    | statement                           %dprec 2
+    ;
+
 /* (6.8.3) expression-statement: */
 /*     expressionopt ; */
 expression_statement
@@ -1327,19 +1333,19 @@ expression_statement
                        SType::ExprStatement); }
     ;
 
-/* (6.8.4) selection-statement: */
+/* (6.8.4) selection-statement (CHANGED): */
 /*     if ( expression ) statement */
 /*     if ( expression ) statement else statement */
 /*     switch ( expression ) statement */
 selection_statement
-    : IF '(' expression ')' statement %prec "then"
+    : IF '(' expression ')' ext_statement %prec "then"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3, SType::IfExpr),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5, SType::IfThen) },
                        SType::IfStmt); }
-    | IF '(' expression ')' statement ELSE statement
+    | IF '(' expression ')' ext_statement ELSE ext_statement
     { auto ifElse = tb->addNode({ tb->addNode($6, @6, SType::Separator),
                                   tb->addNode($7, @7) },
                                 SType::IfElse);
@@ -1350,20 +1356,20 @@ selection_statement
                          tb->addNode($5, @5, SType::IfThen),
                          ifElse },
                        SType::IfStmt); }
-    | SWITCH '(' expression ')' statement
+    | SWITCH '(' expression ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) },
                        SType::SwitchStmt); }
     ;
 
-/* (6.8.5) iteration-statement: */
+/* (6.8.5) iteration-statement (CHANGED): */
 /*     while ( expression ) statement */
 /*     do statement while ( expression ) ; */
 /*     for ( expressionopt ; expressionopt ; expressionopt ) statement */
 /*     for ( declaration expressionopt ; expressionopt ) statement */
 iteration_statement
-    : WHILE '(' expression ')' statement
+    : WHILE '(' expression ')' ext_statement
     { auto whileCond = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                      tb->addNode($2, @2, SType::Separator),
                                      tb->addNode($3, @3, SType::Expression),
@@ -1371,12 +1377,12 @@ iteration_statement
                                    SType::WhileCond);
       auto whileThen = tb->addNode($5, @5);
       $$ = tb->addNode({ whileCond, whileThen }, SType::WhileStmt); }
-    | DO statement WHILE '(' expression ')' ';'
+    | DO ext_statement WHILE '(' expression ')' ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
-    | FOR '(' expression ';' expression ';' expression ')' statement
+    | FOR '(' expression ';' expression ';' expression ')' ext_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
                                    tb->addNode($3, @3, SType::Expression),
@@ -1387,56 +1393,56 @@ iteration_statement
                                    tb->addNode($8, @8, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($9, @9) }, SType::ForStmt); }
-    | FOR '(' expression ';' expression ';' ')' statement
+    | FOR '(' expression ';' expression ';' ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
-    | FOR '(' expression ';' ';' expression ')' statement
+    | FOR '(' expression ';' ';' expression ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
-    | FOR '(' ';' expression ';' expression ')' statement
+    | FOR '(' ';' expression ';' expression ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
-    | FOR '(' ';' ';' expression ')' statement
+    | FOR '(' ';' ';' expression ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
-    | FOR '(' expression ';' ';' ')' statement
+    | FOR '(' expression ';' ';' ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
-    | FOR '(' ';' expression ';' ')' statement
+    | FOR '(' ';' expression ';' ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
-    | FOR '(' ';' ';' ')' statement
+    | FOR '(' ';' ';' ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
-    | FOR '(' declaration expression ';' expression ')' statement
+    | FOR '(' declaration expression ';' expression ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7), tb->addNode($8, @8) }); }
-    | FOR '(' declaration expression ';' ')' statement
+    | FOR '(' declaration expression ';' ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
-    | FOR '(' declaration ';' expression ')' statement
+    | FOR '(' declaration ';' expression ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6),
                          tb->addNode($7, @7) }); }
-    | FOR '(' declaration ';' ')' statement
+    | FOR '(' declaration ';' ')' ext_statement
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
