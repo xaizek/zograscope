@@ -540,7 +540,7 @@ declaration
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
                          tb->addNode($2, @2, SType::Separator) },
                        SType::Declaration); }
-    | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <takeSecond>
+    | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <takeFirst>
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
                          $2,
                          tb->addNode($3, @3, SType::Separator) },
@@ -923,9 +923,11 @@ direct_declarator
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
     /* These are extensions to allow macros and attributes. */
-    | '(' ID pointer declarator ')' %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
+    | '(' ID '*' declarator ')' %dprec 1 %merge <takeSecond>
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, TYPENAME),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4),
                          tb->addNode($5, @5) }); }
     | direct_declarator '(' parameter_type_list ')' macro_invocation %dprec 4
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
@@ -1009,7 +1011,7 @@ parameter_list
 /*     declaration-specifiers declarator */
 /*     declaration-specifiers abstract-declaratoropt */
 parameter_declaration
-    : declaration_specifiers declarator           %dprec 4
+    : declaration_specifiers declarator           %dprec 4    %merge <takeSecond>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::Parameter); }
     | declaration_specifiers abstract_declarator  %dprec 2
@@ -1019,7 +1021,7 @@ parameter_declaration
     { $$ = tb->addNode($1, @1, SType::Parameter); }
     /* This is an extension to allow attributes behind macros after
        parameters. */
-    | declaration_specifiers declarator ID        %dprec 3
+    | declaration_specifiers declarator ID        %dprec 3    %merge <takeSecond>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) },
                        SType::Parameter); }

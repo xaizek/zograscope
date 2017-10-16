@@ -314,6 +314,22 @@ TEST_CASE("Single argument in parameter list is recognized as type",
     CHECK(findNode(tree, Type::UserTypes, "C") != nullptr);
 }
 
+TEST_CASE("Single argument function declarations", "[parser][extensions]")
+{
+    Tree tree;
+
+    tree = makeTree("void func(type **arg);");
+    CHECK(findNode(tree, Type::Functions, "func") != nullptr);
+    CHECK(findNode(tree, Type::UserTypes, "type") != nullptr);
+    CHECK(findNode(tree, Type::Identifiers, "arg") != nullptr);
+
+    tree = makeTree("void func(const type *arg UNUSED);");
+    CHECK(findNode(tree, Type::Functions, "func") != nullptr);
+    CHECK(findNode(tree, Type::UserTypes, "type") != nullptr);
+    CHECK(findNode(tree, Type::Identifiers, "arg") != nullptr);
+    CHECK(findNode(tree, Type::Identifiers, "UNUSED") != nullptr);
+}
+
 TEST_CASE("Function name token is identified when followed with whitespace",
           "[parser]")
 {
