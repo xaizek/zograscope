@@ -15,6 +15,43 @@
 
 static std::string normalizeText(const std::string &s);
 
+TEST_CASE("Width of titles is considered on determining width", "[printer]")
+{
+    Tree oldTree = makeTree("");
+    Tree newTree = makeTree("");
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot());
+    std::string expected;
+
+    SECTION("e1/e2")
+    {
+        printer.addHeader({ "e1", "e2" });
+        expected = normalizeText(R"(
+            ~~~~~~~!~~~~~~~
+             -  e1 !  +  e2
+            ~~~~~~~!~~~~~~~
+        )");
+    }
+
+    SECTION("left/right")
+    {
+        printer.addHeader({ "left", "right" });
+        expected = normalizeText(R"(
+            ~~~~~~~~~!~~~~~~~~~~
+             -  left !  +  right
+            ~~~~~~~~~!~~~~~~~~~~
+        )");
+    }
+
+    StreamCapture coutCapture(std::cout);
+    printer.print(tr);
+
+    REQUIRE(normalizeText(coutCapture.get()) == expected);
+}
+
 TEST_CASE("Comment contents is compared", "[printer]")
 {
     Tree oldTree = makeTree("// This is that comment.\n");

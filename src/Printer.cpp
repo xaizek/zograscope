@@ -130,6 +130,11 @@ Printer::print(TimeReport &tr)
     unsigned int maxRightWidth = 0U;
     std::vector<unsigned int> leftWidths;
 
+    for (const Header &hdr : headers) {
+        maxLeftWidth = std::max<unsigned int>(hdr.left.size(), maxLeftWidth);
+        maxRightWidth = std::max<unsigned int>(hdr.right.size(), maxRightWidth);
+    }
+
     unsigned int maxLeftNum = 0U, maxRightNum = 0U;
 
     unsigned int i = 0U, j = 0U;
@@ -191,13 +196,13 @@ Printer::print(TimeReport &tr)
     std::string leftMarker = ' ' + std::string(lWidth - 1, '-') + "  ";
     std::string rightMarker = ' ' + std::string(rWidth - 1, '+') + "  ";
     for (const Header &hdr : headers) {
-        const std::string left = leftMarker + hdr.left + ' ';
+        const std::string left = leftMarker + hdr.left;
         std::cout << (title << std::left
                             << std::setw(lWidth + 1 + 1 + maxLeftWidth)
                             << left
                             << " ! "
                             << std::setw(rWidth + 1 + 1 + maxRightWidth)
-                            << rightMarker + hdr.right + ' ')
+                            << rightMarker + hdr.right)
                   << '\n';
     }
 
