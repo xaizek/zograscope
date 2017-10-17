@@ -716,9 +716,10 @@ struct_declaration_list
 struct_declaration
     : specifier_qualifier_list struct_declarator_list ';' %dprec 2 %merge <takeFirst>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+                         tb->addNode($3, @3) }, SType::TemporaryContainer); }
     | specifier_qualifier_list ';'                        %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
     | static_assert_declaration
     { $$ = tb->addNode($1, @1); }
     ;

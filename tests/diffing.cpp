@@ -392,6 +392,20 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
             ;
         };
     )", false);
+
+    diffSources(R"(
+        struct S {
+            int
+                field1  /// Updates
+                ;
+        };
+    )", R"(
+        struct S {
+            int
+                field2  /// Updates
+                ;
+        };
+    )", true);
 }
 
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
