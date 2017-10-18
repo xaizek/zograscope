@@ -1545,6 +1545,19 @@ TEST_CASE("Parameter moves are detected", "[comparison][moves]")
     )", false);
 }
 
+TEST_CASE("Additive expression is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        int a = 101 +
+                202    /// Updates
+                ;
+    )", R"(
+        int a = 101 +
+                203    /// Updates
+                ;
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

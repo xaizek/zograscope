@@ -365,11 +365,26 @@ multiplicative_expression
 /*     additive-expression - multiplicative-expression */
 additive_expression
     : multiplicative_expression                         %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | additive_expression '+' multiplicative_expression %dprec 1
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { if ($1->children.size() <= 1U) {
+          $$ = tb->addNode({ $1,
+                             tb->addNode($2, @2, SType::Separator),
+                             tb->addNode($3, @3) },
+                           SType::AdditiveExpr);
+      } else {
+          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                                tb->addNode($3, @3) });
+      } }
     | additive_expression '-' multiplicative_expression %dprec 1
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { if ($1->children.size() <= 1U) {
+          $$ = tb->addNode({ $1,
+                             tb->addNode($2, @2, SType::Separator),
+                             tb->addNode($3, @3) },
+                           SType::AdditiveExpr);
+      } else {
+          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                                tb->addNode($3, @3) });
+      } }
     ;
 
 /* (6.5.7) shift-expression: */
