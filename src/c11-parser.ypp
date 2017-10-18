@@ -168,8 +168,10 @@ primary_expression
     : constant           { $$ = tb->addNode($1, @1); }
     | string_lit         { $$ = tb->addNode($1, @1); }
     | '(' expression ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::Expression); }
     | generic_selection  { $$ = tb->addNode($1, @1); }
     ;
 

@@ -1545,6 +1545,19 @@ TEST_CASE("Parameter moves are detected", "[comparison][moves]")
     )", false);
 }
 
+TEST_CASE("Parenthesised expression is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        int a = (
+                 1002  /// Updates
+                );
+    )", R"(
+        int a = (
+                 1001  /// Updates
+                );
+    )", true);
+}
+
 TEST_CASE("Additive expression is decomposed", "[comparison][parsing]")
 {
     diffSources(R"(
