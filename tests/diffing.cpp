@@ -1571,6 +1571,43 @@ TEST_CASE("Additive expression is decomposed", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("Assignments aren't equal to each other", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            var1
+            =        /// Updates
+            1; var2
+            /=       /// Updates
+            2; var3
+            %=       /// Updates
+            3; var4
+            <<=      /// Updates
+            4; var5
+            &=       /// Updates
+            5; var6
+            |=       /// Updates
+            6;
+        }
+    )", R"(
+        void f() {
+            var1
+            +=       /// Updates
+            1; var2
+            *=       /// Updates
+            2; var3
+            -=       /// Updates
+            3; var4
+            >>=      /// Updates
+            4; var5
+            |=       /// Updates
+            5; var6
+            ^=       /// Updates
+            6;
+        }
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
