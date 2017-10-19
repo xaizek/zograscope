@@ -1608,6 +1608,92 @@ TEST_CASE("Assignments aren't equal to each other", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("For loop is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            for (
+                 i = 0;
+                 i < 1000;
+                 ++i              /// Deletions
+            ) { doSomething(); }
+        }
+    )", R"(
+        void f() {
+            for (
+                 i = 0;
+                 i < 1000;
+            ) { doSomething(); }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            for (
+                 i = 0;
+                 i < 1000         /// Deletions
+                 ; ++i
+            ) { doSomething(); }
+        }
+    )", R"(
+        void f() {
+            for (
+                 i = 0;
+                 ;
+                 ++i
+            ) { doSomething(); }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            for (
+                 i = 0            /// Deletions
+                 ; i < 1000;
+                 ++i
+            ) { doSomething(); }
+        }
+    )", R"(
+        void f() {
+            for (
+                 ; i < 1000;
+                 ++i
+            ) { doSomething(); }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            for (
+                 i = 0            /// Moves
+                 ; ;
+            ) { doSomething(); }
+        }
+    )", R"(
+        void f() {
+            for (;
+                 i = 0            /// Moves
+                 ;
+            ) { doSomething(); }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            for (
+                 i = 0            /// Moves
+                 ; ;
+            ) { doSomething(); }
+        }
+    )", R"(
+        void f() {
+            for (; ;
+                 i = 0            /// Moves
+            ) { doSomething(); }
+        }
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
