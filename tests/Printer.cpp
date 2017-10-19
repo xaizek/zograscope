@@ -1,6 +1,7 @@
 #include "Catch/catch.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -23,7 +24,8 @@ TEST_CASE("Width of titles is considered on determining width", "[printer]")
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot());
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
     std::string expected;
 
     SECTION("e1/e2")
@@ -46,10 +48,9 @@ TEST_CASE("Width of titles is considered on determining width", "[printer]")
         )");
     }
 
-    StreamCapture coutCapture(std::cout);
     printer.print(tr);
 
-    REQUIRE(normalizeText(coutCapture.get()) == expected);
+    REQUIRE(normalizeText(oss.str()) == expected);
 }
 
 TEST_CASE("Comment contents is compared", "[printer]")
@@ -60,8 +61,8 @@ TEST_CASE("Comment contents is compared", "[printer]")
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot());
-    StreamCapture coutCapture(std::cout);
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -70,7 +71,7 @@ TEST_CASE("Comment contents is compared", "[printer]")
          1  // This is {-that-} comment. ~  1  // This is {+this+} comment.
     )");
 
-    REQUIRE(normalizeText(coutCapture.get()) == expected);
+    REQUIRE(normalizeText(oss.str()) == expected);
 }
 
 TEST_CASE("String literal contents is compared", "[printer]")
@@ -89,8 +90,8 @@ TEST_CASE("String literal contents is compared", "[printer]")
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot());
-    StreamCapture coutCapture(std::cout);
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -103,7 +104,7 @@ TEST_CASE("String literal contents is compared", "[printer]")
          4          string";              |  4          string";
     )");
 
-    REQUIRE(normalizeText(coutCapture.get()) == expected);
+    REQUIRE(normalizeText(oss.str()) == expected);
 }
 
 TEST_CASE("Comment contents is not marked as updated on move", "[printer]")
@@ -124,8 +125,8 @@ R"(void f() {
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot());
-    StreamCapture coutCapture(std::cout);
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -139,7 +140,7 @@ R"(void f() {
          3  }                          |  5  }
     )");
 
-    REQUIRE(normalizeText(coutCapture.get()) == expected);
+    REQUIRE(normalizeText(oss.str()) == expected);
 }
 
 static std::string

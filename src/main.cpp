@@ -214,7 +214,7 @@ run(const Args &args, TimeReport &tr)
 
     dumpTrees();
 
-    Printer printer(*T1, *T2);
+    Printer printer(*T1, *T2, std::cout);
     if (args.gitDiff) {
         printer.addHeader({ args.pos[3], args.pos[6] });
         printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });

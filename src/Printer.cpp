@@ -2,7 +2,7 @@
 
 #include <functional>
 #include <iomanip>
-#include <iostream>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -47,7 +47,8 @@ static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
 
-Printer::Printer(Node &left, Node &right) : left(left), right(right)
+Printer::Printer(Node &left, Node &right, std::ostream &os)
+    : left(left), right(right), os(os)
 {
 }
 
@@ -181,14 +182,14 @@ Printer::print(TimeReport &tr)
     auto title = 231_fg + decor::bold;
 
     auto separator = [&]() {
-        std::cout << std::setfill('~')
-                  << std::setw(lWidth + 1 + 1 + maxLeftWidth + 1)
-                  << (231_fg << "")
-                  << (decor::bold << '!')
-                  << std::setw(rWidth + 1 + 1 + maxRightWidth + 1)
-                  << (231_fg << "")
-                  << std::setfill(' ')
-                  << '\n';
+        os << std::setfill('~')
+           << std::setw(lWidth + 1 + 1 + maxLeftWidth + 1)
+           << (231_fg << "")
+           << (decor::bold << '!')
+           << std::setw(rWidth + 1 + 1 + maxRightWidth + 1)
+           << (231_fg << "")
+           << std::setfill(' ')
+           << '\n';
     };
 
     separator();
@@ -197,13 +198,13 @@ Printer::print(TimeReport &tr)
     std::string rightMarker = ' ' + std::string(rWidth - 1, '+') + "  ";
     for (const Header &hdr : headers) {
         const std::string left = leftMarker + hdr.left;
-        std::cout << (title << std::left
-                            << std::setw(lWidth + 1 + 1 + maxLeftWidth)
-                            << left
-                            << " ! "
-                            << std::setw(rWidth + 1 + 1 + maxRightWidth)
-                            << rightMarker + hdr.right)
-                  << '\n';
+        os << (title << std::left
+                     << std::setw(lWidth + 1 + 1 + maxLeftWidth)
+                     << left
+                     << " ! "
+                     << std::setw(rWidth + 1 + 1 + maxRightWidth)
+                     << rightMarker + hdr.right)
+           << '\n';
     }
 
     decor::Decoration lineNo = decor::white_bg + decor::black_fg;
@@ -248,11 +249,11 @@ Printer::print(TimeReport &tr)
                                  - msg.size()/2;
                     int rightFill = wholeWidth - (leftFill + msg.size());
 
-                    std::cout << std::right << std::setfill('.')
-                              << (251_fg << std::setw(leftFill) << "")
-                              << msg
-                              << (251_fg << std::setw(rightFill) << "")
-                              << '\n' << std::setfill(' ');
+                    os << std::right << std::setfill('.')
+                       << (251_fg << std::setw(leftFill) << "")
+                       << msg
+                       << (251_fg << std::setw(rightFill) << "")
+                       << '\n' << std::setfill(' ');
                 }
                 continue;
         }
@@ -261,28 +262,28 @@ Printer::print(TimeReport &tr)
         width = maxLeftWidth + (ll.size() - width);
 
         if (d.type != Diff::Right) {
-            std::cout << (lineNo << std::right << std::setw(lWidth) << i << ' ')
-                      << ' ' << std::left << std::setw(width) << ll;
+            os << (lineNo << std::right << std::setw(lWidth) << i << ' ')
+               << ' ' << std::left << std::setw(width) << ll;
         } else {
-            std::cout << (lineNo << std::right << std::setw(lWidth + 1)
-                                 << (noLineMarker(i) + ' '))
-                      << ' ' << std::left << std::setw(width)
-                      << (235_bg << ll);
+            os << (lineNo << std::right << std::setw(lWidth + 1)
+                          << (noLineMarker(i) + ' '))
+               << ' ' << std::left << std::setw(width)
+               << (235_bg << ll);
         }
 
-        std::cout << marker;
+        os << marker;
 
         if (d.type != Diff::Left) {
-            std::cout << (lineNo << std::right << std::setw(rWidth) << j << ' ')
-                      << ' ' << rl;
+            os << (lineNo << std::right << std::setw(rWidth) << j << ' ')
+               << ' ' << rl;
         } else {
-            std::cout << (lineNo << std::right << std::setw(rWidth + 1)
-                                 << (noLineMarker(j) + ' '))
-                      << ' ' << std::left << std::setw(maxRightWidth)
-                      << (235_bg << rl);
+            os << (lineNo << std::right << std::setw(rWidth + 1)
+                          << (noLineMarker(j) + ' '))
+               << ' ' << std::left << std::setw(maxRightWidth)
+               << (235_bg << rl);
         }
 
-        std::cout << '\n';
+        os << '\n';
     }
 }
 
