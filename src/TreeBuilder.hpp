@@ -24,6 +24,7 @@ enum class SType
     Macro,
     CompoundStatement,
     Separator,
+    Punctuation,
     Statements,
     Statement,
     ExprStatement,

@@ -1694,6 +1694,21 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            ++         /// Updates
+            variable;
+        }
+    )", R"(
+        void f() {
+            --         /// Updates
+            variable;
+        }
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

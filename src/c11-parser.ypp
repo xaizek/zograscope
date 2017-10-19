@@ -306,9 +306,13 @@ unary_expression
     : postfix_expression
     { $$ = tb->addNode($1, @1); }
     | INC_OP unary_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+                         tb->addNode($2, @2) },
+                       SType::Expression); }
     | DEC_OP unary_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+                         tb->addNode($2, @2) },
+                       SType::Expression); }
     | unary_operator cast_expression
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2) },

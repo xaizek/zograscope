@@ -24,6 +24,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::Macro:               return (os << "Macro");
         case SType::CompoundStatement:   return (os << "CompoundStatement");
         case SType::Separator:           return (os << "Separator");
+        case SType::Punctuation:         return (os << "Punctuation");
         case SType::Statements:          return (os << "Statements");
         case SType::Statement:           return (os << "Statement");
         case SType::ExprStatement:       return (os << "ExprStatement");
