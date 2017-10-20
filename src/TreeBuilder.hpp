@@ -6,68 +6,10 @@
 #include <cstddef>
 
 #include <deque>
-#include <iosfwd>
 #include <utility>
 #include <vector>
 
-enum class SType
-{
-    None,
-    TranslationUnit,
-    Declaration,
-    Declarations,
-    FunctionDeclaration,
-    FunctionDefinition,
-    Comment,
-    Directive,
-    LineGlue,
-    Macro,
-    CompoundStatement,
-    Separator,
-    Punctuation,
-    Statements,
-    Statement,
-    ExprStatement,
-    IfStmt,
-    IfExpr,
-    IfCond,
-    IfThen,
-    IfElse,
-    WhileStmt,
-    WhileCond,
-    ForStmt,
-    ForHead,
-    Expression,
-    Declarator,
-    Initializer,
-    InitializerList,
-    Specifiers,
-    WithInitializer,
-    WithoutInitializer,
-    InitializerElement,
-    SwitchStmt,
-    GotoStmt,
-    ContinueStmt,
-    BreakStmt,
-    ReturnValueStmt,
-    ReturnNothingStmt,
-    ArgumentList,
-    Argument,
-    ParameterList,
-    Parameter,
-    CallExpr,
-    AssignmentExpr,
-    ConditionExpr,
-    ComparisonExpr,
-    AdditiveExpr,
-    PointerDecl,
-    DirectDeclarator,
-    TemporaryContainer,
-    Bundle,
-    BundleComma,
-};
-
-std::ostream & operator<<(std::ostream &os, SType stype);
+enum class SType;
 
 struct Location
 {
@@ -89,14 +31,14 @@ struct PNode
     PNode()
     {
     }
-    PNode(std::vector<PNode *> children, SType stype = SType::None)
+    PNode(std::vector<PNode *> children, SType stype = {})
         : children(std::move(children)), stype(stype)
     {
         for (PNode *&child : this->children) {
             child = contract(child);
         }
     }
-    PNode(Text value, const Location &loc, SType stype = SType::None,
+    PNode(Text value, const Location &loc, SType stype = {},
           bool postponed = false)
         : value(value), line(loc.first_line), col(loc.first_column),
           postponed(postponed), stype(stype)
@@ -105,14 +47,14 @@ struct PNode
 
     bool empty() const
     {
-        return value.from == 0U && value.len == 0U && stype == SType::None;
+        return value.from == 0U && value.len == 0U && stype == SType{};
     }
 
     Text value = { 0U, 0U, 0U, 0U, 0 };
     std::vector<PNode *> children;
     int line = 0, col = 0;
     bool postponed = false;
-    SType stype = SType::None;
+    SType stype = {};
     int movedChildren = 0;
 
     static PNode * contract(PNode *node);
@@ -135,7 +77,7 @@ public:
     TreeBuilder & operator=(TreeBuilder &&rhs) = delete;
 
 public:
-    PNode * addNode(PNode *node, const Location &, SType stype = SType::None)
+    PNode * addNode(PNode *node, const Location &, SType stype = {})
     {
         return addNode({ node }, stype);
     }
@@ -146,15 +88,15 @@ public:
         return &nodes.back();
     }
 
-    PNode * addNode(Text value, const Location &loc, SType stype = SType::None)
+    PNode * addNode(Text value, const Location &loc, SType stype = {})
     {
         return addNode(value, loc, value.token, stype);
     }
 
     PNode * addNode(Text value, const Location &loc, int token,
-                    SType stype = SType::None);
+                    SType stype = {});
 
-    PNode * addNode(std::vector<PNode *> children, SType stype = SType::None);
+    PNode * addNode(std::vector<PNode *> children, SType stype = {});
 
     PNode * append(PNode *node, PNode *child)
     {

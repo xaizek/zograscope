@@ -1,10 +1,10 @@
 #ifndef TREE_HPP__
 #define TREE_HPP__
 
+#include <deque>
 #include <string>
 #include <vector>
 
-#include "TreeBuilder.hpp"
 #include "types.hpp"
 
 enum class State
@@ -15,7 +15,10 @@ enum class State
     Updated
 };
 
+class PNode;
 class SNode;
+
+enum class SType;
 
 struct Node
 {
@@ -30,7 +33,7 @@ struct Node
     Node *parent = nullptr;
     bool satellite = false;
     Type type = Type::Virtual;
-    SType stype = SType::None;
+    SType stype = {};
     Node *next = nullptr;
     int valueChild = -1;
     bool moved = false;

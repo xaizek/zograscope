@@ -7,6 +7,7 @@
 #include <string>
 
 #include "c11-parser.hpp"
+#include "stypes.hpp"
 
 enum { tabWidth = 4 };
 

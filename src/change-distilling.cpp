@@ -4,6 +4,7 @@
 
 #include <vector>
 
+#include "stypes.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"

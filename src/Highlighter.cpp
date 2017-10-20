@@ -8,6 +8,7 @@
 #include "dtl/dtl.hpp"
 
 #include "decoration.hpp"
+#include "stypes.hpp"
 #include "tree.hpp"
 #include "utils.hpp"
 

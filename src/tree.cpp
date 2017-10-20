@@ -13,6 +13,7 @@
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "decoration.hpp"
+#include "stypes.hpp"
 #include "trees.hpp"
 #include "types.hpp"
 #include "utils.hpp"

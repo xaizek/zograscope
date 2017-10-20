@@ -3,12 +3,13 @@
 #include "c11-parser.hpp"
 #include "parser.hpp"
 
-#include "c11-lexer.hpp"
-
 #include <cstdio>
 
 #include <iostream>
 #include <string>
+
+#include "c11-lexer.hpp"
+#include "stypes.hpp"
 
 void yyerror(const char s[], int exactColumn = -1);
 

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "decoration.hpp"
+#include "stypes.hpp"
 #include "trees.hpp"
 
 static void print(const PNode *node, const std::string &contents);
@@ -55,7 +56,7 @@ print(const PNode *node, const std::string &contents)
 static PNode *
 findSNode(PNode *node)
 {
-    if (node->stype != SType::None) {
+    if (node->stype != SType{}) {
         return node;
     }
 

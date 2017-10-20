@@ -1,0 +1,65 @@
+#ifndef STYPES_HPP__
+#define STYPES_HPP__
+
+#include <iosfwd>
+
+enum class SType
+{
+    None,
+    TranslationUnit,
+    Declaration,
+    Declarations,
+    FunctionDeclaration,
+    FunctionDefinition,
+    Comment,
+    Directive,
+    LineGlue,
+    Macro,
+    CompoundStatement,
+    Separator,
+    Punctuation,
+    Statements,
+    Statement,
+    ExprStatement,
+    IfStmt,
+    IfExpr,
+    IfCond,
+    IfThen,
+    IfElse,
+    WhileStmt,
+    WhileCond,
+    ForStmt,
+    ForHead,
+    Expression,
+    Declarator,
+    Initializer,
+    InitializerList,
+    Specifiers,
+    WithInitializer,
+    WithoutInitializer,
+    InitializerElement,
+    SwitchStmt,
+    GotoStmt,
+    ContinueStmt,
+    BreakStmt,
+    ReturnValueStmt,
+    ReturnNothingStmt,
+    ArgumentList,
+    Argument,
+    ParameterList,
+    Parameter,
+    CallExpr,
+    AssignmentExpr,
+    ConditionExpr,
+    ComparisonExpr,
+    AdditiveExpr,
+    PointerDecl,
+    DirectDeclarator,
+    TemporaryContainer,
+    Bundle,
+    BundleComma,
+};
+
+std::ostream & operator<<(std::ostream &os, SType stype);
+
+#endif // STYPES_HPP__
