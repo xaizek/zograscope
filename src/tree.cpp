@@ -190,6 +190,7 @@ isLayerBreak(SType stype)
         case SType::ExprStatement:
         case SType::ReturnValueStmt:
         case SType::Parameter:
+        case SType::ForHead:
             return true;
 
         default:

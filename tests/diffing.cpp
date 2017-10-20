@@ -1694,6 +1694,29 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("For loop header is on a separate layer", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            for (i = 0; i < cs->file_hi_count; ++i) {             /// Deletions
+                add_match(expr, "");                              /// Deletions
+            }                                                     /// Deletions
+
+            if (!file_hi_only) {                                  /// Deletions
+                for (i = 0; i < MAXNUM_COLOR; ++i) {              /// Moves
+                    add_match(HI_GROUPS[i], HI_GROUPS_DESCR[i]);  /// Moves
+                }                                                 /// Moves
+            }                                                     /// Deletions
+        }
+    )", R"(
+        void f() {
+            for (i = 0; i < MAXNUM_COLOR; ++i) {                  /// Moves
+                add_match(HI_GROUPS[i], HI_GROUPS_DESCR[i]);      /// Moves
+            }                                                     /// Moves
+        }
+    )", true);
+}
+
 TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")
 {
     diffSources(R"(
