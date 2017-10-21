@@ -70,8 +70,6 @@ enum class Type
     // DEC_OP
     // LSH_OP
     // RSH_OP
-    // AND_OP
-    // OR_OP
     // '&'
     // '|'
     // '^'
@@ -83,6 +81,10 @@ enum class Type
     // '~'
     // '!'
     Operators,
+
+    // AND_OP
+    // OR_OP
+    LogicalOperators,
 
     // '='
     // TIMESEQ_OP

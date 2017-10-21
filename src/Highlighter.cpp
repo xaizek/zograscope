@@ -217,6 +217,7 @@ getHighlight(const Node &node)
             return 222_fg;
         case Type::Assignments:
         case Type::Operators:
+        case Type::LogicalOperators:
         case Type::Comparisons:
             return 224_fg;
         case Type::StrConstants:

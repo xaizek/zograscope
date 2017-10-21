@@ -21,6 +21,7 @@ operator<<(std::ostream &os, Type type)
         case Type::RightBrackets:      return (os << "RightBrackets");
         case Type::Comparisons:        return (os << "Comparisons");
         case Type::Operators:          return (os << "Operators");
+        case Type::LogicalOperators:   return (os << "LogicalOperators");
         case Type::Assignments:        return (os << "Assignments");
         case Type::Directives:         return (os << "Directives");
         case Type::Comments:           return (os << "Comments");
@@ -97,8 +98,6 @@ tokenMap()
     map[DEC_OP] = Type::Operators;
     map[LSH_OP] = Type::Operators;
     map[RSH_OP] = Type::Operators;
-    map[AND_OP] = Type::Operators;
-    map[OR_OP]  = Type::Operators;
     map['&']    = Type::Operators;
     map['|']    = Type::Operators;
     map['^']    = Type::Operators;
@@ -109,6 +108,9 @@ tokenMap()
     map['-']    = Type::Operators;
     map['~']    = Type::Operators;
     map['!']    = Type::Operators;
+
+    map[AND_OP] = Type::LogicalOperators;
+    map[OR_OP]  = Type::LogicalOperators;
 
     map['=']         = Type::Assignments;
     map[TIMESEQ_OP]  = Type::Assignments;

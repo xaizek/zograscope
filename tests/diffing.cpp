@@ -1732,6 +1732,29 @@ TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("Logical operators are a separate category", "[comparison]")
+{
+    diffSources(R"(
+        int a = 1
+             &&     /// Deletions
+                2;
+    )", R"(
+        int a = 1
+              *     /// Additions
+                2;
+    )", false);
+
+    diffSources(R"(
+        int a = 1
+             &&     /// Updates
+                2;
+    )", R"(
+        int a = 1
+             ||     /// Updates
+                2;
+    )", false);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
