@@ -113,6 +113,8 @@ bool isContainer(const Node *x);
 
 bool isExpr(const Node *x);
 
+bool canForceLeafMatch(const Node *x, const Node *y);
+
 void markTreeAsMoved(Node *node);
 
 #endif // TREE_HPP__

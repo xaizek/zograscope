@@ -510,6 +510,20 @@ isExpr(const Node *x)
         || x->stype == SType::IfExpr;
 }
 
+bool
+canForceLeafMatch(const Node *x, const Node *y)
+{
+    if (!x->children.empty() || !y->children.empty()) {
+        return false;
+    }
+
+    const Type xType = canonizeType(x->type);
+    const Type yType = canonizeType(y->type);
+    return xType == yType
+        && xType != Type::Virtual
+        && xType != Type::Comments;
+}
+
 void
 markTreeAsMoved(Node *node)
 {

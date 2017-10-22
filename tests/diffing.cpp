@@ -1732,6 +1732,15 @@ TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("Widely different comments aren't matched", "[comparison]")
+{
+    diffSources(R"(
+        //          /// Deletions
+    )", R"(
+        /* Bla. */  /// Additions
+    )", true);
+}
+
 TEST_CASE("Logical operators are a separate category", "[comparison]")
 {
     diffSources(R"(

@@ -252,9 +252,7 @@ distill(Node &T1, Node &T2)
             }
 
             const float similarity = dice1[x->poID].compare(dice2[y->poID]);
-            if (similarity >= 0.6f ||
-                (x->type != Type::Virtual && y->type != Type::Virtual &&
-                 x->children.empty() && y->children.empty())) {
+            if (similarity >= 0.6f || canForceLeafMatch(x, y)) {
                 matches.push_back({ x, y, similarity, -1 });
             }
         }
