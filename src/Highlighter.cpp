@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include <boost/utility/string_ref.hpp>
 #include "dtl/dtl.hpp"
 
@@ -13,10 +14,10 @@
 #include "tree.hpp"
 #include "utils.hpp"
 
-static decor::Decoration getHighlight(const Node &node);
+static const decor::Decoration & getHighlight(const Node &node);
 static bool isDiffable(const Node &node);
 static std::string diffSpelling(const std::string &l, const std::string &r,
-                             const decor::Decoration &dec, bool original);
+                                const decor::Decoration &dec, bool original);
 static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::string getSpelling(const Node &node, const decor::Decoration &dec,
                                bool original);
@@ -31,8 +32,8 @@ public:
         prevNode = currNode;
         currNode = &node;
 
-        prevHighlight = std::move(currHighlight);
-        currHighlight = ::getHighlight(*currNode);
+        prevHighlight = currHighlight;
+        currHighlight = &::getHighlight(*currNode);
     }
 
     void advancedLine()
@@ -42,29 +43,29 @@ public:
 
     const decor::Decoration & getHighlight() const
     {
-        return currHighlight;
+        return *currHighlight;
     }
 
-    decor::Decoration getFillHighlight()
+    const decor::Decoration & getFillHighlight() const
     {
         if (prevNode == nullptr) {
             return decor::none;
         }
 
         if (prevHighlight == currHighlight) {
-            return currHighlight;
+            return *currHighlight;
         }
 
         if (prevNode->moved || currNode->moved) {
-            return (currNode->moved ? prevHighlight : currHighlight);
+            return (currNode->moved ? *prevHighlight : *currHighlight);
         }
 
         return decor::none;
     }
 
 private:
-    decor::Decoration currHighlight;
-    decor::Decoration prevHighlight;
+    const decor::Decoration *currHighlight = &decor::none;
+    const decor::Decoration *prevHighlight = &decor::none;
     const Node *currNode = nullptr;
     const Node *prevNode = nullptr;
 };
@@ -103,11 +104,11 @@ Highlighter::print(Node &root) const
         if (node.line != 0 && node.col != 0) {
             colorPicker.setNode(node);
 
-            decor::Decoration fillHighlight;
-            // don't do filling across lines
+            boost::optional<const decor::Decoration &> fillHighlight;
+            // Don't do filling across lines.
             if (node.line == line) {
                 fillHighlight = colorPicker.getFillHighlight();
-                oss << fillHighlight;
+                oss << *fillHighlight;
             }
 
             while (node.line > line) {
@@ -122,7 +123,7 @@ Highlighter::print(Node &root) const
                 ++col;
             }
 
-            if (fillHighlight != decor::none) {
+            if (fillHighlight) {
                 oss << decor::def;
             }
 
@@ -163,7 +164,7 @@ Highlighter::print(Node &root) const
  *
  * @returns The decoration.
  */
-static decor::Decoration
+static const decor::Decoration &
 getHighlight(const Node &node)
 {
     static ColorScheme cs;
