@@ -118,12 +118,12 @@ Printer::print(TimeReport &tr)
 
     // TODO: don't highlight lines that won't be displayed (it takes extra
     //       time).
-    const std::string ls = Highlighter(true).print(left);
-    const std::string rs = Highlighter(false).print(right);
-    std::vector<boost::string_ref> l = (tr.measure("left-highlight"),
-                                        split(ls, '\n'));
-    std::vector<boost::string_ref> r = (tr.measure("right-highlight"),
-                                        split(rs, '\n'));
+    const std::string ls = (tr.measure("left-highlight"),
+                            Highlighter(true).print(left));
+    const std::string rs = (tr.measure("right-highlight"),
+                            Highlighter(false).print(right));
+    std::vector<boost::string_ref> l = split(ls, '\n');
+    std::vector<boost::string_ref> r = split(rs, '\n');
 
     auto timer = tr.measure("printing");
 
