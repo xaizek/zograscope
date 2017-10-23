@@ -17,9 +17,6 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
-// TODO: colors should reside in some configuration file, it's very inconvenient
-//       to have to recompile the tool to experiment with coloring.
-
 enum class Diff
 {
     Left,

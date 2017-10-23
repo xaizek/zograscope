@@ -7,6 +7,7 @@
 #include <boost/utility/string_ref.hpp>
 #include "dtl/dtl.hpp"
 
+#include "ColorScheme.hpp"
 #include "decoration.hpp"
 #include "stypes.hpp"
 #include "tree.hpp"
@@ -165,66 +166,56 @@ Highlighter::print(Node &root) const
 static decor::Decoration
 getHighlight(const Node &node)
 {
-    using namespace decor::literals;
+    static ColorScheme cs;
 
     // Highlighting based on node state has higher priority.
     switch (node.state) {
-        using namespace decor;
-
         case State::Deleted:
-            return (210_fg + inv + black_bg + bold)
-                   .prefix("{-"_lit)
-                   .suffix("-}"_lit);
+            return cs[ColorGroup::Deleted];
         case State::Inserted:
-            return (85_fg + inv + black_bg + bold)
-                   .prefix("{+"_lit)
-                   .suffix("+}"_lit);
+            return cs[ColorGroup::Inserted];
         case State::Updated:
             // TODO: things that were updated and moved at the same time need a
             //       special color?
             //       Or update kinda implies move, since it's obvious that there
             //       was a match between nodes?
             if (!isDiffable(node)) {
-                return (228_fg + inv + black_bg + bold)
-                       .prefix("{#"_lit)
-                       .suffix("#}"_lit);
+                return cs[ColorGroup::Updated];
             }
             break;
 
         case State::Unchanged:
             if (node.moved) {
-                return (81_fg + inv + bold)
-                       .prefix("{:"_lit)
-                       .suffix(":}"_lit);
+                return cs[ColorGroup::Moved];
             }
             break;
     }
 
     // Highlighting based on node type follows.
     switch (node.type) {
-        case Type::Specifiers: return 183_fg;
-        case Type::UserTypes:  return 215_fg;
-        case Type::Types:      return  85_fg;
-        case Type::Directives: return 228_fg;
-        case Type::Comments:   return 248_fg;
-        case Type::Functions:  return  81_fg;
+        case Type::Specifiers: return cs[ColorGroup::Specifiers];
+        case Type::UserTypes:  return cs[ColorGroup::UserTypes];
+        case Type::Types:      return cs[ColorGroup::Types];
+        case Type::Directives: return cs[ColorGroup::Directives];
+        case Type::Comments:   return cs[ColorGroup::Comments];
+        case Type::Functions:  return cs[ColorGroup::Functions];
 
         case Type::Jumps:
         case Type::Keywords:
-            return 115_fg;
+            return cs[ColorGroup::Keywords];
         case Type::LeftBrackets:
         case Type::RightBrackets:
-            return 222_fg;
+            return cs[ColorGroup::Brackets];
         case Type::Assignments:
         case Type::Operators:
         case Type::LogicalOperators:
         case Type::Comparisons:
-            return 224_fg;
+            return cs[ColorGroup::Operators];
         case Type::StrConstants:
         case Type::IntConstants:
         case Type::FPConstants:
         case Type::CharConstants:
-            return 219_fg;
+            return cs[ColorGroup::Constants];
 
         case Type::Identifiers:
         case Type::Other:
@@ -233,8 +224,7 @@ getHighlight(const Node &node)
             break;
     }
 
-    // Use default terminal colors if wasn't handled above.
-    return decor::Decoration();
+    return cs[ColorGroup::Other];
 }
 
 /**
