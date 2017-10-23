@@ -116,7 +116,7 @@ Decoration::Decoration(decorFunc decorator) : decorator(decorator)
 }
 
 Decoration::Decoration(extDecorFunc extDecorator, arg_t arg)
-    : extDecorator(extDecorator), arg(arg)
+    : extDecorator(extDecorator), arg(std::move(arg))
 {
 }
 

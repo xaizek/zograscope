@@ -52,7 +52,7 @@ public:
      * @param extDecorator Decorating function.
      * @param arg Parameter for decorating function.
      */
-    explicit Decoration(extDecorFunc extDecorator, arg_t arg);
+    Decoration(extDecorFunc extDecorator, arg_t arg);
     /**
      * @brief Constructs a (deep) copy of a decoration.
      *
@@ -82,6 +82,15 @@ public:
      * @returns @c *this.
      */
     Decoration & operator=(const Decoration &rhs);
+
+    /**
+     * @brief Defaulted move assignment operator.
+     *
+     * @param rhs Assignment operand.
+     *
+     * @returns @c *this.
+     */
+    Decoration & operator=(Decoration &&rhs) = default;
 
     /**
      * @brief Actually performs the decoration of a stream.
@@ -241,10 +250,11 @@ public:
      * @param app First application in the scope.
      */
     ScopedDecoration(const Decoration &decoration,
-                     std::function<void(std::ostream&)> app)
+                     std::function<void(std::ostream&)> &&app)
         : decoration(decoration)
     {
-        apps.push_back(app);
+        apps.reserve(1U);
+        apps.emplace_back(std::move(app));
     }
     /**
      * @brief Constructs an object from scope and additional stream action.
@@ -252,11 +262,12 @@ public:
      * @param scoped Pre-existing scoped decoration which is being extended.
      * @param app Additional application in the scope.
      */
-    ScopedDecoration(const ScopedDecoration &scoped,
-                     std::function<void(std::ostream&)> app)
-        : decoration(scoped.decoration), apps(scoped.apps)
+    ScopedDecoration(ScopedDecoration &&scoped,
+                     std::function<void(std::ostream&)> &&app)
+        : decoration(scoped.decoration), apps(std::move(scoped.apps))
     {
-        apps.push_back(app);
+        apps.reserve(apps.size() + 1U);
+        apps.emplace_back(std::move(app));
     }
 
 public:
@@ -314,6 +325,23 @@ operator<<(const Decoration &d, const T &val)
 }
 
 /**
+ * @brief Constructs scoped decoration.
+ *
+ * @tparam T Type of stream data.
+ * @param d Decoration of the scope.
+ * @param v Stream data.
+ *
+ * @returns Scoped decoration constructed.
+ */
+template <typename T>
+typename std::enable_if<!std::is_function<T>::value, ScopedDecoration>::type
+operator<<(Decoration &&d, const T &val)
+{
+    return ScopedDecoration(std::move(d),
+                            [val](std::ostream &os) { os << val; });
+}
+
+/**
  * @brief Appends to scoped decoration.
  *
  * @tparam T Type of stream data.
@@ -324,9 +352,10 @@ operator<<(const Decoration &d, const T &val)
  */
 template <typename T>
 ScopedDecoration
-operator<<(const ScopedDecoration &sd, const T &val)
+operator<<(ScopedDecoration &&sd, const T &val)
 {
-    return ScopedDecoration(sd, [val](std::ostream &os) { os << val; });
+    return ScopedDecoration(std::move(sd),
+                            [val](std::ostream &os) { os << val; });
 }
 
 /**
