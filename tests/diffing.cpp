@@ -146,31 +146,20 @@ TEST_CASE("All postponed nodes are pulled into parents",
 
 TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
 {
-    Tree oldTree = makeTree(R"(
-        void f()
-        {
-            if (variable < 2 || condition)
+    diffSources(R"(
+        void f() {
+            if (
+                variable < 2 ||  /// Deletions
+                condition
+               )
                 return;
         }
-    )", true);
-    Tree newTree = makeTree(R"(
-        void f()
-        {
+    )", R"(
+        void f() {
             if (condition)
                 return;
         }
     )", true);
-
-    TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
-
-    CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
-    CHECK(countLeaves(*oldTree.getRoot(), State::Inserted) == 0);
-
-    CHECK(countLeaves(*newTree.getRoot(), State::Updated) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Deleted) == 0);
-    CHECK(countLeaves(*newTree.getRoot(), State::Inserted) == 1);
 }
 
 TEST_CASE("Different trees are recognized as different", "[comparison]")
@@ -1445,12 +1434,12 @@ TEST_CASE("Matching parent value guides how leaves are matched", "[comparison]")
     )", false);
 }
 
-TEST_CASE("Expression is moved into if condition", "[comparison][moves]")
+TEST_CASE("Expressions are matched against if condition", "[comparison][moves]")
 {
-    // FIXME: semicolon shouldn't be marked as moved
     diffSources(R"(
         void f() {
-            magic_load(magic, NULL);     /// Moves
+            magic_load(magic, NULL)      /// Moves
+                ;                        /// Deletions
         }
     )", R"(
         void f() {
@@ -1460,6 +1449,58 @@ TEST_CASE("Expression is moved into if condition", "[comparison][moves]")
             { }                          /// Additions
         }
     )", false);
+
+    diffSources(R"(
+        void f() {
+            tabs_new_inner(&         /// Moves
+                           rwin      /// Updates
+                           )         /// Moves
+                           ;         /// Deletions
+        }
+    )", R"(
+        void f() {
+            if (                     /// Additions
+                tabs_new_inner(&     /// Moves
+                               lwin  /// Updates
+                               )     /// Moves
+                == NULL || 1) { }    /// Additions
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            tabs_new_inner(&         /// Moves
+                           lwin      /// Moves
+                           )         /// Moves
+                           ;         /// Deletions
+        }
+    )", R"(
+        void f() {
+            if (                     /// Additions
+                tabs_new_inner(&     /// Moves
+                               lwin  /// Moves
+                               )     /// Moves
+                == NULL || 1) { }    /// Additions
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            tabs_new_inner(&new_tab->left, &lwin)       /// Moves
+                ;                                       /// Deletions
+            tabs_new_inner(&new_tab->right, &rwin)      /// Moves
+                ;                                       /// Deletions
+        }
+    )", R"(
+        void f() {
+            if (                                        /// Additions
+                tabs_new_inner(&new_tab->left, &lwin)   /// Moves
+                == NULL ||                              /// Additions
+                tabs_new_inner(&new_tab->right, &rwin)  /// Moves
+                == NULL)                                /// Additions
+            { }                                         /// Additions
+        }
+    )", true);
 }
 
 TEST_CASE("Refining doesn't cause segfault", "[comparison][moves]")

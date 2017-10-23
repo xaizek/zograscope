@@ -103,15 +103,13 @@ void reduceTreesCoarse(Node *T1, Node *T2);
 
 std::string printSubTree(const Node &root);
 
-bool canBeFlattened(const Node *parent, const Node *child);
+bool canBeFlattened(const Node *parent, const Node *child, int level);
 
 bool isUnmovable(const Node *x);
 
 bool hasMoveableItems(const Node *x);
 
 bool isContainer(const Node *x);
-
-bool isExpr(const Node *x);
 
 bool canForceLeafMatch(const Node *x, const Node *y);
 

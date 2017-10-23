@@ -11,6 +11,7 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static bool flatten(Node *n, int level);
 static void markParents(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static void refine(Node &node);
@@ -91,18 +92,18 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         match.y->relative = match.x;
     }
 
-    // flatten unmatched trees into parent tree of their roots before doing
-    // common distilling
-    for (Node *&c : T1->children) {
-        if (canBeFlattened(T1, c) &&
-            c->relative == nullptr && c->next != nullptr && !c->next->last) {
-            c = c->next;
-        }
+    int flattenLevel = 0;
+    if (flatten(T1, flattenLevel) | flatten(T2, flattenLevel)) {
+        ++flattenLevel;
+        flatten(T1, flattenLevel);
+        flatten(T2, flattenLevel);
     }
-    for (Node *&c : T2->children) {
-        if (canBeFlattened(T2, c) &&
-            c->relative == nullptr && c->next != nullptr && !c->next->last) {
-            c = c->next;
+
+    // Flatten unmatched trees into parent tree of their roots before doing
+    // common distilling.
+    while (++flattenLevel < 3) {
+        if (flatten(T1, flattenLevel) | flatten(T2, flattenLevel)) {
+            break;
         }
     }
     distill(*T1, *T2);
@@ -129,6 +130,34 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
     visit(T1);
     refine(*T1);
+}
+
+static bool
+flatten(Node *n, int level)
+{
+    bool flattened = false;
+
+    for (Node *&c : n->children) {
+        if (c->next != nullptr && c->next->last) {
+            continue;
+        }
+
+        if (c->next == nullptr && !c->children.empty()) {
+            flattened |= flatten(c, level);
+            continue;
+        }
+
+        if (c->relative != nullptr) {
+            continue;
+        }
+
+        if (c->next != nullptr && canBeFlattened(n, c, level)) {
+            c = c->next;
+            flattened = true;
+        }
+    }
+
+    return flattened;
 }
 
 static void

@@ -52,8 +52,7 @@ canMatch(const Node *x, const Node *y)
         return false;
     }
 
-    if (xType == Type::Virtual && x->stype != y->stype &&
-        !(isExpr(x) && isExpr(y))) {
+    if (xType == Type::Virtual && x->stype != y->stype) {
         return false;
     }
 

@@ -474,10 +474,22 @@ printSubTree(const Node &root)
 }
 
 bool
-canBeFlattened(const Node *parent, const Node *child)
+canBeFlattened(const Node *, const Node *child, int level)
 {
-    return child->stype != SType::Declaration
-        || parent->stype != SType::TranslationUnit;
+    switch (level) {
+        case 0:
+            return (child->stype == SType::IfExpr);
+
+        case 1:
+            return (child->stype == SType::ExprStatement);
+
+        default:
+            return child->stype != SType::Declaration
+                && child->stype != SType::ReturnValueStmt
+                && child->stype != SType::CallExpr
+                && child->stype != SType::Initializer
+                && child->stype != SType::Parameter;
+    }
 }
 
 bool
@@ -501,13 +513,6 @@ isContainer(const Node *x)
     return x->stype == SType::Statements
         || x->stype == SType::Bundle
         || x->stype == SType::BundleComma;
-}
-
-bool
-isExpr(const Node *x)
-{
-    return x->stype == SType::ExprStatement
-        || x->stype == SType::IfExpr;
 }
 
 bool
