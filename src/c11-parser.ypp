@@ -434,12 +434,12 @@ equality_expression
     : relational_expression
     | equality_expression EQ_OP relational_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, SType::Punctuation),
                          tb->addNode($3, @3) },
                        SType::ComparisonExpr); }
     | equality_expression NE_OP relational_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, SType::Punctuation),
                          tb->addNode($3, @3) },
                        SType::ComparisonExpr); }
     ;

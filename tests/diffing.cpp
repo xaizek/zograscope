@@ -1805,6 +1805,19 @@ TEST_CASE("Logical operators are a separate category", "[comparison]")
     )", false);
 }
 
+TEST_CASE("Eq/ne change is detected as update", "[comparison][parsing]")
+{
+    diffSources(R"(
+        int a = variable
+                ==        /// Updates
+                value;
+    )", R"(
+        int a = variable
+                !=        /// Updates
+                value;
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {
