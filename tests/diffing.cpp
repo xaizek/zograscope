@@ -395,6 +395,44 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
                 ;
         };
     )", true);
+
+    diffSources(R"(
+        typedef struct {
+            view_t left;   /// Deletions
+            view_t right;  /// Deletions
+        } tab_t;
+    )", R"(
+        typedef struct {
+            view_t view;   /// Additions
+        } tab_t;
+    )", true);
+
+    diffSources(R"(
+        struct tab {
+            view_t left;   /// Deletions
+            view_t right;  /// Deletions
+        };
+    )", R"(
+        struct tab {
+            view_t view;   /// Additions
+        };
+    )", true);
+
+    diffSources(R"(
+        struct tab {
+            view_t left;   /// Deletions
+        };
+    )", R"(
+        struct tab { };
+    )", true);
+
+    diffSources(R"(
+        struct {
+            int left;      /// Deletions
+        } instance;
+    )", R"(
+        struct { } instance;
+    )", true);
 }
 
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")

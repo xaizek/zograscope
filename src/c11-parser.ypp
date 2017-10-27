@@ -682,32 +682,32 @@ type_specifier
 /*     struct-or-union identifier */
 struct_or_union_specifier
     : struct_or_union ID '{' struct_declaration_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($3, @3, SType::Punctuation),
                          $4,
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($5, @5, SType::Punctuation) },
+                       SType::TemporaryContainer); }
     | struct_or_union '{' struct_declaration_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+                         tb->addNode($2, @2, SType::Punctuation),
                          $3,
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($4, @4, SType::Punctuation) },
+                       SType::TemporaryContainer); }
     | struct_or_union ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     /* These are extensions to allow structs and unions without members. */
     | struct_or_union ID '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($3, @3, SType::Punctuation),
+                         tb->addNode($4, @4, SType::Punctuation) },
+                       SType::TemporaryContainer); }
     | struct_or_union '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::Declaration); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($3, @3, SType::Punctuation) },
+                       SType::TemporaryContainer); }
     ;
 
 /* (6.7.2.1) struct-or-union: */
