@@ -1782,6 +1782,16 @@ TEST_CASE("Widely different comments aren't matched", "[comparison]")
     )", true);
 }
 
+TEST_CASE("Widely different directives aren't matched", "[comparison]")
+{
+    diffSources(R"(
+        #if 0                    /// Deletions
+        #endif                   /// Deletions
+    )", R"(
+        #include "cfg/config.h"  /// Additions
+    )", true);
+}
+
 TEST_CASE("Logical operators are a separate category", "[comparison]")
 {
     diffSources(R"(
