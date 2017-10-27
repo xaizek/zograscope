@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include <dtl/dtl.hpp>
 
 #include "change-distilling.hpp"
@@ -49,8 +50,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         if (t1Child->satellite) {
             continue;
         }
-        std::string subtree1 = printSubTree(*t1Child);
-        DiceString subtree1Dice = subtree1;
+        boost::optional<std::string> subtree1;
+        DiceString subtree1Dice = printSubTree(*t1Child, false);
         for (Node *t2Child : T2->children) {
             if (t2Child->satellite) {
                 continue;
@@ -58,12 +59,15 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
             // XXX: here mismatched lables are included in similarity
             //      measurement, which affects it negatively
-            std::string subtree2 = printSubTree(*t2Child);
-            DiceString subtree2Dice = subtree2;
-            const bool identical = (subtree1 == subtree2);
-            const float similarity = identical
-                                   ? 1.0f
-                                   : subtree1Dice.compare(subtree2Dice);
+            DiceString subtree2Dice = printSubTree(*t2Child, false);
+            const float similarity = subtree1Dice.compare(subtree2Dice);
+            bool identical = (similarity == 1.0f);
+            if (identical) {
+                if (!subtree1) {
+                    subtree1 = printSubTree(*t1Child, true);
+                }
+                identical = (subtree1 == printSubTree(*t2Child, true));
+            }
             if ((t1Child->label == t2Child->label && similarity >= 0.6f) ||
                 (t1Child->label != t2Child->label && similarity >= 0.8f)) {
                 matches.push_back({ t1Child, t2Child, similarity, identical });

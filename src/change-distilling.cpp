@@ -331,6 +331,9 @@ distill(Node &T1, Node &T2)
                     if (!po2[i]->children.empty()) {
                         continue;
                     }
+                    if (po2[i]->type == Type::Comments) {
+                        continue;
+                    }
                     ++yLeaves;
 
                     const Node *const parent = getParent(po2[i]);
@@ -351,7 +354,8 @@ distill(Node &T1, Node &T2)
 
                 int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
                                             [](const Node *n) {
-                                                return n->children.empty();
+                                                return n->children.empty() &&
+                                                n->type != Type::Comments;
                                             });
 
                 float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;

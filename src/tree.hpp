@@ -101,7 +101,7 @@ std::vector<Node *> postOrder(Node &root);
 
 void reduceTreesCoarse(Node *T1, Node *T2);
 
-std::string printSubTree(const Node &root);
+std::string printSubTree(const Node &root, bool withComments);
 
 bool canBeFlattened(const Node *parent, const Node *child, int level);
 

@@ -435,6 +435,27 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("Comments are ignored on high-level comparison", "[comparison]")
+{
+    diffSources(R"(
+        typedef enum {
+            NF_NONE,
+            NF_ROOT,
+            NF_FULL
+        } NameFormat;
+    )", R"(
+        /* Defines the way entry name should be formatted. */  /// Additions
+        typedef enum {
+            /* No formatting at all. */                        /// Additions
+            NF_NONE,
+            /* Exclude extension and format the rest. */       /// Additions
+            NF_ROOT,
+            /* Format the whole name. */                       /// Additions
+            NF_FULL
+        } NameFormat;
+    )", true);
+}
+
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
 {
     // This is more of a parsing test, but it's easier and more reliable to test
@@ -1363,14 +1384,14 @@ TEST_CASE("Constants can be updated", "[comparison]")
 TEST_CASE("Top-level declarations aren't mixed", "[comparison]")
 {
     diffSources(R"(
-        typedef struct {                              /// Deletions
+        typedef struct {
             view_t left;                              /// Deletions
             view_t right;                             /// Deletions
 
             int active_win; // 0 -- left, 1 -- right  /// Deletions
             int only_mode;                            /// Deletions
-            preview_t preview;                        /// Deletions
-        } tab_t;                                      /// Deletions
+            preview_t preview;
+        } tab_t;
 
         typedef struct {                              /// Deletions
             tab_t *tabs;                              /// Deletions
@@ -1382,11 +1403,11 @@ TEST_CASE("Top-level declarations aren't mixed", "[comparison]")
                tab_t                                  /// Updates
                *tabs;
     )", R"(
-        typedef struct {                              /// Additions
+        typedef struct {
             view_t view;                              /// Additions
 
-            preview_t preview;                        /// Additions
-        } tab_t;                                      /// Additions
+            preview_t preview;
+        } tab_t;
 
         static inner_tab_t * get_inner_tab(const view_t *view);          /// Additions
         static int tabs_new_outer(void);                                 /// Additions

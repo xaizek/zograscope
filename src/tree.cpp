@@ -267,7 +267,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
             Node &nextLevel = tree.makeNode();
             nextLevel.next = &n;
             nextLevel.stype = n.stype;
-            nextLevel.label = n.label.empty() ? printSubTree(n) : n.label;
+            nextLevel.label = n.label.empty() ? printSubTree(n, false) : n.label;
             return &nextLevel;
         }
 
@@ -451,7 +451,7 @@ hashNode(const Node *node)
 }
 
 std::string
-printSubTree(const Node &root)
+printSubTree(const Node &root, bool withComments)
 {
     std::string out;
 
@@ -460,7 +460,7 @@ printSubTree(const Node &root)
             return visit(*node.next);
         }
 
-        if (node.line != 0 && node.col != 0) {
+        if (node.line != 0 && node.col != 0 && (node.type != Type::Comments || withComments)) {
             out += node.label;
         }
 

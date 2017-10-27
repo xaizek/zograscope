@@ -161,7 +161,8 @@ TEST_CASE("Postponed nodes between string literals are preserved",
         const char *str = "" /*str*/ "";
     )");
 
-    CHECK(printSubTree(*tree.getRoot()) == "constchar*str=\"\"/*str*/\"\";");
+    CHECK(printSubTree(*tree.getRoot(), true) ==
+          "constchar*str=\"\"/*str*/\"\";");
 }
 
 TEST_CASE("Escaping of newline isn't rejected", "[parser]")
