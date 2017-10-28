@@ -487,15 +487,15 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
         enum {
             A,
             B,
-            Aa,  /// Mixed
-            Bb,  /// Mixed
+            Aaaa,  /// Mixed
+            Bbbb,  /// Mixed
         };
     )", R"(
         enum {
             A,
             B,
-            Ab,  /// Mixed
-            Zz   /// Updates
+            Aaab,  /// Mixed
+            Bbbz   /// Updates
         };
     )", true);
 }

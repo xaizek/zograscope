@@ -527,6 +527,7 @@ canForceLeafMatch(const Node *x, const Node *y)
     return xType == yType
         && xType != Type::Virtual
         && xType != Type::Comments
+        && xType != Type::Identifiers
         && xType != Type::Directives;
 }
 
