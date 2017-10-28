@@ -150,13 +150,15 @@ TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
         void f() {
             if (
                 variable < 2 ||  /// Deletions
-                condition
+                condition        /// Moves
                )
                 return;
         }
     )", R"(
         void f() {
-            if (condition)
+            if (
+                condition        /// Moves
+                )
                 return;
         }
     )", true);
@@ -1874,7 +1876,8 @@ TEST_CASE("Logical operators are a separate category", "[comparison]")
     )", false);
 }
 
-TEST_CASE("Eq/ne change is detected as update", "[comparison][parsing]")
+TEST_CASE("Comparison operator change is detected as update",
+          "[comparison][parsing]")
 {
     diffSources(R"(
         int a = variable
@@ -1883,6 +1886,16 @@ TEST_CASE("Eq/ne change is detected as update", "[comparison][parsing]")
     )", R"(
         int a = variable
                 !=        /// Updates
+                value;
+    )", true);
+
+    diffSources(R"(
+        int a = variable
+                ==        /// Updates
+                value;
+    )", R"(
+        int a = variable
+                <=        /// Updates
                 value;
     )", true);
 }

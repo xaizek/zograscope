@@ -417,13 +417,25 @@ relational_expression
     : shift_expression
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | relational_expression '<' shift_expression
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($3, @3) },
+                       SType::ComparisonExpr); }
     | relational_expression '>' shift_expression
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($3, @3) },
+                       SType::ComparisonExpr); }
     | relational_expression LTE_OP shift_expression
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($3, @3) },
+                       SType::ComparisonExpr); }
     | relational_expression GTE_OP shift_expression
-    { $$ = tb->append($1, { tb->addNode($2, @2), tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($3, @3) },
+                       SType::ComparisonExpr); }
     ;
 
 /* (6.5.9) equality-expression: */
