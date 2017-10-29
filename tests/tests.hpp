@@ -8,6 +8,7 @@
 class Node;
 class Tree;
 
+enum class State;
 enum class Type;
 
 /**
@@ -56,6 +57,8 @@ Tree makeTree(const std::string &str, bool coarse = false);
 
 const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});
+
+int countLeaves(const Node &root, State state);
 
 void diffSources(const std::string &left, const std::string &right,
                  bool skipRefine);

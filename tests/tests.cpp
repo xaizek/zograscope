@@ -75,6 +75,29 @@ findNode(const Tree &tree, Type type, const std::string &label)
     return needle;
 }
 
+int
+countLeaves(const Node &root, State state)
+{
+    int count = 0;
+
+    std::function<void(const Node &)> visit = [&](const Node &node) {
+        if (node.state == State::Unchanged && node.next != nullptr) {
+            return visit(*node.next);
+        }
+
+        if (node.children.empty() && node.state == state) {
+            ++count;
+        }
+
+        for (const Node *child : node.children) {
+            visit(*child);
+        }
+    };
+
+    visit(root);
+    return count;
+}
+
 void
 diffSources(const std::string &left, const std::string &right, bool skipRefine)
 {
