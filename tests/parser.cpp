@@ -1,3 +1,7 @@
+// These are tests of basic properties of a parser.  Things like:
+//  - whether some constructs can be parsed
+//  - whether elements are identified correctly
+
 #include "Catch/catch.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
