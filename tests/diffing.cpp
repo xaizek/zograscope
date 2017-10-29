@@ -1094,3 +1094,19 @@ TEST_CASE("Logical operators are a separate category", "[comparison]")
                 2;
     )", false);
 }
+
+TEST_CASE("Somewhat complex expression changes", "[comparison]")
+{
+    diffSources(R"(
+        int primary =
+                    (                                      /// Deletions
+                    id == SK_BY_NAME || id == SK_BY_INAME  /// Moves
+                    )                                      /// Deletions
+                    ;
+    )", R"(
+        int primary =
+                    id == SK_BY_NAME || id == SK_BY_INAME  /// Moves
+                   || id == SK_BY_ROOT                     /// Additions
+                   ;
+    )", true);
+}
