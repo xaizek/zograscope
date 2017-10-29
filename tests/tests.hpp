@@ -57,4 +57,7 @@ Tree makeTree(const std::string &str, bool coarse = false);
 const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});
 
+void diffSources(const std::string &left, const std::string &right,
+                 bool skipRefine);
+
 #endif // TESTS__TESTS_HPP__
