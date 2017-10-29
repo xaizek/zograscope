@@ -1900,6 +1900,44 @@ TEST_CASE("Comparison operator change is detected as update",
     )", true);
 }
 
+TEST_CASE("Negation is decomposed", "[comparison][parsing]")
+{
+    /* The code is relatively complex, because it works otherwise. */
+    diffSources(R"(
+        void f() {
+            if (var == 0 &&
+                !                                    /// Deletions
+                curr_stats.restart_in_progress) { }
+        }
+    )", R"(
+        void f() {
+            if (var == 0 && curr_stats.restart_in_progress) { }
+        }
+    )", true);
+}
+
+TEST_CASE("Inversion of relatively complex condition", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            if (var
+                ==                                   /// Updates
+                0
+                &&                                   /// Updates
+                !                                    /// Deletions
+                curr_stats.restart_in_progress) { }
+        }
+    )", R"(
+        void f() {
+            if (var
+                !=                                   /// Updates
+                0
+                ||                                   /// Updates
+                curr_stats.restart_in_progress) { }
+        }
+    )", true);
+}
+
 static int
 countLeaves(const Node &root, State state)
 {

@@ -315,7 +315,7 @@ unary_expression
                          tb->addNode($2, @2) },
                        SType::Expression); }
     | unary_operator cast_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1),
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
                          tb->addNode($2, @2) },
                        SType::TemporaryContainer); }
     | SIZEOF unary_expression  %dprec 2
