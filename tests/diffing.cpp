@@ -4,7 +4,6 @@
 #include <ostream>
 
 #include "TreeBuilder.hpp"
-#include "change-distilling.hpp"
 #include "compare.hpp"
 #include "time.hpp"
 #include "tree.hpp"
@@ -548,7 +547,8 @@ TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
         int var;
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -821,7 +821,8 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
         };
     )", true);
 
-    distill(*oldTree.getRoot(), *newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
