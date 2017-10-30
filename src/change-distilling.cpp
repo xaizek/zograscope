@@ -197,8 +197,6 @@ match(Node *x, Node *y, State state)
 {
     markNode(*x, state);
     markNode(*y, state);
-    x->state = state;
-    y->state = state;
 
     x->relative = y;
     y->relative = x;
