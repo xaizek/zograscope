@@ -285,15 +285,15 @@ TEST_CASE("Returns with and without value aren't matched",
           "[comparison][parsing]")
 {
     diffSources(R"(
-        void f() {       /// Deletions
+        void f() {
             return 1;    /// Deletions
-        }                /// Deletions
+        }
     )", R"(
-        void f() {       /// Additions
+        void f() {
             if (cond) {  /// Additions
                 return;  /// Additions
             }            /// Additions
-        }                /// Additions
+        }
     )", false);
 }
 

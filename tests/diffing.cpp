@@ -1110,3 +1110,22 @@ TEST_CASE("Somewhat complex expression changes", "[comparison]")
                    ;
     )", true);
 }
+
+TEST_CASE("Almost matched if-statement is matched till the end", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            if (msg == NULL ||
+                vle_mode_is(CMDLINE_MODE)  /// Deletions
+                )
+            { return; }
+        }
+    )", R"(
+        void f() {
+            if (msg == NULL ||
+                is_locked                  /// Additions
+                )
+            { return; }
+        }
+    )", true);
+}

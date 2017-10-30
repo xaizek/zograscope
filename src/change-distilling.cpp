@@ -202,6 +202,68 @@ match(Node *x, Node *y, State state)
     y->relative = x;
 }
 
+static bool
+unmatchedInternal(Node *node)
+{
+    return (node->relative == nullptr && !node->children.empty());
+}
+
+// This pass matches nodes, whose direct children (ignoring comments) are
+// already matched with each other.
+static void
+matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
+                               const std::vector<Node *> &po2)
+{
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            unsigned int i = 0U, j = 0U;
+            int xChildren = 0, yChildren = 0;
+            int nMatched = 0;
+            while (i < x->children.size() && j < y->children.size()) {
+                const Node *xChild = x->children[i], *yChild = y->children[j];
+                if (xChild->type == Type::Comments) {
+                    ++i;
+                    continue;
+                }
+                if (yChild->type == Type::Comments) {
+                    ++j;
+                    continue;
+                }
+
+                if ((xChild->satellite && yChild->satellite) ||
+                    xChild->relative == yChild) {
+                    ++nMatched;
+                }
+                ++i;
+                ++j;
+                ++xChildren;
+                ++yChildren;
+            }
+            while (i < x->children.size() &&
+                   x->children[i]->type == Type::Comments) {
+                ++i;
+                ++xChildren;
+            }
+            while (j < y->children.size() &&
+                   y->children[j]->type == Type::Comments) {
+                ++j;
+                ++xChildren;
+            }
+            if (nMatched == xChildren && nMatched == yChildren) {
+                match(x, y, State::Unchanged);
+            }
+        }
+    }
+}
+
 void
 distill(Node &T1, Node &T2)
 {
@@ -215,10 +277,6 @@ distill(Node &T1, Node &T2)
 
     std::vector<Node *> po1 = postOrderAndInit(T1);
     std::vector<Node *> po2 = postOrderAndInit(T2);
-
-    auto unmatchedInternal = [](Node *node) {
-        return !node->children.empty() && node->relative == nullptr;
-    };
 
     std::vector<DiceString> dice1;
     dice1.reserve(po1.size());
@@ -440,6 +498,7 @@ distill(Node &T1, Node &T2)
     distillLeafs();
     distillInternal();
     distillInternalExtra();
+    matchFirstLevelMatchedInternal(po1, po2);
 
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const Match &a, const Match &b) {
@@ -455,6 +514,7 @@ distill(Node &T1, Node &T2)
     distillLeafs();
     distillInternal();
     distillInternalExtra();
+    matchFirstLevelMatchedInternal(po1, po2);
 
     for (Node *x : po1) {
         if (x->relative == nullptr) {
