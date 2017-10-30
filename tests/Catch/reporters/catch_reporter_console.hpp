@@ -93,7 +93,6 @@ namespace Catch {
         virtual void testRunEnded( TestRunStats const& _testRunStats ) CATCH_OVERRIDE {
             printTotalsDivider( _testRunStats.totals );
             printTotals( _testRunStats.totals );
-            stream << std::endl;
             StreamingReporterBase::testRunEnded( _testRunStats );
         }
 
