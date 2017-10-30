@@ -437,7 +437,7 @@ distill(Node &T1, Node &T2)
         }
     };
 
-    auto distillInternalExtra = [&]() {
+    auto matchPartiallyMatchedInternal = [&]() {
         struct Match
         {
             Node *x;
@@ -497,7 +497,7 @@ distill(Node &T1, Node &T2)
 
     distillLeafs();
     distillInternal();
-    distillInternalExtra();
+    matchPartiallyMatchedInternal();
     matchFirstLevelMatchedInternal(po1, po2);
 
     std::stable_sort(matches.begin(), matches.end(),
@@ -513,7 +513,7 @@ distill(Node &T1, Node &T2)
 
     distillLeafs();
     distillInternal();
-    distillInternalExtra();
+    matchPartiallyMatchedInternal();
     matchFirstLevelMatchedInternal(po1, po2);
 
     for (Node *x : po1) {
