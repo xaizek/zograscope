@@ -69,17 +69,18 @@ static SNode *
 makeSNode(std::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
           bool dumpUnclear)
 {
+    snodes.emplace_back(SNode{pnode, {}});
+    SNode *snode = &snodes.back();
+
     auto isSNode = [](PNode *child) {
         return (findSNode(child) != nullptr);
     };
     // If none of the children is SNode, then current node is a leaf SNode.
-    if (std::none_of(pnode->children.begin(), pnode->children.end(),
-                     isSNode)) {
-        snodes.emplace_back(SNode{pnode, {}});
-        return &snodes.back();
+    if (std::none_of(pnode->children.begin(), pnode->children.end(), isSNode)) {
+        return snode;
     }
 
-    std::vector<SNode *> c;
+    std::vector<SNode *> &c = snode->children;
     c.reserve(pnode->children.size());
     for (PNode *child : pnode->children) {
         if (PNode *schild = findSNode(child)) {
@@ -92,6 +93,5 @@ makeSNode(std::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
             c.push_back(&snodes.back());
         }
     }
-    snodes.emplace_back(SNode{pnode, std::move(c)});
-    return &snodes.back();
+    return snode;
 }

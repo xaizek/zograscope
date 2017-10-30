@@ -23,17 +23,16 @@ TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
     value.token = token;
 
     if (value.postponedFrom != value.postponedTo) {
-        std::vector<PNode *> children;
-        children.reserve(value.postponedTo - value.postponedFrom);
+        PNode *const node = addNode();
+        node->children.reserve(value.postponedTo - value.postponedFrom + 1U);
         for (std::size_t i = value.postponedFrom; i < value.postponedTo; ++i) {
             nodes.emplace_back(postponed[i].value, postponed[i].loc,
                                postponed[i].stype, true);
-            children.push_back(&nodes.back());
+            node->children.push_back(&nodes.back());
         }
         nodes.emplace_back(value, loc, stype);
-        children.push_back(&nodes.back());
-        nodes.emplace_back(std::move(children));
-        return &nodes.back();
+        node->children.push_back(&nodes.back());
+        return node;
     }
 
     nodes.emplace_back(value, loc, stype);
