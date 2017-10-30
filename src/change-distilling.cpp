@@ -277,20 +277,13 @@ distill(Node &T1, Node &T2)
     };
 
     auto distillLeafs = [&]() {
-        for (const Match &match : matches) {
-            if (match.x->relative != nullptr || match.y->relative != nullptr) {
-                continue;
+        for (const Match &m : matches) {
+            if (m.x->relative == nullptr && m.y->relative == nullptr) {
+                match(m.x, m.y, (m.similarity == 1.0f &&
+                                 m.y->label == m.x->label)
+                                ? State::Unchanged
+                                : State::Updated);
             }
-
-            match.x->relative = match.y;
-            match.y->relative = match.x;
-
-            const State state = (match.similarity == 1.0f &&
-                                 match.y->label == match.x->label)
-                              ? State::Unchanged
-                              : State::Updated;
-            match.x->state = state;
-            match.y->state = state;
         }
     };
 
@@ -439,14 +432,10 @@ distill(Node &T1, Node &T2)
                             return b.common < a.common;
                         });
 
-        for (const Match &match : matches) {
-            if (match.x->relative != nullptr || match.y->relative != nullptr) {
-                continue;
+        for (const Match &m : matches) {
+            if (m.x->relative == nullptr && m.y->relative == nullptr) {
+                match(m.x, m.y, State::Unchanged);
             }
-            markNode(*match.x, State::Unchanged);
-            markNode(*match.y, State::Unchanged);
-            match.x->relative = match.y;
-            match.y->relative = match.x;
         }
     };
 
