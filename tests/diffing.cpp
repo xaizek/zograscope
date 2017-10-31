@@ -985,6 +985,28 @@ TEST_CASE("Postponed node in initializer is matched on adding elements",
             [SK_BY_ID]     = ""         /// Additions
         };
     )", false);
+
+    diffSources(R"(
+        const char *list[] = {
+        #include "xmacro-file.h"
+        };
+    )", R"(
+        const char *list[] = {
+        #include "xmacro-file.h"
+            extra                 /// Additions
+        };
+    )", true);
+
+    diffSources(R"(
+        const char *list[] = {
+        #include "xmacro-file.h"
+        };
+    )", R"(
+        const char *list[] = {
+            extra                 /// Additions
+        #include "xmacro-file.h"
+        };
+    )", true);
 }
 
 TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",

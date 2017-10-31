@@ -54,15 +54,24 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
     return (x0.node->stype == SType::Declaration ? x0.node : x1.node);
 }
 
-// Moves children of node after specified one, but before the last child into
-// specified child.
+// Moves children of node after specified one but before the last child and
+// nodes before the specified one but before the first child into specified
+// child.
 static PNode *
 suckIn(PNode *node, PNode *child)
 {
+    // After.
     auto pos = ++std::find(node->children.begin(), node->children.end(), child);
     child->children.insert(child->children.cend(),
                            pos, --node->children.end());
     node->children.erase(pos, --node->children.end());
+
+    // Before.
+    pos = node->children.end() - 2;
+    child->children.insert(child->children.cbegin(),
+                           ++node->children.begin(), pos);
+    node->children.erase(++node->children.begin(), pos);
+
     return node;
 }
 
@@ -1183,7 +1192,11 @@ initializer
                               SType::Initializer), $2); }
     /* This is an extension to allow {} initializer. */
     | '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { PNode *ilist = tb->addNode({ }, SType::InitializerList);
+      $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                                ilist,
+                                tb->addNode($2, @2, SType::Separator) },
+                              SType::Initializer), ilist); }
     ;
 
 /* (6.7.9) initializer-list: */
