@@ -148,6 +148,11 @@ shouldSplice(SType parent, Node *childNode)
         return true;
     }
 
+    if (parent == SType::FunctionDefinition &&
+        child == SType::CompoundStatement) {
+        return true;
+    }
+
     if (childNode->type == Type::Virtual &&
         child == SType::TemporaryContainer) {
         return true;

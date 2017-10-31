@@ -1594,16 +1594,8 @@ external_declaration
 /* (6.9.1) function-definition: */
 /*     declaration-specifiers declarator declaration-listopt compound-statement */
 function_definition
-    : function_header '{' block_item_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::FunctionDeclaration),
-                         tb->addNode($2, @2, SType::Separator),
-                         $3,
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::FunctionDefinition); }
-    | function_header '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::FunctionDeclaration),
-                         tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::Separator) },
+    : function_header compound_statement
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::FunctionDeclaration), $2 },
                        SType::FunctionDefinition); }
     ;
 
