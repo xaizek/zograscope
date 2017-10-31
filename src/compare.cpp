@@ -15,6 +15,7 @@
 static bool flatten(Node *n, int level);
 static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
+static const Node * getParent(const Node *x);
 static void refine(Node &node);
 
 void
@@ -168,24 +169,22 @@ static void
 setParentLinks(Node *x, Node *parent)
 {
     x->parent = parent;
-    if (!isUnmovable(x)) {
-        parent = x;
-    }
     for (Node *child : x->children) {
-        setParentLinks(child, parent);
+        setParentLinks(child, x);
     }
 }
 
 static void
 detectMoves(Node *x)
 {
-    if (x->parent && x->relative && x->relative->parent &&
-        x->parent && x->relative && x->relative->parent &&
-        x->parent->relative != x->relative->parent &&
-        !isUnmovable(x)) {
+    Node *const y = x->relative;
+    const Node *const px = getParent(x);
+    const Node *const py = (y ? getParent(y) : nullptr);
+
+    if (px && py && px->relative != py && !isUnmovable(x)) {
         // Mark nodes which switched their parents as moved.
         markTreeAsMoved(x);
-        markTreeAsMoved(x->relative);
+        markTreeAsMoved(y);
     }
 
     if (x->children.empty()) {
@@ -196,9 +195,9 @@ detectMoves(Node *x)
         return x->relative == y;
     };
 
-    if (x->relative != nullptr && hasMoveableItems(x)) {
+    if (y != nullptr && hasMoveableItems(x)) {
         dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)>
-            diff(x->children, x->relative->children, cmp);
+            diff(x->children, y->children, cmp);
         diff.compose();
 
         for (const auto &d : diff.getSes().getSequence()) {
@@ -215,6 +214,15 @@ detectMoves(Node *x)
     for (Node *child : x->children) {
         detectMoves(child);
     }
+}
+
+static const Node *
+getParent(const Node *x)
+{
+    do {
+        x = x->parent;
+    } while (x != nullptr && isUnmovable(x));
+    return x;
 }
 
 static void
