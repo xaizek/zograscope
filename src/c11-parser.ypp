@@ -32,7 +32,8 @@ postOrderLeafs(const PNode *node, std::vector<const PNode *> &v)
         postOrderLeafs(child, v);
     }
 
-    if (node->children.empty()) {
+    if (node->children.empty() && node->stype != SType::Comment &&
+        node->stype != SType::Directive) {
         v.push_back(node);
     }
 }

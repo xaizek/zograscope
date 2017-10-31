@@ -377,6 +377,26 @@ TEST_CASE("Control-flow macros are allowed", "[parser][extensions]")
     CHECK_FALSE(parse(str).hasFailed());
 }
 
+TEST_CASE("Comments don't affect resolution of declaration/statement conflict",
+          "[parser][postponed][conflicts]")
+{
+    Tree tree;
+
+    tree = makeTree("void f() { thisIsStatement; }");
+    CHECK(findNode(tree, Type::Identifiers, "thisIsStatement") != nullptr);
+
+    tree = makeTree("void f() { /* comment */ thisIsStatement; }");
+    CHECK(findNode(tree, Type::Identifiers, "thisIsStatement") != nullptr);
+
+    tree = makeTree(R"(
+        void f() {
+        #include "file.h"
+            thisIsStatement;
+        })"
+    );
+    CHECK(findNode(tree, Type::Identifiers, "thisIsStatement") != nullptr);
+}
+
 static int
 countNodes(const Node &root)
 {
