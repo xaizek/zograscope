@@ -1585,7 +1585,7 @@ top_level
 external_declaration
     : function_definition
     { $$ = tb->addNode($1, @1); }
-    | declaration
+    | declaration                               %dprec 1
     { $$ = $1; }
     /* This are extensions for top-level macros and extern "C". */
     | ID '(' top_level ')'
@@ -1596,7 +1596,7 @@ external_declaration
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) },
                        SType::Macro); }
-    | ID '(' argument_expression_list ')' ';'
+    | ID '(' argument_expression_list ')' ';'   %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }, SType::Macro); }

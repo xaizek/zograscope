@@ -397,6 +397,13 @@ TEST_CASE("Comments don't affect resolution of declaration/statement conflict",
     CHECK(findNode(tree, Type::Identifiers, "thisIsStatement") != nullptr);
 }
 
+TEST_CASE("Single-parameter macro at global scope",
+          "[parser][conflicts][extensions]")
+{
+    Tree tree = makeTree("DECLARE(rename_inside_subdir_ok);");
+    CHECK(findNode(tree, Type::Functions, "DECLARE") != nullptr);
+}
+
 static int
 countNodes(const Node &root)
 {
