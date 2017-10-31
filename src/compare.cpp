@@ -13,7 +13,7 @@
 #include "utils.hpp"
 
 static bool flatten(Node *n, int level);
-static void markParents(Node *x, Node *parent);
+static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static void refine(Node &node);
 
@@ -111,8 +111,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
     }
     distill(*T1, *T2);
-    markParents(T1, nullptr);
-    markParents(T2, nullptr);
+    setParentLinks(T1, nullptr);
+    setParentLinks(T2, nullptr);
     detectMoves(T1);
 
     timer.measure("recursing");
@@ -165,14 +165,14 @@ flatten(Node *n, int level)
 }
 
 static void
-markParents(Node *x, Node *parent)
+setParentLinks(Node *x, Node *parent)
 {
     x->parent = parent;
     if (!isUnmovable(x)) {
         parent = x;
     }
     for (Node *child : x->children) {
-        markParents(child, parent);
+        setParentLinks(child, parent);
     }
 }
 
