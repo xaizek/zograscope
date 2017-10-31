@@ -111,6 +111,10 @@ bool hasMoveableItems(const Node *x);
 
 bool isContainer(const Node *x);
 
+// Checks whether node doesn't have fixed position within a tree and can move
+// between internal nodes as long as post-order of leafs is preserved.
+bool isTravellingNode(const Node *x);
+
 bool canForceLeafMatch(const Node *x, const Node *y);
 
 void markTreeAsMoved(Node *node);

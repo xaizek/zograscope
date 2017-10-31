@@ -1318,14 +1318,16 @@ labeled_statement
 /*     { block-item-listopt } */
 compound_statement
     : '{' block_item_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         $2,
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::CompoundStatement); }
+    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                                $2,
+                                tb->addNode($3, @3, SType::Separator) },
+                              SType::CompoundStatement), $2); }
     | '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator) },
-                       SType::CompoundStatement); }
+    { PNode *stmts = tb->addNode({ }, SType::Statements);
+      $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                                stmts,
+                                tb->addNode($2, @2, SType::Separator) },
+                              SType::CompoundStatement), stmts); }
     ;
 
 /* (6.8.2) block-item-list: */

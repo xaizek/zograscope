@@ -521,6 +521,12 @@ isContainer(const Node *x)
 }
 
 bool
+isTravellingNode(const Node *x)
+{
+    return (x->stype == SType::Directive || x->stype == SType::Comment);
+}
+
+bool
 canForceLeafMatch(const Node *x, const Node *y)
 {
     if (!x->children.empty() || !y->children.empty()) {

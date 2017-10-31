@@ -987,6 +987,81 @@ TEST_CASE("Postponed node in initializer is matched on adding elements",
     )", false);
 }
 
+TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
+          "[comparison][postponed]")
+{
+    diffSources(R"(
+        void f() {
+            movedStatement;    /// Moves
+            // comment
+            unmovedStatement;
+        }
+    )", R"(
+        void f() {
+            // comment
+            unmovedStatement;
+            movedStatement;    /// Moves
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            movedStatement;    /// Moves
+        #include "file.h"
+            unmovedStatement;
+        }
+    )", R"(
+        void f() {
+        #include "file.h"
+            unmovedStatement;
+            movedStatement;    /// Moves
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            movedStatement;    /// Moves
+            // comment1
+            // comment2
+            unmovedStatement;
+        }
+    )", R"(
+        void f() {
+            // comment1
+            // comment2
+            unmovedStatement;
+            movedStatement;    /// Moves
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            movedStatement;    /// Moves
+            // comment1
+            unmovedStatement;
+            // comment2
+        }
+    )", R"(
+        void f() {
+            // comment1
+            unmovedStatement;
+            // comment2
+            movedStatement;    /// Moves
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            #include "a"
+        }
+    )", R"(
+        void f() {
+            thisIsAMovedStatement;  /// Additions
+            #include "a"
+        }
+    )", true);
+}
+
 TEST_CASE("Comma after initializer element is bundled with the element",
           "[comparison]")
 {

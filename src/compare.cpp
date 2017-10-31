@@ -16,6 +16,7 @@ static bool flatten(Node *n, int level);
 static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static const Node * getParent(const Node *x);
+static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
 void
@@ -181,7 +182,8 @@ detectMoves(Node *x)
     const Node *const px = getParent(x);
     const Node *const py = (y ? getParent(y) : nullptr);
 
-    if (px && py && px->relative != py && !isUnmovable(x)) {
+    if (px && py && px->relative != py && !isUnmovable(x) &&
+        !isTravellingPair(x, y) && !isTravellingPair(y, x)) {
         // Mark nodes which switched their parents as moved.
         markTreeAsMoved(x);
         markTreeAsMoved(y);
@@ -203,7 +205,9 @@ detectMoves(Node *x)
         for (const auto &d : diff.getSes().getSequence()) {
             if (d.second.type == dtl::SES_DELETE) {
                 Node *node = x->children[d.second.beforeIdx - 1];
-                if (node->relative != nullptr) {
+                if (node->relative != nullptr &&
+                    !isTravellingPair(node, node->relative) &&
+                    !isTravellingPair(node->relative, node)) {
                     markTreeAsMoved(node);
                     markTreeAsMoved(node->relative);
                 }
@@ -223,6 +227,50 @@ getParent(const Node *x)
         x = x->parent;
     } while (x != nullptr && isUnmovable(x));
     return x;
+}
+
+// This is a workaround to compensate the fact that travelling nodes (called
+// postponed on parser/lexer level) can fall off container when they are in
+// front of it.
+static bool
+isTravellingPair(const Node *x, const Node *y)
+{
+    if (!isTravellingNode(x)) {
+        return false;
+    }
+
+    // Go up until we find parent that has sibling after previously visited
+    // node.
+    while (x->parent != nullptr) {
+        auto it = std::find(x->parent->children.cbegin(),
+                            x->parent->children.cend(),
+                            x);
+
+        while (++it != x->parent->children.cend() && isTravellingNode(*it)) {
+            // Skip other traveling nodes.
+        }
+        if (it != x->parent->children.cend()) {
+            x = *it;
+            break;
+        }
+
+        x = x->parent;
+    }
+
+    if (x->parent == nullptr) {
+        return false;
+    }
+
+    // Go down into left-most node trying to find node which is relative to y.
+    while (!x->children.empty()) {
+        if (x->relative == y->parent) {
+            return true;
+        }
+
+        x = x->children.front();
+    }
+
+    return false;
 }
 
 static void
