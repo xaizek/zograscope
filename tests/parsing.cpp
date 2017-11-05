@@ -678,7 +678,7 @@ TEST_CASE("Moves in statements with fixed structure",
                  i = 0;
                  i < 1000;
                  ++i
-                 // Comment1
+                 // Comment1      /// Moves
                  // Comment2
             ) { doSomething(); }
         }
@@ -689,8 +689,8 @@ TEST_CASE("Moves in statements with fixed structure",
                  i < 1000;
                  ++i
                  // new           /// Additions
-                 // Comment1
                  // Comment2
+                 // Comment1      /// Moves
             ) { doSomething(); }
         }
     )", true);
