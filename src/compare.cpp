@@ -60,7 +60,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
                 continue;
             }
 
-            // XXX: here mismatched lables are included in similarity
+            // XXX: here mismatched labels are included in similarity
             //      measurement, which affects it negatively
             DiceString subtree2Dice = printSubTree(*t2Child, false);
             const float similarity = subtree1Dice.compare(subtree2Dice);
