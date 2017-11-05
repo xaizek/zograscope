@@ -611,6 +611,77 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
             ) { doSomething(); }
         }
     )", true);
+
+    diffSources(R"(
+        void f() {
+            for (;;) { }
+        }
+    )", R"(
+        void f() {
+            for (
+                i = 0     /// Additions
+                ;;) {
+            }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            for (int i = 0;
+                 i < 0       /// Deletions
+                 ;
+                 --i         /// Moves
+                 ) {
+            }
+        }
+    )", R"(
+        void f() {
+            for (int i = 0;
+                 --i         /// Moves
+                 ; ) {
+            }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            for (int i = 0; ; ) { }
+        }
+    )", R"(
+        void f() {
+            for (int i = 0; ;
+                 ++i                 /// Additions
+                ) {
+            }
+        }
+    )", true);
+}
+
+TEST_CASE("Moves in statements with fixed structure",
+          "[comparison][parsing][postponed]")
+{
+    diffSources(R"(
+        void f() {
+            for (
+                 i = 0;
+                 i < 1000;
+                 ++i
+                 // Comment1
+                 // Comment2
+            ) { doSomething(); }
+        }
+    )", R"(
+        void f() {
+            for (
+                 i = 0;
+                 i < 1000;
+                 ++i
+                 // new           /// Additions
+                 // Comment1
+                 // Comment2
+            ) { doSomething(); }
+        }
+    )", true);
 }
 
 TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")

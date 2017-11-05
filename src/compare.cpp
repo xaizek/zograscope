@@ -1,6 +1,9 @@
 #include "compare.hpp"
 
+#include <cassert>
+
 #include <algorithm>
+#include <iterator>
 #include <vector>
 
 #include <boost/optional.hpp>
@@ -16,6 +19,8 @@ static bool flatten(Node *n, int level);
 static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static const Node * getParent(const Node *x);
+static void detectMovesInFixedStructure(Node *x, Node *y);
+static int getMovePosOfAux(Node *node);
 static void markMoved(Node *x);
 static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
@@ -197,8 +202,17 @@ detectMoves(Node *x)
     };
 
     if (y != nullptr && hasMoveableItems(x)) {
-        dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)>
-            diff(x->children, y->children, cmp);
+        if (hasFixedStructure(x)) {
+            detectMovesInFixedStructure(x, y);
+            for (Node *child : x->children) {
+                detectMoves(child);
+            }
+            return;
+        }
+
+        dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)> diff(x->children,
+                                                                   y->children,
+                                                                   cmp);
         diff.compose();
 
         for (const auto &d : diff.getSes().getSequence()) {
@@ -220,6 +234,62 @@ getParent(const Node *x)
         x = x->parent;
     } while (x != nullptr && isUnmovable(x));
     return x;
+}
+
+// Performs single-level move detection for nodes with fixed structure.
+static void
+detectMovesInFixedStructure(Node *x, Node *y)
+{
+    std::vector<Node *> xChildren, yChildren;
+
+    // Extract payload of the structure to compare it separately.
+    xChildren.reserve(x->children.size());
+    std::copy_if(x->children.cbegin(), x->children.cend(),
+                 std::back_inserter(xChildren), &isPayloadOfFixed);
+    yChildren.reserve(y->children.size());
+    std::copy_if(y->children.cbegin(), y->children.cend(),
+                 std::back_inserter(yChildren), &isPayloadOfFixed);
+
+    assert(xChildren.size() == yChildren.size() && "Must be in sync.");
+
+    // Because number of children is fixed, checking for matching positions
+    // suffices.
+    for (unsigned int i = 0U; i < xChildren.size(); ++i) {
+        Node *const c = xChildren[i];
+        auto it = std::find(yChildren.cbegin(), yChildren.cend(), c->relative);
+        if (it - yChildren.cbegin() != i) {
+            markMoved(c);
+        }
+    }
+
+    // Move detection for auxiliary nodes need to ignore payload nodes and
+    // account for addition/deletion properly.
+    for (Node *c : x->children) {
+        Node *const r = c->relative;
+        if (r != nullptr && getMovePosOfAux(c) != getMovePosOfAux(r)) {
+            markMoved(c);
+        }
+    }
+}
+
+// Computes position of auxiliary node of a parent with fixed structure offset
+// by added and removed nodes.
+static int
+getMovePosOfAux(Node *node)
+{
+    std::vector<Node *> &children = node->parent->children;
+    int pos = 0;
+    for (Node *child : children) {
+        if (child == node) {
+            break;
+        }
+        if (child->relative != nullptr && !isPayloadOfFixed(child) &&
+            child->relative->parent == node->relative->parent &&
+            !child->moved) {
+            ++pos;
+        }
+    }
+    return pos;
 }
 
 // Marks subtree of this node and its relative accounting for special cases.

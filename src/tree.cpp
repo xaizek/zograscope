@@ -521,6 +521,19 @@ isContainer(const Node *x)
 }
 
 bool
+hasFixedStructure(const Node *x)
+{
+    return (x->stype == SType::ForHead);
+}
+
+bool
+isPayloadOfFixed(const Node *x)
+{
+    return x->stype != SType::Separator
+        && !isTravellingNode(x);
+}
+
+bool
 isTravellingNode(const Node *x)
 {
     return (x->stype == SType::Directive || x->stype == SType::Comment);
