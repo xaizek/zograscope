@@ -312,6 +312,18 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
             );
         }
     )", false);
+
+    diffSources(R"(
+        void f() {
+            function(firstArg);
+        }
+    )", R"(
+        void f() {
+            function(
+                     newArg        /// Additions
+                     , firstArg);
+        }
+    )", true);
 }
 
 TEST_CASE("Comma is bundled to arguments", "[comparison][parsing]")

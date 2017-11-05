@@ -289,7 +289,8 @@ asm_argument_list
 /*     argument-expression-list , assignment-expression */
 argument_expression_list
     : expr_or_type
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Argument) },
+    { $$ = tb->addNode({ tb->addNode({ tb->addNode($1, @1, SType::Argument) },
+                                     SType::Bundle) },
                        SType::ArgumentList); }
     | argument_expression_list ',' expr_or_type
     { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2, SType::Separator),
