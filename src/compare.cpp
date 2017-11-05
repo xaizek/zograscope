@@ -16,6 +16,7 @@ static bool flatten(Node *n, int level);
 static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static const Node * getParent(const Node *x);
+static void markMoved(Node *x);
 static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
@@ -182,11 +183,9 @@ detectMoves(Node *x)
     const Node *const px = getParent(x);
     const Node *const py = (y ? getParent(y) : nullptr);
 
-    if (px && py && px->relative != py && !isUnmovable(x) &&
-        !isTravellingPair(x, y) && !isTravellingPair(y, x)) {
-        // Mark nodes which switched their parents as moved.
-        markTreeAsMoved(x);
-        markTreeAsMoved(y);
+    // Mark nodes which switched their parents as moved.
+    if (px && py && px->relative != py && !isUnmovable(x)) {
+        markMoved(x);
     }
 
     if (x->children.empty()) {
@@ -204,13 +203,7 @@ detectMoves(Node *x)
 
         for (const auto &d : diff.getSes().getSequence()) {
             if (d.second.type == dtl::SES_DELETE) {
-                Node *node = x->children[d.second.beforeIdx - 1];
-                if (node->relative != nullptr &&
-                    !isTravellingPair(node, node->relative) &&
-                    !isTravellingPair(node->relative, node)) {
-                    markTreeAsMoved(node);
-                    markTreeAsMoved(node->relative);
-                }
+                markMoved(x->children[d.second.beforeIdx - 1]);
             }
         }
     }
@@ -227,6 +220,17 @@ getParent(const Node *x)
         x = x->parent;
     } while (x != nullptr && isUnmovable(x));
     return x;
+}
+
+// Marks subtree of this node and its relative accounting for special cases.
+static void
+markMoved(Node *x)
+{
+    Node *const y = x->relative;
+    if (y != nullptr && !isTravellingPair(x, y) && !isTravellingPair(y, x)) {
+        markTreeAsMoved(x);
+        markTreeAsMoved(y);
+    }
 }
 
 // This is a workaround to compensate the fact that travelling nodes (called
