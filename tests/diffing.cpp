@@ -1226,3 +1226,28 @@ TEST_CASE("Almost matched if-statement is matched till the end", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Function bodies are matched even when headers don't", "[comparison]")
+{
+    diffSources(R"(
+        TEST(path_is_invalidated_in_fsdata)                  /// Deletions
+        {
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+        }
+    )", R"(
+        TEST(parents_are_mapped_in_fsdata_on_match)          /// Additions
+        {
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+        }
+    )", true);
+}

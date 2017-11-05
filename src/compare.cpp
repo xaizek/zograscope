@@ -98,10 +98,6 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
         Node *subT1 = match.x, *subT2 = match.y;
         distill(*subT1, *subT2);
-        match.x->satellite = match.identical;
-        match.y->satellite = match.identical;
-        match.x->relative = match.y;
-        match.y->relative = match.x;
     }
 
     int flattenLevel = 0;
