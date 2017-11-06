@@ -407,27 +407,28 @@ distill(Node &T1, Node &T2)
                                                 n->type != Type::Comments;
                                             });
 
-                float t = (std::min(xLeaves, yLeaves) <= 4) ? 0.4f : 0.6f;
+                // Threshold of children similarity depends on number of leaves.
+                const float t = (std::min(xLeaves, yLeaves) <= 4 ? 0.4f : 0.6f);
 
-                int xExtra = countSatelliteNodes(x);
-                int yExtra = countSatelliteNodes(y);
+                const int xExtra = countSatelliteNodes(x);
+                const int yExtra = countSatelliteNodes(y);
                 common += std::min(xExtra, yExtra);
                 xLeaves += xExtra;
                 yLeaves += yExtra;
 
-                float similarity2 =
-                    static_cast<float>(common)/std::max(xLeaves, yLeaves);
-                if (similarity2 < t) {
+                const int maxLeaves = std::max(xLeaves, yLeaves);
+                const float childrenSim = static_cast<float>(common)/maxLeaves;
+                if (childrenSim < t) {
                     continue;
                 }
 
-                float similarity1 = dice1[x->poID].compare(dice2[y->poID]);
-                if (similarity1 < 0.6f && similarity2 < 0.8f) {
+                const float labelSim = dice1[x->poID].compare(dice2[y->poID]);
+                if (labelSim < 0.6f && childrenSim < 0.8f) {
                     continue;
                 }
 
-                if (similarity1 == 1.0f && x->label == y->label &&
-                    similarity2 == 1.0f) {
+                if (labelSim == 1.0f && x->label == y->label &&
+                    childrenSim == 1.0f) {
                     match(x, y, State::Unchanged);
                 } else {
                     match(x, y, State::Updated);
