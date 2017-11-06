@@ -417,7 +417,12 @@ distill(Node &T1, Node &T2)
                 yLeaves += yExtra;
 
                 const int maxLeaves = std::max(xLeaves, yLeaves);
-                const float childrenSim = static_cast<float>(common)/maxLeaves;
+                // Avoid NaN result.  If there are no common leaves, the nodes
+                // are the same (XXX: might want to compare satellites in such
+                // cases in the future).
+                const float childrenSim = maxLeaves == 0
+                                        ? 1.0f
+                                        : static_cast<float>(common)/maxLeaves;
                 if (childrenSim < t) {
                     continue;
                 }

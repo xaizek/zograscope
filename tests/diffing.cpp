@@ -1251,3 +1251,38 @@ TEST_CASE("Function bodies are matched even when headers don't", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
+          "[comparison]")
+{
+    // Internal node containing `default:` was marked as updated.
+
+    Tree oldTree = makeTree(R"(
+        void f() {
+            switch (v) {
+                default:
+                    doSomething();
+                    break;
+                case 1:
+                    call(arg1, arg2);
+            }
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void f() {
+            switch (v) {
+                case 1:
+                    call(arg1, 10);
+                default:
+                    doSomething();
+                    break;
+            }
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    CHECK(countInternal(*oldTree.getRoot(), State::Updated) == 0);
+    CHECK(countInternal(*newTree.getRoot(), State::Updated) == 0);
+}

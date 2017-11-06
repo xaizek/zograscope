@@ -28,6 +28,7 @@ enum class Changes
     Mixed,
 };
 
+static int countNodesInState(const Node &root, State state, bool leaves);
 static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
@@ -78,6 +79,18 @@ findNode(const Tree &tree, Type type, const std::string &label)
 int
 countLeaves(const Node &root, State state)
 {
+    return countNodesInState(root, state, true);
+}
+
+int
+countInternal(const Node &root, State state)
+{
+    return countNodesInState(root, state, false);
+}
+
+static int
+countNodesInState(const Node &root, State state, bool leaves)
+{
     int count = 0;
 
     std::function<void(const Node &)> visit = [&](const Node &node) {
@@ -85,7 +98,7 @@ countLeaves(const Node &root, State state)
             return visit(*node.next);
         }
 
-        if (node.children.empty() && node.state == state) {
+        if (node.children.empty() == leaves && node.state == state) {
             ++count;
         }
 
