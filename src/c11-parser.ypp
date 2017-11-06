@@ -1298,8 +1298,7 @@ static_assert_declaration
 /*     jump-statement */
 statement
     : labeled_statement
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Statement) },
-                       SType::Statements); }
+    { $$ = tb->addNode({ $1 }, SType::Statements); }
     | compound_statement
     | expression_statement
     { $$ = tb->addNode({ $1 }, SType::Statements); }
@@ -1318,14 +1317,19 @@ statement
 /*     default : statement */
 labeled_statement
     : ID ':' ext_statement                        %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator), $3 },
+                       SType::LabelStmt); }
     | CASE constant_expression ':' ext_statement  %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { PNode *prefix = tb->addNode({ tb->addNode($1, @1, SType::Separator), $2,
+                                    tb->addNode($3, @3, SType::Separator) },
+                                  SType::LabelStmt);
+      $$ = tb->addNode({ prefix, $4 }, SType::TemporaryContainer); }
     | DEFAULT ':' ext_statement                   %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { PNode *prefix = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                                    tb->addNode($2, @2, SType::Separator) },
+                                  SType::LabelStmt);
+      $$ = tb->addNode({ prefix, $3 }, SType::TemporaryContainer); }
     ;
 
 /* (6.8.2) compound-statement: */
@@ -1406,9 +1410,9 @@ selection_statement
                          ifElse },
                        SType::IfStmt); }
     | SWITCH '(' expression ')' ext_statement
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) },
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator), $3,
+                         tb->addNode($4, @4, SType::Separator), $5 },
                        SType::SwitchStmt); }
     ;
 

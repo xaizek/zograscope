@@ -32,6 +32,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::WhileStmt:           return (os << "WhileStmt");
         case SType::WhileCond:           return (os << "WhileCond");
         case SType::ForStmt:             return (os << "ForStmt");
+        case SType::LabelStmt:           return (os << "LabelStmt");
         case SType::ForHead:             return (os << "ForHead");
         case SType::Expression:          return (os << "Expression");
         case SType::Declarator:          return (os << "Declarator");

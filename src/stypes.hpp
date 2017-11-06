@@ -29,6 +29,7 @@ enum class SType
     WhileStmt,
     WhileCond,
     ForStmt,
+    LabelStmt,
     ForHead,
     Expression,
     Declarator,

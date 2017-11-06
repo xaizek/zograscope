@@ -772,3 +772,32 @@ TEST_CASE("Inversion of relatively complex condition", "[comparison][parsing]")
         }
     )", true);
 }
+
+TEST_CASE("Switch and label statements are decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            switch (v) {
+                default:
+                    doSomething();
+                    break;
+                case 1:               /// Moves
+                    call(arg1         /// Moves
+                             , arg2   /// Deletions
+                             );       /// Moves
+            }
+        }
+    )", R"(
+        void f() {
+            switch (v) {
+                case 1:               /// Moves
+                    call(arg1         /// Moves
+                             , 10     /// Additions
+                             );       /// Moves
+                default:
+                    doSomething();
+                    break;
+            }
+        }
+    )", true);
+}
