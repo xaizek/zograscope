@@ -19,7 +19,6 @@ enum class SType
     Separator,
     Punctuation,
     Statements,
-    Statement,
     ExprStatement,
     IfStmt,
     IfExpr,
