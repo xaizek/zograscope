@@ -49,7 +49,7 @@ struct DiffSource
 
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::vector<DiffLine> dtlCompare(DiffSource &&l, DiffSource &&r);
+static std::vector<DiffLine> makeDiff(DiffSource &&l, DiffSource &&r);
 static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
@@ -134,7 +134,7 @@ Printer::print(TimeReport &tr)
     DiffSource lsrc = (tr.measure("left-print"), DiffSource(left));
     DiffSource rsrc = (tr.measure("right-print"), DiffSource(right));
     std::vector<DiffLine> diff = (tr.measure("compare"),
-                                  dtlCompare(std::move(lsrc), std::move(rsrc)));
+                                  makeDiff(std::move(lsrc), std::move(rsrc)));
 
     // TODO: don't highlight lines that won't be displayed (it takes extra
     //       time).
@@ -331,20 +331,21 @@ countWidth(int n)
     return (width == 0) ? 1 : width;
 }
 
+// Generates alignment information describing two sequences.
 static std::vector<DiffLine>
-dtlCompare(DiffSource &&l, DiffSource &&r)
+makeDiff(DiffSource &&l, DiffSource &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
-    std::vector<DiceString> &lt = l.lines;
-    std::vector<DiceString> &rt = r.lines;
+    const std::vector<DiceString> &lt = l.lines;
+    const std::vector<DiceString> &rt = r.lines;
 
     auto cmp = [](DiceString &a, DiceString &b) {
         return (a.compare(b) >= 0.8f);
     };
 
-    dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)>
-        diff(lt, rt, cmp);
+    dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)> diff(lt, rt,
+                                                                       cmp);
     diff.compose();
 
     size_type identicalLines = 0U;
