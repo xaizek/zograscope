@@ -30,6 +30,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::IfThen:              return (os << "IfThen");
         case SType::IfElse:              return (os << "IfElse");
         case SType::WhileStmt:           return (os << "WhileStmt");
+        case SType::DoWhileStmt:         return (os << "DoWhileStmt");
         case SType::WhileCond:           return (os << "WhileCond");
         case SType::ForStmt:             return (os << "ForStmt");
         case SType::LabelStmt:           return (os << "LabelStmt");

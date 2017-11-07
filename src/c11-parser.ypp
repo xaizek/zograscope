@@ -1425,16 +1425,22 @@ iteration_statement
     : WHILE '(' expression ')' ext_statement
     { auto whileCond = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                      tb->addNode($2, @2, SType::Separator),
-                                     tb->addNode($3, @3, SType::Expression),
+                                     $3,
                                      tb->addNode($4, @4, SType::Separator) },
                                    SType::WhileCond);
       auto whileThen = tb->addNode($5, @5);
       $$ = tb->addNode({ whileCond, whileThen }, SType::WhileStmt); }
     | DO ext_statement WHILE '(' expression ')' ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5), tb->addNode($6, @6),
-                         tb->addNode($7, @7) }); }
+    { auto whileCond = tb->addNode({ tb->addNode($3, @3, SType::Separator),
+                                     tb->addNode($4, @4, SType::Separator),
+                                     $5,
+                                     tb->addNode($6, @6, SType::Separator) },
+                                   SType::WhileCond);
+      $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         $2,
+                         whileCond,
+                         tb->addNode($7, @7, SType::Separator) },
+                       SType::DoWhileStmt); }
     | FOR '(' expression ';' expression ';' expression ')' ext_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),

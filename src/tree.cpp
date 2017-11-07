@@ -170,6 +170,10 @@ shouldSplice(SType parent, Node *childNode)
         }
     }
 
+    if (parent == SType::DoWhileStmt && child == SType::CompoundStatement) {
+        return true;
+    }
+
     return false;
 }
 

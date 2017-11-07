@@ -27,6 +27,7 @@ enum class SType
     IfThen,
     IfElse,
     WhileStmt,
+    DoWhileStmt,
     WhileCond,
     ForStmt,
     LabelStmt,
