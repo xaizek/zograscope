@@ -36,10 +36,15 @@ struct DiffLine
     int data;
 };
 
+// Represents tree in a form suitable for diffing.
 struct DiffSide
 {
-    std::vector<std::string> lines;
-    std::vector<bool> modified;
+    // Formats tokens from the tree without highlighting and recording presence
+    // of changes for each line.
+    DiffSide(const Node &root);
+
+    std::vector<std::string> lines; // Unhighlighted lines generated from tree.
+    std::vector<bool> modified;     // Whether respective line contains changes.
 };
 
 static std::string noLineMarker(int at);
@@ -48,6 +53,50 @@ static std::vector<DiffLine> dtlCompare(DiffSide &&l, DiffSide &&r);
 static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
+
+DiffSide::DiffSide(const Node &root)
+{
+    int line = 0, col = 1;
+    std::function<void(const Node &, bool)> visit = [&](const Node &node,
+                                                        bool moved) {
+        if (node.next != nullptr) {
+            return visit(*node.next, moved || node.moved);
+        }
+
+        if (node.line != 0 && node.col != 0) {
+            if (node.line > line) {
+                lines.insert(lines.cend(), node.line - line, empty);
+                modified.insert(modified.cend(), node.line - line, false);
+                line = node.line;
+                col = 1;
+            }
+
+            if (node.col > col) {
+                lines.back().append(node.col - col, ' ');
+                col = node.col;
+            }
+
+            std::vector<boost::string_ref> spell = split(node.spelling, '\n');
+            col += spell.front().size();
+            lines.back() += spell.front().to_string();
+
+            const bool changed = (node.state != State::Unchanged || moved);
+            modified.back() = (modified.back() || changed);
+
+            for (std::size_t i = 1U; i < spell.size(); ++i) {
+                ++line;
+                col = 1 + spell[i].size();
+                lines.emplace_back(spell[i]);
+                modified.emplace_back(changed);
+            }
+        }
+
+        for (Node *child : node.children) {
+            visit(*child, moved);
+        }
+    };
+    visit(root, false);
+}
 
 Printer::Printer(Node &left, Node &right, std::ostream &os)
     : left(left), right(right), os(os)
@@ -60,54 +109,6 @@ Printer::addHeader(Header header)
     headers.emplace_back(std::move(header));
 }
 
-static DiffSide
-treePrint(Node &root)
-{
-    DiffSide s;
-
-    int line = 0, col = 1;
-    std::function<void(Node &, bool)> visit = [&](Node &node, bool moved) {
-        if (node.next != nullptr) {
-            return visit(*node.next, moved || node.moved);
-        }
-
-        if (node.line != 0 && node.col != 0) {
-            if (node.line > line) {
-                s.lines.insert(s.lines.cend(), node.line - line, empty);
-                s.modified.insert(s.modified.cend(), node.line - line, false);
-                line = node.line;
-                col = 1;
-            }
-
-            if (node.col > col) {
-                s.lines.back().append(node.col - col, ' ');
-                col = node.col;
-            }
-
-            std::vector<boost::string_ref> spell = split(node.spelling, '\n');
-            col += spell.front().size();
-            s.lines.back() += spell.front().to_string();
-
-            bool modified = (node.state != State::Unchanged || moved);
-            s.modified.back() = (s.modified.back() || modified);
-
-            for (std::size_t i = 1U; i < spell.size(); ++i) {
-                ++line;
-                col = 1 + spell[i].size();
-                s.lines.emplace_back(spell[i]);
-                s.modified.emplace_back(modified);
-            }
-        }
-
-        for (Node *child : node.children) {
-            visit(*child, moved);
-        }
-    };
-    visit(root, false);
-
-    return s;
-}
-
 void
 Printer::print(TimeReport &tr)
 {
@@ -116,8 +117,8 @@ Printer::print(TimeReport &tr)
     auto diffingTimer = tr.measure("printing");
 
     // Do comparison without highlighting as it skews alignment results.
-    DiffSide lp = (tr.measure("left-print"), treePrint(left));
-    DiffSide rp = (tr.measure("right-print"), treePrint(right));
+    DiffSide lp = (tr.measure("left-print"), DiffSide(left));
+    DiffSide rp = (tr.measure("right-print"), DiffSide(right));
     std::vector<DiffLine> diff = (tr.measure("compare"),
                                   dtlCompare(std::move(lp), std::move(rp)));
 
