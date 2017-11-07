@@ -43,8 +43,8 @@ struct DiffSource
     // of changes for each line.
     DiffSource(const Node &root);
 
-    std::vector<std::string> lines; // Unhighlighted lines generated from tree.
-    std::vector<bool> modified;     // Whether respective line contains changes.
+    std::vector<DiceString> lines; // Unhighlighted lines generated from tree.
+    std::vector<bool> modified;    // Whether respective line contains changes.
 };
 
 static std::string noLineMarker(int at);
@@ -56,6 +56,8 @@ static std::string empty;
 
 DiffSource::DiffSource(const Node &root)
 {
+    std::string buffer;
+
     int line = 0, col = 1;
     std::function<void(const Node &, bool)> visit = [&](const Node &node,
                                                         bool moved) {
@@ -65,6 +67,10 @@ DiffSource::DiffSource(const Node &root)
 
         if (node.line != 0 && node.col != 0) {
             if (node.line > line) {
+                if (!buffer.empty()) {
+                    lines.back() = DiceString(buffer);
+                    buffer.clear();
+                }
                 lines.insert(lines.cend(), node.line - line, empty);
                 modified.insert(modified.cend(), node.line - line, false);
                 line = node.line;
@@ -72,13 +78,13 @@ DiffSource::DiffSource(const Node &root)
             }
 
             if (node.col > col) {
-                lines.back().append(node.col - col, ' ');
+                buffer.append(node.col - col, ' ');
                 col = node.col;
             }
 
             std::vector<boost::string_ref> spell = split(node.spelling, '\n');
             col += spell.front().size();
-            lines.back() += spell.front().to_string();
+            buffer += spell.front().to_string();
 
             const bool changed = (node.state != State::Unchanged || moved);
             modified.back() = (modified.back() || changed);
@@ -86,7 +92,11 @@ DiffSource::DiffSource(const Node &root)
             for (std::size_t i = 1U; i < spell.size(); ++i) {
                 ++line;
                 col = 1 + spell[i].size();
-                lines.emplace_back(spell[i]);
+                if (!buffer.empty()) {
+                    lines.back() = DiceString(buffer);
+                    buffer.clear();
+                }
+                lines.emplace_back(spell[i].to_string());
                 modified.emplace_back(changed);
             }
         }
@@ -95,7 +105,11 @@ DiffSource::DiffSource(const Node &root)
             visit(*child, moved);
         }
     };
+
     visit(root, false);
+    if (!buffer.empty()) {
+        lines.back() = DiceString(std::move(buffer));
+    }
 }
 
 Printer::Printer(Node &left, Node &right, std::ostream &os)
@@ -322,17 +336,8 @@ dtlCompare(DiffSource &&l, DiffSource &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
-    std::vector<DiceString> lt;
-    lt.reserve(l.lines.size());
-    for (const auto &s : l.lines) {
-        lt.emplace_back(std::move(s));
-    }
-
-    std::vector<DiceString> rt;
-    rt.reserve(r.lines.size());
-    for (const auto &s : r.lines) {
-        rt.emplace_back(std::move(s));
-    }
+    std::vector<DiceString> &lt = l.lines;
+    std::vector<DiceString> &rt = r.lines;
 
     auto cmp = [](DiceString &a, DiceString &b) {
         return (a.compare(b) >= 0.8f);
