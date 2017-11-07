@@ -37,11 +37,11 @@ struct DiffLine
 };
 
 // Represents tree in a form suitable for diffing.
-struct DiffSide
+struct DiffSource
 {
     // Formats tokens from the tree without highlighting and recording presence
     // of changes for each line.
-    DiffSide(const Node &root);
+    DiffSource(const Node &root);
 
     std::vector<std::string> lines; // Unhighlighted lines generated from tree.
     std::vector<bool> modified;     // Whether respective line contains changes.
@@ -49,12 +49,12 @@ struct DiffSide
 
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::vector<DiffLine> dtlCompare(DiffSide &&l, DiffSide &&r);
+static std::vector<DiffLine> dtlCompare(DiffSource &&l, DiffSource &&r);
 static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
 
-DiffSide::DiffSide(const Node &root)
+DiffSource::DiffSource(const Node &root)
 {
     int line = 0, col = 1;
     std::function<void(const Node &, bool)> visit = [&](const Node &node,
@@ -117,10 +117,10 @@ Printer::print(TimeReport &tr)
     auto diffingTimer = tr.measure("printing");
 
     // Do comparison without highlighting as it skews alignment results.
-    DiffSide lp = (tr.measure("left-print"), DiffSide(left));
-    DiffSide rp = (tr.measure("right-print"), DiffSide(right));
+    DiffSource lsrc = (tr.measure("left-print"), DiffSource(left));
+    DiffSource rsrc = (tr.measure("right-print"), DiffSource(right));
     std::vector<DiffLine> diff = (tr.measure("compare"),
-                                  dtlCompare(std::move(lp), std::move(rp)));
+                                  dtlCompare(std::move(lsrc), std::move(rsrc)));
 
     // TODO: don't highlight lines that won't be displayed (it takes extra
     //       time).
@@ -318,7 +318,7 @@ countWidth(int n)
 }
 
 static std::vector<DiffLine>
-dtlCompare(DiffSide &&l, DiffSide &&r)
+dtlCompare(DiffSource &&l, DiffSource &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
