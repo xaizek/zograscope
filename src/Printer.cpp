@@ -36,10 +36,14 @@ struct DiffLine
     int data;
 };
 
+struct DiffSide
+{
+    std::vector<std::string> lines;
+};
+
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::vector<DiffLine> dtlCompare(std::vector<std::string> &&l,
-                                        std::vector<std::string> &&r);
+static std::vector<DiffLine> dtlCompare(DiffSide &&l, DiffSide &&r);
 static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
@@ -55,10 +59,10 @@ Printer::addHeader(Header header)
     headers.emplace_back(std::move(header));
 }
 
-static std::vector<std::string>
+static DiffSide
 treePrint(Node &root)
 {
-    std::vector<std::string> lines;
+    DiffSide s;
 
     int line = 0, col = 1;
     std::function<void(Node &)> visit = [&](Node &node) {
@@ -68,24 +72,24 @@ treePrint(Node &root)
 
         if (node.line != 0 && node.col != 0) {
             if (node.line > line) {
-                lines.insert(lines.cend(), node.line - line, empty);
+                s.lines.insert(s.lines.cend(), node.line - line, empty);
                 line = node.line;
                 col = 1;
             }
 
             if (node.col > col) {
-                lines.back().append(node.col - col, ' ');
+                s.lines.back().append(node.col - col, ' ');
                 col = node.col;
             }
 
             std::vector<boost::string_ref> spell = split(node.spelling, '\n');
             col += spell.front().size();
-            lines.back() += spell.front().to_string();
+            s.lines.back() += spell.front().to_string();
 
             for (std::size_t i = 1U; i < spell.size(); ++i) {
                 ++line;
                 col = 1 + spell[i].size();
-                lines.emplace_back(spell[i]);
+                s.lines.emplace_back(spell[i]);
             }
         }
 
@@ -95,7 +99,7 @@ treePrint(Node &root)
     };
     visit(root);
 
-    return lines;
+    return s;
 }
 
 void
@@ -106,10 +110,8 @@ Printer::print(TimeReport &tr)
     auto diffingTimer = tr.measure("printing");
 
     // Do comparison without highlighting as it skews alignment results.
-    std::vector<std::string> lp = (tr.measure("left-print"),
-                                   treePrint(left));
-    std::vector<std::string> rp = (tr.measure("right-print"),
-                                   treePrint(right));
+    DiffSide lp = (tr.measure("left-print"), treePrint(left));
+    DiffSide rp = (tr.measure("right-print"), treePrint(right));
     std::vector<DiffLine> diff = (tr.measure("compare"),
                                   dtlCompare(std::move(lp), std::move(rp)));
 
@@ -309,19 +311,19 @@ countWidth(int n)
 }
 
 static std::vector<DiffLine>
-dtlCompare(std::vector<std::string> &&l, std::vector<std::string> &&r)
+dtlCompare(DiffSide &&l, DiffSide &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
     std::vector<DiceString> lt;
-    lt.reserve(l.size());
-    for (const auto &s : l) {
+    lt.reserve(l.lines.size());
+    for (const auto &s : l.lines) {
         lt.emplace_back(std::move(s));
     }
 
     std::vector<DiceString> rt;
-    rt.reserve(r.size());
-    for (const auto &s : r) {
+    rt.reserve(r.lines.size());
+    for (const auto &s : r.lines) {
         rt.emplace_back(std::move(s));
     }
 
