@@ -98,10 +98,10 @@ TEST_CASE("String literal contents is compared", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                |  1
-         2          char str[] = "this is |  2          char str[] = "this is
+         2          char str[] = "this is ~  2          char str[] = "this is
          3          {-a-}                 <  -
          -                                >  3          {+the+}
-         4          string";              |  4          string";
+         4          string";              ~  4          string";
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -138,6 +138,68 @@ R"(void f() {
          -                             >  4      {+}+}
          2      /* {-This-} is bad. */ <  -
          3  }                          |  5  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Lines with changes aren't folded", "[printer]")
+{
+    Tree oldTree = makeTree(R"(
+        void f() {
+        }
+
+        void g()
+        {
+            movedStuff;
+            movedStuff;
+            movedStuff;
+            movedStuff;
+        }
+
+        void h() {
+        }
+    )", true);
+    Tree newTree = makeTree(R"(
+        void h() {
+        }
+
+        void g()
+        {
+            movedStuff;
+            movedStuff;
+            movedStuff;
+            movedStuff;
+        }
+
+        void f() {
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          1                                         |   1
+          2          {:void:} {:f:}{:(:}{:):} {:{:} ~   2          void h() {
+          3          {:}:}                          ~   3          }
+          4                                         |   4
+          5          {:void:} {:g:}{:(:}{:):}       ~   5          {:void:} {:g:}{:(:}{:):}
+          6          {:{:}                          ~   6          {:{:}
+          7              {:movedStuff:}{:;:}        ~   7              {:movedStuff:}{:;:}
+          8              {:movedStuff:}{:;:}        ~   8              {:movedStuff:}{:;:}
+          9              {:movedStuff:}{:;:}        ~   9              {:movedStuff:}{:;:}
+         10              {:movedStuff:}{:;:}        ~  10              {:movedStuff:}{:;:}
+         11          {:}:}                          ~  11          {:}:}
+         12                                         |  12
+         13          void h() {                     ~  13          {:void:} {:f:}{:(:}{:):} {:{:}
+         14          }                              ~  14          {:}:}
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);

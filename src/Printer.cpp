@@ -39,6 +39,7 @@ struct DiffLine
 struct DiffSide
 {
     std::vector<std::string> lines;
+    std::vector<bool> modified;
 };
 
 static std::string noLineMarker(int at);
@@ -65,14 +66,15 @@ treePrint(Node &root)
     DiffSide s;
 
     int line = 0, col = 1;
-    std::function<void(Node &)> visit = [&](Node &node) {
+    std::function<void(Node &, bool)> visit = [&](Node &node, bool moved) {
         if (node.next != nullptr) {
-            return visit(*node.next);
+            return visit(*node.next, moved || node.moved);
         }
 
         if (node.line != 0 && node.col != 0) {
             if (node.line > line) {
                 s.lines.insert(s.lines.cend(), node.line - line, empty);
+                s.modified.insert(s.modified.cend(), node.line - line, false);
                 line = node.line;
                 col = 1;
             }
@@ -86,18 +88,22 @@ treePrint(Node &root)
             col += spell.front().size();
             s.lines.back() += spell.front().to_string();
 
+            bool modified = (node.state != State::Unchanged || moved);
+            s.modified.back() = (s.modified.back() || modified);
+
             for (std::size_t i = 1U; i < spell.size(); ++i) {
                 ++line;
                 col = 1 + spell[i].size();
                 s.lines.emplace_back(spell[i]);
+                s.modified.emplace_back(modified);
             }
         }
 
         for (Node *child : node.children) {
-            visit(*child);
+            visit(*child, moved);
         }
     };
-    visit(root);
+    visit(root, false);
 
     return s;
 }
@@ -356,7 +362,7 @@ dtlCompare(DiffSide &&l, DiffSide &&r)
     };
 
     auto handleSameLines = [&](size_type i, size_type j) {
-        if (lt[i].str() == rt[j].str()) {
+        if (lt[i].str() == rt[j].str() && !l.modified[i] && !r.modified[j]) {
             ++identicalLines;
             diffSeq.emplace_back(Diff::Identical);
         } else {
