@@ -36,13 +36,81 @@ struct DiffLine
     int data;
 };
 
+// Represents tree in a form suitable for diffing.
+struct DiffSource
+{
+    // Formats tokens from the tree without highlighting and recording presence
+    // of changes for each line.
+    DiffSource(const Node &root);
+
+    std::vector<DiceString> lines; // Unhighlighted lines generated from tree.
+    std::vector<bool> modified;    // Whether respective line contains changes.
+};
+
 static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::vector<DiffLine> dtlCompare(std::vector<std::string> &&l,
-                                        std::vector<std::string> &&r);
+static std::vector<DiffLine> makeDiff(DiffSource &&l, DiffSource &&r);
 static unsigned int measureWidth(boost::string_ref s);
 
 static std::string empty;
+
+DiffSource::DiffSource(const Node &root)
+{
+    std::string buffer;
+
+    int line = 0, col = 1;
+    std::function<void(const Node &, bool)> visit = [&](const Node &node,
+                                                        bool moved) {
+        if (node.next != nullptr) {
+            return visit(*node.next, moved || node.moved);
+        }
+
+        if (node.line != 0 && node.col != 0) {
+            if (node.line > line) {
+                if (!buffer.empty()) {
+                    lines.back() = DiceString(buffer);
+                    buffer.clear();
+                }
+                lines.insert(lines.cend(), node.line - line, empty);
+                modified.insert(modified.cend(), node.line - line, false);
+                line = node.line;
+                col = 1;
+            }
+
+            if (node.col > col) {
+                buffer.append(node.col - col, ' ');
+                col = node.col;
+            }
+
+            std::vector<boost::string_ref> spell = split(node.spelling, '\n');
+            col += spell.front().size();
+            buffer += spell.front().to_string();
+
+            const bool changed = (node.state != State::Unchanged || moved);
+            modified.back() = (modified.back() || changed);
+
+            for (std::size_t i = 1U; i < spell.size(); ++i) {
+                ++line;
+                col = 1 + spell[i].size();
+                if (!buffer.empty()) {
+                    lines.back() = DiceString(buffer);
+                    buffer.clear();
+                }
+                lines.emplace_back(spell[i].to_string());
+                modified.emplace_back(changed);
+            }
+        }
+
+        for (Node *child : node.children) {
+            visit(*child, moved);
+        }
+    };
+
+    visit(root, false);
+    if (!buffer.empty()) {
+        lines.back() = DiceString(std::move(buffer));
+    }
+}
 
 Printer::Printer(Node &left, Node &right, std::ostream &os)
     : left(left), right(right), os(os)
@@ -55,49 +123,6 @@ Printer::addHeader(Header header)
     headers.emplace_back(std::move(header));
 }
 
-static std::vector<std::string>
-treePrint(Node &root)
-{
-    std::vector<std::string> lines;
-
-    int line = 0, col = 1;
-    std::function<void(Node &)> visit = [&](Node &node) {
-        if (node.next != nullptr) {
-            return visit(*node.next);
-        }
-
-        if (node.line != 0 && node.col != 0) {
-            if (node.line > line) {
-                lines.insert(lines.cend(), node.line - line, empty);
-                line = node.line;
-                col = 1;
-            }
-
-            if (node.col > col) {
-                lines.back().append(node.col - col, ' ');
-                col = node.col;
-            }
-
-            std::vector<boost::string_ref> spell = split(node.spelling, '\n');
-            col += spell.front().size();
-            lines.back() += spell.front().to_string();
-
-            for (std::size_t i = 1U; i < spell.size(); ++i) {
-                ++line;
-                col = 1 + spell[i].size();
-                lines.emplace_back(spell[i]);
-            }
-        }
-
-        for (Node *child : node.children) {
-            visit(*child);
-        }
-    };
-    visit(root);
-
-    return lines;
-}
-
 void
 Printer::print(TimeReport &tr)
 {
@@ -106,12 +131,10 @@ Printer::print(TimeReport &tr)
     auto diffingTimer = tr.measure("printing");
 
     // Do comparison without highlighting as it skews alignment results.
-    std::vector<std::string> lp = (tr.measure("left-print"),
-                                   treePrint(left));
-    std::vector<std::string> rp = (tr.measure("right-print"),
-                                   treePrint(right));
+    DiffSource lsrc = (tr.measure("left-print"), DiffSource(left));
+    DiffSource rsrc = (tr.measure("right-print"), DiffSource(right));
     std::vector<DiffLine> diff = (tr.measure("compare"),
-                                  dtlCompare(std::move(lp), std::move(rp)));
+                                  makeDiff(std::move(lsrc), std::move(rsrc)));
 
     // TODO: don't highlight lines that won't be displayed (it takes extra
     //       time).
@@ -308,29 +331,21 @@ countWidth(int n)
     return (width == 0) ? 1 : width;
 }
 
+// Generates alignment information describing two sequences.
 static std::vector<DiffLine>
-dtlCompare(std::vector<std::string> &&l, std::vector<std::string> &&r)
+makeDiff(DiffSource &&l, DiffSource &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
-    std::vector<DiceString> lt;
-    lt.reserve(l.size());
-    for (const auto &s : l) {
-        lt.emplace_back(std::move(s));
-    }
-
-    std::vector<DiceString> rt;
-    rt.reserve(r.size());
-    for (const auto &s : r) {
-        rt.emplace_back(std::move(s));
-    }
+    const std::vector<DiceString> &lt = l.lines;
+    const std::vector<DiceString> &rt = r.lines;
 
     auto cmp = [](DiceString &a, DiceString &b) {
         return (a.compare(b) >= 0.8f);
     };
 
-    dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)>
-        diff(lt, rt, cmp);
+    dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)> diff(lt, rt,
+                                                                       cmp);
     diff.compose();
 
     size_type identicalLines = 0U;
@@ -354,7 +369,7 @@ dtlCompare(std::vector<std::string> &&l, std::vector<std::string> &&r)
     };
 
     auto handleSameLines = [&](size_type i, size_type j) {
-        if (lt[i].str() == rt[j].str()) {
+        if (lt[i].str() == rt[j].str() && !l.modified[i] && !r.modified[j]) {
             ++identicalLines;
             diffSeq.emplace_back(Diff::Identical);
         } else {
