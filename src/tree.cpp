@@ -158,7 +158,11 @@ shouldSplice(SType parent, Node *childNode)
         return true;
     }
 
-    if (parent == SType::IfThen || parent == SType::IfElse) {
+    // Work around situation when addition of compound block to a statement
+    // leads to the only statement that was there being marked as moved.
+    if (parent == SType::IfThen || parent == SType::IfElse ||
+        parent == SType::SwitchStmt || parent == SType::WhileStmt ||
+        parent == SType::DoWhileStmt) {
         if (child == SType::CompoundStatement) {
             return true;
         }
@@ -502,8 +506,7 @@ isUnmovable(const Node *x)
 {
     return x->stype == SType::Statements
         || x->stype == SType::Bundle
-        || x->stype == SType::BundleComma
-        || (x->stype == SType::Statement && x->type == Type::Virtual);
+        || x->stype == SType::BundleComma;
 }
 
 bool

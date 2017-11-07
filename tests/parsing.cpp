@@ -801,3 +801,21 @@ TEST_CASE("Switch and label statements are decomposed", "[comparison][parsing]")
         }
     )", true);
 }
+
+TEST_CASE("Do-while loop is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        void f() {
+            do
+                step();
+            while (condition);
+        }
+    )", R"(
+        void f() {
+            do {
+                step();
+                newCall();        /// Additions
+            } while (condition);
+        }
+    )", true);
+}

@@ -580,6 +580,32 @@ TEST_CASE("Removing/adding block braces don't make single statement moved",
                 call();
         }
     )", true);
+
+    diffSources(R"(
+        void f() {
+            while (true)
+                doSomething();
+        }
+    )", R"(
+        void f() {
+            while (true) {
+                doSomething();
+            }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            switch (true)
+                doSomething();
+        }
+    )", R"(
+        void f() {
+            switch (true) {
+                doSomething();
+            }
+        }
+    )", true);
 }
 
 TEST_CASE("Moves in nested structures are detected meaningfully",

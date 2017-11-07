@@ -22,7 +22,6 @@ operator<<(std::ostream &os, SType stype)
         case SType::Separator:           return (os << "Separator");
         case SType::Punctuation:         return (os << "Punctuation");
         case SType::Statements:          return (os << "Statements");
-        case SType::Statement:           return (os << "Statement");
         case SType::ExprStatement:       return (os << "ExprStatement");
         case SType::IfStmt:              return (os << "IfStmt");
         case SType::IfExpr:              return (os << "IfExpr");
@@ -30,6 +29,7 @@ operator<<(std::ostream &os, SType stype)
         case SType::IfThen:              return (os << "IfThen");
         case SType::IfElse:              return (os << "IfElse");
         case SType::WhileStmt:           return (os << "WhileStmt");
+        case SType::DoWhileStmt:         return (os << "DoWhileStmt");
         case SType::WhileCond:           return (os << "WhileCond");
         case SType::ForStmt:             return (os << "ForStmt");
         case SType::LabelStmt:           return (os << "LabelStmt");
