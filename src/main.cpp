@@ -145,8 +145,7 @@ main(int argc, char *argv[])
             exit(127);
         }
         execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
-            args.pos[5].c_str(), "--", args.pos[0].c_str(),
-            static_cast<char *>(nullptr));
+            args.pos[5].c_str(), "--", static_cast<char *>(nullptr));
         exit(127);
     }
 
