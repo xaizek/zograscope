@@ -21,7 +21,6 @@ enum class SType
     Statements,
     ExprStatement,
     IfStmt,
-    IfExpr,
     IfCond,
     IfThen,
     IfElse,

@@ -1393,7 +1393,7 @@ selection_statement
     : IF '(' expression ')' ext_statement %prec "then"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::IfExpr),
+                         tb->addNode($3, @3, SType::IfCond),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5, SType::IfThen) },
                        SType::IfStmt); }
@@ -1403,7 +1403,7 @@ selection_statement
                                 SType::IfElse);
       $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::IfExpr),
+                         tb->addNode($3, @3, SType::IfCond),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5, SType::IfThen),
                          ifElse },

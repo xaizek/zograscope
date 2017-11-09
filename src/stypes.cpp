@@ -24,7 +24,6 @@ operator<<(std::ostream &os, SType stype)
         case SType::Statements:          return (os << "Statements");
         case SType::ExprStatement:       return (os << "ExprStatement");
         case SType::IfStmt:              return (os << "IfStmt");
-        case SType::IfExpr:              return (os << "IfExpr");
         case SType::IfCond:              return (os << "IfCond");
         case SType::IfThen:              return (os << "IfThen");
         case SType::IfElse:              return (os << "IfElse");

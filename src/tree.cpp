@@ -181,7 +181,7 @@ static bool
 isValueSNode(const SNode *n)
 {
     return n->value->stype == SType::FunctionDeclaration
-        || n->value->stype == SType::IfExpr;
+        || n->value->stype == SType::IfCond;
 }
 
 static bool
@@ -194,7 +194,7 @@ isLayerBreak(SType stype)
         case SType::InitializerList:
         case SType::Initializer:
         case SType::Declaration:
-        case SType::IfExpr:
+        case SType::IfCond:
         case SType::CallExpr:
         case SType::ExprStatement:
         case SType::ReturnValueStmt:
@@ -487,7 +487,7 @@ canBeFlattened(const Node *, const Node *child, int level)
 {
     switch (level) {
         case 0:
-            return (child->stype == SType::IfExpr);
+            return (child->stype == SType::IfCond);
 
         case 1:
             return (child->stype == SType::ExprStatement);
