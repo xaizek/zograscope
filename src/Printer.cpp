@@ -238,7 +238,7 @@ Printer::print(TimeReport &tr)
         boost::string_ref ll = empty;
         boost::string_ref rl = empty;
 
-        const char *marker;
+        const char *marker = nullptr;
         switch (d.type) {
             case Diff::Left:
                 ll = l[i++];
