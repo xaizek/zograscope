@@ -797,10 +797,11 @@ struct_declarator
     : declarator
     { $$ = tb->addNode($1, @1); }
     | declarator ':' constant_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ $1, tb->addNode($2, @2, SType::Separator), $3 },
+                       SType::TemporaryContainer); }
     | ':' constant_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator), $2 },
+                       SType::TemporaryContainer); }
     ;
 
 /* (6.7.2.2) enum-specifier (CHANGED): */

@@ -77,7 +77,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
             2        /// Updates
             ;
         };
-    )", false);
+    )", true);
 
     diffSources(R"(
         struct S {
