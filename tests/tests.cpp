@@ -3,6 +3,7 @@
 #include "Catch/catch.hpp"
 
 #include <functional>
+#include <iostream>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -10,8 +11,10 @@
 
 #include <boost/utility/string_ref.hpp>
 
+#include "Printer.hpp"
 #include "STree.hpp"
 #include "compare.hpp"
+#include "decoration.hpp"
 #include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
@@ -138,8 +141,29 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine)
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
-    CHECK(oldMap == expectedOld);
-    CHECK(newMap == expectedNew);
+
+    bool needPrint = false;
+    CHECKED_ELSE(oldMap == expectedOld) {
+        needPrint = true;
+    }
+    CHECKED_ELSE(newMap == expectedNew) {
+        needPrint = true;
+    }
+
+    if (needPrint) {
+        Tree oldTree = makeTree(left, true);
+        Tree newTree = makeTree(right, true);
+
+        compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
+
+        decor::enableDecorations();
+
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(), std::cout);
+        printer.addHeader({ "old", "new" });
+        printer.print(tr);
+
+        decor::disableDecorations();
+    }
 }
 
 static std::pair<std::string, std::vector<Changes>>
