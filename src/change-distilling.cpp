@@ -9,6 +9,8 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static bool isTerminal(const Node *n);
+
 static void
 postOrderAndInit(Node &node, std::vector<Node *> &v)
 {
@@ -377,10 +379,7 @@ distill(Node &T1, Node &T2)
                 int common = 0;
                 int yLeaves = 0;
                 for (int i = lml(y); i < y->poID; ++i) {
-                    if (!po2[i]->children.empty()) {
-                        continue;
-                    }
-                    if (po2[i]->type == Type::Comments) {
+                    if (!isTerminal(po2[i])) {
                         continue;
                     }
                     ++yLeaves;
@@ -468,7 +467,7 @@ distill(Node &T1, Node &T2)
                 const int xFrom = lml(x);
                 int common = 0;
                 for (int i = lml(y); i < y->poID; ++i) {
-                    if (!po2[i]->children.empty()) {
+                    if (!isTerminal(po2[i])) {
                         continue;
                     }
 
@@ -532,4 +531,12 @@ distill(Node &T1, Node &T2)
             markNode(*y, State::Inserted);
         }
     }
+}
+
+// Checks whether node is leaf that "matters" (i.e., not a comment).
+static bool
+isTerminal(const Node *n)
+{
+    // XXX: should we check for isTravellingNode() instead of just comments?
+    return (n->children.empty() && n->type != Type::Comments);
 }
