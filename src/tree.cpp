@@ -181,7 +181,8 @@ static bool
 isValueSNode(const SNode *n)
 {
     return n->value->stype == SType::FunctionDeclaration
-        || n->value->stype == SType::IfCond;
+        || n->value->stype == SType::IfCond
+        || n->value->stype == SType::WhileCond;
 }
 
 static bool
@@ -195,6 +196,7 @@ isLayerBreak(SType stype)
         case SType::Initializer:
         case SType::Declaration:
         case SType::IfCond:
+        case SType::WhileCond:
         case SType::CallExpr:
         case SType::ExprStatement:
         case SType::ReturnValueStmt:

@@ -1315,3 +1315,72 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
     CHECK(countInternal(*newTree.getRoot(), SType::LabelStmt, State::Updated)
           == 0);
 }
+
+TEST_CASE("Head of while-loop is treated correctly", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            while (new_jobs != NULL) {
+                new_job->err_next = *jobs;
+                *jobs = new_job;
+            }
+
+            while (*job != NULL) {          /// Moves
+                bg_job_t *const j = *job;   /// Moves
+            }                               /// Moves
+        }
+    )", R"(
+        void f() {
+            while (*job != NULL) {          /// Moves
+            }                               /// Moves
+
+            while (new_jobs != NULL) {
+                new_job->err_next = *jobs;
+                *jobs = new_job;
+            }
+
+            while (*job != NULL) {          /// Additions
+                bg_job_t *const j = *job;   /// Moves
+            }                               /// Additions
+        }
+    )", true);
+}
+
+TEST_CASE("Statements are matched by common bodies", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            if (
+                !at_first_line(view)                               /// Deletions
+                ) {
+                new_pos = MIN(new_pos, view->list_pos - (int)offset);
+            }
+        }
+    )", R"(
+        void f() {
+            if (
+                fpos_can_move_up(view)                             /// Additions
+                ) {
+                new_pos = MIN(new_pos, view->list_pos - (int)offset);
+            }
+        }
+    )", true);
+
+    diffSources(R"(
+        void f() {
+            while (new_jobs != NULL)                   /// Deletions
+            {
+                int new_pos;
+                size_t offset = view->window_cells/2;
+            }
+        }
+    )", R"(
+        void f() {
+            while (veryDifferentCondition)             /// Additions
+            {
+                int new_pos;
+                size_t offset = view->window_cells/2;
+            }
+        }
+    )", true);
+}

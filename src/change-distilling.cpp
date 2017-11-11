@@ -9,6 +9,8 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static float childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
+                                const Node *y, const std::vector<Node *> &po2);
 static bool isTerminal(const Node *n);
 
 namespace {
@@ -430,50 +432,8 @@ distill(Node &T1, Node &T2)
                     break;
                 }
 
-                NodeRange xChildren(po1, x), yChildren(po2, y);
-
-                int common = 0;
-                int yLeaves = 0;
-                for (const Node *n : yChildren) {
-                    if (!isTerminal(n)) {
-                        continue;
-                    }
-                    ++yLeaves;
-
-                    const Node *const parent = getParent(n);
-                    if (parent && parent->relative == nullptr) {
-                        // Skip children of unmatched internal nodes.
-                        continue;
-                    }
-
-                    if (n->relative == nullptr) {
-                        continue;
-                    }
-
-                    if (xChildren.includes(n->relative)) {
-                        ++common;
-                    }
-                }
-
-                int xLeaves = xChildren.terminalCount();
-
-                // Threshold of children similarity depends on number of leaves.
-                const float t = (std::min(xLeaves, yLeaves) <= 4 ? 0.4f : 0.6f);
-
-                const int xExtra = countSatelliteNodes(x);
-                const int yExtra = countSatelliteNodes(y);
-                common += std::min(xExtra, yExtra);
-                xLeaves += xExtra;
-                yLeaves += yExtra;
-
-                const int maxLeaves = std::max(xLeaves, yLeaves);
-                // Avoid NaN result.  If there are no common leaves, the nodes
-                // are the same (XXX: might want to compare satellites in such
-                // cases in the future).
-                const float childrenSim = maxLeaves == 0
-                                        ? 1.0f
-                                        : static_cast<float>(common)/maxLeaves;
-                if (childrenSim < t) {
+                const float childrenSim = childrenSimilarity(x, po1, y, po2);
+                if (childrenSim == 0.0f) {
                     continue;
                 }
 
@@ -582,6 +542,84 @@ distill(Node &T1, Node &T2)
             markNode(*y, State::Inserted);
         }
     }
+}
+
+// Computes children similarity.  Returns the similarity, which is 0.0 if it's
+// too small to consider nodes as matching.
+static float
+childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
+                   const Node *y, const std::vector<Node *> &po2)
+{
+    NodeRange xChildren(po1, x), yChildren(po2, y);
+
+    NodeRange xValue, yValue;
+    if (haveValues(x, y)) {
+        xValue = NodeRange(po1, x->getValue());
+        yValue = NodeRange(po2, y->getValue());
+    }
+
+    // Number of common terminal nodes (terminals of
+    // unmatched internal nodes are not ignored).
+    int nonValueCommon = 0;
+    // Number of selected common terminal nodes (terminals of
+    // unmatched internal nodes are ignored).
+    int selCommon = 0;
+
+    int yLeaves = 0;
+    for (const Node *n : yChildren) {
+        if (!isTerminal(n)) {
+            continue;
+        }
+        ++yLeaves;
+
+        if (n->relative == nullptr || !xChildren.includes(n->relative)) {
+            continue;
+        }
+
+        if (!yValue.includes(n)) {
+            ++nonValueCommon;
+        }
+
+        const Node *const parent = getParent(n);
+        // This might skip children of unmatched internal nodes.
+        if (parent == nullptr || parent->relative != nullptr) {
+            ++selCommon;
+        }
+    }
+
+    int xLeaves = xChildren.terminalCount();
+
+    const int xExtra = countSatelliteNodes(x);
+    const int yExtra = countSatelliteNodes(y);
+    selCommon += std::min(xExtra, yExtra);
+    xLeaves += xExtra;
+    yLeaves += yExtra;
+
+    const int selMaxLeaves = std::max(xLeaves, yLeaves);
+    // Avoid NaN result.  If there are no common leaves, the nodes
+    // are the same (XXX: might want to compare satellites in such
+    // cases in the future).
+    const float childrenSim = selMaxLeaves == 0
+                            ? 1.0f
+                            : static_cast<float>(selCommon)/selMaxLeaves;
+
+    // Threshold of children similarity depends on number of leaves.
+    if (childrenSim >= (std::min(xLeaves, yLeaves) <= 4 ? 0.4f : 0.6f)) {
+        return childrenSim;
+    }
+
+    xLeaves -= xValue.terminalCount();
+    yLeaves -= yValue.terminalCount();
+
+    const int maxLeaves = std::max(xLeaves, yLeaves);
+    const float nonValueSim = maxLeaves == 0
+                            ? 1.0f
+                            : static_cast<float>(nonValueCommon)/maxLeaves;
+    if (nonValueSim >= 0.8) {
+        return nonValueSim;
+    }
+
+    return 0.0f;
 }
 
 // Checks whether node is leaf that "matters" (i.e., not a comment).
