@@ -404,6 +404,12 @@ TEST_CASE("Single-parameter macro at global scope",
     CHECK(findNode(tree, Type::Functions, "DECLARE") != nullptr);
 }
 
+TEST_CASE("Multiple type specifiers inside structures", "[parser]")
+{
+    Tree tree = makeTree("struct name { unsigned int field; };", true);
+    CHECK(findNode(tree, Type::Virtual, "unsignedintfield;") != nullptr);
+}
+
 static int
 countNodes(const Node &root)
 {

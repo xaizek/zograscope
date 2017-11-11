@@ -71,6 +71,10 @@ findNode(const Tree &tree, Type type, const std::string &label)
             }
         }
 
+        if (node->next != nullptr) {
+            return visit(node->next);
+        }
+
         return false;
     };
 

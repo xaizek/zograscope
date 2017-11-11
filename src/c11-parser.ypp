@@ -773,11 +773,11 @@ specifier_qualifier_list
     : type_specifier specifier_qualifier_list
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
     | type_specifier
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     | type_qualifier specifier_qualifier_list
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
     | type_qualifier
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     ;
 
 /* (6.7.2.1) struct-declarator-list: */
