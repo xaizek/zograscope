@@ -8,6 +8,7 @@
 class Node;
 class Tree;
 
+enum class SType;
 enum class State;
 enum class Type;
 
@@ -60,7 +61,7 @@ const Node * findNode(const Tree &tree, Type type,
 
 int countLeaves(const Node &root, State state);
 
-int countInternal(const Node &root, State state);
+int countInternal(const Node &root, SType stype, State state);
 
 void diffSources(const std::string &left, const std::string &right,
                  bool skipRefine);

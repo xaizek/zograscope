@@ -5,6 +5,7 @@
 #include <functional>
 
 #include "compare.hpp"
+#include "stypes.hpp"
 #include "time.hpp"
 #include "tree.hpp"
 
@@ -1309,6 +1310,8 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
 
-    CHECK(countInternal(*oldTree.getRoot(), State::Updated) == 0);
-    CHECK(countInternal(*newTree.getRoot(), State::Updated) == 0);
+    CHECK(countInternal(*oldTree.getRoot(), SType::LabelStmt, State::Updated)
+          == 0);
+    CHECK(countInternal(*newTree.getRoot(), SType::LabelStmt, State::Updated)
+          == 0);
 }
