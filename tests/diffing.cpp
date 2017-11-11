@@ -1368,16 +1368,18 @@ TEST_CASE("Statements are matched by common bodies", "[comparison]")
 
     diffSources(R"(
         void f() {
-            while (new_jobs != NULL)                   /// Deletions
-            {
+            while (
+                   new_jobs != NULL                    /// Deletions
+                   ) {
                 int new_pos;
                 size_t offset = view->window_cells/2;
             }
         }
     )", R"(
         void f() {
-            while (veryDifferentCondition)             /// Additions
-            {
+            while (
+                   veryDifferentCondition              /// Additions
+                   ) {
                 int new_pos;
                 size_t offset = view->window_cells/2;
             }

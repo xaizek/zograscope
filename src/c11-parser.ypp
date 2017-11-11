@@ -1423,13 +1423,12 @@ selection_statement
 /*     for ( declaration expressionopt ; expressionopt ) statement */
 iteration_statement
     : WHILE '(' expression ')' ext_statement
-    { auto whileCond = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                     tb->addNode($2, @2, SType::Separator),
-                                     $3,
-                                     tb->addNode($4, @4, SType::Separator) },
-                                   SType::WhileCond);
-      auto whileThen = tb->addNode($5, @5);
-      $$ = tb->addNode({ whileCond, whileThen }, SType::WhileStmt); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3, SType::WhileCond),
+                         tb->addNode($4, @4, SType::Separator),
+                         $5 },
+                       SType::WhileStmt); }
     | DO ext_statement WHILE '(' expression ')' ';'
     { auto whileCond = tb->addNode({ tb->addNode($3, @3, SType::Separator),
                                      tb->addNode($4, @4, SType::Separator),
