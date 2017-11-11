@@ -11,6 +11,75 @@
 
 static bool isTerminal(const Node *n);
 
+namespace {
+
+// Represents range of nodes and provides common operations on it.
+class NodeRange
+{
+public:
+    // Constructs an empty range.
+    NodeRange() : from(-1), to(-1), po(nullptr)
+    {
+    }
+
+    // Constructs range from all descendants of the node.
+    NodeRange(const std::vector<Node *> &po, const Node *n)
+        : from(leftmostChild(n)), to(n->poID), po(&po)
+    {
+    }
+
+    // List of nodes must be an lvalue.
+    NodeRange(std::vector<Node *> &&po, const Node *n) = delete;
+
+public:
+    // Checks whether range includes the node.
+    bool includes(const Node *n) const
+    {
+        return (n->poID >= from && n->poID < to);
+    }
+
+    // Computes number of terminals.
+    int terminalCount() const
+    {
+        return (po == nullptr ? 0 : std::count_if(begin(), end(), &isTerminal));
+    }
+
+    // Retrieves beginning of the range.
+    const Node *const * begin() const
+    {
+        return (po == nullptr ? nullptr : &(*po)[from]);
+    }
+
+    // Retrieves end of the range.
+    const Node *const * end() const
+    {
+        return (po == nullptr ? nullptr : &(*po)[to]);
+    }
+
+private:
+    // Finds id of the leftmost child of the node.
+    static int leftmostChild(const Node *node)
+    {
+        if (node->children.empty()) {
+            return node->poID;
+        }
+
+        for (const Node *child : node->children) {
+            if (!child->satellite) {
+                return leftmostChild(child);
+            }
+        }
+
+        return node->poID;
+    }
+
+private:
+    int from, to;                  // Range defined by from and to ids.
+    const std::vector<Node *> *po; // External storage of nodes in post-order.
+};
+
+}
+
 static void
 postOrderAndInit(Node &node, std::vector<Node *> &v)
 {
@@ -320,20 +389,6 @@ distill(Node &T1, Node &T2)
                          return b.similarity < a.similarity;
                      });
 
-    std::function<int(const Node *)> lml = [&](const Node *node) {
-        if (node->children.empty()) {
-            return node->poID;
-        }
-
-        for (const Node *child : node->children) {
-            if (!child->satellite) {
-                return lml(child);
-            }
-        }
-
-        return node->poID;
-    };
-
     auto distillLeafs = [&]() {
         for (const Match &m : matches) {
             if (m.x->relative == nullptr && m.y->relative == nullptr) {
@@ -375,36 +430,32 @@ distill(Node &T1, Node &T2)
                     break;
                 }
 
-                const int xFrom = lml(x);
+                NodeRange xChildren(po1, x), yChildren(po2, y);
+
                 int common = 0;
                 int yLeaves = 0;
-                for (int i = lml(y); i < y->poID; ++i) {
-                    if (!isTerminal(po2[i])) {
+                for (const Node *n : yChildren) {
+                    if (!isTerminal(n)) {
                         continue;
                     }
                     ++yLeaves;
 
-                    const Node *const parent = getParent(po2[i]);
+                    const Node *const parent = getParent(n);
                     if (parent && parent->relative == nullptr) {
                         // Skip children of unmatched internal nodes.
                         continue;
                     }
 
-                    if (po2[i]->relative == nullptr) {
+                    if (n->relative == nullptr) {
                         continue;
                     }
 
-                    if (po2[i]->relative->poID >= xFrom &&
-                        po2[i]->relative->poID < x->poID) {
+                    if (xChildren.includes(n->relative)) {
                         ++common;
                     }
                 }
 
-                int xLeaves = std::count_if(&po1[xFrom], &po1[x->poID],
-                                            [](const Node *n) {
-                                                return n->children.empty() &&
-                                                n->type != Type::Comments;
-                                            });
+                int xLeaves = xChildren.terminalCount();
 
                 // Threshold of children similarity depends on number of leaves.
                 const float t = (std::min(xLeaves, yLeaves) <= 4 ? 0.4f : 0.6f);
@@ -464,19 +515,19 @@ distill(Node &T1, Node &T2)
                     continue;
                 }
 
-                const int xFrom = lml(x);
+                NodeRange xChildren(po1, x), yChildren(po2, y);
+
                 int common = 0;
-                for (int i = lml(y); i < y->poID; ++i) {
-                    if (!isTerminal(po2[i])) {
+                for (const Node *n : yChildren) {
+                    if (!isTerminal(n)) {
                         continue;
                     }
 
-                    if (po2[i]->relative == nullptr) {
+                    if (n->relative == nullptr) {
                         continue;
                     }
 
-                    if (po2[i]->relative->poID >= xFrom &&
-                        po2[i]->relative->poID < x->poID) {
+                    if (xChildren.includes(n->relative)) {
                         ++common;
                     }
                 }
