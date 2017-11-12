@@ -25,6 +25,13 @@ takeSecond(YYSTYPE, YYSTYPE x)
     return x.node;
 }
 
+static bool
+isNotPostponed(const PNode *node)
+{
+    return node->stype != SType::Comment
+        && node->stype != SType::Directive;
+}
+
 static void
 postOrderLeafs(const PNode *node, std::vector<const PNode *> &v)
 {
@@ -32,8 +39,7 @@ postOrderLeafs(const PNode *node, std::vector<const PNode *> &v)
         postOrderLeafs(child, v);
     }
 
-    if (node->children.empty() && node->stype != SType::Comment &&
-        node->stype != SType::Directive) {
+    if (node->children.empty() && isNotPostponed(node)) {
         v.push_back(node);
     }
 }
@@ -54,23 +60,25 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
     return (x0.node->stype == SType::Declaration ? x0.node : x1.node);
 }
 
-// Moves children of node after specified one but before the last child and
-// nodes before the specified one but before the first child into specified
-// child.
+// Moves children of node after specified one but before next non-postponed
+// child and nodes before the specified one but after the first non-postponed
+// child into specified child.
 static PNode *
 suckIn(PNode *node, PNode *child)
 {
     // After.
     auto pos = ++std::find(node->children.begin(), node->children.end(), child);
-    child->children.insert(child->children.cend(),
-                           pos, --node->children.end());
-    node->children.erase(pos, --node->children.end());
+    auto until = std::find_if(pos, node->children.end(), &isNotPostponed);
+    child->children.insert(child->children.cend(), pos, until);
+    node->children.erase(pos, until);
 
     // Before.
-    pos = node->children.end() - 2;
-    child->children.insert(child->children.cbegin(),
-                           ++node->children.begin(), pos);
-    node->children.erase(++node->children.begin(), pos);
+    pos = std::find(node->children.begin(), node->children.end(), child);
+    decltype(node->children)::reverse_iterator rpos(pos);
+    auto rsince = std::find_if(rpos, node->children.rend(), &isNotPostponed);
+    auto since = rsince.base();
+    child->children.insert(child->children.cbegin(), since, pos);
+    node->children.erase(since, pos);
 
     return node;
 }
