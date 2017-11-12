@@ -1111,6 +1111,53 @@ TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
     )", true);
 }
 
+TEST_CASE("Postponed nodes in structures", "[comparison][postponed]")
+{
+    diffSources(R"(
+        struct {
+            int bla; // comment
+        };
+    )", R"(
+        struct {
+            int bla; // comment
+            int added;           /// Additions
+        };
+    )", true);
+
+    diffSources(R"(
+        struct name {
+            int bla; // comment
+        };
+    )", R"(
+        struct name {
+            int bla; // comment
+            int added;           /// Additions
+        };
+    )", true);
+
+    diffSources(R"(
+        struct {
+            // comment
+        };
+    )", R"(
+        struct {
+            // comment
+            int v;      /// Additions
+        };
+    )", true);
+
+    diffSources(R"(
+        struct aReallyLongName {
+            // comment
+        };
+    )", R"(
+        struct aReallyLongName {
+            // comment
+            int allow_empty;      /// Additions
+        };
+    )", true);
+}
+
 TEST_CASE("Comma after initializer element is bundled with the element",
           "[comparison]")
 {

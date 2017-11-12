@@ -11,7 +11,6 @@ operator<<(std::ostream &os, SType stype)
         case SType::None:                return (os << "None");
         case SType::TranslationUnit:     return (os << "TranslationUnit");
         case SType::Declaration:         return (os << "Declaration");
-        case SType::Declarations:        return (os << "Declarations");
         case SType::FunctionDeclaration: return (os << "FunctionDeclaration");
         case SType::FunctionDefinition:  return (os << "FunctionDefinition");
         case SType::Directive:           return (os << "Directive");

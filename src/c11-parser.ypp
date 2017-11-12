@@ -747,7 +747,7 @@ struct_or_union
 struct_declaration_list
     : struct_declaration
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declaration) },
-                       SType::Declarations); }
+                       SType::TemporaryContainer); }
     | struct_declaration_list struct_declaration
     { $$ = tb->append($1, tb->addNode($2, @2, SType::Declaration)); }
     ;

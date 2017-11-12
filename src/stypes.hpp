@@ -8,7 +8,6 @@ enum class SType
     None,
     TranslationUnit,
     Declaration,
-    Declarations,
     FunctionDeclaration,
     FunctionDefinition,
     Comment,
