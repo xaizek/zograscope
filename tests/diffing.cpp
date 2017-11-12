@@ -1325,23 +1325,23 @@ TEST_CASE("Head of while-loop is treated correctly", "[comparison]")
                 *jobs = new_job;
             }
 
-            while (*job != NULL) {          /// Moves
-                bg_job_t *const j = *job;   /// Moves
-            }                               /// Moves
+            while (*job != NULL) {
+                bg_job_t *const j = *job;
+            }
         }
     )", R"(
         void f() {
-            while (*job != NULL) {          /// Moves
-            }                               /// Moves
+            while (*job != NULL) {          /// Additions
+            }                               /// Additions
 
             while (new_jobs != NULL) {
                 new_job->err_next = *jobs;
                 *jobs = new_job;
             }
 
-            while (*job != NULL) {          /// Additions
-                bg_job_t *const j = *job;   /// Moves
-            }                               /// Additions
+            while (*job != NULL) {
+                bg_job_t *const j = *job;
+            }
         }
     )", true);
 }

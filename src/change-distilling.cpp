@@ -15,6 +15,9 @@ static bool isTerminal(const Node *n);
 
 namespace {
 
+struct descendants_t {} descendants;
+struct subtree_t     {} subtree;
+
 // Represents range of nodes and provides common operations on it.
 class NodeRange
 {
@@ -24,14 +27,23 @@ public:
     {
     }
 
-    // Constructs range from all descendants of the node.
-    NodeRange(const std::vector<Node *> &po, const Node *n)
+    // Constructs range from all descendants of the node, including the node
+    // itself.
+    NodeRange(subtree_t, const std::vector<Node *> &po, const Node *n)
+        : from(leftmostChild(n)), to(n->poID + 1), po(&po)
+    {
+    }
+
+    // Constructs range from all descendants of the node, but not including the
+    // node itself.
+    NodeRange(descendants_t, const std::vector<Node *> &po, const Node *n)
         : from(leftmostChild(n)), to(n->poID), po(&po)
     {
     }
 
     // List of nodes must be an lvalue.
-    NodeRange(std::vector<Node *> &&po, const Node *n) = delete;
+    NodeRange(subtree_t, std::vector<Node *> &&po, const Node *n) = delete;
+    NodeRange(descendants_t, std::vector<Node *> &&po, const Node *n) = delete;
 
 public:
     // Checks whether range includes the node.
@@ -248,6 +260,10 @@ rateMatch(const Node *x, const Node *y)
     const Node *xParent = getParent(x);
     const Node *yParent = getParent(y);
 
+    if (xParent && xParent->relative && xParent->relative == yParent) {
+        return 4;
+    }
+
     if (haveValues(xParent, yParent)) {
         if (xParent->getValue()->relative == yParent->getValue()) {
             return 3;
@@ -453,7 +469,7 @@ distill(Node &T1, Node &T2)
         }
     };
 
-    auto matchPartiallyMatchedInternal = [&]() {
+    auto matchPartiallyMatchedInternal = [&](bool excludeValues) {
         struct Match
         {
             Node *x;
@@ -475,11 +491,18 @@ distill(Node &T1, Node &T2)
                     continue;
                 }
 
-                NodeRange xChildren(po1, x), yChildren(po2, y);
+                NodeRange xChildren(descendants, po1, x);
+                NodeRange yChildren(descendants, po2, y);
+
+                NodeRange xValue, yValue;
+                if (excludeValues && haveValues(x, y)) {
+                    xValue = NodeRange(subtree, po1, x->getValue());
+                    yValue = NodeRange(subtree, po2, y->getValue());
+                }
 
                 int common = 0;
                 for (const Node *n : yChildren) {
-                    if (!isTerminal(n)) {
+                    if (!isTerminal(n) || yValue.includes(n)) {
                         continue;
                     }
 
@@ -487,7 +510,8 @@ distill(Node &T1, Node &T2)
                         continue;
                     }
 
-                    if (xChildren.includes(n->relative)) {
+                    if (xChildren.includes(n->relative) &&
+                        !xValue.includes(n->relative)) {
                         ++common;
                     }
                 }
@@ -513,7 +537,10 @@ distill(Node &T1, Node &T2)
 
     distillLeafs();
     distillInternal();
-    matchPartiallyMatchedInternal();
+    // First time around we don't want to use values as our guide because they
+    // bind statements too strong, which ruins picking correct value out of
+    // several identical candidates.
+    matchPartiallyMatchedInternal(true);
     matchFirstLevelMatchedInternal(po1, po2);
 
     std::stable_sort(matches.begin(), matches.end(),
@@ -529,7 +556,7 @@ distill(Node &T1, Node &T2)
 
     distillLeafs();
     distillInternal();
-    matchPartiallyMatchedInternal();
+    matchPartiallyMatchedInternal(false);
     matchFirstLevelMatchedInternal(po1, po2);
 
     for (Node *x : po1) {
@@ -550,12 +577,12 @@ static float
 childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
                    const Node *y, const std::vector<Node *> &po2)
 {
-    NodeRange xChildren(po1, x), yChildren(po2, y);
+    NodeRange xChildren(descendants, po1, x), yChildren(descendants, po2, y);
 
     NodeRange xValue, yValue;
     if (haveValues(x, y)) {
-        xValue = NodeRange(po1, x->getValue());
-        yValue = NodeRange(po2, y->getValue());
+        xValue = NodeRange(descendants, po1, x->getValue());
+        yValue = NodeRange(descendants, po2, y->getValue());
     }
 
     // Number of common terminal nodes (terminals of
