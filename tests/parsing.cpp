@@ -819,3 +819,14 @@ TEST_CASE("Do-while loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 }
+
+TEST_CASE("Call without arguments is decomposed", "[comparison][parsing]")
+{
+    diffSources(R"(
+        trashes_list list = get_list_of_trashes();
+    )", R"(
+        trashes_list list = get_list_of_trashes(
+                                                0   /// Additions
+                                                );
+    )", true);
+}

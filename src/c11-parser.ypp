@@ -251,8 +251,10 @@ postfix_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | postfix_expression '(' ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ $1,
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::CallExpr); }
     | postfix_expression '(' argument_expression_list ')'
     { $$ = tb->addNode({ $1,
                          tb->addNode($2, @2, SType::Separator),
