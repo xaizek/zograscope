@@ -11,7 +11,7 @@
 #include "c11-lexer.hpp"
 #include "stypes.hpp"
 
-void yyerror(const char s[], int exactColumn = -1);
+void yyerror(YYLTYPE *loc, void *scanner, const char s[], int exactColumn = -1);
 
 static PNode *
 takeFirst(YYSTYPE x, YYSTYPE)
@@ -98,6 +98,9 @@ extern TreeBuilder *tb;
 
 %glr-parser
 %define parse.error verbose
+%define api.pure
+%lex-param {void *scanner}
+%parse-param {void *scanner}
 /* %define lr.type ielr */
 %locations
 
@@ -1705,8 +1708,8 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
     yylineoffset = 0U;
     extern std::size_t yyline;
     yyline = 1U;
-    extern std::size_t yycolumn;
-    yycolumn = 1U;
+    extern std::size_t yycol;
+    yycol = 1U;
 
 #if YYDEBUG
     extern int yydebug;
@@ -1725,24 +1728,27 @@ parse(const std::string &contents, const std::string &fileName, bool debug)
     yybegin = contents.data();
     yyend = yybegin + contents.size();
 
+    yyscan_t scanner;
+    yylex_init(&scanner);
+
     // parse through the input until there is no more:
-    const bool failed = (yyparse() != 0);
+    const bool failed = (yyparse(scanner) != 0);
     tb.finish(failed || hitError);
 
-    yylex_destroy();
+    yylex_destroy(scanner);
 
     return tb;
 }
 
 void
-yyerror(const char s[], int exactColumn)
+yyerror(YYLTYPE *loc, void */*scanner*/, const char s[], int exactColumn)
 {
     if (exactColumn == -1) {
-        exactColumn = yylloc.first_column;
+        exactColumn = loc->first_column;
     }
 
     std::cout << fileName << ':'
-              << yylloc.first_line << ':' << exactColumn
+              << loc->first_line << ':' << exactColumn
               << ": parse error: " << s << std::endl;
     hitError = true;
 }
