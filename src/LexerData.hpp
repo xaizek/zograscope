@@ -8,8 +8,6 @@
 
 #include "c11-parser.hpp"
 
-class TreeBuilder;
-
 struct LexerData
 {
     enum { tabWidth = 4 };
@@ -23,9 +21,10 @@ struct LexerData
     YYLTYPE startLoc = {};
 
     TreeBuilder *tb;
+    ParseData *pd;
 
-    explicit LexerData(const std::string &str, TreeBuilder &tb)
-        : tb(&tb), next(str.data()), finish(str.data() + str.size())
+    LexerData(const std::string &str, TreeBuilder &tb, ParseData &pd)
+        : tb(&tb), pd(&pd), next(str.data()), finish(str.data() + str.size())
     {
     }
 

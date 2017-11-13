@@ -11,6 +11,7 @@
 #include <string>
 
 #include "LexerData.hpp"
+#include "TreeBuilder.hpp"
 #include "c11-parser.hpp"
 #include "stypes.hpp"
 
@@ -38,8 +39,6 @@
     ++yyextra->line; \
     yyextra->col = 1U; \
     yyextra->lineoffset = yyextra->offset;
-
-void yyerror(YYLTYPE *loc, void *scanner, const char s[], int exactColumn = -1);
 
 static void reportError(YYLTYPE *loc, const char text[], std::size_t len,
                         LexerData *data);
@@ -445,7 +444,9 @@ reportError(YYLTYPE *loc, const char text[], std::size_t len, LexerData *data)
         error = std::string("Unknown token: <") + std::to_string(text[0]) + '>';
     }
 
-    yyerror(loc, nullptr, error.c_str(), data->offset - data->lineoffset);
+    YYLTYPE changedLoc = *loc;
+    changedLoc.first_column = data->offset - data->lineoffset;
+    yyerror(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
 }
 
 void
