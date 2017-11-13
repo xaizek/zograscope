@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 
+#include "LexerData.hpp"
 #include "c11-lexer.hpp"
 #include "stypes.hpp"
 
@@ -83,7 +84,7 @@ suckIn(PNode *node, PNode *child)
     return node;
 }
 
-TreeBuilder *tb = nullptr;
+static TreeBuilder *tb;
 static std::string fileName;
 static bool hitError;
 
@@ -93,7 +94,6 @@ static bool hitError;
 {
 #include "TreeBuilder.hpp"
 #define YYLTYPE Location
-extern TreeBuilder *tb;
 }
 
 %glr-parser
@@ -1702,34 +1702,21 @@ macro_invocation
 TreeBuilder
 parse(const std::string &contents, const std::string &fileName, bool debug)
 {
-    extern std::size_t yyoffset;
-    yyoffset = 0U;
-    extern std::size_t yylineoffset;
-    yylineoffset = 0U;
-    extern std::size_t yyline;
-    yyline = 1U;
-    extern std::size_t yycol;
-    yycol = 1U;
-
 #if YYDEBUG
     extern int yydebug;
     yydebug = debug;
 #endif
 
     TreeBuilder tb;
-    ::tb = &tb;
+    LexerData ld(contents, tb);
 
+    ::tb = &tb;
     ::fileName = fileName;
 
     hitError = false;
 
-    extern const char *yybegin;
-    extern const char *yyend;
-    yybegin = contents.data();
-    yyend = yybegin + contents.size();
-
     yyscan_t scanner;
-    yylex_init(&scanner);
+    yylex_init_extra(&ld, &scanner);
 
     // parse through the input until there is no more:
     const bool failed = (yyparse(scanner) != 0);
