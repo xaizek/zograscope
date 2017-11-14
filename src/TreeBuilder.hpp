@@ -77,7 +77,12 @@ public:
     TreeBuilder & operator=(TreeBuilder &&rhs) = delete;
 
 public:
-    PNode * addNode(PNode *node, const Location &, SType stype = {})
+    PNode * addNode(PNode *node, const Location &)
+    {
+        return node;
+    }
+
+    PNode * addNode(PNode *node, const Location &, SType stype)
     {
         return addNode({ node }, stype);
     }
