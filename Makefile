@@ -76,7 +76,8 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
 
 bin := $(out_dir)/$(NAME)$(bin_suffix)
 
-bin_sources := $(call rwildcard, src/, *.cpp)
+bin_sources := $(call rwildcard, src/, *.cpp) \
+               $(call rwildcard, third-party/, *.cpp)
 bin_sources := $(filter-out %.gen.cpp,$(bin_sources))
 bin_autocpp := $(addprefix $(out_dir)/src/, \
                            c11-lexer.gen.cpp c11-parser.gen.cpp)
