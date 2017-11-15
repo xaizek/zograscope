@@ -28,19 +28,20 @@ lmld(Node &node, std::vector<int> &l)
         return;
     }
 
-    auto isSatellite = [](const Node *n) { return n->satellite; };
-    std::vector<Node *> n = node.children;
-    n.erase(std::remove_if(n.begin(), n.end(), isSatellite), n.end());
+    int satelliteCount = 0;
+    for (Node *child : node.children) {
+        if (!child->satellite) {
+            ++satelliteCount;
+            if (satelliteCount == 1) {
+                l[node.poID] = l[child->poID];
+            }
+            lmld(*child, l);
+        }
+    }
 
-    if (n.empty()) {
+    if (satelliteCount == 0) {
         l[node.poID] = node.poID;
-        return;
     }
-
-    for (Node *child : n) {
-        lmld(*child, l);
-    }
-    l[node.poID] = l[n[0]->poID];
 }
 
 static std::vector<int>
