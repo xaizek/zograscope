@@ -340,7 +340,7 @@ toWords(const std::string &s)
     boost::string_ref sr(s);
 
     bool inWord = false;
-    std::size_t wordStart;
+    std::size_t wordStart = 0U;
     for (std::size_t i = 0U; i <= s.size(); ++i) {
         const bool isWordChar = s[i] != '\0'
                              && !std::isspace(s[i], std::locale());
