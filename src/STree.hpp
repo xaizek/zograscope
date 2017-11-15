@@ -23,6 +23,11 @@ public:
     STree(TreeBuilder &&ptree, const std::string &contents,
           bool dumpWhole = false, bool dumpUnclear = false);
 
+    STree(const STree &rhs) = delete;
+    STree(STree &&rhs) = delete;
+    STree & operator=(const STree &rhs) = delete;
+    STree & operator=(STree &&rhs) = default;
+
 public:
     SNode * getRoot() { return root; }
 
