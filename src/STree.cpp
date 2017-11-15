@@ -11,12 +11,12 @@
 
 static void print(const PNode *node, const std::string &contents);
 static PNode * findSNode(PNode *node);
-static SNode * makeSNode(std::deque<SNode> &snodes, const std::string &contents,
+static SNode * makeSNode(cpp17::pmr::deque<SNode> &snodes, const std::string &contents,
                          PNode *pnode, bool dumpUnclear);
 
 STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
-             bool dumpUnclear)
-    : ptree(std::move(ptree))
+             bool dumpUnclear, allocator_type al)
+    : ptree(std::move(ptree)), snodes(al)
 {
     PNode *proot = ptree.getRoot();
 
@@ -66,7 +66,7 @@ findSNode(PNode *node)
 }
 
 static SNode *
-makeSNode(std::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
+makeSNode(cpp17::pmr::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
           bool dumpUnclear)
 {
     snodes.emplace_back(pnode);
@@ -80,7 +80,7 @@ makeSNode(std::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
         return snode;
     }
 
-    std::vector<SNode *> &c = snode->children;
+    cpp17::pmr::vector<SNode *> &c = snode->children;
     c.reserve(pnode->children.size());
     for (PNode *child : pnode->children) {
         if (PNode *schild = findSNode(child)) {

@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "pmr/monolithic.hpp"
+
 #include "Highlighter.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
@@ -325,6 +327,8 @@ buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr)
 
     const std::string contents = readFile(path);
 
+    cpp17::pmr::monolithic localMR;
+
     TreeBuilder tb = parse(contents, path, args.debug);
     if (tb.hasFailed()) {
         return {};
@@ -335,7 +339,8 @@ buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr)
     if (args.fine) {
         t = Tree(contents, tb.getRoot());
     } else {
-        STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug);
+        STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
+                    &localMR);
         t = Tree(contents, stree.getRoot());
     }
 
