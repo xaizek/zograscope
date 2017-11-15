@@ -8,10 +8,16 @@
 #include <iostream>
 #include <string>
 
+#include "LexerData.hpp"
+#include "TreeBuilder.hpp"
 #include "c11-lexer.hpp"
 #include "stypes.hpp"
 
-void yyerror(const char s[], int exactColumn = -1);
+struct ParseData
+{
+    std::string fileName;
+    bool hitError;
+};
 
 static PNode *
 takeFirst(YYSTYPE x, YYSTYPE)
@@ -83,21 +89,26 @@ suckIn(PNode *node, PNode *child)
     return node;
 }
 
-TreeBuilder *tb = nullptr;
-static std::string fileName;
-static bool hitError;
-
 %}
 
 %code requires
 {
+
 #include "TreeBuilder.hpp"
 #define YYLTYPE Location
-extern TreeBuilder *tb;
+
+struct ParseData;
+
+void yyerror(YYLTYPE *loc, void *scanner, TreeBuilder *tb, ParseData *pd,
+             const char s[]);
+
 }
 
 %glr-parser
 %define parse.error verbose
+%define api.pure
+%param {void *scanner}
+%parse-param {TreeBuilder *tb} {ParseData *pd}
 /* %define lr.type ielr */
 %locations
 
@@ -1699,50 +1710,33 @@ macro_invocation
 TreeBuilder
 parse(const std::string &contents, const std::string &fileName, bool debug)
 {
-    extern std::size_t yyoffset;
-    yyoffset = 0U;
-    extern std::size_t yylineoffset;
-    yylineoffset = 0U;
-    extern std::size_t yyline;
-    yyline = 1U;
-    extern std::size_t yycolumn;
-    yycolumn = 1U;
-
 #if YYDEBUG
     extern int yydebug;
     yydebug = debug;
 #endif
 
     TreeBuilder tb;
-    ::tb = &tb;
+    ParseData pd = { fileName, false };
+    LexerData ld(contents, tb, pd);
 
-    ::fileName = fileName;
-
-    hitError = false;
-
-    extern const char *yybegin;
-    extern const char *yyend;
-    yybegin = contents.data();
-    yyend = yybegin + contents.size();
+    yyscan_t scanner;
+    yylex_init_extra(&ld, &scanner);
 
     // parse through the input until there is no more:
-    const bool failed = (yyparse() != 0);
-    tb.finish(failed || hitError);
+    const bool failed = (yyparse(scanner, &tb, &pd) != 0);
+    tb.finish(failed || pd.hitError);
 
-    yylex_destroy();
+    yylex_destroy(scanner);
 
     return tb;
 }
 
 void
-yyerror(const char s[], int exactColumn)
+yyerror(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/, ParseData *pd,
+        const char s[])
 {
-    if (exactColumn == -1) {
-        exactColumn = yylloc.first_column;
-    }
-
-    std::cout << fileName << ':'
-              << yylloc.first_line << ':' << exactColumn
+    std::cout << pd->fileName << ':'
+              << loc->first_line << ':' << loc->first_column
               << ": parse error: " << s << std::endl;
-    hitError = true;
+    pd->hitError = true;
 }

@@ -68,7 +68,7 @@ static optional_t<Args> parseArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static optional_t<Tree> buildTreeFromFile(const std::string &path,
-                                          const Args &args);
+                                          const Args &args, TimeReport &tr);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -177,8 +177,7 @@ run(const Args &args, TimeReport &tr)
     };
 
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
-    if (optional_t<Tree> &&tree = (tr.measure("parsing1"),
-                                   buildTreeFromFile(oldFile, args))) {
+    if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr)) {
         treeA = *tree;
     } else {
         return EXIT_FAILURE;
@@ -193,8 +192,7 @@ run(const Args &args, TimeReport &tr)
     }
 
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
-    if (optional_t<Tree> &&tree = (tr.measure("parsing2"),
-                                   buildTreeFromFile(newFile, args))) {
+    if (optional_t<Tree> &&tree = buildTreeFromFile(newFile, args, tr)) {
         treeB = *tree;
     } else {
         return EXIT_FAILURE;
@@ -316,12 +314,15 @@ parseOptions(const std::vector<std::string> &args)
  *
  * @param path  Path to the file to read.
  * @param args  Arguments of the application.
+ * @param tr    Time keeper.
  *
  * @returns Tree on success or empty optional on error.
  */
 static optional_t<Tree>
-buildTreeFromFile(const std::string &path, const Args &args)
+buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr)
 {
+    auto timer = tr.measure("parsing: " + path);
+
     const std::string contents = readFile(path);
 
     TreeBuilder tb = parse(contents, path, args.debug);

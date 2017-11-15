@@ -1,4 +1,8 @@
+%option bison-bridge
+%option bison-locations
+%option reentrant
 %option noyywrap
+%option extra-type="struct LexerData *"
 
 %{
 
@@ -6,50 +10,38 @@
 #include <locale>
 #include <string>
 
+#include "LexerData.hpp"
+#include "TreeBuilder.hpp"
 #include "c11-parser.hpp"
 #include "stypes.hpp"
 
-enum { tabWidth = 4 };
-
-std::size_t yyoffset;
-std::size_t yylineoffset;
-std::size_t yyline;
-std::size_t yycolumn;
-const char *yybegin;
-const char *yyend;
-
-static YYSTYPE startTok;
-static YYLTYPE startLoc;
-
 #define YY_INPUT(buf, result, maxSize) \
-    do { (result) = yyinput((buf), (maxSize)); } while (false)
+    do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
 
 #define YY_USER_ACTION \
-    yylval.text = { yyoffset, yyleng, 0U, 0U, 0 }; \
-    yylloc.first_line = yyline; \
-    yylloc.first_column = yycolumn; \
-    yylloc.last_line = yyline; \
-    yylloc.last_column = yycolumn + yyleng; \
-    yyoffset += yyleng; \
-    yycolumn += yyleng;
+    yylval->text = { yyextra->offset, yyleng, 0U, 0U, 0 }; \
+    yylloc->first_line = yyextra->line; \
+    yylloc->first_column = yyextra->col; \
+    yylloc->last_line = yyextra->line; \
+    yylloc->last_column = yyextra->col + yyleng; \
+    yyextra->offset += yyleng; \
+    yyextra->col += yyleng;
 
 #define TOKEN(t) \
-    tb->markWithPostponed(yylval.text); \
-    return (yylval.text.token = (t))
+    yyextra->tb->markWithPostponed(yylval->text); \
+    return (yylval->text.token = (t))
 
 #define KW(t) \
     BEGIN(INITIAL); \
     TOKEN(t)
 
 #define ADVANCE_LINE() \
-    ++yyline; \
-    yycolumn = 1U; \
-    yylineoffset = yyoffset;
+    ++yyextra->line; \
+    yyextra->col = 1U; \
+    yyextra->lineoffset = yyextra->offset;
 
-void yyerror(const char s[], int exactColumn);
-
-static std::size_t yyinput(char buf[], std::size_t maxSize);
-static void reportError();
+static void reportError(YYLTYPE *loc, const char text[], std::size_t len,
+                        LexerData *data);
 
 %}
 
@@ -223,12 +215,14 @@ NL                      \n|\r|\r\n
 %%
 
 [ ]                     ;
-\t                      { yycolumn += tabWidth - (yycolumn - 1)%tabWidth; }
+\t {
+    yyextra->col += yyextra->tabWidth - (yyextra->col - 1)%yyextra->tabWidth;
+}
 {NL}                    { ADVANCE_LINE(); }
 \\{NL} {
-    yylval.text.len = 1;
-    yylloc.last_column = yylloc.first_column + 1;
-    tb->addPostponed(yylval.text, yylloc, SType::LineGlue);
+    yylval->text.len = 1;
+    yylloc->last_column = yylloc->first_column + 1;
+    yyextra->tb->addPostponed(yylval->text, *yylloc, SType::LineGlue);
     ADVANCE_LINE();
 }
 <INITIAL,beforeparen>"case"                  { KW(CASE); }
@@ -279,15 +273,15 @@ NL                      \n|\r|\r\n
 <INITIAL>{ID}                                { TOKEN(ID); }
 <beforeparen>{ID} {
     BEGIN(INITIAL);
-    tb->markWithPostponed(yylval.text);
-    yylval.text.token = FUNCTION;
+    yyextra->tb->markWithPostponed(yylval->text);
+    yylval->text.token = FUNCTION;
     return ID;
 }
 
 {ID}[[:space:]]*"(" {
     BEGIN(beforeparen);
-    yyoffset -= yyleng;
-    yycolumn -= yyleng;
+    yyextra->offset -= yyleng;
+    yyextra->col -= yyleng;
     yyless(0);
 }
 
@@ -320,26 +314,26 @@ NL                      \n|\r|\r\n
  /*     s-char */
  /*     s-char-sequence s-char */
 {EPREFIX}?\" {
-    startTok = yylval;
-    startTok.text.token = SLIT;
-    startLoc = yylloc;
+    yyextra->startTok = *yylval;
+    yyextra->startTok.text.token = SLIT;
+    yyextra->startLoc = *yylloc;
     BEGIN(slit);
 }
 
 <slit>{SCHAR} ;
 
 <slit>\" {
-    startTok.text.len = yyoffset - startTok.text.from;
-    tb->markWithPostponed(startTok.text);
+    yyextra->startTok.text.len = yyextra->offset - yyextra->startTok.text.from;
+    yyextra->tb->markWithPostponed(yyextra->startTok.text);
 
-    yylval = startTok;
-    yylloc = startLoc;
+    *yylval = yyextra->startTok;
+    *yylloc = yyextra->startLoc;
 
     BEGIN(INITIAL);
     return SLIT;
 }
 <slit>\\?{NL}           { ADVANCE_LINE(); }
-<slit>.                 { reportError(); }
+<slit>.                 { reportError(yylloc, yytext, yyleng, yyextra); }
 
 "->"                    { TOKEN(ARR_OP); }
 "++"                    { TOKEN(INC_OP); }
@@ -364,19 +358,21 @@ NL                      \n|\r|\r\n
 "|="                    { TOKEN(OREQ_OP); }
 
 ^[[:space:]]{-}[\n\r]*# {
-    startTok = yylval;
-    startTok.text.token = DIRECTIVE;
-    startLoc = yylloc;
+    yyextra->startTok = *yylval;
+    yyextra->startTok.text.token = DIRECTIVE;
+    yyextra->startLoc = *yylloc;
     BEGIN(directive);
 }
 <directive>\\{NL} {
     ADVANCE_LINE();
 }
 <directive>{NL} {
-    startTok.text.len = yyoffset - startTok.text.from - 1;
-    startLoc.last_line = yylloc.last_line;
-    startLoc.last_column = yylloc.last_column;
-    tb->addPostponed(startTok.text, startLoc, SType::Directive);
+    yyextra->startTok.text.len = yyextra->offset
+                               - yyextra->startTok.text.from - 1;
+    yyextra->startLoc.last_line = yylloc->last_line;
+    yyextra->startLoc.last_column = yylloc->last_column;
+    yyextra->tb->addPostponed(yyextra->startTok.text, yyextra->startLoc,
+                              SType::Directive);
 
     ADVANCE_LINE();
     BEGIN(INITIAL);
@@ -389,16 +385,18 @@ NL                      \n|\r|\r\n
 <directive>.            ;
 
 "//" {
-    startTok = yylval;
-    startTok.text.token = SLCOMMENT;
-    startLoc = yylloc;
+    yyextra->startTok = *yylval;
+    yyextra->startTok.text.token = SLCOMMENT;
+    yyextra->startLoc = *yylloc;
     BEGIN(slcomment);
 }
 <slcomment>{NL} {
-    startTok.text.len = yyoffset - startTok.text.from - 1;
-    startLoc.last_line = yylloc.last_line;
-    startLoc.last_column = yylloc.last_column;
-    tb->addPostponed(startTok.text, startLoc, SType::Comment);
+    yyextra->startTok.text.len = yyextra->offset
+                               - yyextra->startTok.text.from - 1;
+    yyextra->startLoc.last_line = yylloc->last_line;
+    yyextra->startLoc.last_column = yylloc->last_column;
+    yyextra->tb->addPostponed(yyextra->startTok.text, yyextra->startLoc,
+                              SType::Comment);
 
     ADVANCE_LINE();
     BEGIN(INITIAL);
@@ -406,16 +404,17 @@ NL                      \n|\r|\r\n
 <slcomment>.            ;
 
 "/*" {
-    startTok = yylval;
-    startTok.text.token = MLCOMMENT;
-    startLoc = yylloc;
+    yyextra->startTok = *yylval;
+    yyextra->startTok.text.token = MLCOMMENT;
+    yyextra->startLoc = *yylloc;
     BEGIN(mlcomment);
 }
 <mlcomment>"*/" {
-    startTok.text.len = yyoffset - startTok.text.from;
-    startLoc.last_line = yylloc.last_line;
-    startLoc.last_column = yylloc.last_column;
-    tb->addPostponed(startTok.text, startLoc, SType::Comment);
+    yyextra->startTok.text.len = yyextra->offset - yyextra->startTok.text.from;
+    yyextra->startLoc.last_line = yylloc->last_line;
+    yyextra->startLoc.last_column = yylloc->last_column;
+    yyextra->tb->addPostponed(yyextra->startTok.text, yyextra->startLoc,
+                              SType::Comment);
 
     BEGIN(INITIAL);
 }
@@ -428,48 +427,26 @@ NL                      \n|\r|\r\n
     TOKEN(yytext[0]);
 }
 
-. { reportError(); }
+. { reportError(yylloc, yytext, yyleng, yyextra); }
 
 %%
 
-static std::size_t
-yyinput(char buf[], std::size_t maxSize)
-{
-    static const char *const trailing = "\n";
-
-    if (yybegin == nullptr) {
-        return 0U;
-    }
-
-    const std::size_t count = std::min<std::size_t>(yyend - yybegin, maxSize);
-    char *end = std::copy_n(yybegin, count, buf);
-    const std::size_t copied = end - buf;
-
-    if (yybegin[copied] == '\0') {
-        yybegin = (yybegin == trailing ? nullptr : trailing);
-        yyend = (yybegin == nullptr ? nullptr : yybegin + strlen(yybegin));
-    } else {
-        yybegin += copied;
-    }
-
-    return copied;
-}
-
 static void
-reportError()
+reportError(YYLTYPE *loc, const char text[], std::size_t len, LexerData *data)
 {
     std::string error;
 
-    if (yyleng > 1U) {
-        error = std::string("Unknown token: ") + yytext;
-    } else if (std::isprint(yytext[0], std::locale())) {
-        error = std::string("Unknown token: ") + yytext[0];
+    if (len > 1U) {
+        error = std::string("Unknown token: ") + text;
+    } else if (std::isprint(text[0], std::locale())) {
+        error = std::string("Unknown token: ") + text[0];
     } else {
-        error = std::string("Unknown token: <") + std::to_string(yytext[0]) +
-                '>';
+        error = std::string("Unknown token: <") + std::to_string(text[0]) + '>';
     }
 
-    yyerror(error.c_str(), yyoffset - yylineoffset);
+    YYLTYPE changedLoc = *loc;
+    changedLoc.first_column = data->offset - data->lineoffset;
+    yyerror(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
 }
 
 void
