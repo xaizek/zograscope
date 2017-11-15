@@ -9,6 +9,10 @@
 
 struct SNode
 {
+    SNode(PNode *value) : value(value)
+    {
+    }
+
     PNode *value;
     std::vector<SNode *> children;
 };

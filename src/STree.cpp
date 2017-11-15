@@ -26,7 +26,7 @@ STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
 
     PNode *rootNode = findSNode(proot);
     if (rootNode == nullptr) {
-        snodes.emplace_back(SNode{proot, {}});
+        snodes.emplace_back(proot);
         root = &snodes[0];
         return;
     }
@@ -69,7 +69,7 @@ static SNode *
 makeSNode(std::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
           bool dumpUnclear)
 {
-    snodes.emplace_back(SNode{pnode, {}});
+    snodes.emplace_back(pnode);
     SNode *snode = &snodes.back();
 
     auto isSNode = [](PNode *child) {
@@ -89,7 +89,7 @@ makeSNode(std::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
             if (dumpUnclear) {
                 print(child, contents);
             }
-            snodes.emplace_back(SNode{pnode->children[c.size()], {}});
+            snodes.emplace_back(pnode->children[c.size()]);
             c.push_back(&snodes.back());
         }
     }
