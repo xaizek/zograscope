@@ -45,6 +45,11 @@ struct PNode
     {
     }
 
+    PNode(const PNode &) = delete;
+    PNode(PNode &&) = delete;
+    PNode & operator=(const PNode &) = delete;
+    PNode & operator=(PNode &&) = delete;
+
     bool empty() const
     {
         return value.from == 0U && value.len == 0U && stype == SType{};
