@@ -70,7 +70,8 @@ static optional_t<Args> parseArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
 static po::variables_map parseOptions(const std::vector<std::string> &args);
 static optional_t<Tree> buildTreeFromFile(const std::string &path,
-                                          const Args &args, TimeReport &tr);
+                                          const Args &args, TimeReport &tr,
+                                          cpp17::pmr::memory_resource *mr);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -161,7 +162,8 @@ run(const Args &args, TimeReport &tr)
         decor::enableDecorations();
     }
 
-    Tree treeA, treeB;
+    cpp17::pmr::monolithic mr;
+    Tree treeA(&mr), treeB(&mr);
     auto dumpTrees = [&args, &treeA, &treeB]() {
         if (!args.dumpTree) {
             return;
@@ -179,7 +181,7 @@ run(const Args &args, TimeReport &tr)
     };
 
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
-    if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr)) {
+    if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr, &mr)) {
         treeA = *tree;
     } else {
         return EXIT_FAILURE;
@@ -194,7 +196,7 @@ run(const Args &args, TimeReport &tr)
     }
 
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
-    if (optional_t<Tree> &&tree = buildTreeFromFile(newFile, args, tr)) {
+    if (optional_t<Tree> &&tree = buildTreeFromFile(newFile, args, tr, &mr)) {
         treeB = *tree;
     } else {
         return EXIT_FAILURE;
@@ -317,11 +319,13 @@ parseOptions(const std::vector<std::string> &args)
  * @param path  Path to the file to read.
  * @param args  Arguments of the application.
  * @param tr    Time keeper.
+ * @param mr    Allocator.
  *
  * @returns Tree on success or empty optional on error.
  */
 static optional_t<Tree>
-buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr)
+buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr,
+                  cpp17::pmr::memory_resource *mr)
 {
     auto timer = tr.measure("parsing: " + path);
 
@@ -334,14 +338,14 @@ buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr)
         return {};
     }
 
-    Tree t;
+    Tree t(mr);
 
     if (args.fine) {
-        t = Tree(contents, tb.getRoot());
+        t = Tree(contents, tb.getRoot(), &localMR);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
                     &localMR);
-        t = Tree(contents, stree.getRoot());
+        t = Tree(contents, stree.getRoot(), mr);
     }
 
     return optional_t<Tree>(std::move(t));

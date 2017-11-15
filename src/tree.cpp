@@ -134,7 +134,8 @@ printNode(std::ostream &os, const Node *node)
     os << '\n';
 }
 
-Tree::Tree(const std::string &contents, const PNode *node)
+Tree::Tree(const std::string &contents, const PNode *node, allocator_type al)
+    : nodes(al)
 {
     root = materializePNode(*this, contents, node);
 }
@@ -209,7 +210,8 @@ isLayerBreak(SType stype)
     };
 }
 
-Tree::Tree(const std::string &contents, const SNode *node)
+Tree::Tree(const std::string &contents, const SNode *node, allocator_type al)
+    : nodes(al)
 {
     root = materializeSNode(*this, contents, node);
 }

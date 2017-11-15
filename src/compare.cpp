@@ -206,9 +206,8 @@ detectMoves(Node *x)
             return;
         }
 
-        dtl::Diff<Node *, std::vector<Node *>, decltype(cmp)> diff(x->children,
-                                                                   y->children,
-                                                                   cmp);
+        dtl::Diff<Node *, cpp17::pmr::vector<Node *>, decltype(cmp)>
+            diff(x->children, y->children, cmp);
         diff.compose();
 
         for (const auto &d : diff.getSes().getSequence()) {
@@ -273,7 +272,7 @@ detectMovesInFixedStructure(Node *x, Node *y)
 static int
 getMovePosOfAux(Node *node)
 {
-    std::vector<Node *> &children = node->parent->children;
+    cpp17::pmr::vector<Node *> &children = node->parent->children;
     int pos = 0;
     for (Node *child : children) {
         if (child == node) {
