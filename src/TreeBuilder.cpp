@@ -78,17 +78,12 @@ TreeBuilder::finish(bool failed)
 
     root = clean(root);
 
-    std::vector<PNode *> children;
-    children.reserve(newPostponed);
     for (std::size_t i = postponed.size() - newPostponed; i < postponed.size();
          ++i) {
         nodes.emplace_back(postponed[i].value, postponed[i].loc,
                            postponed[i].stype, true);
-        children.push_back(&nodes.back());
+        root->children.push_back(&nodes.back());
     }
-
-    root->children.insert(root->children.cend(),
-                          children.cbegin(), children.cend());
 }
 
 void
@@ -101,8 +96,8 @@ TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
         return;
     }
 
-    std::vector<PNode *> postponed(node->children.begin(), pos);
-    node->movedChildren = postponed.size();
+    // Save the value, because it's modified below.
+    PNode *n = node;
 
     if (node->children.end() - pos == 1U && (*pos)->empty() &&
         (*pos)->children.empty()) {
@@ -110,5 +105,7 @@ TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
         node = *pos;
     }
 
-    nodes.insert(insertPos, postponed.cbegin(), postponed.cend());
+    // Inserting elements here to avoid invalidating pos iterator.
+    nodes.insert(insertPos, n->children.begin(), pos);
+    n->movedChildren = pos - n->children.begin();
 }
