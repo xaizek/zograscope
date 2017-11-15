@@ -2,10 +2,8 @@
 
 #include <cstddef>
 
-#include <deque>
 #include <functional>
 #include <utility>
-#include <vector>
 
 PNode *
 PNode::contract(PNode *node)
@@ -30,18 +28,20 @@ TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
                                postponed[i].stype, true);
             node->children.push_back(&nodes.back());
         }
-        nodes.emplace_back(value, loc, stype);
+        nodes.emplace_back(value, loc, stype, false);
         node->children.push_back(&nodes.back());
         return node;
     }
 
-    nodes.emplace_back(value, loc, stype);
+    nodes.emplace_back(value, loc, stype, false);
     return &nodes.back();
 }
 
 PNode *
-TreeBuilder::addNode(std::vector<PNode *> children, SType stype)
+TreeBuilder::addNode(const std::initializer_list<PNode *> &ini, SType stype)
 {
+    cpp17::pmr::vector<PNode *> children(ini, alloc);
+
     for (unsigned int i = children.size(); i != 0U; --i) {
         movePostponed(children[i - 1U], children, children.cbegin() + (i - 1U));
     }
@@ -65,7 +65,7 @@ TreeBuilder::finish(bool failed)
     }
 
     std::function<PNode * (PNode *)> clean = [&clean](PNode *node) {
-        std::vector<PNode *> &children = node->children;
+        cpp17::pmr::vector<PNode *> &children = node->children;
         children.erase(children.begin(),
                        children.begin() + node->movedChildren);
         for (PNode *&child : children) {
@@ -87,8 +87,8 @@ TreeBuilder::finish(bool failed)
 }
 
 void
-TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
-                           std::vector<PNode *>::const_iterator insertPos)
+TreeBuilder::movePostponed(PNode *&node, cpp17::pmr::vector<PNode *> &nodes,
+                          cpp17::pmr::vector<PNode *>::const_iterator insertPos)
 {
     auto pos = std::find_if_not(node->children.begin(), node->children.end(),
                                 [](PNode *n) { return n->postponed; });

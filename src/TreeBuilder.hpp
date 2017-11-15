@@ -5,9 +5,10 @@
 
 #include <cstddef>
 
-#include <deque>
 #include <utility>
-#include <vector>
+
+#include "pmr/pmr_deque.hpp"
+#include "pmr/pmr_vector.hpp"
 
 enum class SType;
 
@@ -28,20 +29,24 @@ struct Text
 
 struct PNode
 {
-    PNode()
+    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
+
+    PNode(allocator_type al = {}) : children(al)
     {
     }
-    PNode(std::vector<PNode *> children, SType stype = {})
-        : children(std::move(children)), stype(stype)
+    PNode(cpp17::pmr::vector<PNode *> children, SType stype = {},
+          allocator_type al = {})
+        : children(std::move(children), al), stype(stype)
     {
         for (PNode *&child : this->children) {
             child = contract(child);
         }
     }
     PNode(Text value, const Location &loc, SType stype = {},
-          bool postponed = false)
-        : value(value), line(loc.first_line), col(loc.first_column),
-          postponed(postponed), stype(stype)
+          bool postponed = false,
+          allocator_type al = {})
+        : value(value), children(al), line(loc.first_line),
+          col(loc.first_column), postponed(postponed), stype(stype)
     {
     }
 
@@ -56,7 +61,7 @@ struct PNode
     }
 
     Text value = { 0U, 0U, 0U, 0U, 0 };
-    std::vector<PNode *> children;
+    cpp17::pmr::vector<PNode *> children;
     int line = 0, col = 0;
     bool postponed = false;
     SType stype = {};
@@ -67,6 +72,8 @@ struct PNode
 
 class TreeBuilder
 {
+    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
+
     struct Postponed
     {
         Text value;
@@ -75,7 +82,9 @@ class TreeBuilder
     };
 
 public:
-    TreeBuilder() = default;
+    TreeBuilder(allocator_type al = {}) : alloc(al), nodes(al), postponed(al)
+    {
+    }
     TreeBuilder(const TreeBuilder &rhs) = delete;
     TreeBuilder(TreeBuilder &&rhs) = default;
     TreeBuilder & operator=(const TreeBuilder &rhs) = delete;
@@ -106,7 +115,7 @@ public:
     PNode * addNode(Text value, const Location &loc, int token,
                     SType stype = {});
 
-    PNode * addNode(std::vector<PNode *> children, SType stype = {});
+    PNode * addNode(const std::initializer_list<PNode *> &ini, SType stype = {});
 
     PNode * append(PNode *node, PNode *child)
     {
@@ -171,13 +180,14 @@ public:
     }
 
 private:
-    void movePostponed(PNode *&node, std::vector<PNode *> &nodes,
-                       std::vector<PNode *>::const_iterator insertPos);
+    void movePostponed(PNode *&node, cpp17::pmr::vector<PNode *> &nodes,
+                       cpp17::pmr::vector<PNode *>::const_iterator insertPos);
 
 private:
-    std::deque<PNode> nodes;
+    cpp17::pmr::polymorphic_allocator<cpp17::byte> alloc;
+    cpp17::pmr::deque<PNode> nodes;
     PNode *root = nullptr;
-    std::vector<Postponed> postponed;
+    cpp17::pmr::vector<Postponed> postponed;
     int newPostponed = 0;
     bool failed = false;
 };

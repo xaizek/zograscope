@@ -329,7 +329,7 @@ buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr)
 
     cpp17::pmr::monolithic localMR;
 
-    TreeBuilder tb = parse(contents, path, args.debug);
+    TreeBuilder tb = parse(contents, path, args.debug, &localMR);
     if (tb.hasFailed()) {
         return {};
     }
