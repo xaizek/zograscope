@@ -5,18 +5,19 @@
 #include <utility>
 #include <vector>
 
+#include "Pool.hpp"
 #include "decoration.hpp"
 #include "stypes.hpp"
 #include "trees.hpp"
 
 static void print(const PNode *node, const std::string &contents);
 static PNode * findSNode(PNode *node);
-static SNode * makeSNode(cpp17::pmr::deque<SNode> &snodes, const std::string &contents,
+static SNode * makeSNode(Pool<SNode> &snodes, const std::string &contents,
                          PNode *pnode, bool dumpUnclear);
 
 STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
              bool dumpUnclear, allocator_type al)
-    : ptree(std::move(ptree)), snodes(al)
+    : ptree(std::move(ptree)), pool(al)
 {
     PNode *proot = ptree.getRoot();
 
@@ -26,12 +27,11 @@ STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
 
     PNode *rootNode = findSNode(proot);
     if (rootNode == nullptr) {
-        snodes.emplace_back(proot);
-        root = &snodes[0];
+        root = pool.make(proot);
         return;
     }
 
-    root = makeSNode(snodes, contents, rootNode, dumpUnclear);
+    root = makeSNode(pool, contents, rootNode, dumpUnclear);
 }
 
 static void
@@ -66,11 +66,10 @@ findSNode(PNode *node)
 }
 
 static SNode *
-makeSNode(cpp17::pmr::deque<SNode> &snodes, const std::string &contents, PNode *pnode,
+makeSNode(Pool<SNode> &pool, const std::string &contents, PNode *pnode,
           bool dumpUnclear)
 {
-    snodes.emplace_back(pnode);
-    SNode *snode = &snodes.back();
+    SNode *snode = pool.make(pnode);
 
     auto isSNode = [](PNode *child) {
         return (findSNode(child) != nullptr);
@@ -84,13 +83,12 @@ makeSNode(cpp17::pmr::deque<SNode> &snodes, const std::string &contents, PNode *
     c.reserve(pnode->children.size());
     for (PNode *child : pnode->children) {
         if (PNode *schild = findSNode(child)) {
-            c.push_back(makeSNode(snodes, contents, schild, dumpUnclear));
+            c.push_back(makeSNode(pool, contents, schild, dumpUnclear));
         } else {
             if (dumpUnclear) {
                 print(child, contents);
             }
-            snodes.emplace_back(pnode->children[c.size()]);
-            c.push_back(&snodes.back());
+            c.push_back(pool.make(pnode->children[c.size()]));
         }
     }
     return snode;

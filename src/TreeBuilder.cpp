@@ -5,6 +5,8 @@
 #include <functional>
 #include <utility>
 
+#include "Pool.hpp"
+
 PNode *
 PNode::contract(PNode *node)
 {
@@ -24,17 +26,16 @@ TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
         PNode *const node = addNode();
         node->children.reserve(value.postponedTo - value.postponedFrom + 1U);
         for (std::size_t i = value.postponedFrom; i < value.postponedTo; ++i) {
-            nodes.emplace_back(postponed[i].value, postponed[i].loc,
-                               postponed[i].stype, true);
-            node->children.push_back(&nodes.back());
+            node->children.push_back(pool.make(postponed[i].value,
+                                               postponed[i].loc,
+                                               postponed[i].stype,
+                                               true));
         }
-        nodes.emplace_back(value, loc, stype, false);
-        node->children.push_back(&nodes.back());
+        node->children.push_back(pool.make(value, loc, stype, false));
         return node;
     }
 
-    nodes.emplace_back(value, loc, stype, false);
-    return &nodes.back();
+    return pool.make(value, loc, stype, false);
 }
 
 PNode *
@@ -52,8 +53,8 @@ TreeBuilder::addNode(const std::initializer_list<PNode *> &ini, SType stype)
         return PNode::contract(children[0]);
     }
 
-    nodes.emplace_back(std::move(children), stype);
-    return &nodes.back();
+    ;
+    return pool.make(std::move(children), stype);
 }
 
 void
@@ -80,9 +81,8 @@ TreeBuilder::finish(bool failed)
 
     for (std::size_t i = postponed.size() - newPostponed; i < postponed.size();
          ++i) {
-        nodes.emplace_back(postponed[i].value, postponed[i].loc,
-                           postponed[i].stype, true);
-        root->children.push_back(&nodes.back());
+        root->children.push_back(pool.make(postponed[i].value, postponed[i].loc,
+                                           postponed[i].stype, true));
     }
 }
 

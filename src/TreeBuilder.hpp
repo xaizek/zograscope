@@ -8,8 +8,9 @@
 
 #include <utility>
 
-#include "pmr/pmr_deque.hpp"
 #include "pmr/pmr_vector.hpp"
+
+#include "Pool.hpp"
 
 enum class SType : std::uint8_t;
 
@@ -83,7 +84,7 @@ class TreeBuilder
     };
 
 public:
-    TreeBuilder(allocator_type al = {}) : alloc(al), nodes(al), postponed(al)
+    TreeBuilder(allocator_type al = {}) : alloc(al), pool(al), postponed(al)
     {
     }
     TreeBuilder(const TreeBuilder &rhs) = delete;
@@ -104,8 +105,7 @@ public:
 
     PNode * addNode()
     {
-        nodes.emplace_back();
-        return &nodes.back();
+        return pool.make();
     }
 
     PNode * addNode(Text value, const Location &loc, SType stype = {})
@@ -186,7 +186,7 @@ private:
 
 private:
     cpp17::pmr::polymorphic_allocator<cpp17::byte> alloc;
-    cpp17::pmr::deque<PNode> nodes;
+    Pool<PNode> pool;
     PNode *root = nullptr;
     cpp17::pmr::vector<Postponed> postponed;
     int newPostponed = 0;

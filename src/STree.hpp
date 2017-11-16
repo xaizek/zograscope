@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "pmr/pmr_deque.hpp"
 #include "pmr/pmr_vector.hpp"
 
+#include "Pool.hpp"
 #include "TreeBuilder.hpp"
 
 struct SNode
@@ -40,7 +40,7 @@ public:
 
 private:
     TreeBuilder ptree;
-    cpp17::pmr::deque<SNode> snodes;
+    Pool<SNode> pool;
     SNode *root;
 };
 
