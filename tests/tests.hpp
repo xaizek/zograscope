@@ -1,6 +1,8 @@
 #ifndef TESTS__TESTS_HPP__
 #define TESTS__TESTS_HPP__
 
+#include <cstdint>
+
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -8,9 +10,9 @@
 class Node;
 class Tree;
 
-enum class SType;
-enum class State;
-enum class Type;
+enum class SType : std::uint8_t;
+enum class State : std::uint8_t;
+enum class Type : std::uint8_t;
 
 /**
  * @brief Temporarily redirects specified stream into a string.

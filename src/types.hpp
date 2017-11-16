@@ -1,9 +1,11 @@
 #ifndef TYPES_HPP__
 #define TYPES_HPP__
 
+#include <cstdint>
+
 #include <iosfwd>
 
-enum class Type
+enum class Type : std::uint8_t
 {
     Virtual,
 

@@ -1,6 +1,8 @@
 #ifndef TREE_HPP__
 #define TREE_HPP__
 
+#include <cstdint>
+
 #include <string>
 #include <vector>
 
@@ -9,7 +11,7 @@
 
 #include "types.hpp"
 
-enum class State
+enum class State : std::uint8_t
 {
     Unchanged,
     Deleted,
@@ -20,7 +22,7 @@ enum class State
 class PNode;
 class SNode;
 
-enum class SType;
+enum class SType : std::uint8_t;
 
 struct Node
 {

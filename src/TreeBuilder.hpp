@@ -4,13 +4,14 @@
 #include <boost/range/adaptor/reversed.hpp>
 
 #include <cstddef>
+#include <cstdint>
 
 #include <utility>
 
 #include "pmr/pmr_deque.hpp"
 #include "pmr/pmr_vector.hpp"
 
-enum class SType;
+enum class SType : std::uint8_t;
 
 struct Location
 {
