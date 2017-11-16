@@ -31,21 +31,26 @@ struct Node
     std::string label;
     std::string spelling;
     cpp17::pmr::vector<Node *> children;
-    int poID = -1; // post-order ID
-    State state = State::Unchanged;
-    int line = 0;
-    int col = 0;
     Node *relative = nullptr;
     Node *parent = nullptr;
-    bool satellite = false;
-    Type type = Type::Virtual;
-    SType stype = {};
     Node *next = nullptr;
     int valueChild = -1;
-    bool moved = false;
-    bool last = false;
+    int poID = -1; // post-order ID
+    int line = 0;
+    int col = 0;
+    Type type : 8;
+    SType stype : 8;
+    State state : 8;
+    bool satellite : 1;
+    bool moved : 1;
+    bool last : 1;
 
-    Node(allocator_type al = {}) : children(al)
+    Node(allocator_type al = {})
+        : children(al),
+          type(Type::Virtual),
+          stype(),
+          state(State::Unchanged),
+          satellite(false), moved(false), last(false)
     {
     }
     Node(const Node &rhs) = delete;
