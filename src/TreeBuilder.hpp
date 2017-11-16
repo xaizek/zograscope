@@ -24,8 +24,8 @@ struct Location
 
 struct Text
 {
-    std::size_t from, len;
-    std::size_t postponedFrom, postponedTo;
+    std::uint32_t from, len;
+    std::uint32_t postponedFrom, postponedTo;
     int token;
 };
 
