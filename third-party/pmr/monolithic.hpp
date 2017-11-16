@@ -8,8 +8,6 @@
 #ifndef PMR__MONOLITHIC_HPP__
 #define PMR__MONOLITHIC_HPP__
 
-#include <cassert>
-
 #include "pmr_vector.hpp"
 #include "polymorphic_allocator.hpp"
 
@@ -43,8 +41,8 @@ private:
         byte *start;
         byte *next;
 
-        byte * allocate(size_t n);
-        bool canAllocate(size_t n) const;
+        byte * aligned(size_t alignment) const;
+        byte * allocate(size_t n, size_t alignment);
     };
 
     memory_resource *parent;
@@ -52,17 +50,22 @@ private:
 };
 
 inline byte *
-monolithic::Block::allocate(size_t n)
+monolithic::Block::aligned(size_t alignment) const
 {
-    byte *ret = next;
-    next += n;
-    return ret;
+    const size_t mod = reinterpret_cast<uintptr_t>(next)&(alignment - 1U);
+    return (mod == 0U ? next : next + alignment - mod);
 }
 
-inline bool
-monolithic::Block::canAllocate(size_t n) const
+inline byte *
+monolithic::Block::allocate(size_t n, size_t alignment)
 {
-    return static_cast<size_t>(start + size - next) >= n;
+    byte *ret = aligned(alignment);
+    if (static_cast<size_t>(start + size - ret) < n) {
+        return nullptr;
+    }
+
+    next = ret + n;
+    return ret;
 }
 
 inline
@@ -81,20 +84,16 @@ monolithic::~monolithic()
 inline void *
 monolithic::do_allocate(size_t bytes, size_t align)
 {
-    assert(align <= alignment);
-
-    if (bytes%alignment != 0) {
-        bytes += alignment - bytes%alignment;
-    }
-
-    if (blocks.empty() || !blocks.back().canAllocate(bytes)) {
+    void *ret;
+    if (blocks.empty() || !(ret = blocks.back().allocate(bytes, align))) {
         const size_t size = max(static_cast<std::size_t>(blockSize), bytes);
 
-        byte *ret = static_cast<byte *>(parent->allocate(size, alignment));
-        blocks.push_back(Block{size, ret, ret});
+        byte *r = static_cast<byte *>(parent->allocate(size, alignment));
+        blocks.push_back(Block{size, r, r});
+        ret = blocks.back().allocate(bytes, align);
     }
 
-    return blocks.back().allocate(bytes);
+    return ret;
 }
 
 inline void
