@@ -8,8 +8,8 @@
 class TreeBuilder;
 
 TreeBuilder parse(const std::string &contents,
-                  const std::string &fileName = "<input>",
-                  bool debug = false,
+                  const std::string &fileName,
+                  bool debug,
                   cpp17::pmr::polymorphic_allocator<cpp17::byte> al = {});
 
 #endif // PARSER_HPP__
