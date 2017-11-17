@@ -43,7 +43,7 @@ bool
 parsed(const std::string &str)
 {
     cpp17::pmr::monolithic mr;
-    return !parse(str, "<input>", false, &mr).hasFailed();
+    return !parse(str, "<input>", false, mr).hasFailed();
 }
 
 Tree
@@ -51,14 +51,14 @@ makeTree(const std::string &str, bool coarse)
 {
     cpp17::pmr::monolithic mr;
 
-    TreeBuilder tb = parse(str, "<input>", false, &mr);
+    TreeBuilder tb = parse(str, "<input>", false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {
         return Tree(str, tb.getRoot());
     }
 
-    STree stree(std::move(tb), str, false, false, &mr);
+    STree stree(std::move(tb), str, false, false, mr);
     return Tree(str, stree.getRoot());
 }
 

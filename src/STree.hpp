@@ -8,6 +8,12 @@
 #include "Pool.hpp"
 #include "TreeBuilder.hpp"
 
+namespace cpp17 {
+    namespace pmr {
+        class monolithic;
+    }
+}
+
 struct SNode
 {
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
@@ -23,12 +29,10 @@ struct SNode
 
 class STree
 {
-    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
-
 public:
     STree(TreeBuilder &&ptree, const std::string &contents,
-          bool dumpWhole = false, bool dumpUnclear = false,
-          allocator_type al = {});
+          bool dumpWhole, bool dumpUnclear,
+          cpp17::pmr::monolithic &mr);
 
     STree(const STree &rhs) = delete;
     STree(STree &&rhs) = delete;

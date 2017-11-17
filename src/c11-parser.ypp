@@ -1709,14 +1709,14 @@ macro_invocation
 
 TreeBuilder
 parse(const std::string &contents, const std::string &fileName, bool debug,
-      cpp17::pmr::polymorphic_allocator<cpp17::byte> al)
+      cpp17::pmr::monolithic &mr)
 {
 #if YYDEBUG
     extern int yydebug;
     yydebug = debug;
 #endif
 
-    TreeBuilder tb(al);
+    TreeBuilder tb(mr);
     ParseData pd = { fileName, false };
     LexerData ld(contents, tb, pd);
 

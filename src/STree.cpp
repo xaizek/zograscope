@@ -16,8 +16,8 @@ static SNode * makeSNode(Pool<SNode> &snodes, const std::string &contents,
                          PNode *pnode, bool dumpUnclear);
 
 STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
-             bool dumpUnclear, allocator_type al)
-    : ptree(std::move(ptree)), pool(al)
+             bool dumpUnclear, cpp17::pmr::monolithic &mr)
+    : ptree(std::move(ptree)), pool(&mr)
 {
     PNode *proot = ptree.getRoot();
 

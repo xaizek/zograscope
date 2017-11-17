@@ -8,6 +8,7 @@
 
 #include <utility>
 
+#include "pmr/monolithic.hpp"
 #include "pmr/pmr_vector.hpp"
 
 #include "Pool.hpp"
@@ -74,8 +75,6 @@ struct PNode
 
 class TreeBuilder
 {
-    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
-
     struct Postponed
     {
         Text value;
@@ -84,7 +83,8 @@ class TreeBuilder
     };
 
 public:
-    TreeBuilder(allocator_type al = {}) : alloc(al), pool(al), postponed(al)
+    TreeBuilder(cpp17::pmr::monolithic &mr)
+        : alloc(&mr), pool(&mr), postponed(&mr)
     {
     }
     TreeBuilder(const TreeBuilder &rhs) = delete;

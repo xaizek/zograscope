@@ -3,13 +3,17 @@
 
 #include <string>
 
-#include "pmr/polymorphic_allocator.hpp"
+namespace cpp17 {
+    namespace pmr {
+        class monolithic;
+    }
+}
 
 class TreeBuilder;
 
 TreeBuilder parse(const std::string &contents,
                   const std::string &fileName,
                   bool debug,
-                  cpp17::pmr::polymorphic_allocator<cpp17::byte> al = {});
+                  cpp17::pmr::monolithic &mr);
 
 #endif // PARSER_HPP__
