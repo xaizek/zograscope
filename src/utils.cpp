@@ -1,7 +1,6 @@
 #include "utils.hpp"
 
 #include <iterator>
-#include <string>
 #include <utility>
 
 class CountIterator :
@@ -24,10 +23,6 @@ public:
 private:
     int count = 0;
 };
-
-DiceString::DiceString(std::string s) : s(std::move(s))
-{
-}
 
 float
 DiceString::compare(DiceString &other)

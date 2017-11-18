@@ -45,6 +45,9 @@ struct DiffSource
 
     std::vector<DiceString> lines; // Unhighlighted lines generated from tree.
     std::vector<bool> modified;    // Whether respective line contains changes.
+
+private:
+    std::deque<std::string> storage; // Storage that backs the lines.
 };
 
 static std::string noLineMarker(int at);
@@ -68,10 +71,12 @@ DiffSource::DiffSource(const Node &root)
         if (node.line != 0 && node.col != 0) {
             if (node.line > line) {
                 if (!buffer.empty()) {
-                    lines.back() = DiceString(buffer);
+                    storage.push_back(buffer);
+                    lines.back() = DiceString(storage.back());
                     buffer.clear();
                 }
-                lines.insert(lines.cend(), node.line - line, empty);
+                lines.insert(lines.cend(), node.line - line,
+                             boost::string_ref());
                 modified.insert(modified.cend(), node.line - line, false);
                 line = node.line;
                 col = 1;
@@ -93,10 +98,11 @@ DiffSource::DiffSource(const Node &root)
                 ++line;
                 col = 1 + spell[i].size();
                 if (!buffer.empty()) {
-                    lines.back() = DiceString(buffer);
+                    storage.push_back(buffer);
+                    lines.back() = DiceString(storage.back());
                     buffer.clear();
                 }
-                lines.emplace_back(spell[i].to_string());
+                lines.emplace_back(spell[i]);
                 modified.emplace_back(changed);
             }
         }
@@ -108,7 +114,8 @@ DiffSource::DiffSource(const Node &root)
 
     visit(root, false);
     if (!buffer.empty()) {
-        lines.back() = DiceString(std::move(buffer));
+        storage.push_back(std::move(buffer));
+        lines.back() = DiceString(storage.back());
     }
 }
 

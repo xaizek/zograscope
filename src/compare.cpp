@@ -59,7 +59,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
             continue;
         }
         boost::optional<std::string> subtree1;
-        DiceString subtree1Dice = printSubTree(*t1Child, false);
+        const std::string st1 = printSubTree(*t1Child, false);
+        DiceString subtree1Dice(st1);
         for (Node *t2Child : T2->children) {
             if (t2Child->satellite) {
                 continue;
@@ -67,7 +68,8 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
             // XXX: here mismatched labels are included in similarity
             //      measurement, which affects it negatively
-            DiceString subtree2Dice = printSubTree(*t2Child, false);
+            const std::string st2 = printSubTree(*t2Child, false);
+            DiceString subtree2Dice(st2);
             const float similarity = subtree1Dice.compare(subtree2Dice);
             bool identical = (similarity == 1.0f);
             if (identical) {
