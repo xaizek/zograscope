@@ -7,6 +7,8 @@
 
 #include "Pool.hpp"
 
+static PNode * shrinkTree(PNode *node);
+
 PNode *
 PNode::contract(PNode *node)
 {
@@ -65,25 +67,29 @@ TreeBuilder::finish(bool failed)
         return;
     }
 
-    std::function<PNode * (PNode *)> clean = [&clean](PNode *node) {
-        cpp17::pmr::vector<PNode *> &children = node->children;
-        children.erase(children.begin(),
-                       children.begin() + node->movedChildren);
-        for (PNode *&child : children) {
-            child = clean(child);
-        }
-
-        node->movedChildren = 0;
-        return PNode::contract(node);
-    };
-
-    root = clean(root);
+    root = shrinkTree(root);
 
     for (std::size_t i = postponed.size() - newPostponed; i < postponed.size();
          ++i) {
         root->children.push_back(pool.make(postponed[i].value, postponed[i].loc,
                                            postponed[i].stype, true));
     }
+}
+
+// Drops children of each node within the tree that were "moved" to some parent
+// nodes.  Returns contracted node.
+static PNode *
+shrinkTree(PNode *node)
+{
+    cpp17::pmr::vector<PNode *> &children = node->children;
+    children.erase(children.begin(),
+                   children.begin() + node->movedChildren);
+    for (PNode *&child : children) {
+        child = shrinkTree(child);
+    }
+
+    node->movedChildren = 0;
+    return PNode::contract(node);
 }
 
 void

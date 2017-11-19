@@ -15,6 +15,8 @@
 #include "tree-edit-distance.hpp"
 #include "utils.hpp"
 
+static void compareChanged(Node *node, TimeReport &tr, bool coarse,
+                           bool skipRefine);
 static bool flatten(Node *n, int level);
 static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
@@ -121,25 +123,28 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
     setParentLinks(T2, nullptr);
     detectMoves(T1);
 
-    timer.measure("recursing");
+    timer.measure("descending");
+    compareChanged(T1, tr, coarse, skipRefine);
 
-    std::function<void(Node *)> visit = [&](Node *node) {
-        for (Node *x : node->children) {
-            if (x->relative != nullptr && x->next != nullptr &&
-                x->relative->next != nullptr) {
-                if (!x->next->last && !x->satellite) {
-                    x->state = State::Unchanged;
-                    x->relative->state = State::Unchanged;
-                    compare(x->next, x->relative->next, tr, coarse, skipRefine);
-                }
-            } else {
-                visit(x);
-            }
-        }
-    };
-
-    visit(T1);
     refine(*T1);
+}
+
+// Recursively compares nodes that are marked as changed.
+static void
+compareChanged(Node *node, TimeReport &tr, bool coarse, bool skipRefine)
+{
+    for (Node *x : node->children) {
+        Node *y = x->relative;
+        if (y != nullptr && x->next != nullptr && y->next != nullptr) {
+            if (!x->next->last && !x->satellite) {
+                x->state = State::Unchanged;
+                y->state = State::Unchanged;
+                compare(x->next, y->next, tr, coarse, skipRefine);
+            }
+        } else {
+            compareChanged(x, tr, coarse, skipRefine);
+        }
+    }
 }
 
 static bool

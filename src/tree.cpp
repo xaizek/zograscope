@@ -22,6 +22,7 @@ static void printTree(const Node *node, std::vector<bool> &trace, int depth);
 static void printNode(std::ostream &os, const Node *node);
 static Node * materializeSNode(Tree &tree, const std::string &contents,
                                const SNode *node);
+static const PNode * leftmostChild(const PNode *node);
 static std::string materializePTree(const std::string &contents,
                                     const PNode *node);
 static Node * materializePNode(Tree &tree, const std::string &contents,
@@ -219,94 +220,97 @@ Tree::Tree(const std::string &contents, const SNode *node, allocator_type al)
 static Node *
 materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
 {
-    std::function<const PNode *(const PNode *)> lml = [&](const PNode *node) {
-        return node->children.empty()
-             ? node
-             : lml(node->children.front());
-    };
+    Node &n = tree.makeNode();
+    n.stype = node->value->stype;
+    n.satellite = (n.stype == SType::Separator);
 
-    std::function<Node *(const SNode *)> visit = [&](const SNode *node) {
-        Node &n = tree.makeNode();
-        n.stype = node->value->stype;
-        n.satellite = (n.stype == SType::Separator);
+    if (node->children.empty()) {
+        const PNode *leftmostLeaf = leftmostChild(node->value);
 
-        if (node->children.empty()) {
-            const PNode *leaf = lml(node->value);
+        n.label = materializePTree(contents, node->value);
+        n.line = leftmostLeaf->line;
+        n.col = leftmostLeaf->col;
+        n.next = materializePNode(tree, contents, node->value);
+        n.next->last = true;
+        n.type = n.next->type;
+        return &n;
+    }
 
-            n.label = materializePTree(contents, node->value);
-            n.line = leaf->line;
-            n.col = leaf->col;
-            n.next = materializePNode(tree, contents, node->value);
-            n.next->last = true;
-            n.type = n.next->type;
-            return &n;
-        }
+    n.children.reserve(node->children.size());
+    for (SNode *child : node->children) {
+        Node *newChild = materializeSNode(tree, contents, child);
 
-        n.children.reserve(node->children.size());
-        for (SNode *child : node->children) {
-            Node *newChild = visit(child);
-
-            if (shouldSplice(node->value->stype, newChild)) {
-                if (newChild->next != nullptr) {
-                    // Make sure we don't splice last layer.
-                    if (newChild->next->last) {
-                        n.children.emplace_back(newChild);
-                        continue;
-                    }
-
-                    newChild = newChild->next;
+        if (shouldSplice(node->value->stype, newChild)) {
+            if (newChild->next != nullptr) {
+                // Make sure we don't splice last layer.
+                if (newChild->next->last) {
+                    n.children.emplace_back(newChild);
+                    continue;
                 }
 
-                n.children.insert(n.children.cend(),
-                                  newChild->children.cbegin(),
-                                  newChild->children.cend());
-            } else {
-                n.children.emplace_back(newChild);
+                newChild = newChild->next;
             }
-        }
 
-        auto valueChild = std::find_if(node->children.begin(),
-                                       node->children.end(),
-                                       &isValueSNode);
-        if (valueChild != node->children.end()) {
-            n.label = materializePTree(contents, (*valueChild)->value);
-            n.valueChild = valueChild - node->children.begin();
+            n.children.insert(n.children.cend(),
+                              newChild->children.cbegin(),
+                              newChild->children.cend());
         } else {
-            n.valueChild = -1;
+            n.children.emplace_back(newChild);
         }
+    }
 
-        // move certain nodes onto the next layer
-        if (isLayerBreak(n.stype)) {
-            Node &nextLevel = tree.makeNode();
-            nextLevel.next = &n;
-            nextLevel.stype = n.stype;
-            nextLevel.label = n.label.empty() ? printSubTree(n, false) : n.label;
-            return &nextLevel;
-        }
+    auto valueChild = std::find_if(node->children.begin(),
+                                   node->children.end(),
+                                   &isValueSNode);
+    if (valueChild != node->children.end()) {
+        n.label = materializePTree(contents, (*valueChild)->value);
+        n.valueChild = valueChild - node->children.begin();
+    } else {
+        n.valueChild = -1;
+    }
 
-        return &n;
-    };
+    // move certain nodes onto the next layer
+    if (isLayerBreak(n.stype)) {
+        Node &nextLevel = tree.makeNode();
+        nextLevel.next = &n;
+        nextLevel.stype = n.stype;
+        nextLevel.label = n.label.empty() ? printSubTree(n, false) : n.label;
+        return &nextLevel;
+    }
 
-    return visit(node);
+    return &n;
+}
+
+// Finds the leftmost child of the node.
+static const PNode *
+leftmostChild(const PNode *node)
+{
+    return node->children.empty()
+         ? node
+         : leftmostChild(node->children.front());
 }
 
 static std::string
 materializePTree(const std::string &contents, const PNode *node)
 {
-    std::string out;
+    struct {
+        const std::string &contents;
+        std::string out;
+        void run(const PNode *node)
+        {
+            if (node->line != 0 && node->col != 0) {
+                materializeLabel(contents, node, false, out);
+            }
 
-    std::function<void(const PNode *)> visit = [&](const PNode *node) {
-        if (node->line != 0 && node->col != 0) {
-            materializeLabel(contents, node, false, out);
+            for (const PNode *child : node->children) {
+                run(child);
+            }
         }
+    } visitor { contents, {} };
 
-        for (const PNode *child : node->children) {
-            visit(child);
-        }
-    };
-    visit(node);
+    visitor.run(node);
 
-    return out;
+    return visitor.out;
 }
 
 static Node *
@@ -466,24 +470,29 @@ hashNode(const Node *node)
 std::string
 printSubTree(const Node &root, bool withComments)
 {
-    std::string out;
+    struct {
+        bool withComments;
+        std::string out;
+        void run(const Node &node)
+        {
+            if (node.next != nullptr) {
+                return run(*node.next);
+            }
 
-    std::function<void(const Node &)> visit = [&](const Node &node) {
-        if (node.next != nullptr) {
-            return visit(*node.next);
+            if (node.line != 0 && node.col != 0 &&
+                (node.type != Type::Comments || withComments)) {
+                out += node.label;
+            }
+
+            for (const Node *child : node.children) {
+                run(*child);
+            }
         }
+    } visitor { withComments, {} };
 
-        if (node.line != 0 && node.col != 0 && (node.type != Type::Comments || withComments)) {
-            out += node.label;
-        }
+    visitor.run(root);
 
-        for (const Node *child : node.children) {
-            visit(*child);
-        }
-    };
-    visit(root);
-
-    return out;
+    return visitor.out;
 }
 
 bool

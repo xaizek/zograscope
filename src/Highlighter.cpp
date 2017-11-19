@@ -14,6 +14,7 @@
 #include "tree.hpp"
 #include "utils.hpp"
 
+static void markTreeWithState(Node *node, State state);
 static const decor::Decoration & getHighlight(const Node &node);
 static bool isDiffable(const Node &node);
 static std::string diffSpelling(const std::string &l, const std::string &r,
@@ -79,82 +80,91 @@ Highlighter::Highlighter(bool original) : original(original)
 std::string
 Highlighter::print(Node &root) const
 {
-    std::ostringstream oss;
+    struct {
+        bool original;
 
-    std::function<void(Node &, State)> mark = [&](Node &node, State state) {
-        node.state = state;
-        for (Node *child : node.children) {
-            mark(*child, state);
-        }
-    };
+        std::ostringstream oss;
+        int line, col;
+        ColorPicker colorPicker;
 
-    int line = 1, col = 1;
-    ColorPicker colorPicker;
-    std::function<void(Node &)> visit = [&](Node &node) {
-        if (node.next != nullptr) {
-            if (node.state != State::Unchanged) {
-                mark(*node.next, node.state);
-            }
-            if (node.moved) {
-                markTreeAsMoved(node.next);
-            }
-            return visit(*node.next);
-        }
-
-        if (node.line != 0 && node.col != 0) {
-            colorPicker.setNode(node);
-
-            boost::optional<const decor::Decoration &> fillHighlight;
-            // Don't do filling across lines.
-            if (node.line == line) {
-                fillHighlight = colorPicker.getFillHighlight();
-                oss << *fillHighlight;
-            }
-
-            while (node.line > line) {
-                oss << '\n';
-                ++line;
-                colorPicker.advancedLine();
-                col = 1;
-            }
-
-            while (node.col > col) {
-                oss << ' ';
-                ++col;
-            }
-
-            if (fillHighlight) {
-                oss << decor::def;
-            }
-
-            const decor::Decoration &dec = colorPicker.getHighlight();
-
-            const std::string spelling = getSpelling(node, dec, original);
-            const std::vector<boost::string_ref> lines = split(spelling, '\n');
-            oss << (dec << lines.front());
-            col += lines.front().size();
-
-            for (std::size_t i = 1U; i < lines.size(); ++i) {
-                std::size_t whitespaceLength =
-                    lines[i].find_first_not_of(" \t");
-                if (whitespaceLength == std::string::npos) {
-                    whitespaceLength = lines[i].size();
+        void run(Node &node)
+        {
+            if (node.next != nullptr) {
+                if (node.state != State::Unchanged) {
+                    markTreeWithState(node.next, node.state);
                 }
-                oss << '\n' << lines[i].substr(0, whitespaceLength)
-                            << (dec << lines[i].substr(whitespaceLength));
-                ++line;
-                col = 1 + lines[i].size();
-                colorPicker.advancedLine();
+                if (node.moved) {
+                    markTreeAsMoved(node.next);
+                }
+                return run(*node.next);
+            }
+
+            if (node.line != 0 && node.col != 0) {
+                colorPicker.setNode(node);
+
+                boost::optional<const decor::Decoration &> fillHighlight;
+                // Don't do filling across lines.
+                if (node.line == line) {
+                    fillHighlight = colorPicker.getFillHighlight();
+                    oss << *fillHighlight;
+                }
+
+                while (node.line > line) {
+                    oss << '\n';
+                    ++line;
+                    colorPicker.advancedLine();
+                    col = 1;
+                }
+
+                while (node.col > col) {
+                    oss << ' ';
+                    ++col;
+                }
+
+                if (fillHighlight) {
+                    oss << decor::def;
+                }
+
+                const decor::Decoration &dec = colorPicker.getHighlight();
+
+                const std::string spelling = getSpelling(node, dec, original);
+                const std::vector<boost::string_ref> lines = split(spelling, '\n');
+                oss << (dec << lines.front());
+                col += lines.front().size();
+
+                for (std::size_t i = 1U; i < lines.size(); ++i) {
+                    std::size_t whitespaceLength =
+                        lines[i].find_first_not_of(" \t");
+                    if (whitespaceLength == std::string::npos) {
+                        whitespaceLength = lines[i].size();
+                    }
+                    oss << '\n' << lines[i].substr(0, whitespaceLength)
+                                << (dec << lines[i].substr(whitespaceLength));
+                    ++line;
+                    col = 1 + lines[i].size();
+                    colorPicker.advancedLine();
+                }
+            }
+
+            for (Node *child : node.children) {
+                run(*child);
             }
         }
+    } visitor { original, std::ostringstream{}, 1, 1, {} };
 
-        for (Node *child : node.children) {
-            visit(*child);
-        }
-    };
-    visit(root);
+    visitor.run(root);
 
-    return oss.str();
+    return visitor.oss.str();
+}
+
+// Marks one layer of a tree specified by the node with the given state.
+static void
+markTreeWithState(Node *node, State state)
+{
+    node->state = state;
+    for (Node *child : node->children) {
+        markTreeWithState(child, state);
+    }
 }
 
 /**
