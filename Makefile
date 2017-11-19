@@ -88,7 +88,7 @@ lib_objects := $(sort $(lib_sources:%.cpp=$(out_dir)/%.o) \
 lib_objects := $(filter-out %/main.o,$(lib_objects))
 lib_depends := $(lib_objects:.o=.d)
 
-bin_sources := src/main.cpp
+bin_sources := $(call rwildcard, tools/diff/, *.cpp)
 bin_objects := $(sort $(bin_sources:%.cpp=$(out_dir)/%.o))
 bin_depends := $(bin_objects:.o=.d)
 bin_objects += $(lib)
