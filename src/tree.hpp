@@ -56,7 +56,22 @@ struct Node
     Node(const Node &rhs) = delete;
     Node(Node &&rhs) = default;
     Node(Node &&rhs, allocator_type al = {})
-        : children(std::move(rhs.children), al)
+        : label(std::move(rhs.label)),
+          spelling(std::move(rhs.spelling)),
+          children(std::move(rhs.children), al),
+          relative(rhs.relative),
+          parent(rhs.parent),
+          next(rhs.next),
+          valueChild(rhs.valueChild),
+          poID(rhs.poID),
+          line(rhs.line),
+          col(rhs.col),
+          type(rhs.type),
+          stype(rhs.stype),
+          state(rhs.state),
+          satellite(rhs.satellite),
+          moved(rhs.moved),
+          last(rhs.last)
     {
     }
     Node & operator=(const Node &rhs) = delete;
