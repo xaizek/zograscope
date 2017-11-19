@@ -75,23 +75,30 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
                                         $(filter $(subst *,%,$2),$d))
 
 bin := $(out_dir)/$(NAME)$(bin_suffix)
+lib := $(out_dir)/lib$(NAME).a
 
-bin_sources := $(call rwildcard, src/, *.cpp) \
+lib_sources := $(call rwildcard, src/, *.cpp) \
                $(call rwildcard, third-party/, *.cpp)
-bin_sources := $(filter-out %.gen.cpp,$(bin_sources))
-bin_autocpp := $(addprefix $(out_dir)/src/, \
+lib_sources := $(filter-out %.gen.cpp,$(lib_sources))
+lib_autocpp := $(addprefix $(out_dir)/src/, \
                            c11-lexer.gen.cpp c11-parser.gen.cpp)
-bin_autohpp := $(addprefix $(out_dir)/src/, c11-lexer.hpp c11-parser.hpp)
-bin_objects := $(sort $(bin_sources:%.cpp=$(out_dir)/%.o) \
-                      $(bin_autocpp:%.cpp=%.o))
+lib_autohpp := $(addprefix $(out_dir)/src/, c11-lexer.hpp c11-parser.hpp)
+lib_objects := $(sort $(lib_sources:%.cpp=$(out_dir)/%.o) \
+                      $(lib_autocpp:%.cpp=%.o))
+lib_objects := $(filter-out %/main.o,$(lib_objects))
+lib_depends := $(lib_objects:.o=.d)
+
+bin_sources := src/main.cpp
+bin_objects := $(sort $(bin_sources:%.cpp=$(out_dir)/%.o))
 bin_depends := $(bin_objects:.o=.d)
+bin_objects += $(lib)
 
 tests_sources := $(call rwildcard, tests/, *.cpp)
 tests_objects := $(tests_sources:%.cpp=$(out_dir)/%.o)
-tests_objects += $(filter-out %/main.o,$(bin_objects))
 tests_depends := $(tests_objects:%.o=%.d)
+tests_objects += $(lib)
 
-out_dirs := $(sort $(dir $(bin_objects) $(tests_objects)))
+out_dirs := $(sort $(dir $(lib_objects) $(bin_objects) $(tests_objects)))
 
 .PHONY: all check clean debug release sanitize-basic man install uninstall
 .PHONY: coverage reset-coverage
@@ -127,7 +134,10 @@ ifeq ($(with_cov),1)
 	find $(out_dir)/ -name '*.gcda' -delete
 endif
 
-$(bin): | $(out_dirs)
+$(bin) $(lib): | $(out_dirs)
+
+$(lib): $(lib_objects)
+	$(AR) cr $@ $^
 
 $(bin): $(bin_objects)
 	$(CXX) -o $@ $^ $(LDFLAGS) $(EXTRA_LDFLAGS)
@@ -157,7 +167,7 @@ $(out_dir)/src/c11-parser.gen.cpp: src/c11-parser.ypp
 	      --output=$(out_dir)/src/c11-parser.gen.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet
-$(bin_objects): | $(bin_autohpp)
+$(lib_objects): | $(lib_autohpp)
 
 # work around parenthesis warning in tests somehow caused by ccache
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses -Itests/
@@ -175,9 +185,9 @@ $(out_dirs) $(out_dir)/docs:
 
 clean:
 	-$(RM) -r coverage/ debug/ release/ sanitize-basic/
-	-$(RM) $(bin_objects) $(tests_objects) \
-	       $(bin_depends) $(tests_depends) \
-	       $(bin_autocpp) $(bin_autohpp) \
-	       $(bin) $(out_dir)/tests/tests
+	-$(RM) $(lib_objects) $(bin_objects) $(tests_objects) \
+	       $(lib_depends) $(bin_depends) $(tests_depends) \
+	       $(lib_autocpp) $(lib_autohpp) \
+	       $(lib) $(bin) $(out_dir)/tests/tests
 
 include $(wildcard $(bin_depends) $(tests_depends))
