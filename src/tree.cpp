@@ -233,6 +233,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
         n.next = materializePNode(tree, contents, node->value);
         n.next->last = true;
         n.type = n.next->type;
+        n.leaf = (n.line != 0 && n.col != 0);
         return &n;
     }
 
@@ -333,6 +334,7 @@ materializePNode(Tree &tree, const std::string &contents, const PNode *node)
     n.col = node->col;
     n.type = type;
     n.stype = node->stype;
+    n.leaf = (n.line != 0 && n.col != 0);
 
     n.children.reserve(node->children.size());
     for (const PNode *child : node->children) {
@@ -479,8 +481,7 @@ printSubTree(const Node &root, bool withComments)
                 return run(*node.next);
             }
 
-            if (node.line != 0 && node.col != 0 &&
-                (node.type != Type::Comments || withComments)) {
+            if (node.leaf && (node.type != Type::Comments || withComments)) {
                 out += node.label;
             }
 

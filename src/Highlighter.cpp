@@ -99,7 +99,7 @@ Highlighter::print(Node &root) const
                 return run(*node.next);
             }
 
-            if (node.line != 0 && node.col != 0) {
+            if (node.leaf) {
                 colorPicker.setNode(node);
 
                 boost::optional<const decor::Decoration &> fillHighlight;

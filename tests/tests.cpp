@@ -302,7 +302,7 @@ makeChangeMap(Node &root)
             return visit(*node.next);
         }
 
-        if (node.line != 0 && node.col != 0) {
+        if (node.leaf) {
             line = node.line - 1;
             std::vector<boost::string_ref> lines = split(node.label, '\n');
             updateMap(line, node);

@@ -74,7 +74,7 @@ DiffSource::DiffSource(const Node &root)
                 return run(*node.next, moved || node.moved);
             }
 
-            if (node.line != 0 && node.col != 0) {
+            if (node.leaf) {
                 if (node.line > line) {
                     if (!buffer.empty()) {
                         storage.push_back(buffer);
