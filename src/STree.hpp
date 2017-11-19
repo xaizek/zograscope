@@ -1,27 +1,38 @@
 #ifndef STREE_HPP__
 #define STREE_HPP__
 
-#include <deque>
 #include <string>
-#include <vector>
 
+#include "pmr/pmr_vector.hpp"
+
+#include "Pool.hpp"
 #include "TreeBuilder.hpp"
+
+namespace cpp17 {
+    namespace pmr {
+        class monolithic;
+    }
+}
 
 struct SNode
 {
-    SNode(PNode *value) : value(value)
+    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
+
+    SNode(PNode *value, allocator_type al = {})
+        : value(value), children(al)
     {
     }
 
     PNode *value;
-    std::vector<SNode *> children;
+    cpp17::pmr::vector<SNode *> children;
 };
 
 class STree
 {
 public:
     STree(TreeBuilder &&ptree, const std::string &contents,
-          bool dumpWhole = false, bool dumpUnclear = false);
+          bool dumpWhole, bool dumpUnclear,
+          cpp17::pmr::monolithic &mr);
 
     STree(const STree &rhs) = delete;
     STree(STree &&rhs) = delete;
@@ -33,7 +44,7 @@ public:
 
 private:
     TreeBuilder ptree;
-    std::deque<SNode> snodes;
+    Pool<SNode> pool;
     SNode *root;
 };
 

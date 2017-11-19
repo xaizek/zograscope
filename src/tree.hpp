@@ -1,13 +1,17 @@
 #ifndef TREE_HPP__
 #define TREE_HPP__
 
-#include <deque>
+#include <cstdint>
+
 #include <string>
 #include <vector>
 
+#include "pmr/pmr_deque.hpp"
+#include "pmr/pmr_vector.hpp"
+
 #include "types.hpp"
 
-enum class State
+enum class State : std::uint8_t
 {
     Unchanged,
     Deleted,
@@ -18,30 +22,58 @@ enum class State
 class PNode;
 class SNode;
 
-enum class SType;
+enum class SType : std::uint8_t;
 
 struct Node
 {
+    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
+
     std::string label;
     std::string spelling;
-    std::vector<Node *> children;
-    int poID = -1; // post-order ID
-    State state = State::Unchanged;
-    int line = 0;
-    int col = 0;
+    cpp17::pmr::vector<Node *> children;
     Node *relative = nullptr;
     Node *parent = nullptr;
-    bool satellite = false;
-    Type type = Type::Virtual;
-    SType stype = {};
     Node *next = nullptr;
     int valueChild = -1;
-    bool moved = false;
-    bool last = false;
+    int poID = -1; // post-order ID
+    int line = 0;
+    int col = 0;
+    Type type : 8;
+    SType stype : 8;
+    State state : 8;
+    bool satellite : 1;
+    bool moved : 1;
+    bool last : 1;
 
-    Node() = default;
+    Node(allocator_type al = {})
+        : children(al),
+          type(Type::Virtual),
+          stype(),
+          state(State::Unchanged),
+          satellite(false), moved(false), last(false)
+    {
+    }
     Node(const Node &rhs) = delete;
     Node(Node &&rhs) = default;
+    Node(Node &&rhs, allocator_type al = {})
+        : label(std::move(rhs.label)),
+          spelling(std::move(rhs.spelling)),
+          children(std::move(rhs.children), al),
+          relative(rhs.relative),
+          parent(rhs.parent),
+          next(rhs.next),
+          valueChild(rhs.valueChild),
+          poID(rhs.poID),
+          line(rhs.line),
+          col(rhs.col),
+          type(rhs.type),
+          stype(rhs.stype),
+          state(rhs.state),
+          satellite(rhs.satellite),
+          moved(rhs.moved),
+          last(rhs.last)
+    {
+    }
     Node & operator=(const Node &rhs) = delete;
     Node & operator=(Node &&rhs) = default;
 
@@ -63,12 +95,18 @@ struct Node
 
 class Tree
 {
+    using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
+
 public:
-    Tree() = default;
+    Tree(allocator_type al = {}) : nodes(al)
+    {
+    }
     Tree(const Tree &rhs) = delete;
     Tree(Tree &&rhs) = default;
-    Tree(const std::string &contents, const PNode *node);
-    Tree(const std::string &contents, const SNode *node);
+    Tree(const std::string &contents, const PNode *node,
+         allocator_type al = {});
+    Tree(const std::string &contents, const SNode *node,
+         allocator_type al = {});
 
     Tree & operator=(const Tree &rhs) = delete;
     Tree & operator=(Tree &&rhs) = default;
@@ -91,7 +129,7 @@ public:
     }
 
 private:
-    std::deque<Node> nodes;
+    cpp17::pmr::deque<Node> nodes;
     Node *root = nullptr;
 };
 

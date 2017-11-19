@@ -19,7 +19,9 @@
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
 
 #define YY_USER_ACTION \
-    yylval->text = { yyextra->offset, yyleng, 0U, 0U, 0 }; \
+    yylval->text = { }; \
+    yylval->text.from = yyextra->offset; \
+    yylval->text.len = yyleng; \
     yylloc->first_line = yyextra->line; \
     yylloc->first_column = yyextra->col; \
     yylloc->last_line = yyextra->line; \

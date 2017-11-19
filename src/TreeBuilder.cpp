@@ -2,10 +2,12 @@
 
 #include <cstddef>
 
-#include <deque>
 #include <functional>
 #include <utility>
-#include <vector>
+
+#include "Pool.hpp"
+
+static PNode * shrinkTree(PNode *node);
 
 PNode *
 PNode::contract(PNode *node)
@@ -26,22 +28,23 @@ TreeBuilder::addNode(Text value, const Location &loc, int token, SType stype)
         PNode *const node = addNode();
         node->children.reserve(value.postponedTo - value.postponedFrom + 1U);
         for (std::size_t i = value.postponedFrom; i < value.postponedTo; ++i) {
-            nodes.emplace_back(postponed[i].value, postponed[i].loc,
-                               postponed[i].stype, true);
-            node->children.push_back(&nodes.back());
+            node->children.push_back(pool.make(postponed[i].value,
+                                               postponed[i].loc,
+                                               postponed[i].stype,
+                                               true));
         }
-        nodes.emplace_back(value, loc, stype);
-        node->children.push_back(&nodes.back());
+        node->children.push_back(pool.make(value, loc, stype, false));
         return node;
     }
 
-    nodes.emplace_back(value, loc, stype);
-    return &nodes.back();
+    return pool.make(value, loc, stype, false);
 }
 
 PNode *
-TreeBuilder::addNode(std::vector<PNode *> children, SType stype)
+TreeBuilder::addNode(const std::initializer_list<PNode *> &ini, SType stype)
 {
+    cpp17::pmr::vector<PNode *> children(ini, alloc);
+
     for (unsigned int i = children.size(); i != 0U; --i) {
         movePostponed(children[i - 1U], children, children.cbegin() + (i - 1U));
     }
@@ -52,8 +55,8 @@ TreeBuilder::addNode(std::vector<PNode *> children, SType stype)
         return PNode::contract(children[0]);
     }
 
-    nodes.emplace_back(std::move(children), stype);
-    return &nodes.back();
+    ;
+    return pool.make(std::move(children), stype);
 }
 
 void
@@ -64,31 +67,34 @@ TreeBuilder::finish(bool failed)
         return;
     }
 
-    std::function<PNode * (PNode *)> clean = [&clean](PNode *node) {
-        std::vector<PNode *> &children = node->children;
-        children.erase(children.begin(),
-                       children.begin() + node->movedChildren);
-        for (PNode *&child : children) {
-            child = clean(child);
-        }
-
-        node->movedChildren = 0;
-        return PNode::contract(node);
-    };
-
-    root = clean(root);
+    root = shrinkTree(root);
 
     for (std::size_t i = postponed.size() - newPostponed; i < postponed.size();
          ++i) {
-        nodes.emplace_back(postponed[i].value, postponed[i].loc,
-                           postponed[i].stype, true);
-        root->children.push_back(&nodes.back());
+        root->children.push_back(pool.make(postponed[i].value, postponed[i].loc,
+                                           postponed[i].stype, true));
     }
 }
 
+// Drops children of each node within the tree that were "moved" to some parent
+// nodes.  Returns contracted node.
+static PNode *
+shrinkTree(PNode *node)
+{
+    cpp17::pmr::vector<PNode *> &children = node->children;
+    children.erase(children.begin(),
+                   children.begin() + node->movedChildren);
+    for (PNode *&child : children) {
+        child = shrinkTree(child);
+    }
+
+    node->movedChildren = 0;
+    return PNode::contract(node);
+}
+
 void
-TreeBuilder::movePostponed(PNode *&node, std::vector<PNode *> &nodes,
-                           std::vector<PNode *>::const_iterator insertPos)
+TreeBuilder::movePostponed(PNode *&node, cpp17::pmr::vector<PNode *> &nodes,
+                          cpp17::pmr::vector<PNode *>::const_iterator insertPos)
 {
     auto pos = std::find_if_not(node->children.begin(), node->children.end(),
                                 [](PNode *n) { return n->postponed; });

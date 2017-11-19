@@ -71,13 +71,9 @@ public:
     }
 
 private:
-    // Finds id of the leftmost child of the node.
+    // Finds id of the leftmost child of the node ignoring satellites.
     static int leftmostChild(const Node *node)
     {
-        if (node->children.empty()) {
-            return node->poID;
-        }
-
         for (const Node *child : node->children) {
             if (!child->satellite) {
                 return leftmostChild(child);
@@ -370,13 +366,13 @@ distill(Node &T1, Node &T2)
     std::vector<DiceString> dice1;
     dice1.reserve(po1.size());
     for (Node *x : po1) {
-        dice1.push_back(x->label);
+        dice1.emplace_back(x->label);
     }
 
     std::vector<DiceString> dice2;
     dice2.reserve(po2.size());
     for (Node *x : po2) {
-        dice2.push_back(x->label);
+        dice2.emplace_back(x->label);
     }
 
     std::vector<Match> matches;

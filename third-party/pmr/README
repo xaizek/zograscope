@@ -1,0 +1,5 @@
+This is slightly modified version from
+
+    https://github.com/phalpern/CppCon2017Code
+
+with addition of monolithic memory resource.

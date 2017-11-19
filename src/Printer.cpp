@@ -45,6 +45,9 @@ struct DiffSource
 
     std::vector<DiceString> lines; // Unhighlighted lines generated from tree.
     std::vector<bool> modified;    // Whether respective line contains changes.
+
+private:
+    std::deque<std::string> storage; // Storage that backs the lines.
 };
 
 static std::string noLineMarker(int at);
@@ -56,59 +59,70 @@ static std::string empty;
 
 DiffSource::DiffSource(const Node &root)
 {
-    std::string buffer;
+    struct {
+        std::vector<DiceString> &lines;
+        std::vector<bool> &modified;
+        std::deque<std::string> &storage;
 
-    int line = 0, col = 1;
-    std::function<void(const Node &, bool)> visit = [&](const Node &node,
-                                                        bool moved) {
-        if (node.next != nullptr) {
-            return visit(*node.next, moved || node.moved);
-        }
+        std::string buffer;
+        int line;
+        int col;
 
-        if (node.line != 0 && node.col != 0) {
-            if (node.line > line) {
-                if (!buffer.empty()) {
-                    lines.back() = DiceString(buffer);
-                    buffer.clear();
+        void run(const Node &node, bool moved)
+        {
+            if (node.next != nullptr) {
+                return run(*node.next, moved || node.moved);
+            }
+
+            if (node.line != 0 && node.col != 0) {
+                if (node.line > line) {
+                    if (!buffer.empty()) {
+                        storage.push_back(buffer);
+                        lines.back() = DiceString(storage.back());
+                        buffer.clear();
+                    }
+                    lines.insert(lines.cend(), node.line - line,
+                                 boost::string_ref());
+                    modified.insert(modified.cend(), node.line - line, false);
+                    line = node.line;
+                    col = 1;
                 }
-                lines.insert(lines.cend(), node.line - line, empty);
-                modified.insert(modified.cend(), node.line - line, false);
-                line = node.line;
-                col = 1;
-            }
 
-            if (node.col > col) {
-                buffer.append(node.col - col, ' ');
-                col = node.col;
-            }
-
-            std::vector<boost::string_ref> spell = split(node.spelling, '\n');
-            col += spell.front().size();
-            buffer += spell.front().to_string();
-
-            const bool changed = (node.state != State::Unchanged || moved);
-            modified.back() = (modified.back() || changed);
-
-            for (std::size_t i = 1U; i < spell.size(); ++i) {
-                ++line;
-                col = 1 + spell[i].size();
-                if (!buffer.empty()) {
-                    lines.back() = DiceString(buffer);
-                    buffer.clear();
+                if (node.col > col) {
+                    buffer.append(node.col - col, ' ');
+                    col = node.col;
                 }
-                lines.emplace_back(spell[i].to_string());
-                modified.emplace_back(changed);
+
+                std::vector<boost::string_ref> spell = split(node.spelling, '\n');
+                col += spell.front().size();
+                buffer += spell.front().to_string();
+
+                const bool changed = (node.state != State::Unchanged || moved);
+                modified.back() = (modified.back() || changed);
+
+                for (std::size_t i = 1U; i < spell.size(); ++i) {
+                    ++line;
+                    col = 1 + spell[i].size();
+                    if (!buffer.empty()) {
+                        storage.push_back(buffer);
+                        lines.back() = DiceString(storage.back());
+                        buffer.clear();
+                    }
+                    lines.emplace_back(spell[i]);
+                    modified.emplace_back(changed);
+                }
+            }
+
+            for (Node *child : node.children) {
+                run(*child, moved);
             }
         }
+    } visitor { lines, modified, storage, {}, 0, 1 };
 
-        for (Node *child : node.children) {
-            visit(*child, moved);
-        }
-    };
-
-    visit(root, false);
-    if (!buffer.empty()) {
-        lines.back() = DiceString(std::move(buffer));
+    visitor.run(root, false);
+    if (!visitor.buffer.empty()) {
+        storage.push_back(std::move(visitor.buffer));
+        lines.back() = DiceString(storage.back());
     }
 }
 

@@ -1,9 +1,11 @@
 #ifndef STYPES_HPP__
 #define STYPES_HPP__
 
+#include <cstdint>
+
 #include <iosfwd>
 
-enum class SType
+enum class SType : std::uint8_t
 {
     None,
     TranslationUnit,

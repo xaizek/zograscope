@@ -3,10 +3,17 @@
 
 #include <string>
 
+namespace cpp17 {
+    namespace pmr {
+        class monolithic;
+    }
+}
+
 class TreeBuilder;
 
 TreeBuilder parse(const std::string &contents,
-                  const std::string &fileName = "<input>",
-                  bool debug = false);
+                  const std::string &fileName,
+                  bool debug,
+                  cpp17::pmr::monolithic &mr);
 
 #endif // PARSER_HPP__

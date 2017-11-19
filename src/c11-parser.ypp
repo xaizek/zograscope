@@ -1708,19 +1708,18 @@ macro_invocation
 %%
 
 TreeBuilder
-parse(const std::string &contents, const std::string &fileName, bool debug)
+parse(const std::string &contents, const std::string &fileName, bool debug,
+      cpp17::pmr::monolithic &mr)
 {
-#if YYDEBUG
-    extern int yydebug;
-    yydebug = debug;
-#endif
-
-    TreeBuilder tb;
+    TreeBuilder tb(mr);
     ParseData pd = { fileName, false };
     LexerData ld(contents, tb, pd);
 
     yyscan_t scanner;
     yylex_init_extra(&ld, &scanner);
+#if YYDEBUG
+    yyset_debug(debug, scanner);
+#endif
 
     // parse through the input until there is no more:
     const bool failed = (yyparse(scanner, &tb, &pd) != 0);

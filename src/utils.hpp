@@ -5,24 +5,28 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/utility/string_ref.hpp>
 
-#include <string>
 #include <vector>
 
 class DiceString
 {
 public:
-    DiceString(std::string s);
+    DiceString(boost::string_ref s) : s(s)
+    {
+    }
 
 public:
     float compare(DiceString &other);
 
-    const std::string & str() const { return s; }
+    boost::string_ref str() const
+    {
+        return s;
+    }
 
 private:
     const std::vector<short> & getBigrams();
 
 private:
-    std::string s;
+    boost::string_ref s;
     std::vector<short> bigrams;
 };
 
