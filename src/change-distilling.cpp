@@ -71,13 +71,9 @@ public:
     }
 
 private:
-    // Finds id of the leftmost child of the node.
+    // Finds id of the leftmost child of the node ignoring satellites.
     static int leftmostChild(const Node *node)
     {
-        if (node->children.empty()) {
-            return node->poID;
-        }
-
         for (const Node *child : node->children) {
             if (!child->satellite) {
                 return leftmostChild(child);
