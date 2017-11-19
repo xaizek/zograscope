@@ -341,7 +341,7 @@ buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr,
     Tree t(mr);
 
     if (args.fine) {
-        t = Tree(contents, tb.getRoot(), &localMR);
+        t = Tree(contents, tb.getRoot(), mr);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
                     localMR);
