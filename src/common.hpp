@@ -44,6 +44,8 @@ optional_t<Tree> buildTreeFromFile(const std::string &path,
                                    const CommonArgs &args, TimeReport &tr,
                                    cpp17::pmr::memory_resource *mr);
 
+void dumpTree(const CommonArgs &args, Tree &tree);
+
 void dumpTrees(const CommonArgs &args, Tree &treeA, Tree &treeB);
 
 #endif // COMMON_HPP__

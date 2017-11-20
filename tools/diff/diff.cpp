@@ -21,7 +21,6 @@ namespace po = boost::program_options;
 
 struct Args : CommonArgs
 {
-    bool highlightMode;
     bool noRefine;
     bool gitDiff;
 };
@@ -65,8 +64,7 @@ main(int argc, char *argv[])
 
     try {
         args = parseLocArgs({ argv + 1, argv + argc });
-        if ((args.pos.empty() || args.pos.size() > 2U) &&
-            args.pos.size() != 7U) {
+        if (args.pos.size() != 2U && args.pos.size() != 7U) {
             std::cerr << "Wrong arguments\n";
             return EXIT_FAILURE;
         }
@@ -101,13 +99,11 @@ parseLocArgs(const std::vector<std::string> &argv)
 {
     po::options_description options;
     options.add_options()
-        ("no-refine",   "do not refine coarse results");
+        ("no-refine", "do not refine coarse results");
 
     Args args;
-    boost::program_options::variables_map varMap = parseArgs(args, argv,
-                                                             options);
+    po::variables_map varMap = parseArgs(args, argv, options);
 
-    args.highlightMode = (args.pos.size() == 1U);
     args.noRefine = varMap.count("no-refine");
     args.gitDiff = (args.pos.size() == 7U);
 
@@ -125,14 +121,6 @@ run(const Args &args, TimeReport &tr)
         treeA = *tree;
     } else {
         return EXIT_FAILURE;
-    }
-
-    if (args.highlightMode) {
-        dumpTrees(args, treeA, treeB);
-        if (!args.dryRun) {
-            std::cout << Highlighter().print(*treeA.getRoot()) << '\n';
-        }
-        return EXIT_SUCCESS;
     }
 
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);

@@ -79,6 +79,17 @@ readFile(const std::string &path)
 }
 
 void
+dumpTree(const CommonArgs &args, Tree &tree)
+{
+    if (args.dumpTree) {
+        if (Node *root = tree.getRoot()) {
+            std::cout << "Tree:\n";
+            print(*root);
+        }
+    }
+}
+
+void
 dumpTrees(const CommonArgs &args, Tree &treeA, Tree &treeB)
 {
     if (!args.dumpTree) {
