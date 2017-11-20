@@ -12,6 +12,7 @@
 #include "pmr/monolithic.hpp"
 
 #include "utils/optional.hpp"
+#include "CommonArgs.hpp"
 #include "Highlighter.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
@@ -26,25 +27,15 @@
 
 namespace po = boost::program_options;
 
-struct Args
+struct Args : CommonArgs
 {
-    std::vector<std::string> pos;
     bool highlightMode;
-    bool debug;     //!< Whether grammar debugging is enabled.
-    bool sdebug;    //!< Whether stree debugging is enabled.
-    bool dumpSTree; //!< Whether to dump strees.
-    bool dumpTree;  //!< Whether to dump trees.
-    bool dryRun;
-    bool color;
-    bool fine;     //!< Whether to build only fine-grained tree.
-    bool timeReport;
     bool noRefine;
     bool gitDiff;
 };
 
-static optional_t<Args> parseArgs(const std::vector<std::string> &argv);
+static Args parseLocArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
-static po::variables_map parseOptions(const std::vector<std::string> &args);
 static optional_t<Tree> buildTreeFromFile(const std::string &path,
                                           const Args &args, TimeReport &tr,
                                           cpp17::pmr::memory_resource *mr);
@@ -97,9 +88,10 @@ main(int argc, char *argv[])
     int result;
 
     try {
-        if (optional_t<Args> &&a = parseArgs({ argv + 1, argv + argc })) {
-            args = *a;
-        } else {
+        args = parseLocArgs({ argv + 1, argv + argc });
+        if ((args.pos.empty() || args.pos.size() > 2U) &&
+            args.pos.size() != 7U) {
+            std::cerr << "Wrong arguments\n";
             return EXIT_FAILURE;
         }
 
@@ -206,87 +198,22 @@ run(const Args &args, TimeReport &tr)
     return EXIT_SUCCESS;
 }
 
-static optional_t<Args>
-parseArgs(const std::vector<std::string> &argv)
+static Args
+parseLocArgs(const std::vector<std::string> &argv)
 {
-    po::variables_map varMap;
-    try {
-        varMap = parseOptions(argv);
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << '\n';
-        return {};
-    }
+    po::options_description options;
+    options.add_options()
+        ("no-refine",   "do not refine coarse results");
 
     Args args;
-
-    args.pos = varMap["positional"].as<std::vector<std::string>>();
-    if ((args.pos.empty() || args.pos.size() > 2U) && args.pos.size() != 7U) {
-        std::cerr << "Wrong arguments\n";
-        return {};
-    }
+    boost::program_options::variables_map varMap = parseArgs(args, argv,
+                                                             options);
 
     args.highlightMode = (args.pos.size() == 1U);
-    args.debug = varMap.count("debug");
-    args.sdebug = varMap.count("sdebug");
-    args.dumpSTree = varMap.count("dump-stree");
-    args.dumpTree = varMap.count("dump-tree");
-    args.dryRun = varMap.count("dry-run");
-    args.color = varMap.count("color");
-    args.fine = varMap.count("fine-only");
-    args.timeReport = varMap.count("time-report");
     args.noRefine = varMap.count("no-refine");
     args.gitDiff = (args.pos.size() == 7U);
 
-    return optional_t<Args>(std::move(args));
-}
-
-/**
- * @brief Parses command line-options.
- *
- * Positional arguments are returned in "positional" entry, which exists even
- * when there is no positional arguments.
- *
- * @param args Command-line arguments.
- *
- * @returns Variables map of option values.
- */
-static po::variables_map
-parseOptions(const std::vector<std::string> &args)
-{
-    po::options_description hiddenOpts;
-    hiddenOpts.add_options()
-        ("positional", po::value<std::vector<std::string>>()
-                       ->default_value({}, ""),
-         "positional args");
-
-    po::positional_options_description positionalOptions;
-    positionalOptions.add("positional", -1);
-
-    po::options_description cmdlineOptions;
-
-    cmdlineOptions.add_options()
-        ("dry-run",     "just parse")
-        ("debug",       "enable debugging of grammar")
-        ("sdebug",      "enable debugging of strees")
-        ("dump-stree",  "display stree(s)")
-        ("dump-tree",   "display tree(s)")
-        ("fine-only",   "use only fine-grained tree")
-        ("time-report", "report time spent on different activities")
-        ("color",       "force colorization of output")
-        ("no-refine",   "do not refine coarse results");
-
-    po::options_description allOptions;
-    allOptions.add(cmdlineOptions).add(hiddenOpts);
-
-    auto parsed_from_cmdline =
-        po::command_line_parser(args)
-        .options(allOptions)
-        .positional(positionalOptions)
-        .run();
-
-    po::variables_map varMap;
-    po::store(parsed_from_cmdline, varMap);
-    return varMap;
+    return args;
 }
 
 /**
