@@ -4,7 +4,7 @@
 #include "decoration.hpp"
 
 int
-main(int argc, const char *argv[])
+main(int argc, char *argv[])
 {
     decor::disableDecorations();
     return Catch::Session().run(argc, argv);
