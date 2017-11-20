@@ -1,5 +1,5 @@
-#ifndef TREES_HPP__
-#define TREES_HPP__
+#ifndef UTILS__TREES_HPP__
+#define UTILS__TREES_HPP__
 
 #include <ostream>
 #include <vector>
@@ -76,4 +76,4 @@ printSetTraits(std::ostream &os, N *node, const F &nodePrinter)
 
 }
 
-#endif // TREES_HPP__
+#endif // UTILS__TREES_HPP__

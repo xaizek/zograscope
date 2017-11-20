@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-#include "trees.hpp"
+#include "utils/trees.hpp"
 
 class TimeReport
 {
