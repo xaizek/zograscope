@@ -11,6 +11,7 @@
 
 #include "pmr/monolithic.hpp"
 
+#include "utils/optional.hpp"
 #include "Highlighter.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
@@ -40,31 +41,6 @@ struct Args
     bool noRefine;
     bool gitDiff;
 };
-
-template <typename T>
-class MoveOnCopy
-{
-public:
-    MoveOnCopy(T &&movable) : movable(std::move(movable))
-    {
-    }
-
-    MoveOnCopy(MoveOnCopy &rhs) : movable(std::move(rhs.movable))
-    {
-    }
-
-public:
-    operator T&&() const
-    {
-        return std::move(movable);
-    }
-
-private:
-    mutable T movable;
-};
-
-template <typename T>
-using optional_t = boost::optional<MoveOnCopy<T>>;
 
 static optional_t<Args> parseArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
