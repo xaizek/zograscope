@@ -17,9 +17,8 @@
 #include "Printer.hpp"
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
+#include "common.hpp"
 #include "compare.hpp"
-#include "decoration.hpp"
-#include "integration.hpp"
 #include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
@@ -95,15 +94,12 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        RedirectToPager redirectToPager;
-        TimeReport tr;
+        Environment env(args);
+        env.setup();
 
-        result = run(args, tr);
+        result = run(args, env.getTimeKeeper());
 
-        if (args.timeReport) {
-            tr.stop();
-            std::cout << tr;
-        }
+        env.teardown();
     } catch (const std::exception &e) {
         std::cerr << "ERROR: " << e.what() << '\n';
         result = EXIT_FAILURE;
@@ -126,10 +122,6 @@ main(int argc, char *argv[])
 static int
 run(const Args &args, TimeReport &tr)
 {
-    if (args.color) {
-        decor::enableDecorations();
-    }
-
     cpp17::pmr::monolithic mr;
     Tree treeA(&mr), treeB(&mr);
     auto dumpTrees = [&args, &treeA, &treeB]() {
