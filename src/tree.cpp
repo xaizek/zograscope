@@ -90,10 +90,6 @@ printNode(std::ostream &os, const Node *node)
     using namespace decor;
     using namespace decor::literals;
 
-    // if (node->satellite) {
-    //     return;
-    // }
-
     Decoration labelHi = 78_fg + bold;
     Decoration relLabelHi = 78_fg;
     Decoration idHi = bold;
