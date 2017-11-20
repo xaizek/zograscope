@@ -1,5 +1,5 @@
-#ifndef POOL_HPP__
-#define POOL_HPP__
+#ifndef UTILS__POOL_HPP__
+#define UTILS__POOL_HPP__
 
 #include <utility>
 
@@ -40,4 +40,4 @@ private:
     allocator_type alloc; // Allocator used for objects.
 };
 
-#endif // POOL_HPP__
+#endif // UTILS__POOL_HPP__
