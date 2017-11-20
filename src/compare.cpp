@@ -356,7 +356,7 @@ refine(Node &node)
         return;
     }
 
-    if (node.line != 0 && node.col != 0 && node.state == State::Updated) {
+    if (node.leaf && node.state == State::Updated) {
         node.state = State::Unchanged;
         node.relative->state = State::Unchanged;
 

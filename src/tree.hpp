@@ -44,13 +44,14 @@ struct Node
     bool satellite : 1;
     bool moved : 1;
     bool last : 1;
+    bool leaf : 1;
 
     Node(allocator_type al = {})
         : children(al),
           type(Type::Virtual),
           stype(),
           state(State::Unchanged),
-          satellite(false), moved(false), last(false)
+          satellite(false), moved(false), last(false), leaf(false)
     {
     }
     Node(const Node &rhs) = delete;
@@ -71,7 +72,8 @@ struct Node
           state(rhs.state),
           satellite(rhs.satellite),
           moved(rhs.moved),
-          last(rhs.last)
+          last(rhs.last),
+          leaf(rhs.leaf)
     {
     }
     Node & operator=(const Node &rhs) = delete;
