@@ -5,7 +5,7 @@
 
 #include <algorithm>
 
-#include "c11-parser.hpp"
+#include "c/c11-parser.hpp"
 
 std::size_t
 LexerData::readInput(char buf[], std::size_t maxSize)

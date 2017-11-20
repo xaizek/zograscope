@@ -9,12 +9,12 @@
 #include <boost/optional.hpp>
 #include "pmr/monolithic.hpp"
 
+#include "c/parser.hpp"
 #include "utils/optional.hpp"
 #include "CommonArgs.hpp"
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
-#include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
 

@@ -10,9 +10,9 @@
 #include <locale>
 #include <string>
 
-#include "LexerData.hpp"
+#include "c/LexerData.hpp"
+#include "c/c11-parser.hpp"
 #include "TreeBuilder.hpp"
-#include "c11-parser.hpp"
 #include "stypes.hpp"
 
 #define YY_INPUT(buf, result, maxSize) \

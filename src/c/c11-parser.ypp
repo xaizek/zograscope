@@ -1,16 +1,16 @@
 %{
 
-#include "c11-parser.hpp"
-#include "parser.hpp"
+#include "c/c11-parser.hpp"
+#include "c/parser.hpp"
 
 #include <cstdio>
 
 #include <iostream>
 #include <string>
 
-#include "LexerData.hpp"
+#include "c/LexerData.hpp"
+#include "c/c11-lexer.hpp"
 #include "TreeBuilder.hpp"
-#include "c11-lexer.hpp"
 #include "stypes.hpp"
 
 struct ParseData
