@@ -1,5 +1,6 @@
 #include <boost/optional.hpp>
-#include <boost/program_options.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -17,8 +18,6 @@
 #include "compare.hpp"
 #include "tree.hpp"
 
-namespace po = boost::program_options;
-
 struct Args : CommonArgs
 {
     bool noRefine;
@@ -27,34 +26,6 @@ struct Args : CommonArgs
 
 static Args parseLocArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
-
-// TODO: try marking tokens with types and accounting for them on rename
-// TODO: try using string edit distance on rename
-// TODO: try using token streams to find edit distance
-// TODO: try using token streams to construct common diff
-
-// TODO: try changing tree structure to get better results (join block node with { and } nodes)
-//       e.g. by not feeding terminal nodes of non-terminal nodes that have
-//       non-terminal children to the differ and later propagating state of
-//       parent nodes to such children
-static void
-markSatellites(Node &node)
-{
-    auto nonTerminal = [](const Node *node) {
-        return node->line == 0 || node->col == 0 || !node->children.empty();
-    };
-    auto terminal = [&nonTerminal](const Node *node) {
-        return !nonTerminal(node);
-    };
-
-    if (std::any_of(node.children.cbegin(), node.children.cend(), nonTerminal)
-        || std::all_of(node.children.cbegin(), node.children.cend(), terminal)) {
-        for (Node *child : node.children) {
-            child->satellite = !nonTerminal(child);
-            markSatellites(*child);
-        }
-    }
-}
 
 int
 main(int argc, char *argv[])
@@ -97,6 +68,8 @@ main(int argc, char *argv[])
 static Args
 parseLocArgs(const std::vector<std::string> &argv)
 {
+    namespace po = boost::program_options;
+
     po::options_description options;
     options.add_options()
         ("no-refine", "do not refine coarse results");
@@ -135,9 +108,6 @@ run(const Args &args, TimeReport &tr)
         return EXIT_SUCCESS;
     }
 
-    // markSatellites(*treeA.getRoot());
-    // markSatellites(*treeB.getRoot());
-
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
     compare(T1, T2, tr, !args.fine, args.noRefine);
 
@@ -151,9 +121,6 @@ run(const Args &args, TimeReport &tr)
         printer.addHeader({ oldFile, newFile });
     }
     printer.print(tr);
-
-    // printTree("T1", *T1);
-    // printTree("T2", *T2);
 
     return EXIT_SUCCESS;
 }
