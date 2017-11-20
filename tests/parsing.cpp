@@ -3,8 +3,8 @@
 
 #include "Catch/catch.hpp"
 
+#include "utils/time.hpp"
 #include "compare.hpp"
-#include "time.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"

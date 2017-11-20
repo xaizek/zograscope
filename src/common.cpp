@@ -11,11 +11,11 @@
 
 #include "c/parser.hpp"
 #include "utils/optional.hpp"
+#include "utils/time.hpp"
 #include "CommonArgs.hpp"
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
-#include "time.hpp"
 #include "tree.hpp"
 
 static std::string readFile(const std::string &path);

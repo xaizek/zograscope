@@ -7,9 +7,9 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "utils/strings.hpp"
+#include "utils/time.hpp"
 #include "Printer.hpp"
 #include "compare.hpp"
-#include "time.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"

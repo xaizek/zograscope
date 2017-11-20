@@ -4,8 +4,8 @@
 #include <string>
 
 #include "utils/optional.hpp"
+#include "utils/time.hpp"
 #include "integration.hpp"
-#include "time.hpp"
 
 class CommonArgs;
 class Tree;

@@ -11,9 +11,9 @@
 #include "dtl/dtl.hpp"
 
 #include "utils/strings.hpp"
+#include "utils/time.hpp"
 #include "Highlighter.hpp"
 #include "decoration.hpp"
-#include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 

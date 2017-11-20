@@ -1,5 +1,5 @@
-#ifndef TIME_HPP__
-#define TIME_HPP__
+#ifndef UTILS__TIME_HPP__
+#define UTILS__TIME_HPP__
 
 #include <chrono>
 #include <ostream>
@@ -131,4 +131,4 @@ private:
     Measure *current {&root};
 };
 
-#endif // TIME_HPP__
+#endif // UTILS__TIME_HPP__
