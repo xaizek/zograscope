@@ -2,9 +2,7 @@
 #include <boost/program_options.hpp>
 
 #include <algorithm>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -15,12 +13,8 @@
 #include "CommonArgs.hpp"
 #include "Highlighter.hpp"
 #include "Printer.hpp"
-#include "STree.hpp"
-#include "TreeBuilder.hpp"
 #include "common.hpp"
 #include "compare.hpp"
-#include "parser.hpp"
-#include "time.hpp"
 #include "tree.hpp"
 
 namespace po = boost::program_options;
@@ -34,9 +28,6 @@ struct Args : CommonArgs
 
 static Args parseLocArgs(const std::vector<std::string> &argv);
 static int run(const Args &args, TimeReport &tr);
-static optional_t<Tree> buildTreeFromFile(const std::string &path,
-                                          const Args &args, TimeReport &tr,
-                                          cpp17::pmr::memory_resource *mr);
 
 // TODO: try marking tokens with types and accounting for them on rename
 // TODO: try using string edit distance on rename
@@ -64,19 +55,6 @@ markSatellites(Node &node)
             markSatellites(*child);
         }
     }
-}
-
-std::string
-readFile(const std::string &path)
-{
-    std::ifstream ifile(path);
-    if (!ifile) {
-        throw std::runtime_error("Can't open file: " + path);
-    }
-
-    std::ostringstream iss;
-    iss << ifile.rdbuf();
-    return iss.str();
 }
 
 int
@@ -141,21 +119,6 @@ run(const Args &args, TimeReport &tr)
 {
     cpp17::pmr::monolithic mr;
     Tree treeA(&mr), treeB(&mr);
-    auto dumpTrees = [&args, &treeA, &treeB]() {
-        if (!args.dumpTree) {
-            return;
-        }
-
-        if (Node *root = treeA.getRoot()) {
-            std::cout << "Old tree:\n";
-            print(*root);
-        }
-
-        if (Node *root = treeB.getRoot()) {
-            std::cout << "New tree:\n";
-            print(*root);
-        }
-    };
 
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
     if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr, &mr)) {
@@ -165,7 +128,7 @@ run(const Args &args, TimeReport &tr)
     }
 
     if (args.highlightMode) {
-        dumpTrees();
+        dumpTrees(args, treeA, treeB);
         if (!args.dryRun) {
             std::cout << Highlighter().print(*treeA.getRoot()) << '\n';
         }
@@ -180,7 +143,7 @@ run(const Args &args, TimeReport &tr)
     }
 
     if (args.dryRun) {
-        dumpTrees();
+        dumpTrees(args, treeA, treeB);
         return EXIT_SUCCESS;
     }
 
@@ -190,7 +153,7 @@ run(const Args &args, TimeReport &tr)
     Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
     compare(T1, T2, tr, !args.fine, args.noRefine);
 
-    dumpTrees();
+    dumpTrees(args, treeA, treeB);
 
     Printer printer(*T1, *T2, std::cout);
     if (args.gitDiff) {
@@ -205,42 +168,4 @@ run(const Args &args, TimeReport &tr)
     // printTree("T2", *T2);
 
     return EXIT_SUCCESS;
-}
-
-/**
- * @brief Reads and parses a file to build its tree.
- *
- * @param path  Path to the file to read.
- * @param args  Arguments of the application.
- * @param tr    Time keeper.
- * @param mr    Allocator.
- *
- * @returns Tree on success or empty optional on error.
- */
-static optional_t<Tree>
-buildTreeFromFile(const std::string &path, const Args &args, TimeReport &tr,
-                  cpp17::pmr::memory_resource *mr)
-{
-    auto timer = tr.measure("parsing: " + path);
-
-    const std::string contents = readFile(path);
-
-    cpp17::pmr::monolithic localMR;
-
-    TreeBuilder tb = parse(contents, path, args.debug, localMR);
-    if (tb.hasFailed()) {
-        return {};
-    }
-
-    Tree t(mr);
-
-    if (args.fine) {
-        t = Tree(contents, tb.getRoot(), mr);
-    } else {
-        STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
-                    localMR);
-        t = Tree(contents, stree.getRoot(), mr);
-    }
-
-    return optional_t<Tree>(std::move(t));
 }
