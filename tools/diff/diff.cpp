@@ -118,6 +118,24 @@ main(int argc, char *argv[])
     return result;
 }
 
+static Args
+parseLocArgs(const std::vector<std::string> &argv)
+{
+    po::options_description options;
+    options.add_options()
+        ("no-refine",   "do not refine coarse results");
+
+    Args args;
+    boost::program_options::variables_map varMap = parseArgs(args, argv,
+                                                             options);
+
+    args.highlightMode = (args.pos.size() == 1U);
+    args.noRefine = varMap.count("no-refine");
+    args.gitDiff = (args.pos.size() == 7U);
+
+    return args;
+}
+
 static int
 run(const Args &args, TimeReport &tr)
 {
@@ -187,24 +205,6 @@ run(const Args &args, TimeReport &tr)
     // printTree("T2", *T2);
 
     return EXIT_SUCCESS;
-}
-
-static Args
-parseLocArgs(const std::vector<std::string> &argv)
-{
-    po::options_description options;
-    options.add_options()
-        ("no-refine",   "do not refine coarse results");
-
-    Args args;
-    boost::program_options::variables_map varMap = parseArgs(args, argv,
-                                                             options);
-
-    args.highlightMode = (args.pos.size() == 1U);
-    args.noRefine = varMap.count("no-refine");
-    args.gitDiff = (args.pos.size() == 7U);
-
-    return args;
 }
 
 /**
