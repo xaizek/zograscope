@@ -22,7 +22,6 @@
 #include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
-#include "types.hpp"
 
 namespace po = boost::program_options;
 
