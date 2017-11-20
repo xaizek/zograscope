@@ -8,11 +8,11 @@
 #include <boost/utility/string_ref.hpp>
 #include "dtl/dtl.hpp"
 
+#include "utils/strings.hpp"
 #include "ColorScheme.hpp"
 #include "decoration.hpp"
 #include "stypes.hpp"
 #include "tree.hpp"
-#include "utils.hpp"
 
 static void markTreeWithState(Node *node, State state);
 static const decor::Decoration & getHighlight(const Node &node);

@@ -9,11 +9,11 @@
 #include <boost/optional.hpp>
 #include <dtl/dtl.hpp>
 
+#include "utils/strings.hpp"
 #include "change-distilling.hpp"
 #include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
-#include "utils.hpp"
 
 static void compareChanged(Node *node, TimeReport &tr, bool coarse,
                            bool skipRefine);

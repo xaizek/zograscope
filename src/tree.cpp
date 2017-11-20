@@ -10,13 +10,13 @@
 #include <string>
 #include <vector>
 
+#include "utils/strings.hpp"
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "decoration.hpp"
 #include "stypes.hpp"
 #include "trees.hpp"
 #include "types.hpp"
-#include "utils.hpp"
 
 static void printTree(const Node *node, std::vector<bool> &trace, int depth);
 static void printNode(std::ostream &os, const Node *node);

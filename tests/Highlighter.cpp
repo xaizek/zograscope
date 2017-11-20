@@ -2,9 +2,9 @@
 
 #include <string>
 
+#include "utils/strings.hpp"
 #include "Highlighter.hpp"
 #include "tree.hpp"
-#include "utils.hpp"
 
 #include "tests.hpp"
 

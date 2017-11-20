@@ -1,5 +1,5 @@
-#ifndef UTILS_HPP__
-#define UTILS_HPP__
+#ifndef UTILS__STRINGS__HPP__
+#define UTILS__STRINGS__HPP__
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -59,4 +59,4 @@ split(boost::string_ref str, char with)
     return { results.cbegin(), results.cend() };
 }
 
-#endif // UTILS_HPP__
+#endif // UTILS__STRINGS__HPP__

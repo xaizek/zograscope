@@ -12,6 +12,7 @@
 #include <boost/utility/string_ref.hpp>
 #include "pmr/monolithic.hpp"
 
+#include "utils/strings.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
 #include "compare.hpp"
@@ -19,7 +20,6 @@
 #include "parser.hpp"
 #include "time.hpp"
 #include "tree.hpp"
-#include "utils.hpp"
 
 enum class Changes
 {

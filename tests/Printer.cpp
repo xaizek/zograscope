@@ -6,11 +6,11 @@
 
 #include <boost/algorithm/string/trim.hpp>
 
+#include "utils/strings.hpp"
 #include "Printer.hpp"
 #include "compare.hpp"
 #include "time.hpp"
 #include "tree.hpp"
-#include "utils.hpp"
 
 #include "tests.hpp"
 

@@ -10,12 +10,12 @@
 #include <boost/utility/string_ref.hpp>
 #include "dtl/dtl.hpp"
 
+#include "utils/strings.hpp"
 #include "Highlighter.hpp"
 #include "decoration.hpp"
 #include "time.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
-#include "utils.hpp"
 
 enum class Diff
 {
