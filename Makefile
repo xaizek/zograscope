@@ -205,4 +205,4 @@ clean:
 	       $(lib_autocpp) $(lib_autohpp) \
 	       $(lib) $(tools_bins) $(out_dir)/tests/tests
 
-include $(wildcard $(tools_depends) $(tests_depends))
+include $(wildcard $(lib_depends) $(tools_depends) $(tests_depends))
