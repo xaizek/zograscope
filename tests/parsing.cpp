@@ -506,34 +506,34 @@ TEST_CASE("Assignments aren't equal to each other", "[comparison][parsing]")
 {
     diffSources(R"(
         void f() {
-            var1
-            =        /// Updates
-            1; var2
-            /=       /// Updates
-            2; var3
-            %=       /// Updates
-            3; var4
-            <<=      /// Updates
-            4; var5
-            &=       /// Updates
-            5; var6
-            |=       /// Updates
+            vvar1
+            =         /// Updates
+            1; vvar2
+            /=        /// Updates
+            2; vvar3
+            %=        /// Updates
+            3; vvar4
+            <<=       /// Updates
+            4; vvar5
+            &=        /// Updates
+            5; vvar6
+            |=        /// Updates
             6;
         }
     )", R"(
         void f() {
-            var1
-            +=       /// Updates
-            1; var2
-            *=       /// Updates
-            2; var3
-            -=       /// Updates
-            3; var4
-            >>=      /// Updates
-            4; var5
-            |=       /// Updates
-            5; var6
-            ^=       /// Updates
+            vvar1
+            +=        /// Updates
+            1; vvar2
+            *=        /// Updates
+            2; vvar3
+            -=        /// Updates
+            3; vvar4
+            >>=       /// Updates
+            4; vvar5
+            |=        /// Updates
+            5; vvar6
+            ^=        /// Updates
             6;
         }
     )", true);

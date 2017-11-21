@@ -196,6 +196,7 @@ isLayerBreak(SType stype)
         case SType::IfCond:
         case SType::WhileCond:
         case SType::CallExpr:
+        case SType::AssignmentExpr:
         case SType::ExprStatement:
         case SType::AnyExpression:
         case SType::ReturnValueStmt:

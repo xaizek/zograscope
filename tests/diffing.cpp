@@ -1489,4 +1489,16 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
             }
         }
     )", true);
+
+    diffSources(R"(
+        void f() {
+            list.ntrashes =                                   /// Deletions
+                add_to_string_array(&list.trashes,            /// Deletions
+                                    list.ntrashes, 1, spec);  /// Deletions
+        }
+    )", R"(
+        void f() {
+            add_trash_to_list(&list, spec);                   /// Additions
+        }
+    )", true);
 }
