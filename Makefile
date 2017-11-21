@@ -79,9 +79,9 @@ lib := $(out_dir)/lib$(NAME).a
 lib_sources := $(call rwildcard, src/, *.cpp) \
                $(call rwildcard, third-party/, *.cpp)
 lib_sources := $(filter-out %.gen.cpp,$(lib_sources))
-lib_autocpp := $(addprefix $(out_dir)/src/, \
+lib_autocpp := $(addprefix $(out_dir)/src/c/, \
                            c11-lexer.gen.cpp c11-parser.gen.cpp)
-lib_autohpp := $(addprefix $(out_dir)/src/, c11-lexer.hpp c11-parser.hpp)
+lib_autohpp := $(addprefix $(out_dir)/src/c/, c11-lexer.hpp c11-parser.hpp)
 lib_objects := $(sort $(lib_sources:%.cpp=$(out_dir)/%.o) \
                       $(lib_autocpp:%.cpp=%.o))
 lib_objects := $(filter-out %/main.o,$(lib_objects))
@@ -170,17 +170,17 @@ uninstall:
 	      $(DESTDIR)/usr/share/man/man1/$(NAME).1
 	$(RM) -r $(DESTDIR)/usr/share/$(NAME)/
 
-$(out_dir)/src/c11-lexer.hpp: $(out_dir)/src/c11-lexer.gen.cpp
-$(out_dir)/src/c11-lexer.gen.cpp: src/c11-lexer.flex \
-                                | $(out_dir)/src/c11-parser.gen.cpp \
-                                  $(out_dir)/src/c11-parser.hpp
-	flex --header-file=$(out_dir)/src/c11-lexer.hpp \
-	     --outfile=$(out_dir)/src/c11-lexer.gen.cpp $<
+$(out_dir)/src/c/c11-lexer.hpp: $(out_dir)/src/c/c11-lexer.gen.cpp
+$(out_dir)/src/c/c11-lexer.gen.cpp: src/c/c11-lexer.flex \
+                                | $(out_dir)/src/c/c11-parser.gen.cpp \
+                                  $(out_dir)/src/c/c11-parser.hpp
+	flex --header-file=$(out_dir)/src/c/c11-lexer.hpp \
+	     --outfile=$(out_dir)/src/c/c11-lexer.gen.cpp $<
 
-$(out_dir)/src/c11-parser.hpp: $(out_dir)/src/c11-parser.gen.cpp
-$(out_dir)/src/c11-parser.gen.cpp: src/c11-parser.ypp
-	bison --defines=$(out_dir)/src/c11-parser.hpp \
-	      --output=$(out_dir)/src/c11-parser.gen.cpp $<
+$(out_dir)/src/c/c11-parser.hpp: $(out_dir)/src/c/c11-parser.gen.cpp
+$(out_dir)/src/c/c11-parser.gen.cpp: src/c/c11-parser.ypp
+	bison --defines=$(out_dir)/src/c/c11-parser.hpp \
+	      --output=$(out_dir)/src/c/c11-parser.gen.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet
 $(lib_objects): | $(lib_autohpp)

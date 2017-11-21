@@ -4,10 +4,10 @@
 
 #include <vector>
 
+#include "utils/strings.hpp"
 #include "stypes.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
-#include "utils.hpp"
 
 static float childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
                                 const Node *y, const std::vector<Node *> &po2);

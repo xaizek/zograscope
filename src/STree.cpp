@@ -5,10 +5,10 @@
 #include <utility>
 #include <vector>
 
-#include "Pool.hpp"
+#include "utils/Pool.hpp"
+#include "utils/trees.hpp"
 #include "decoration.hpp"
 #include "stypes.hpp"
-#include "trees.hpp"
 
 static void print(const PNode *node, const std::string &contents);
 static PNode * findSNode(PNode *node);

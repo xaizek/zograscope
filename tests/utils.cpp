@@ -1,6 +1,6 @@
 #include "Catch/catch.hpp"
 
-#include "utils.hpp"
+#include "utils/strings.hpp"
 
 TEST_CASE("Different strings are recognized as different", "[utils][dice]")
 {
