@@ -84,7 +84,6 @@ lib_autocpp := $(addprefix $(out_dir)/src/c/, \
 lib_autohpp := $(addprefix $(out_dir)/src/c/, c11-lexer.hpp c11-parser.hpp)
 lib_objects := $(sort $(lib_sources:%.cpp=$(out_dir)/%.o) \
                       $(lib_autocpp:%.cpp=%.o))
-lib_objects := $(filter-out %/main.o,$(lib_objects))
 lib_depends := $(lib_objects:.o=.d)
 
 tests_sources := $(call rwildcard, tests/, *.cpp)
