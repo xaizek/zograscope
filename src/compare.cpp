@@ -113,7 +113,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
 
     // Flatten unmatched trees into parent tree of their roots before doing
     // common distilling.
-    while (++flattenLevel < 3) {
+    while (++flattenLevel < 4) {
         if (flatten(T1, flattenLevel) | flatten(T2, flattenLevel)) {
             break;
         }

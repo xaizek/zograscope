@@ -197,6 +197,7 @@ isLayerBreak(SType stype)
         case SType::WhileCond:
         case SType::CallExpr:
         case SType::ExprStatement:
+        case SType::AnyExpression:
         case SType::ReturnValueStmt:
         case SType::Parameter:
         case SType::ForHead:
@@ -501,6 +502,9 @@ canBeFlattened(const Node *, const Node *child, int level)
 
         case 1:
             return (child->stype == SType::ExprStatement);
+
+        case 2:
+            return (child->stype == SType::AnyExpression);
 
         default:
             return child->stype != SType::Declaration

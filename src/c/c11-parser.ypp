@@ -1403,7 +1403,8 @@ expression_statement
     : ';'
     { $$ = tb->addNode($1, @1, SType::ExprStatement); }
     | expression ';'
-    { $$ = tb->addNode({ $1, tb->addNode($2, @2, SType::Separator) },
+    { $$ = tb->addNode({ tb->addNode($1, @2, SType::AnyExpression),
+                         tb->addNode($2, @2, SType::Separator) },
                        SType::ExprStatement); }
     ;
 
@@ -1415,7 +1416,7 @@ selection_statement
     : IF '(' expression ')' ext_statement %prec "then"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::IfCond),
+                         tb->addNode(tb->addNode($3, @3, SType::AnyExpression), @3, SType::IfCond),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5, SType::IfThen) },
                        SType::IfStmt); }
@@ -1425,7 +1426,7 @@ selection_statement
                                 SType::IfElse);
       $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::IfCond),
+                         tb->addNode(tb->addNode($3, @3, SType::AnyExpression), @3, SType::IfCond),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5, SType::IfThen),
                          ifElse },
@@ -1479,7 +1480,7 @@ iteration_statement
                                    tb->addNode($4, @4, SType::Separator),
                                    $5,
                                    tb->addNode($6, @6, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($7, @7, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, SType::ForStmt); }
@@ -1488,7 +1489,7 @@ iteration_statement
                                    tb->addNode($2, @2, SType::Separator),
                                    $3,
                                    tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($5, @5, SType::Separator),
                                    $6,
                                    tb->addNode($7, @7, SType::Separator) },
@@ -1497,7 +1498,7 @@ iteration_statement
     | FOR '(' ';' expression ';' expression ')' ext_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($3, @3, SType::Separator),
                                    $4,
                                    tb->addNode($5, @5, SType::Separator),
@@ -1508,9 +1509,9 @@ iteration_statement
     | FOR '(' ';' ';' expression ')' ext_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($3, @3, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($4, @4, SType::Separator),
                                    $5,
                                    tb->addNode($6, @6, SType::Separator) },
@@ -1521,31 +1522,31 @@ iteration_statement
                                    tb->addNode($2, @2, SType::Separator),
                                    $3,
                                    tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($5, @5, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($6, @6, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
     | FOR '(' ';' expression ';' ')' ext_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($3, @3, SType::Separator),
                                    $4,
                                    tb->addNode($5, @5, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($6, @6, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
     | FOR '(' ';' ';' ')' ext_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($3, @3, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($5, @5, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, SType::ForStmt); }
@@ -1565,7 +1566,7 @@ iteration_statement
                                    $3,
                                    $4,
                                    tb->addNode($5, @5, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($6, @6, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
@@ -1573,7 +1574,7 @@ iteration_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
                                    $3,
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($4, @4, SType::Separator),
                                    $5,
                                    tb->addNode($6, @6, SType::Separator) },
@@ -1583,9 +1584,9 @@ iteration_statement
     { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                                    tb->addNode($2, @2, SType::Separator),
                                    $3,
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::ExprStatement),
+                                   tb->addNode({ }, SType::AnyExpression),
                                    tb->addNode($5, @5, SType::Separator) },
                                  SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, SType::ForStmt); }

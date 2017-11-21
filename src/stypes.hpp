@@ -32,6 +32,7 @@ enum class SType : std::uint8_t
     LabelStmt,
     ForHead,
     Expression,
+    AnyExpression,
     Declarator,
     Initializer,
     InitializerList,

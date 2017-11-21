@@ -1456,3 +1456,37 @@ TEST_CASE("Simple expressions are matched consistently", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            while(new_jobs != NULL) {
+                bg_job_t *const new_job = new_jobs;
+            }
+
+            while(*job != NULL) {
+                bg_job_t *const j = *job;
+
+                if(!j->running) {                          /// Deletions
+                    *job = j->err_next;                    /// Deletions
+                    pthread_spin_unlock(&j->status_lock);  /// Deletions
+                    continue;                              /// Deletions
+                }                                          /// Deletions
+            }
+        }
+    )", R"(
+        void f() {
+            while(*job != NULL) {                          /// Additions
+            }                                              /// Additions
+
+            while(new_jobs != NULL) {
+                bg_job_t *const new_job = new_jobs;
+            }
+
+            while(*job != NULL) {
+                bg_job_t *const j = *job;
+            }
+        }
+    )", true);
+}
