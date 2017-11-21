@@ -1433,3 +1433,26 @@ TEST_CASE("Statements are matched by common bodies", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Simple expressions are matched consistently", "[comparison]")
+{
+    diffSources(R"(
+        void f() {
+            !
+             to_tree      /// Updates
+             ;
+            if (!
+                 to_tree  /// Updates
+                 );
+        }
+    )", R"(
+        void f() {
+            !
+             as_tree      /// Updates
+             ;
+            if (!
+                 as_tree  /// Updates
+                 );
+        }
+    )", true);
+}
