@@ -1,4 +1,4 @@
-NAME := jposed
+NAME := zograscope
 
 CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -Isrc/ -Ithird-party/
 CXXFLAGS += -DYYDEBUG
