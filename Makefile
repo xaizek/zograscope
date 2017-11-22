@@ -94,7 +94,7 @@ tests_objects += $(lib)
 # tool definition template, takes single argument: name of the tool
 define tool_template
 
-$1.bin := $(out_dir)/$1$(bin_suffix)
+$1.bin := $(out_dir)/zs-$1$(bin_suffix)
 $1.sources := $$(call rwildcard, tools/$1/, *.cpp)
 $1.objects := $$(sort $$($1.sources:%.cpp=$$(out_dir)/%.o))
 $1.depends := $$($1.objects:.o=.d)
