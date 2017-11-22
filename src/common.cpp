@@ -7,31 +7,96 @@
 #include <string>
 
 #include <boost/optional.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/positional_options.hpp>
+#include <boost/program_options/variables_map.hpp>
 #include "pmr/monolithic.hpp"
 
 #include "c/parser.hpp"
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
-#include "CommonArgs.hpp"
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
 
+namespace po = boost::program_options;
+
+static po::variables_map parseOptions(const std::vector<std::string> &args,
+                                      po::options_description options);
 static std::string readFile(const std::string &path);
 
 void
-Environment::setup()
+Environment::setup(const std::vector<std::string> &argv)
 {
-    if (args->color) {
+    if (args.color) {
         decor::enableDecorations();
     }
+
+    varMap = parseOptions(argv, extraOpts);
+
+    args.pos = varMap["positional"].as<std::vector<std::string>>();
+    args.debug = varMap.count("debug");
+    args.sdebug = varMap.count("sdebug");
+    args.dumpSTree = varMap.count("dump-stree");
+    args.dumpTree = varMap.count("dump-tree");
+    args.dryRun = varMap.count("dry-run");
+    args.color = varMap.count("color");
+    args.fine = varMap.count("fine-only");
+    args.timeReport = varMap.count("time-report");
+}
+
+// Parses command line-options.
+//
+// Positional arguments are returned in "positional" entry, which exists even
+// when there is no positional arguments.
+static po::variables_map
+parseOptions(const std::vector<std::string> &args,
+             po::options_description options)
+{
+    po::options_description hiddenOpts;
+    hiddenOpts.add_options()
+        ("positional", po::value<std::vector<std::string>>()
+                       ->default_value({}, ""),
+         "positional args");
+
+    po::positional_options_description positionalOptions;
+    positionalOptions.add("positional", -1);
+
+    options.add_options()
+        ("dry-run",     "just parse")
+        ("debug",       "enable debugging of grammar")
+        ("sdebug",      "enable debugging of strees")
+        ("dump-stree",  "display stree(s)")
+        ("dump-tree",   "display tree(s)")
+        ("fine-only",   "use only fine-grained tree")
+        ("time-report", "report time spent on different activities")
+        ("color",       "force colorization of output");
+
+    po::options_description allOptions;
+    allOptions.add(options).add(hiddenOpts);
+
+    auto parsed_from_cmdline =
+        po::command_line_parser(args)
+        .options(allOptions)
+        .positional(positionalOptions)
+        .run();
+
+    po::variables_map varMap;
+    po::store(parsed_from_cmdline, varMap);
+    return varMap;
 }
 
 void
-Environment::teardown()
+Environment::teardown(bool error)
 {
-    if (args->timeReport) {
+    if (error) {
+        redirectToPager.discharge();
+        return;
+    }
+
+    if (args.timeReport) {
         tr.stop();
         std::cout << tr;
     }

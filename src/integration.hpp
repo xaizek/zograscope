@@ -28,13 +28,19 @@ public:
 
     //! No copy-constructor.
     RedirectToPager(const RedirectToPager &rhs) = delete;
-    //! No copy-move.
+    //! No copy-assignment.
     RedirectToPager & operator=(const RedirectToPager &rhs) = delete;
 
     /**
      * @brief Restores previous state of @c std::cout.
      */
     ~RedirectToPager();
+
+public:
+    /**
+     * @brief Restores previous state of @c std::cout discharging destructor.
+     */
+    void discharge();
 
 private:
     //! Implementation details.

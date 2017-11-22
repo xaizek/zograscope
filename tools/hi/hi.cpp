@@ -7,7 +7,6 @@
 #include "pmr/monolithic.hpp"
 
 #include "utils/optional.hpp"
-#include "CommonArgs.hpp"
 #include "Highlighter.hpp"
 #include "common.hpp"
 #include "tree.hpp"
@@ -21,14 +20,16 @@ main(int argc, char *argv[])
     int result;
 
     try {
-        parseArgs(args, { argv + 1, argv + argc });
+        Environment env;
+        env.setup({ argv + 1, argv + argc });
+
+        args = env.getCommonArgs();
         if (args.pos.size() != 1U) {
-            std::cerr << "Wrong arguments\n";
+            env.teardown(true);
+            std::cerr << "Wrong positional arguments\n"
+                      << "Expected exactly one\n";
             return EXIT_FAILURE;
         }
-
-        Environment env(args);
-        env.setup();
 
         result = run(args, env.getTimeKeeper());
 

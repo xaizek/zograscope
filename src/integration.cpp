@@ -239,6 +239,12 @@ RedirectToPager::~RedirectToPager()
     // Destroy impl with complete type.
 }
 
+void
+RedirectToPager::discharge()
+{
+    impl.reset();
+}
+
 bool
 isOutputToTerminal()
 {
