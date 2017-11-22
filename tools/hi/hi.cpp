@@ -24,6 +24,10 @@ main(int argc, char *argv[])
         env.setup({ argv + 1, argv + argc });
 
         args = env.getCommonArgs();
+        if (args.help) {
+            env.printOptions();
+            return EXIT_SUCCESS;
+        }
         if (args.pos.size() != 1U) {
             env.teardown(true);
             std::cerr << "Wrong positional arguments\n"

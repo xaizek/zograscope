@@ -24,7 +24,7 @@
 namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args,
-                                      po::options_description options);
+                                      po::options_description &options);
 static std::string readFile(const std::string &path);
 
 void
@@ -34,9 +34,10 @@ Environment::setup(const std::vector<std::string> &argv)
         decor::enableDecorations();
     }
 
-    varMap = parseOptions(argv, extraOpts);
+    varMap = parseOptions(argv, options);
 
     args.pos = varMap["positional"].as<std::vector<std::string>>();
+    args.help = varMap.count("help");
     args.debug = varMap.count("debug");
     args.sdebug = varMap.count("sdebug");
     args.dumpSTree = varMap.count("dump-stree");
@@ -53,7 +54,7 @@ Environment::setup(const std::vector<std::string> &argv)
 // when there is no positional arguments.
 static po::variables_map
 parseOptions(const std::vector<std::string> &args,
-             po::options_description options)
+             po::options_description &options)
 {
     po::options_description hiddenOpts;
     hiddenOpts.add_options()
@@ -65,13 +66,14 @@ parseOptions(const std::vector<std::string> &args,
     positionalOptions.add("positional", -1);
 
     options.add_options()
+        ("help,h",      "print help message")
         ("dry-run",     "just parse")
         ("debug",       "enable debugging of grammar")
         ("sdebug",      "enable debugging of strees")
         ("dump-stree",  "display stree(s)")
         ("dump-tree",   "display tree(s)")
-        ("fine-only",   "use only fine-grained tree")
         ("time-report", "report time spent on different activities")
+        ("fine-only",   "use only fine-grained tree")
         ("color",       "force colorization of output");
 
     po::options_description allOptions;
@@ -100,6 +102,12 @@ Environment::teardown(bool error)
         tr.stop();
         std::cout << tr;
     }
+}
+
+void
+Environment::printOptions()
+{
+    std::cout << options;
 }
 
 optional_t<Tree>

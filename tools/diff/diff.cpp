@@ -38,6 +38,10 @@ main(int argc, char *argv[])
         env.setup({ argv + 1, argv + argc });
 
         args = parseLocalArgs(env);
+        if (args.help) {
+            env.printOptions();
+            return EXIT_SUCCESS;
+        }
         if (args.pos.size() != 2U && args.pos.size() != 7U) {
             env.teardown(true);
             std::cerr << "Wrong positional arguments\n"

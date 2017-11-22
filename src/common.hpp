@@ -23,6 +23,7 @@ namespace cpp17 {
 struct CommonArgs
 {
     std::vector<std::string> pos; // Positional arguments.
+    bool help;                    // Print help message.
     bool debug;                   // Whether grammar debugging is enabled.
     bool sdebug;                  // Whether stree debugging is enabled.
     bool dumpSTree;               // Whether to dump strees.
@@ -40,7 +41,7 @@ class Environment
 
 public:
     explicit Environment(const options_description &extraOpts = {})
-        : extraOpts(extraOpts)
+        : options(extraOpts)
     {
     }
 
@@ -48,6 +49,8 @@ public:
     void setup(const std::vector<std::string> &argv);
 
     void teardown(bool error = false);
+
+    void printOptions();
 
     TimeReport & getTimeKeeper()
     {
@@ -65,7 +68,7 @@ public:
     }
 
 private:
-    options_description extraOpts;
+    options_description options;
     variables_map varMap;
     CommonArgs args;
 
