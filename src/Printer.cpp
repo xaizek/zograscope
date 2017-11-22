@@ -355,6 +355,7 @@ makeDiff(DiffSource &&l, DiffSource &&r)
     const std::vector<DiceString> &rt = r.lines;
 
     auto cmp = [](DiceString &a, DiceString &b) {
+        // XXX: hard-coded threshold.
         return (a.compare(b) >= 0.8f);
     };
 
@@ -423,6 +424,8 @@ makeDiff(DiffSource &&l, DiffSource &&r)
 static unsigned int
 measureWidth(boost::string_ref s)
 {
+    // XXX: we actually print lines without formatting and should be able to
+    //      avoid using this function.
     unsigned int valWidth = 0U;
     while (!s.empty()) {
         if (s.front() != '\033') {

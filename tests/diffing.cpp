@@ -1501,4 +1501,61 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
             add_trash_to_list(&list, spec);                   /// Additions
         }
     )", true);
+
+    diffSources(R"(
+        void f() {
+            dcache_get_of(entry,
+                          size               /// Updates
+                          ,
+                          nitems             /// Updates
+                          );
+
+            if(                              /// Moves
+               *nitems                       /// Deletions
+               == DCACHE_UNKNOWN && !        /// Moves
+               view->on_slow_fs              /// Deletions
+               ) {                           /// Moves
+                *nitems                      /// Deletions
+                = entry_calc_nitems(entry);  /// Moves
+            }                                /// Moves
+        }
+    )", R"(
+        void f() {
+            const int is_slow_fs = view->on_slow_fs;  /// Additions
+
+            dcache_result_t size_res, nitems_res;     /// Additions
+            dcache_get_of(entry,
+                          &                           /// Additions
+                          size_res                    /// Updates
+                          ,
+                          &                           /// Additions
+                          nitems_res                  /// Updates
+                          );
+
+            assert((size != NULL || nitems != NULL) &&                      /// Additions
+                    "At least one of out parameters has to be non-NULL.");  /// Additions
+
+            if(size != NULL) {                                              /// Additions
+                *size = size_res.value;                                     /// Additions
+                if(size_res.value != DCACHE_UNKNOWN &&                      /// Additions
+                   !size_res.is_valid && !is_slow_fs) {                     /// Additions
+                    *size = recalc_entry_size(entry, size_res.value);       /// Additions
+                }                                                           /// Additions
+            }                                                               /// Additions
+
+            if(nitems != NULL) {                                            /// Additions
+                if(                                                         /// Moves
+                   nitems_res.value                                         /// Additions
+                   == DCACHE_UNKNOWN && !                                   /// Moves
+                   is_slow_fs                                               /// Additions
+                   ) {                                                      /// Moves
+                    nitems_res.value                                        /// Additions
+                        = entry_calc_nitems(entry);                         /// Moves
+                }                                                           /// Moves
+
+                *nitems = (nitems_res.value == DCACHE_UNKNOWN ?             /// Additions
+                           0 : nitems_res.value);                           /// Additions
+            }                                                               /// Additions
+        }
+    )", true);
 }

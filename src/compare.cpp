@@ -17,7 +17,8 @@
 
 static void compareChanged(Node *node, TimeReport &tr, bool coarse,
                            bool skipRefine);
-static bool flatten(Node *n, int level);
+static bool flatten(Node *x, Node *y, int level);
+static int flatten(Node *n, int level, bool dry);
 static void setParentLinks(Node *x, Node *parent);
 static void detectMoves(Node *x);
 static const Node * getParent(const Node *x);
@@ -105,16 +106,15 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
     }
 
     int flattenLevel = 0;
-    if (flatten(T1, flattenLevel) | flatten(T2, flattenLevel)) {
+    if (flatten(T1, T2, flattenLevel)) {
         ++flattenLevel;
-        flatten(T1, flattenLevel);
-        flatten(T2, flattenLevel);
+        flatten(T1, T2, flattenLevel);
     }
 
     // Flatten unmatched trees into parent tree of their roots before doing
     // common distilling.
     while (++flattenLevel < 4) {
-        if (flatten(T1, flattenLevel) | flatten(T2, flattenLevel)) {
+        if (flatten(T1, T2, flattenLevel)) {
             break;
         }
     }
@@ -148,9 +148,19 @@ compareChanged(Node *node, TimeReport &tr, bool coarse, bool skipRefine)
 }
 
 static bool
-flatten(Node *n, int level)
+flatten(Node *x, Node *y, int level)
 {
-    bool flattened = false;
+    const int wouldFlatten = flatten(x, level, true) + flatten(y, level, true);
+    if (wouldFlatten < 5) {
+        return (flatten(x, level, false) + flatten(y, level, false) > 0);
+    }
+    return true;
+}
+
+static int
+flatten(Node *n, int level, bool dry)
+{
+    int flattened = 0;
 
     for (Node *&c : n->children) {
         if (c->next != nullptr && c->next->last) {
@@ -158,7 +168,7 @@ flatten(Node *n, int level)
         }
 
         if (c->next == nullptr && !c->children.empty()) {
-            flattened |= flatten(c, level);
+            flattened += flatten(c, level, dry);
             continue;
         }
 
@@ -167,8 +177,10 @@ flatten(Node *n, int level)
         }
 
         if (c->next != nullptr && canBeFlattened(n, c, level)) {
-            c = c->next;
-            flattened = true;
+            if (!dry) {
+                c = c->next;
+            }
+            ++flattened;
         }
     }
 
