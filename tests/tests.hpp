@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef TESTS__TESTS_HPP__
-#define TESTS__TESTS_HPP__
+#ifndef ZOGRASCOPE_TESTS__TESTS_HPP__
+#define ZOGRASCOPE_TESTS__TESTS_HPP__
 
 #include <cstdint>
 
@@ -87,4 +87,4 @@ int countInternal(const Node &root, SType stype, State state);
 void diffSources(const std::string &left, const std::string &right,
                  bool skipRefine);
 
-#endif // TESTS__TESTS_HPP__
+#endif // ZOGRASCOPE_TESTS__TESTS_HPP__

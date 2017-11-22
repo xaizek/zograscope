@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef UTILS__TIME_HPP__
-#define UTILS__TIME_HPP__
+#ifndef ZOGRASCOPE__UTILS__TIME_HPP__
+#define ZOGRASCOPE__UTILS__TIME_HPP__
 
 #include <chrono>
 #include <ostream>
@@ -148,4 +148,4 @@ private:
     Measure *current {&root};
 };
 
-#endif // UTILS__TIME_HPP__
+#endif // ZOGRASCOPE__UTILS__TIME_HPP__

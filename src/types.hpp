@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef TYPES_HPP__
-#define TYPES_HPP__
+#ifndef ZOGRASCOPE__TYPES_HPP__
+#define ZOGRASCOPE__TYPES_HPP__
 
 #include <cstdint>
 
@@ -172,4 +172,4 @@ Type tokenToType(int token);
 
 Type canonizeType(Type type);
 
-#endif // TYPES_HPP__
+#endif // ZOGRASCOPE__TYPES_HPP__

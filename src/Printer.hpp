@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PRINTER_HPP__
-#define PRINTER_HPP__
+#ifndef ZOGRASCOPE__PRINTER_HPP__
+#define ZOGRASCOPE__PRINTER_HPP__
 
 #include <iosfwd>
 #include <string>
@@ -47,4 +47,4 @@ private:
     std::vector<Header> headers;
 };
 
-#endif // PRINTER_HPP__
+#endif // ZOGRASCOPE__PRINTER_HPP__

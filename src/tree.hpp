@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef TREE_HPP__
-#define TREE_HPP__
+#ifndef ZOGRASCOPE__TREE_HPP__
+#define ZOGRASCOPE__TREE_HPP__
 
 #include <cstdint>
 
@@ -184,4 +184,4 @@ bool canForceLeafMatch(const Node *x, const Node *y);
 
 void markTreeAsMoved(Node *node);
 
-#endif // TREE_HPP__
+#endif // ZOGRASCOPE__TREE_HPP__

@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef DECORATION_HPP__
-#define DECORATION_HPP__
+#ifndef ZOGRASCOPE__DECORATION_HPP__
+#define ZOGRASCOPE__DECORATION_HPP__
 
 #include <functional>
 #include <iosfwd>
@@ -583,4 +583,4 @@ namespace literals {
 
 }
 
-#endif // DECORATION_HPP__
+#endif // ZOGRASCOPE__DECORATION_HPP__

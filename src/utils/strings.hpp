@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef UTILS__STRINGS__HPP__
-#define UTILS__STRINGS__HPP__
+#ifndef ZOGRASCOPE__UTILS__STRINGS__HPP__
+#define ZOGRASCOPE__UTILS__STRINGS__HPP__
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -76,4 +76,4 @@ split(boost::string_ref str, char with)
     return { results.cbegin(), results.cend() };
 }
 
-#endif // UTILS__STRINGS__HPP__
+#endif // ZOGRASCOPE__UTILS__STRINGS__HPP__

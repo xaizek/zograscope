@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef STYPES_HPP__
-#define STYPES_HPP__
+#ifndef ZOGRASCOPE__STYPES_HPP__
+#define ZOGRASCOPE__STYPES_HPP__
 
 #include <cstdint>
 
@@ -81,4 +81,4 @@ enum class SType : std::uint8_t
 
 std::ostream & operator<<(std::ostream &os, SType stype);
 
-#endif // STYPES_HPP__
+#endif // ZOGRASCOPE__STYPES_HPP__

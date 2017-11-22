@@ -15,12 +15,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef COMPARE_HPP__
-#define COMPARE_HPP__
+#ifndef ZOGRASCOPE__COMPARE_HPP__
+#define ZOGRASCOPE__COMPARE_HPP__
 
 class Node;
 class TimeReport;
 
 void compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine);
 
-#endif // COMPARE_HPP__
+#endif // ZOGRASCOPE__COMPARE_HPP__

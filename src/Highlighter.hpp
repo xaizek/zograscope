@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef HIGHLIGHTER_HPP__
-#define HIGHLIGHTER_HPP__
+#ifndef ZOGRASCOPE__HIGHLIGHTER_HPP__
+#define ZOGRASCOPE__HIGHLIGHTER_HPP__
 
 #include <string>
 
@@ -34,4 +34,4 @@ private:
     const bool original;
 };
 
-#endif // HIGHLIGHTER_HPP__
+#endif // ZOGRASCOPE__HIGHLIGHTER_HPP__

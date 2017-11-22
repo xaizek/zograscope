@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef INTEGRATION_HPP__
-#define INTEGRATION_HPP__
+#ifndef ZOGRASCOPE__INTEGRATION_HPP__
+#define ZOGRASCOPE__INTEGRATION_HPP__
 
 #include <memory>
 #include <utility>
@@ -79,4 +79,4 @@ bool isOutputToTerminal();
  */
 std::pair<unsigned int, unsigned int> getTerminalSize();
 
-#endif // INTEGRATION_HPP__
+#endif // ZOGRASCOPE__INTEGRATION_HPP__

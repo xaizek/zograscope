@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef STREE_HPP__
-#define STREE_HPP__
+#ifndef ZOGRASCOPE__STREE_HPP__
+#define ZOGRASCOPE__STREE_HPP__
 
 #include <string>
 
@@ -65,4 +65,4 @@ private:
     SNode *root;
 };
 
-#endif // STREE_HPP__
+#endif // ZOGRASCOPE__STREE_HPP__

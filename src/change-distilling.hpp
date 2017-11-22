@@ -15,11 +15,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef CHANGE_DISTILLING_HPP__
-#define CHANGE_DISTILLING_HPP__
+#ifndef ZOGRASCOPE__CHANGE_DISTILLING_HPP__
+#define ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 
 class Node;
 
 void distill(Node &T1, Node &T2);
 
-#endif // CHANGE_DISTILLING_HPP__
+#endif // ZOGRASCOPE__CHANGE_DISTILLING_HPP__

@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef LEXERDATA_HPP__
-#define LEXERDATA_HPP__
+#ifndef ZOGRASCOPE__C__LEXERDATA_HPP__
+#define ZOGRASCOPE__C__LEXERDATA_HPP__
 
 #include <cstddef>
 #include <cstring>
@@ -52,4 +52,4 @@ private:
     const char *finish;
 };
 
-#endif // LEXERDATA_HPP__
+#endif // ZOGRASCOPE__C__LEXERDATA_HPP__
