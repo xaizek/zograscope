@@ -32,12 +32,14 @@
 #include "Printer.hpp"
 #include "common.hpp"
 #include "compare.hpp"
+#include "decoration.hpp"
 #include "tree.hpp"
 
 struct Args : CommonArgs
 {
     bool noRefine;
     bool gitDiff;
+    bool gitRename;
 };
 
 static boost::program_options::options_description getLocalOpts();
@@ -59,10 +61,10 @@ main(int argc, char *argv[])
             env.printOptions();
             return EXIT_SUCCESS;
         }
-        if (args.pos.size() != 2U && args.pos.size() != 7U) {
+        if (args.pos.size() != 2U && !args.gitDiff && !args.gitRename) {
             env.teardown(true);
             std::cerr << "Wrong positional arguments\n"
-                      << "Expected 2 (cli) or 7 (git)\n";
+                      << "Expected 2 (cli) or 7 or 9 (git)\n";
             return EXIT_FAILURE;
         }
 
@@ -107,7 +109,9 @@ parseLocalArgs(const Environment &env)
     const boost::program_options::variables_map &varMap = env.getVarMap();
 
     args.noRefine = varMap.count("no-refine");
-    args.gitDiff = (args.pos.size() == 7U);
+    args.gitDiff = args.pos.size() == 7U
+                || (args.pos.size() == 9U && args.pos[2] != args.pos[5]);
+    args.gitRename = (args.pos.size() == 9U && args.pos[2] == args.pos[5]);
 
     return args;
 }
@@ -115,6 +119,12 @@ parseLocalArgs(const Environment &env)
 static int
 run(const Args &args, TimeReport &tr)
 {
+    if (args.gitRename) {
+        std::cout << (decor::bold << "{ old name } " << args.pos[0]) << '\n'
+                  << (decor::bold << "{ new name } " << args.pos[7]) << '\n';
+        return EXIT_SUCCESS;
+    }
+
     cpp17::pmr::monolithic mr;
     Tree treeA(&mr), treeB(&mr);
 
