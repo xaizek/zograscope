@@ -1,3 +1,20 @@
+// Copyright (C) 2017 xaizek <xaizek@posteo.net>
+//
+// This file is part of zograscope.
+//
+// zograscope is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// zograscope is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
+
 #include <boost/optional.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
@@ -11,7 +28,6 @@
 #include "pmr/monolithic.hpp"
 
 #include "utils/optional.hpp"
-#include "CommonArgs.hpp"
 #include "Highlighter.hpp"
 #include "Printer.hpp"
 #include "common.hpp"
@@ -24,7 +40,8 @@ struct Args : CommonArgs
     bool gitDiff;
 };
 
-static Args parseLocArgs(const std::vector<std::string> &argv);
+static boost::program_options::options_description getLocalOpts();
+static Args parseLocalArgs(const Environment &env);
 static int run(const Args &args, TimeReport &tr);
 
 int
@@ -34,14 +51,20 @@ main(int argc, char *argv[])
     int result;
 
     try {
-        args = parseLocArgs({ argv + 1, argv + argc });
+        Environment env(getLocalOpts());
+        env.setup({ argv + 1, argv + argc });
+
+        args = parseLocalArgs(env);
+        if (args.help) {
+            env.printOptions();
+            return EXIT_SUCCESS;
+        }
         if (args.pos.size() != 2U && args.pos.size() != 7U) {
-            std::cerr << "Wrong arguments\n";
+            env.teardown(true);
+            std::cerr << "Wrong positional arguments\n"
+                      << "Expected 2 (cli) or 7 (git)\n";
             return EXIT_FAILURE;
         }
-
-        Environment env(args);
-        env.setup();
 
         result = run(args, env.getTimeKeeper());
 
@@ -65,17 +88,23 @@ main(int argc, char *argv[])
     return result;
 }
 
-static Args
-parseLocArgs(const std::vector<std::string> &argv)
+static boost::program_options::options_description
+getLocalOpts()
 {
-    namespace po = boost::program_options;
-
-    po::options_description options;
+    boost::program_options::options_description options;
     options.add_options()
         ("no-refine", "do not refine coarse results");
 
+    return options;
+}
+
+static Args
+parseLocalArgs(const Environment &env)
+{
     Args args;
-    po::variables_map varMap = parseArgs(args, argv, options);
+    static_cast<CommonArgs &>(args) = env.getCommonArgs();
+
+    const boost::program_options::variables_map &varMap = env.getVarMap();
 
     args.noRefine = varMap.count("no-refine");
     args.gitDiff = (args.pos.size() == 7U);

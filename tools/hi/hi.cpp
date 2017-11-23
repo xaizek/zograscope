@@ -1,3 +1,20 @@
+// Copyright (C) 2017 xaizek <xaizek@posteo.net>
+//
+// This file is part of zograscope.
+//
+// zograscope is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// zograscope is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
+
 #include <boost/optional.hpp>
 
 #include <iostream>
@@ -7,7 +24,6 @@
 #include "pmr/monolithic.hpp"
 
 #include "utils/optional.hpp"
-#include "CommonArgs.hpp"
 #include "Highlighter.hpp"
 #include "common.hpp"
 #include "tree.hpp"
@@ -21,14 +37,20 @@ main(int argc, char *argv[])
     int result;
 
     try {
-        parseArgs(args, { argv + 1, argv + argc });
+        Environment env;
+        env.setup({ argv + 1, argv + argc });
+
+        args = env.getCommonArgs();
+        if (args.help) {
+            env.printOptions();
+            return EXIT_SUCCESS;
+        }
         if (args.pos.size() != 1U) {
-            std::cerr << "Wrong arguments\n";
+            env.teardown(true);
+            std::cerr << "Wrong positional arguments\n"
+                      << "Expected exactly one\n";
             return EXIT_FAILURE;
         }
-
-        Environment env(args);
-        env.setup();
 
         result = run(args, env.getTimeKeeper());
 

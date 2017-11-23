@@ -1,5 +1,22 @@
-#ifndef INTEGRATION_HPP__
-#define INTEGRATION_HPP__
+// Copyright (C) 2017 xaizek <xaizek@posteo.net>
+//
+// This file is part of zograscope.
+//
+// zograscope is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// zograscope is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifndef ZOGRASCOPE__INTEGRATION_HPP__
+#define ZOGRASCOPE__INTEGRATION_HPP__
 
 #include <memory>
 #include <utility>
@@ -28,13 +45,19 @@ public:
 
     //! No copy-constructor.
     RedirectToPager(const RedirectToPager &rhs) = delete;
-    //! No copy-move.
+    //! No copy-assignment.
     RedirectToPager & operator=(const RedirectToPager &rhs) = delete;
 
     /**
      * @brief Restores previous state of @c std::cout.
      */
     ~RedirectToPager();
+
+public:
+    /**
+     * @brief Restores previous state of @c std::cout discharging destructor.
+     */
+    void discharge();
 
 private:
     //! Implementation details.
@@ -56,4 +79,4 @@ bool isOutputToTerminal();
  */
 std::pair<unsigned int, unsigned int> getTerminalSize();
 
-#endif // INTEGRATION_HPP__
+#endif // ZOGRASCOPE__INTEGRATION_HPP__

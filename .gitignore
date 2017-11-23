@@ -3,7 +3,9 @@
 /debug/
 /release/
 /tests/tests
-/jposed
+/zs-hi
+/zs-diff
+/libzograscope.a
 *.o
 *.d
 

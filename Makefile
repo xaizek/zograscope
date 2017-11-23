@@ -1,10 +1,8 @@
-NAME := jposed
+NAME := zograscope
 
 CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -Isrc/ -Ithird-party/
 CXXFLAGS += -DYYDEBUG
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options
-
-INSTALL := install -D
 
 ifneq ($(OS),Windows_NT)
     bin_suffix :=
@@ -26,9 +24,6 @@ pos = $(strip $(eval T := ) \
 # or "release"/"debug" for corresponding targets
 is_release := 0
 ifneq ($(call pos,release,$(MAKECMDGOALS)),-1)
-    is_release := 1
-endif
-ifneq ($(call pos,install,$(MAKECMDGOALS)),-1)
     is_release := 1
 endif
 ifneq ($(is_release),0)
@@ -94,7 +89,7 @@ tests_objects += $(lib)
 # tool definition template, takes single argument: name of the tool
 define tool_template
 
-$1.bin := $(out_dir)/$1$(bin_suffix)
+$1.bin := $(out_dir)/zs-$1$(bin_suffix)
 $1.sources := $$(call rwildcard, tools/$1/, *.cpp)
 $1.objects := $$(sort $$($1.sources:%.cpp=$$(out_dir)/%.o))
 $1.depends := $$($1.objects:.o=.d)
@@ -118,7 +113,7 @@ $(foreach tool, $(tools), $(eval $(call tool_template,$(tool))))
 
 out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))
 
-.PHONY: all check clean debug release sanitize-basic man install uninstall
+.PHONY: all check clean debug release sanitize-basic
 .PHONY: coverage reset-coverage
 
 all: $(lib)
@@ -132,21 +127,6 @@ coverage: check $(all)
 	    --exclude third-party | uncov new
 	find . -name '*.gcov' -delete
 
-man: docs/$(NAME).1
-# the next target doesn't depend on $(wildcard docs/*.md) to make pandoc
-# optional
-docs/$(NAME).1: force | $(out_dir)/docs
-	pandoc -V title=$(NAME) \
-	       -V section=1 \
-	       -V app=$(NAME) \
-	       -V footer="$(NAME) v0.1" \
-	       -V date="$$(date +'%B %d, %Y')" \
-	       -V author='xaizek <xaizek@posteo.net>' \
-	       -s -o $@ $(sort $(wildcard docs/*.md))
-
-# target that doesn't exist and used to force rebuild
-force:
-
 reset-coverage:
 ifeq ($(with_cov),1)
 	find $(out_dir)/ -name '*.gcda' -delete
@@ -159,15 +139,6 @@ $(lib): $(lib_objects)
 
 check: $(target) $(out_dir)/tests/tests reset-coverage
 	@$(out_dir)/tests/tests
-
-install: release
-	$(INSTALL) -t $(DESTDIR)/usr/bin/ $(bin)
-	$(INSTALL) -m 644 docs/$(NAME).1 $(DESTDIR)/usr/share/man/man1/$(NAME).1
-
-uninstall:
-	$(RM) $(DESTDIR)/usr/bin/$(basename $(bin)) \
-	      $(DESTDIR)/usr/share/man/man1/$(NAME).1
-	$(RM) -r $(DESTDIR)/usr/share/$(NAME)/
 
 $(out_dir)/src/c/c11-lexer.hpp: $(out_dir)/src/c/c11-lexer.gen.cpp
 $(out_dir)/src/c/c11-lexer.gen.cpp: src/c/c11-lexer.flex \
@@ -195,7 +166,7 @@ $(out_dir)/%.gen.o: $(out_dir)/%.gen.cpp | $(out_dirs)
 $(out_dir)/%.o: %.cpp | $(out_dirs)
 	$(CXX) -o $@ -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $<
 
-$(out_dirs) $(out_dir)/docs:
+$(out_dirs):
 	mkdir -p $@
 
 clean:
