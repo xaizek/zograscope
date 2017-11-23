@@ -47,12 +47,7 @@ static std::string readFile(const std::string &path);
 void
 Environment::setup(const std::vector<std::string> &argv)
 {
-    if (args.color) {
-        decor::enableDecorations();
-    }
-
     varMap = parseOptions(argv, options);
-
     args.pos = varMap["positional"].as<std::vector<std::string>>();
     args.help = varMap.count("help");
     args.debug = varMap.count("debug");
@@ -63,6 +58,10 @@ Environment::setup(const std::vector<std::string> &argv)
     args.color = varMap.count("color");
     args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
+
+    if (args.color) {
+        decor::enableDecorations();
+    }
 }
 
 // Parses command line-options.
