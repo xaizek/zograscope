@@ -103,6 +103,8 @@ Highlighter::print(Node &root) const
         std::ostringstream oss;
         int line, col;
         ColorPicker colorPicker;
+        std::vector<boost::string_ref> olines;
+        std::vector<boost::string_ref> lines;
 
         void run(Node &node)
         {
@@ -144,9 +146,12 @@ Highlighter::print(Node &root) const
 
                 const decor::Decoration &dec = colorPicker.getHighlight();
 
-                const std::vector<boost::string_ref> olines = split(node.spelling, '\n');
+                olines.clear();
+                lines.clear();
+
                 const std::string spelling = getSpelling(node, dec, original);
-                const std::vector<boost::string_ref> lines = split(spelling, '\n');
+                split(node.spelling, '\n', olines);
+                split(spelling, '\n', lines);
                 oss << (dec << lines.front());
                 col += olines.front().size();
 
@@ -168,7 +173,7 @@ Highlighter::print(Node &root) const
                 run(*child);
             }
         }
-    } visitor { original, std::ostringstream{}, 1, 1, {} };
+    } visitor { original, std::ostringstream{}, 1, 1, {}, {}, {} };
 
     visitor.run(root);
 
