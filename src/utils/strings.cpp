@@ -17,6 +17,8 @@
 
 #include "utils/strings.hpp"
 
+#include <climits>
+
 #include <iterator>
 #include <utility>
 
