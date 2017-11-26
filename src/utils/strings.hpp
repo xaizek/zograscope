@@ -18,8 +18,6 @@
 #ifndef ZOGRASCOPE__UTILS__STRINGS__HPP__
 #define ZOGRASCOPE__UTILS__STRINGS__HPP__
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/utility/string_ref.hpp>
 
 #include <vector>
@@ -47,6 +45,20 @@ private:
     std::vector<short> bigrams;
 };
 
+inline void
+split(boost::string_ref str, char with, std::vector<boost::string_ref> &results)
+{
+    const char *next = &str.front();
+    while (!str.empty()) {
+        if (str.front() == with) {
+            results.emplace_back(next, &str.front() - next);
+            next = &str.front() + 1;
+        }
+        str.remove_prefix(1U);
+    }
+    results.emplace_back(next, &str.front() - next);
+}
+
 /**
  * @brief Splits string in a range-for loop friendly way.
  *
@@ -58,22 +70,9 @@ private:
 inline std::vector<boost::string_ref>
 split(boost::string_ref str, char with)
 {
-    class string_ref : public boost::string_ref
-    {
-    public:
-        string_ref(const char *begin, const char *end)
-            : boost::string_ref(begin, end - begin)
-        {
-        }
-    };
-
-    if (str.empty()) {
-        return {};
-    }
-
-    std::vector<string_ref> results;
-    boost::split(results, str, boost::is_from_range(with, with));
-    return { results.cbegin(), results.cend() };
+    std::vector<boost::string_ref> results;
+    split(str, with, results);
+    return results;
 }
 
 #endif // ZOGRASCOPE__UTILS__STRINGS__HPP__
