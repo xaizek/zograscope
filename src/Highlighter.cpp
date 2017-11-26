@@ -144,10 +144,11 @@ Highlighter::print(Node &root) const
 
                 const decor::Decoration &dec = colorPicker.getHighlight();
 
+                const std::vector<boost::string_ref> olines = split(node.spelling, '\n');
                 const std::string spelling = getSpelling(node, dec, original);
                 const std::vector<boost::string_ref> lines = split(spelling, '\n');
                 oss << (dec << lines.front());
-                col += lines.front().size();
+                col += olines.front().size();
 
                 for (std::size_t i = 1U; i < lines.size(); ++i) {
                     std::size_t whitespaceLength =
@@ -158,7 +159,7 @@ Highlighter::print(Node &root) const
                     oss << '\n' << lines[i].substr(0, whitespaceLength)
                                 << (dec << lines[i].substr(whitespaceLength));
                     ++line;
-                    col = 1 + lines[i].size();
+                    col = 1 + olines[i].size();
                     colorPicker.advancedLine();
                 }
             }

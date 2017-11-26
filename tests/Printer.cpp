@@ -124,6 +124,32 @@ TEST_CASE("String literal contents is compared", "[printer]")
     REQUIRE(normalizeText(oss.str()) == expected);
 }
 
+TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
+{
+    Tree oldTree = makeTree(R"(
+        format_str("...%s", str);
+    )", true);
+    Tree newTree = makeTree(R"(
+        format_str("%s%s", ell, str);
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                        |  1
+         2          format_str({-"...%s"-}, str); ~  2          format_str({+"%s%s"+}{+,+} {+ell+}, str);
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
 TEST_CASE("Comment contents is not marked as updated on move", "[printer]")
 {
     Tree oldTree = makeTree(
