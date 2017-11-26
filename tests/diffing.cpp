@@ -1576,3 +1576,18 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Refining works for fine trees", "[comparison]")
+{
+    Tree oldTree = makeTree(R"(
+        format_str("...%s", str);
+    )");
+    Tree newTree = makeTree(R"(
+        format_str("%s%s", ell, str);
+    )");
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+
+    // Just checking that it doesn't crash.
+}
