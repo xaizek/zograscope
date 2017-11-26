@@ -82,6 +82,7 @@ DiffSource::DiffSource(const Node &root)
         std::deque<std::string> &storage;
 
         std::string buffer;
+        std::vector<boost::string_ref> spell;
         int line;
         int col;
 
@@ -110,7 +111,8 @@ DiffSource::DiffSource(const Node &root)
                     col = node.col;
                 }
 
-                std::vector<boost::string_ref> spell = split(node.spelling, '\n');
+                spell.clear();
+                split(node.spelling, '\n', spell);
                 col += spell.front().size();
                 buffer += spell.front().to_string();
 
@@ -134,7 +136,7 @@ DiffSource::DiffSource(const Node &root)
                 run(*child, moved);
             }
         }
-    } visitor { lines, modified, storage, {}, 0, 1 };
+    } visitor { lines, modified, storage, {}, {}, 0, 1 };
 
     visitor.run(root, false);
     if (!visitor.buffer.empty()) {
