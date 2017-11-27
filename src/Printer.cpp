@@ -114,7 +114,7 @@ DiffSource::DiffSource(const Node &root)
                 spell.clear();
                 split(node.spelling, '\n', spell);
                 col += spell.front().size();
-                buffer += spell.front().to_string();
+                buffer.append(spell.front().cbegin(), spell.front().cend());
 
                 const bool changed = (node.state != State::Unchanged || moved);
                 modified.back() = (modified.back() || changed);
