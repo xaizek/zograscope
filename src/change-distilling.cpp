@@ -647,15 +647,19 @@ childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
         return childrenSim;
     }
 
-    xLeaves -= xValue.terminalCount();
-    yLeaves -= yValue.terminalCount();
+    // Disregard values only if they aren't matched.
+    if (haveValues(x, y) && x->getValue()->relative == nullptr &&
+        y->getValue()->relative == nullptr) {
+        xLeaves -= xValue.terminalCount();
+        yLeaves -= yValue.terminalCount();
 
-    const int maxLeaves = std::max(xLeaves, yLeaves);
-    const float nonValueSim = maxLeaves == 0
-                            ? 1.0f
-                            : static_cast<float>(nonValueCommon)/maxLeaves;
-    if (nonValueSim >= 0.8) {
-        return nonValueSim;
+        const int maxLeaves = std::max(xLeaves, yLeaves);
+        const float nonValueSim = maxLeaves == 0
+                                ? 1.0f
+                                : static_cast<float>(nonValueCommon)/maxLeaves;
+        if (nonValueSim >= 0.8) {
+            return nonValueSim;
+        }
     }
 
     return 0.0f;
