@@ -1591,3 +1591,45 @@ TEST_CASE("Refining works for fine trees", "[comparison]")
 
     // Just checking that it doesn't crash.
 }
+
+TEST_CASE("Nested statements with values are matched correctly", "[comparison]")
+{
+    diffSources(R"(
+        void g() {
+            if(strcmp(part, "normal") == 0)         new_value |= SF_NORMAL;
+            else if(strcmp(part, "visual") == 0)    new_value |= SF_VISUAL;
+            else if(strcmp(part, "view") == 0)      new_value |= SF_VIEW;           /// Moves
+            else if(strcmp(part, "otherpane") == 0) new_value |= SF_OTHERPANE;      /// Moves
+            else if(strcmp(part, "keys") == 0)      new_value |= SF_KEYS;           /// Moves
+            else if(strcmp(part, "marks") == 0)     new_value |= SF_MARKS;          /// Moves
+            else if(starts_with_lit(part, "registers:")) {                          /// Moves
+                const char *const num = after_first(part, ':');                     /// Moves
+                new_value |= SF_REGISTERS;                                          /// Moves
+            } else if(strcmp(part, "delay") == 0)     new_value |= SF_DELAY;        /// Moves
+            else if(strcmp(part, "registers") == 0) new_value |= SF_REGISTERS;      /// Moves
+            else {                                                                  /// Moves
+                break_at(part, ':');                                                /// Moves
+                break;                                                              /// Moves
+            }                                                                       /// Moves
+        }
+    )", R"(
+        void g() {
+            if(strcmp(part, "normal") == 0)           new_value |= SF_NORMAL;
+            else if(strcmp(part, "visual") == 0)      new_value |= SF_VISUAL;
+            else if(strcmp(part, "foldsubkeys") == 0) new_value |= SF_FOLDSUBKEYS;  /// Additions
+            else if(strcmp(part, "view") == 0)        new_value |= SF_VIEW;         /// Moves
+            else if(strcmp(part, "otherpane") == 0)   new_value |= SF_OTHERPANE;    /// Moves
+            else if(strcmp(part, "keys") == 0)        new_value |= SF_KEYS;         /// Moves
+            else if(strcmp(part, "marks") == 0)       new_value |= SF_MARKS;        /// Moves
+            else if(starts_with_lit(part, "registers:")) {                          /// Moves
+                const char *const num = after_first(part, ':');                     /// Moves
+                new_value |= SF_REGISTERS;                                          /// Moves
+            } else if(strcmp(part, "delay") == 0)     new_value |= SF_DELAY;        /// Moves
+            else if(strcmp(part, "registers") == 0) new_value |= SF_REGISTERS;      /// Moves
+            else {                                                                  /// Moves
+                break_at(part, ':');                                                /// Moves
+                break;                                                              /// Moves
+            }                                                                       /// Moves
+        }
+    )", true);
+}

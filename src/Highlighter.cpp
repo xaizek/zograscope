@@ -17,12 +17,16 @@
 
 #include "Highlighter.hpp"
 
+#include <algorithm>
+#include <limits>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <vector>
 
-#include <boost/optional.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/utility/string_ref.hpp>
+#include <boost/optional.hpp>
 #include "dtl/dtl.hpp"
 
 #include "utils/strings.hpp"
@@ -40,14 +44,12 @@ static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::string getSpelling(const Node &node, const decor::Decoration &dec,
                                bool original);
 
-namespace {
-
-class ColorPicker
+class Highlighter::ColorPicker
 {
 public:
     void setNode(const Node &node)
     {
-        prevNode = currNode;
+        prevNode = (currNode == &node ? nullptr : currNode);
         currNode = &node;
 
         prevHighlight = currHighlight;
@@ -88,96 +90,206 @@ private:
     const Node *prevNode = nullptr;
 };
 
+Highlighter::Highlighter(Node &root, bool original)
+    : line(1), col(1), colorPicker(new ColorPicker()), original(original)
+{
+    toProcess.push(&root);
 }
 
-Highlighter::Highlighter(bool original) : original(original)
+Highlighter::~Highlighter()
 {
+    // Emit destructor here with ColorPicker object being complete.
 }
 
 std::string
-Highlighter::print(Node &root) const
+Highlighter::print(int from, int n)
 {
-    struct {
-        bool original;
+    if (from < line) {
+        n = std::max(0, n - (line - from));
+    }
 
-        std::ostringstream oss;
-        int line, col;
-        ColorPicker colorPicker;
-        std::vector<boost::string_ref> olines;
-        std::vector<boost::string_ref> lines;
+    skipUntil(from);
+    print(n);
 
-        void run(Node &node)
-        {
-            if (node.next != nullptr) {
-                if (node.state != State::Unchanged) {
-                    markTreeWithState(node.next, node.state);
-                }
-                if (node.moved) {
-                    markTreeAsMoved(node.next);
-                }
-                return run(*node.next);
-            }
+    std::string result = oss.str();
+    oss.str(std::string());
+    return result;
+}
 
-            if (node.leaf) {
-                colorPicker.setNode(node);
+std::string
+Highlighter::print()
+{
+    print(std::numeric_limits<int>::max());
 
-                boost::optional<const decor::Decoration &> fillHighlight;
-                // Don't do filling across lines.
-                if (node.line == line) {
-                    fillHighlight = colorPicker.getFillHighlight();
-                    oss << *fillHighlight;
-                }
+    std::string result = oss.str();
+    oss.str(std::string());
+    return result;
+}
 
-                while (node.line > line) {
-                    oss << '\n';
-                    ++line;
-                    colorPicker.advancedLine();
-                    col = 1;
-                }
+void
+Highlighter::skipUntil(int targetLine)
+{
+    if (line >= targetLine) {
+        return;
+    }
 
-                while (node.col > col) {
-                    oss << ' ';
-                    ++col;
-                }
-
-                if (fillHighlight) {
-                    oss << decor::def;
-                }
-
-                const decor::Decoration &dec = colorPicker.getHighlight();
-
-                olines.clear();
-                lines.clear();
-
-                const std::string spelling = getSpelling(node, dec, original);
-                split(node.spelling, '\n', olines);
-                split(spelling, '\n', lines);
-                oss << (dec << lines.front());
-                col += olines.front().size();
-
-                for (std::size_t i = 1U; i < lines.size(); ++i) {
-                    std::size_t whitespaceLength =
-                        lines[i].find_first_not_of(" \t");
-                    if (whitespaceLength == std::string::npos) {
-                        whitespaceLength = lines[i].size();
-                    }
-                    oss << '\n' << lines[i].substr(0, whitespaceLength)
-                                << (dec << lines[i].substr(whitespaceLength));
-                    ++line;
-                    col = 1 + olines[i].size();
-                    colorPicker.advancedLine();
-                }
-            }
-
-            for (Node *child : node.children) {
-                run(*child);
+    if (!lines.empty()) {
+        for (std::size_t i = 1U; i < lines.size(); ++i) {
+            if (++line == targetLine) {
+                olines.erase(olines.begin(), olines.begin() + i);
+                lines.erase(lines.begin(), lines.begin() + i);
+                return;
             }
         }
-    } visitor { original, std::ostringstream{}, 1, 1, {}, {}, {} };
+        olines.clear();
+        lines.clear();
+    }
 
-    visitor.run(root);
+    while (!toProcess.empty()) {
+        Node *const node = getNode();
+        if (!node->leaf) {
+            advanceNode(node);
+            continue;
+        }
 
-    return visitor.oss.str();
+        colorPicker->setNode(*node);
+
+        while (node->line > line) {
+            if (++line == targetLine) {
+                return;
+            }
+        }
+
+        advanceNode(node);
+
+        split(node->spelling, '\n', olines);
+
+        for (std::size_t i = 1U; i < olines.size(); ++i) {
+            if (++line == targetLine) {
+                colorPicker->advancedLine();
+                const decor::Decoration &dec = colorPicker->getHighlight();
+                spelling = getSpelling(*node, dec, original);
+                split(spelling, '\n', lines);
+                olines.erase(olines.begin(), olines.begin() + i);
+                lines.erase(lines.begin(), lines.begin() + i);
+                return;
+            }
+        }
+
+        olines.clear();
+        lines.clear();
+    }
+}
+
+void
+Highlighter::print(int n)
+{
+    col = 1;
+    colorPicker->advancedLine();
+
+    if (!lines.empty()) {
+        printSpelling(n);
+    }
+
+    while (!toProcess.empty() && n != 0) {
+        Node *const node = getNode();
+        if (!node->leaf) {
+            advanceNode(node);
+            continue;
+        }
+
+        colorPicker->setNode(*node);
+
+        const decor::Decoration &fillHighlight =
+            colorPicker->getFillHighlight();
+        // Don't do filling across lines.
+        if (node->line == line && &fillHighlight != &decor::none) {
+            oss << fillHighlight;
+        }
+
+        while (node->line > line) {
+            ++line;
+            colorPicker->advancedLine();
+            if (--n == 0) {
+                return;
+            }
+            oss << '\n';
+            col = 1;
+        }
+
+        while (node->col > col) {
+            oss << ' ';
+            ++col;
+        }
+
+        if (&fillHighlight != &decor::none) {
+            oss << decor::def;
+        }
+
+        advanceNode(node);
+
+        spelling = getSpelling(*node, colorPicker->getHighlight(), original);
+        split(node->spelling, '\n', olines);
+        split(spelling, '\n', lines);
+
+        printSpelling(n);
+    }
+}
+
+void
+Highlighter::printSpelling(int &n)
+{
+    const decor::Decoration &dec = colorPicker->getHighlight();
+    oss << (dec << lines.front());
+    col += olines.front().size();
+
+    for (std::size_t i = 1U; i < lines.size(); ++i) {
+        ++line;
+        colorPicker->advancedLine();
+        if (--n == 0) {
+            olines.erase(olines.begin(), olines.begin() + i);
+            lines.erase(lines.begin(), lines.begin() + i);
+            return;
+        }
+
+        std::size_t whitespaceLength = lines[i].find_first_not_of(" \t");
+        if (whitespaceLength == std::string::npos) {
+            whitespaceLength = lines[i].size();
+        }
+        oss << '\n' << lines[i].substr(0, whitespaceLength)
+                    << (dec << lines[i].substr(whitespaceLength));
+        col = 1 + olines[i].size();
+    }
+
+    olines.clear();
+    lines.clear();
+}
+
+Node *
+Highlighter::getNode()
+{
+    Node *node = toProcess.top();
+
+    if (node->next != nullptr) {
+        if (node->state != State::Unchanged) {
+            markTreeWithState(node->next, node->state);
+        }
+        if (node->moved) {
+            markTreeAsMoved(node->next);
+        }
+        node = node->next;
+    }
+
+    return node;
+}
+
+void
+Highlighter::advanceNode(Node *node)
+{
+    toProcess.pop();
+    for (Node *child : boost::adaptors::reverse(node->children)) {
+        toProcess.push(child);
+    }
 }
 
 // Marks one layer of a tree specified by the node with the given state.

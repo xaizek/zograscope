@@ -18,20 +18,65 @@
 #ifndef ZOGRASCOPE__HIGHLIGHTER_HPP__
 #define ZOGRASCOPE__HIGHLIGHTER_HPP__
 
+#include <memory>
+#include <sstream>
+#include <stack>
 #include <string>
+#include <vector>
+
+#include <boost/utility/string_ref.hpp>
 
 class Node;
 
+// Tree highlighter.  Highlights either all at once or by line ranges.
 class Highlighter
 {
-public:
-    Highlighter(bool original = true);
+    class ColorPicker;
 
 public:
-    std::string print(Node &root) const;
+    // Stores arguments for future reference.  The original flag specifies
+    // whether this is an old version of a file (matters only for trees marked
+    // with results of comparison).
+    Highlighter(Node &root, bool original = true);
+
+    // No copying.
+    Highlighter(const Highlighter&) = delete;
+    // No assigning.
+    Highlighter & operator=(const Highlighter&) = delete;
+
+    // Destructs the highlighter.
+    ~Highlighter();
+
+public:
+    // Prints lines in the range [from, from + n) into a string.  Each line can
+    // be printed at most once, thus calls to this function need to increase
+    // from argument.  Returns the string.
+    std::string print(int from, int n);
+    // Prints lines until the end into a string.  Returns the string.
+    std::string print();
 
 private:
-    const bool original;
+    // Skips everything until target line is reached.
+    void skipUntil(int targetLine);
+    // Prints at most `n` lines.
+    void print(int n);
+    // Prints lines of spelling decreasing `n` on advancing through lines.
+    void printSpelling(int &n);
+    // Retrieves the next node to be processed.
+    Node * getNode();
+    // Advances processing to the next node.  The node here is the one that was
+    // returned by `getNode()` earlier.
+    void advanceNode(Node *node);
+
+private:
+    std::ostringstream oss;                   // Temporary output buffer.
+    int line, col;                            // Current position.
+    std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.
+    std::vector<boost::string_ref> olines;    // Undiffed spelling.
+    std::vector<boost::string_ref> lines;     // Possibly diffed spelling.
+    std::stack<Node *> toProcess;             // State of tree traversal.
+    std::string spelling;                     // Storage behind `lines` field.
+    bool original;                            // Whether this is an old version.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__

@@ -598,11 +598,11 @@ childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
         yValue = NodeRange(descendants, po2, y->getValue());
     }
 
-    // Number of common terminal nodes (terminals of
-    // unmatched internal nodes are not ignored).
+    // Number of common terminal nodes (terminals of unmatched internal nodes
+    // are not ignored).
     int nonValueCommon = 0;
-    // Number of selected common terminal nodes (terminals of
-    // unmatched internal nodes are ignored).
+    // Number of selected common terminal nodes (terminals of unmatched internal
+    // nodes are ignored).
     int selCommon = 0;
 
     int yLeaves = 0;
@@ -636,9 +636,8 @@ childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
     yLeaves += yExtra;
 
     const int selMaxLeaves = std::max(xLeaves, yLeaves);
-    // Avoid NaN result.  If there are no common leaves, the nodes
-    // are the same (XXX: might want to compare satellites in such
-    // cases in the future).
+    // Avoid NaN result.  If there are no common leaves, the nodes are the same
+    // (XXX: might want to compare satellites in such cases in the future).
     const float childrenSim = selMaxLeaves == 0
                             ? 1.0f
                             : static_cast<float>(selCommon)/selMaxLeaves;
@@ -648,15 +647,19 @@ childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
         return childrenSim;
     }
 
-    xLeaves -= xValue.terminalCount();
-    yLeaves -= yValue.terminalCount();
+    // Disregard values only if they aren't matched.
+    if (haveValues(x, y) && x->getValue()->relative == nullptr &&
+        y->getValue()->relative == nullptr) {
+        xLeaves -= xValue.terminalCount();
+        yLeaves -= yValue.terminalCount();
 
-    const int maxLeaves = std::max(xLeaves, yLeaves);
-    const float nonValueSim = maxLeaves == 0
-                            ? 1.0f
-                            : static_cast<float>(nonValueCommon)/maxLeaves;
-    if (nonValueSim >= 0.8) {
-        return nonValueSim;
+        const int maxLeaves = std::max(xLeaves, yLeaves);
+        const float nonValueSim = maxLeaves == 0
+                                ? 1.0f
+                                : static_cast<float>(nonValueCommon)/maxLeaves;
+        if (nonValueSim >= 0.8) {
+            return nonValueSim;
+        }
     }
 
     return 0.0f;
