@@ -78,7 +78,7 @@ run(const CommonArgs &args, TimeReport &tr)
 
     dumpTree(args, tree);
     if (!args.dryRun) {
-        std::cout << Highlighter().print(*tree.getRoot()) << '\n';
+        std::cout << Highlighter(*tree.getRoot()).print() << '\n';
     }
     return EXIT_SUCCESS;
 }

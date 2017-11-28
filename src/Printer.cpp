@@ -169,16 +169,12 @@ Printer::print(TimeReport &tr)
     std::vector<DiffLine> diff = (tr.measure("compare"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
 
-    // TODO: don't highlight lines that won't be displayed (it takes extra
-    //       time).
-    const std::string ls = (tr.measure("left-highlight"),
-                            Highlighter(true).print(left));
-    const std::string rs = (tr.measure("right-highlight"),
-                            Highlighter(false).print(right));
-    std::vector<boost::string_ref> l = split(ls, '\n');
-    std::vector<boost::string_ref> r = split(rs, '\n');
-
     auto timer = tr.measure("printing");
+
+    Highlighter lh(left, true);
+    Highlighter rh(right, false);
+    std::vector<std::string> l(lsrc.lines.size());
+    std::vector<std::string> r(rsrc.lines.size());
 
     unsigned int maxLeftWidth = 0U;
     unsigned int maxRightWidth = 0U;
@@ -197,20 +193,24 @@ Printer::print(TimeReport &tr)
             unsigned int width;
 
             case Diff::Left:
+                l[i] = lh.print(i + 1, 1);
                 width = measureWidth(l[i++]);
                 leftWidths.push_back(width);
                 maxLeftWidth = std::max(width, maxLeftWidth);
                 break;
             case Diff::Right:
+                r[j] = rh.print(j + 1, 1);
                 width = measureWidth(r[j++]);
                 maxRightWidth = std::max(width, maxRightWidth);
                 break;
             case Diff::Identical:
             case Diff::Different:
+                l[i] = lh.print(i + 1, 1);
                 width = measureWidth(l[i++]);
                 leftWidths.push_back(width);
                 maxLeftWidth = std::max(width, maxLeftWidth);
 
+                r[j] = rh.print(j + 1, 1);
                 width = measureWidth(r[j++]);
                 maxRightWidth = std::max(width, maxRightWidth);
                 break;

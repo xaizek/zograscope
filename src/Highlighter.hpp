@@ -18,20 +18,48 @@
 #ifndef ZOGRASCOPE__HIGHLIGHTER_HPP__
 #define ZOGRASCOPE__HIGHLIGHTER_HPP__
 
+#include <memory>
+#include <sstream>
+#include <stack>
 #include <string>
+#include <vector>
+
+#include <boost/utility/string_ref.hpp>
 
 class Node;
 
 class Highlighter
 {
-public:
-    Highlighter(bool original = true);
+    class ColorPicker;
 
 public:
-    std::string print(Node &root) const;
+    Highlighter(Node &root, bool original = true);
+
+    Highlighter(const Highlighter&) = delete;
+    Highlighter & operator=(const Highlighter&) = delete;
+
+    ~Highlighter();
+
+public:
+    std::string print(int from, int n);
+    std::string print();
 
 private:
-    const bool original;
+    void skipUntil(int targetLine);
+    void print(int n);
+    void printSpelling(int &n);
+    Node * getNode();
+    void advanceNode(Node *node);
+
+private:
+    std::ostringstream oss;
+    int line, col;
+    std::unique_ptr<ColorPicker> colorPicker;
+    std::vector<boost::string_ref> olines;
+    std::vector<boost::string_ref> lines;
+    std::stack<Node *> toProcess;
+    std::string spelling;
+    bool original;
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__

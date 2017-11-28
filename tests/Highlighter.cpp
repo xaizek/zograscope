@@ -33,6 +33,35 @@ TEST_CASE("Multiline tokens don't mess up positioning", "[highlighter]")
 
     Tree tree = makeTree(input);
 
-    std::string output = Highlighter().print(*tree.getRoot());
+    std::string output = Highlighter(*tree.getRoot()).print();
     CHECK(split(output, '\n') == split(input, '\n'));
+}
+
+TEST_CASE("Ranges are printed correctly", "[highlighter]")
+{
+    Tree tree = makeTree(
+R"(/* line1
+
+ * line3 */
+// line4
+/* line5
+ * line6
+ * line7 */
+// line8
+/* line9
+ * line10
+ * line11
+ * line12 */
+int f() { return 10; }
+// line14)", true);
+
+    Highlighter hi(*tree.getRoot());
+    CHECK(hi.print(1, 2) == "/* line1\n");
+    CHECK(hi.print(4, 2) == "// line4\n/* line5");
+    CHECK(hi.print(7, 1) == " * line7 */");
+    CHECK(hi.print(7, 1) == "");
+    CHECK(hi.print(6, 3) == "// line8");
+    CHECK(hi.print(10, 1) == " * line10");
+    CHECK(hi.print(14, 10) == "// line14");
+    CHECK(hi.print(20, 10) == "");
 }
