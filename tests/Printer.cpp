@@ -248,6 +248,36 @@ TEST_CASE("Lines with changes aren't folded", "[printer]")
     REQUIRE(normalizeText(oss.str()) == expected);
 }
 
+TEST_CASE("Highlighting skips leading whitespace", "[printer]")
+{
+    Tree oldTree = makeTree("");
+    Tree newTree = makeTree(R"(
+        /* This
+         * is
+         * a
+         * comment */
+    )");
+
+    TimeReport tr;
+    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         -   >  1
+         -   >  2          {+/* This+}
+         -   >  3           {+* is+}
+         -   >  4           {+* a+}
+         -   >  5           {+* comment */+}
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
 static std::string
 normalizeText(const std::string &s)
 {

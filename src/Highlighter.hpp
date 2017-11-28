@@ -77,6 +77,7 @@ private:
     std::stack<Node *> toProcess;             // State of tree traversal.
     std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
+    Node *current;                            // Node that's being processed.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__

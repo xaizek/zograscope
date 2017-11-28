@@ -91,7 +91,8 @@ private:
 };
 
 Highlighter::Highlighter(Node &root, bool original)
-    : line(1), col(1), colorPicker(new ColorPicker()), original(original)
+    : line(1), col(1), colorPicker(new ColorPicker()), original(original),
+      current(nullptr)
 {
     toProcess.push(&root);
 }
@@ -166,6 +167,7 @@ Highlighter::skipUntil(int targetLine)
 
         for (std::size_t i = 1U; i < olines.size(); ++i) {
             if (++line == targetLine) {
+                current = node;
                 colorPicker->advancedLine();
                 const decor::Decoration &dec = colorPicker->getHighlight();
                 spelling = getSpelling(*node, dec, original);
@@ -231,6 +233,7 @@ Highlighter::print(int n)
         spelling = getSpelling(*node, colorPicker->getHighlight(), original);
         split(node->spelling, '\n', olines);
         split(spelling, '\n', lines);
+        current = node;
 
         printSpelling(n);
     }
@@ -240,7 +243,22 @@ void
 Highlighter::printSpelling(int &n)
 {
     const decor::Decoration &dec = colorPicker->getHighlight();
-    oss << (dec << lines.front());
+
+    auto printLine = [&](boost::string_ref line) {
+        if (current->line == this->line) {
+            oss << (dec << lines.front());
+            return;
+        }
+
+        std::size_t whitespaceLength = line.find_first_not_of(" \t");
+        if (whitespaceLength == std::string::npos) {
+            whitespaceLength = line.size();
+        }
+        oss << line.substr(0, whitespaceLength)
+            << (dec << line.substr(whitespaceLength));
+    };
+
+    printLine(lines.front());
     col += olines.front().size();
 
     for (std::size_t i = 1U; i < lines.size(); ++i) {
@@ -252,12 +270,8 @@ Highlighter::printSpelling(int &n)
             return;
         }
 
-        std::size_t whitespaceLength = lines[i].find_first_not_of(" \t");
-        if (whitespaceLength == std::string::npos) {
-            whitespaceLength = lines[i].size();
-        }
-        oss << '\n' << lines[i].substr(0, whitespaceLength)
-                    << (dec << lines[i].substr(whitespaceLength));
+        oss << '\n';
+        printLine(lines[i]);
         col = 1 + olines[i].size();
     }
 
