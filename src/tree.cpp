@@ -476,12 +476,11 @@ hashNode(const Node *node)
         return hashNode(node->next);
     }
 
-    const std::size_t hash = std::hash<std::string>()(node->label);
-    return std::accumulate(node->children.cbegin(), node->children.cend(), hash,
-                           [](std::size_t h, const Node *child) {
-                               boost::hash_combine(h, hashNode(child));
-                               return h;
-                           });
+    std::size_t hash = std::hash<std::string>()(node->label);
+    for (const Node *child : node->children) {
+        boost::hash_combine(hash, hashNode(child));
+    }
+    return hash;
 }
 
 std::string
