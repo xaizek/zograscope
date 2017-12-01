@@ -21,6 +21,7 @@
 %option reentrant
 %option noyywrap
 %option extra-type="struct LexerData *"
+%option prefix="c11_"
 
 %{
 
@@ -466,7 +467,7 @@ reportError(YYLTYPE *loc, const char text[], std::size_t len, LexerData *data)
 
     YYLTYPE changedLoc = *loc;
     changedLoc.first_column = data->offset - data->lineoffset;
-    yyerror(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
+    c11_error(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
 }
 
 void
