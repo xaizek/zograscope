@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__C__PARSER_HPP__
-#define ZOGRASCOPE__C__PARSER_HPP__
+#ifndef ZOGRASCOPE__PARSER_HPP__
+#define ZOGRASCOPE__PARSER_HPP__
 
 #include <string>
 
@@ -33,4 +33,4 @@ TreeBuilder parse(const std::string &contents,
                   bool debug,
                   cpp17::pmr::monolithic &mr);
 
-#endif // ZOGRASCOPE__C__PARSER_HPP__
+#endif // ZOGRASCOPE__PARSER_HPP__

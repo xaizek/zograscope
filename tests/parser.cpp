@@ -26,8 +26,8 @@
 #include <functional>
 #include <iostream>
 
-#include "c/parser.hpp"
 #include "TreeBuilder.hpp"
+#include "parser.hpp"
 #include "stypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"

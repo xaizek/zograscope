@@ -30,12 +30,12 @@
 #include <boost/program_options/variables_map.hpp>
 #include "pmr/monolithic.hpp"
 
-#include "c/parser.hpp"
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
+#include "parser.hpp"
 #include "tree.hpp"
 
 namespace po = boost::program_options;
