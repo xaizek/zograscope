@@ -47,6 +47,11 @@ public:
 public:
     // Maps language-specific token to an element of Type enumeration.
     virtual Type mapToken(int token) const = 0;
+    // Parses source file into a tree.
+    virtual TreeBuilder parse(const std::string &contents,
+                              const std::string &fileName,
+                              bool debug,
+                              cpp17::pmr::monolithic &mr) const = 0;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__

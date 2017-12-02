@@ -37,7 +37,6 @@
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
-#include "parser.hpp"
 #include "tree.hpp"
 
 namespace po = boost::program_options;
@@ -140,7 +139,7 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
 
     cpp17::pmr::monolithic localMR;
 
-    TreeBuilder tb = parse(contents, path, args.debug, localMR);
+    TreeBuilder tb = lang->parse(contents, path, args.debug, localMR);
     if (tb.hasFailed()) {
         return {};
     }

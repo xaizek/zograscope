@@ -37,7 +37,6 @@
 #include "STree.hpp"
 #include "compare.hpp"
 #include "decoration.hpp"
-#include "parser.hpp"
 #include "tree.hpp"
 
 enum class Changes
@@ -61,8 +60,9 @@ static std::ostream & operator<<(std::ostream &os, Changes changes);
 bool
 parsed(const std::string &str)
 {
+    std::unique_ptr<Language> lang = Language::create("test-input.c");
     cpp17::pmr::monolithic mr;
-    return !parse(str, "<input>", false, mr).hasFailed();
+    return !lang->parse(str, "<input>", false, mr).hasFailed();
 }
 
 Tree
@@ -72,7 +72,7 @@ makeTree(const std::string &str, bool coarse)
 
     std::unique_ptr<Language> lang = Language::create("test-input.c");
 
-    TreeBuilder tb = parse(str, "<input>", false, mr);
+    TreeBuilder tb = lang->parse(str, "<input>", false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {
