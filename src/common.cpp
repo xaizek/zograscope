@@ -22,6 +22,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <boost/optional.hpp>
 #include <boost/program_options/options_description.hpp>
@@ -32,6 +33,7 @@
 
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
+#include "Language.hpp"
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
@@ -132,6 +134,8 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
 {
     auto timer = tr.measure("parsing: " + path);
 
+    std::unique_ptr<Language> lang = Language::create(path);
+
     const std::string contents = readFile(path);
 
     cpp17::pmr::monolithic localMR;
@@ -144,11 +148,11 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
     Tree t(mr);
 
     if (args.fine) {
-        t = Tree(contents, tb.getRoot(), &localMR);
+        t = Tree(std::move(lang), contents, tb.getRoot(), &localMR);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
                     localMR);
-        t = Tree(contents, stree.getRoot(), mr);
+        t = Tree(std::move(lang), contents, stree.getRoot(), mr);
     }
 
     return optional_t<Tree>(std::move(t));

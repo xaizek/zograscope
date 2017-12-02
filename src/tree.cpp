@@ -24,11 +24,14 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "utils/strings.hpp"
 #include "utils/trees.hpp"
+#include "Language.hpp"
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "decoration.hpp"
@@ -148,8 +151,9 @@ printNode(std::ostream &os, const Node *node)
     os << '\n';
 }
 
-Tree::Tree(const std::string &contents, const PNode *node, allocator_type al)
-    : nodes(al)
+Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
+           const PNode *node, allocator_type al)
+    : lang(std::move(lang)), nodes(al)
 {
     root = materializePNode(*this, contents, node);
 }
@@ -226,8 +230,9 @@ isLayerBreak(SType stype)
     };
 }
 
-Tree::Tree(const std::string &contents, const SNode *node, allocator_type al)
-    : nodes(al)
+Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
+           const SNode *node, allocator_type al)
+    : lang(std::move(lang)), nodes(al)
 {
     root = materializeSNode(*this, contents, node);
 }
@@ -332,7 +337,7 @@ materializePTree(const std::string &contents, const PNode *node)
 static Node *
 materializePNode(Tree &tree, const std::string &contents, const PNode *node)
 {
-    const Type type = tokenToType(node->value.token);
+    const Type type = tree.getLanguage()->mapToken(node->value.token);
 
     if (type == Type::Virtual && node->children.size() == 1U) {
         return materializePNode(tree, contents, node->children[0]);

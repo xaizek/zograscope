@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -31,6 +32,7 @@
 
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
+#include "Language.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
 #include "compare.hpp"
@@ -68,15 +70,17 @@ makeTree(const std::string &str, bool coarse)
 {
     cpp17::pmr::monolithic mr;
 
+    std::unique_ptr<Language> lang = Language::create("test-input.c");
+
     TreeBuilder tb = parse(str, "<input>", false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {
-        return Tree(str, tb.getRoot());
+        return Tree(std::move(lang), str, tb.getRoot());
     }
 
     STree stree(std::move(tb), str, false, false, mr);
-    return Tree(str, stree.getRoot());
+    return Tree(std::move(lang), str, stree.getRoot());
 }
 
 const Node *
