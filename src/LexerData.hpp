@@ -15,33 +15,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__C__LEXERDATA_HPP__
-#define ZOGRASCOPE__C__LEXERDATA_HPP__
+#ifndef ZOGRASCOPE__LEXERDATA_HPP__
+#define ZOGRASCOPE__LEXERDATA_HPP__
 
 #include <cstddef>
-#include <cstring>
 
 #include <string>
 
-#include "c/c11-parser.hpp"
+class TreeBuilder;
 
 struct LexerData
 {
     enum { tabWidth = 4 };
 
-    std::size_t offset = 0U;
-    std::size_t lineoffset = 0U;
-    std::size_t line = 1U;
-    std::size_t col = 1U;
-
-    YYSTYPE startTok = {};
-    YYLTYPE startLoc = {};
-
     TreeBuilder *tb;
-    ParseData *pd;
 
-    LexerData(const std::string &str, TreeBuilder &tb, ParseData &pd)
-        : tb(&tb), pd(&pd), next(str.data()), finish(str.data() + str.size())
+    LexerData(const std::string &str, TreeBuilder &tb)
+        : tb(&tb), next(str.data()), finish(str.data() + str.size())
     {
     }
 
@@ -52,4 +42,4 @@ private:
     const char *finish;
 };
 
-#endif // ZOGRASCOPE__C__LEXERDATA_HPP__
+#endif // ZOGRASCOPE__LEXERDATA_HPP__

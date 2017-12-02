@@ -25,7 +25,7 @@
 #include <iostream>
 #include <string>
 
-#include "c/LexerData.hpp"
+#include "c/C11LexerData.hpp"
 #include "c/c11-lexer.hpp"
 #include "TreeBuilder.hpp"
 #include "stypes.hpp"
@@ -1741,7 +1741,7 @@ c11_parse(const std::string &contents, const std::string &fileName, bool debug,
 {
     TreeBuilder tb(mr);
     ParseData pd = { fileName, false };
-    LexerData ld(contents, tb, pd);
+    C11LexerData ld(contents, tb, pd);
 
     yyscan_t scanner;
     c11_lex_init_extra(&ld, &scanner);
