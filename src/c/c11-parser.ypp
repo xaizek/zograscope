@@ -30,7 +30,7 @@
 #include "TreeBuilder.hpp"
 #include "stypes.hpp"
 
-struct ParseData
+struct C11ParseData
 {
     std::string fileName;
     bool hitError;
@@ -120,12 +120,12 @@ namespace cpp17 {
     }
 }
 
-struct ParseData;
+struct C11ParseData;
 
 TreeBuilder c11_parse(const std::string &contents, const std::string &fileName,
                       bool debug, cpp17::pmr::monolithic &mr);
 
-void c11_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, ParseData *pd,
+void c11_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
                const char s[]);
 
 }
@@ -135,7 +135,7 @@ void c11_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, ParseData *pd,
 %define parse.error verbose
 %define api.pure
 %param {void *scanner}
-%parse-param {TreeBuilder *tb} {ParseData *pd}
+%parse-param {TreeBuilder *tb} {C11ParseData *pd}
 /* %define lr.type ielr */
 %locations
 
@@ -1740,7 +1740,7 @@ c11_parse(const std::string &contents, const std::string &fileName, bool debug,
           cpp17::pmr::monolithic &mr)
 {
     TreeBuilder tb(mr);
-    ParseData pd = { fileName, false };
+    C11ParseData pd = { fileName, false };
     C11LexerData ld(contents, tb, pd);
 
     yyscan_t scanner;
@@ -1760,8 +1760,8 @@ c11_parse(const std::string &contents, const std::string &fileName, bool debug,
 }
 
 void
-c11_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/, ParseData *pd,
-          const char s[])
+c11_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
+          C11ParseData *pd, const char s[])
 {
     std::cout << pd->fileName << ':'
               << loc->first_line << ':' << loc->first_column

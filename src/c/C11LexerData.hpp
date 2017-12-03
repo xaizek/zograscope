@@ -36,9 +36,9 @@ struct C11LexerData : LexerData
     YYSTYPE startTok = {};
     YYLTYPE startLoc = {};
 
-    ParseData *pd;
+    C11ParseData *pd;
 
-    C11LexerData(const std::string &str, TreeBuilder &tb, ParseData &pd)
+    C11LexerData(const std::string &str, TreeBuilder &tb, C11ParseData &pd)
         : LexerData(str, tb), pd(&pd)
     {
     }
