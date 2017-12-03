@@ -120,8 +120,6 @@ statements
     { $$ = $1; }
     | statements statement NL
     { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | statements if_else NL
-    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 if_else
@@ -167,6 +165,7 @@ statement
     | assignment
     | function
     | rule
+    | if_else
     ;
 
 assignment

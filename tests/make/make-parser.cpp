@@ -157,4 +157,12 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
         endif
     )";
     CHECK(makeIsParsed(withoutBody_withElse));
+
+    const char *const nested = R"(
+        ifneq ($(OS),Windows_NT)
+            ifneq ($(OS),Windows_NT)
+            endif
+        endif
+    )";
+    CHECK(makeIsParsed(nested));
 }
