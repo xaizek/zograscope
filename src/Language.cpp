@@ -22,10 +22,16 @@
 #include <memory>
 #include <string>
 
+#include <boost/filesystem/path.hpp>
+
 #include "c/C11Language.hpp"
+#include "make/MakeLanguage.hpp"
 
 std::unique_ptr<Language>
-Language::create(const std::string &/* fileName */)
+Language::create(const std::string &fileName)
 {
+    if (boost::filesystem::path(fileName).filename() == "Makefile") {
+        return std::unique_ptr<MakeLanguage>(new MakeLanguage());
+    }
     return std::unique_ptr<C11Language>(new C11Language());
 }

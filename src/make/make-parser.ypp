@@ -1,0 +1,334 @@
+/* Copyright (C) 2017 xaizek <xaizek@posteo.net>
+ *
+ * This file is part of zograscope.
+ *
+ * zograscope is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * zograscope is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+%{
+
+#include "make/make-parser.hpp"
+
+#include <cstdio>
+
+#include <iostream>
+#include <string>
+
+#include "make/MakeLexerData.hpp"
+#include "make/make-lexer.hpp"
+#include "TreeBuilder.hpp"
+#include "stypes.hpp"
+
+struct MakeParseData
+{
+    const std::string &contents;
+    std::string fileName;
+    bool hitError;
+};
+
+%}
+
+%code requires
+{
+
+#include "TreeBuilder.hpp"
+#define YYLTYPE Location
+
+namespace cpp17 {
+    namespace pmr {
+        class monolithic;
+    }
+}
+
+struct MakeParseData;
+
+TreeBuilder make_parse(const std::string &contents, const std::string &fileName,
+                       bool debug, cpp17::pmr::monolithic &mr);
+
+void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
+                const char s[]);
+
+}
+
+%name-prefix "make_"
+%define parse.error verbose
+%define api.pure
+%param {void *scanner}
+%parse-param {TreeBuilder *tb} {MakeParseData *pd}
+%locations
+
+%union {
+    Text text;
+    PNode *node;
+}
+
+%token END 0 "end of file"
+%token <text> ',' ':' '(' ')'
+%token <text> COMMENT ASSIGN_OP CHAR WS NL
+%token <text> CALL_PREFIX "$("
+%token <text> IFEQ "ifeq"
+%token <text> IFNEQ "ifneq"
+%token <text> ELSE "else"
+%token <text> ENDIF "endif"
+%token <text> LEADING_TAB
+%token <text> NTOKENS
+
+%printer {
+    if ($$.len == 1U && pd->contents[$$.from] == '\n') {
+        std::fprintf(yyoutput, "<newline>");
+    } else {
+        std::fprintf(yyoutput, "%.*s", (int)$$.len, &pd->contents[$$.from]);
+    }
+} <text>
+
+%type <node> statement statements statements_opt if_else assignment
+%type <node> expressions expression expression_text expression_function
+%type <node> arguments argument
+%type <node> function
+%type <node> rule target pattern prerequisites
+%type <node> recipes recipe
+%type <node> if_else_kw function_name identifier text char_like
+
+%start makefile
+
+%%
+
+makefile
+    : statements END
+    { tb->setRoot($1); }
+    | END
+    { tb->setRoot(tb->addNode({ }, SType::TranslationUnit)); }
+    ;
+
+statements
+    : NL
+    { $$ = tb->addNode({ }, SType::Statements); }
+    | statement NL
+    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    | statements NL
+    { $$ = $1; }
+    | statements statement NL
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | statements if_else NL
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+if_else
+    : if_else_kw '(' expressions ',' expressions ')' NL statements_opt "endif"
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($8, @8),
+                         tb->addNode($9, @9, SType::Separator) },
+                       SType::IfStmt); }
+    | if_else_kw '(' expressions ',' expressions ')' NL statements_opt
+      "else" NL statements_opt "endif"
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($8, @8),
+                         tb->addNode($9, @9, SType::Separator),
+                         tb->addNode($11, @11),
+                         tb->addNode($12, @12, SType::Separator) },
+                       SType::IfStmt); }
+    ;
+
+statements_opt
+    : %empty      { $$ = tb->addNode({ }, SType::Statements); }
+    | statements
+    ;
+
+if_else_kw
+    : "ifeq"
+    { $$ = tb->addNode($1, @1, SType::Separator); }
+    | "ifneq"
+    { $$ = tb->addNode($1, @1, SType::Separator); }
+    ;
+
+statement
+    : COMMENT     { $$ = tb->addNode($1, @1, SType::Comment); }
+    | assignment
+    | function
+    | rule
+    ;
+
+assignment
+    : identifier ASSIGN_OP
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator) },
+                       SType::AssignmentExpr); }
+    | identifier ASSIGN_OP expressions
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3) },
+                       SType::AssignmentExpr); }
+    ;
+
+expressions
+    : expression
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expressions WS expression
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
+expression
+    : expression_text
+    | expression_function
+    ;
+
+expression_text
+    : text
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_function text
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+expression_function
+    : function
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_text function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+function
+    : "$(" function_name ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::CallExpr); }
+    | "$(" function_name WS arguments ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::CallExpr); }
+    ;
+
+function_name
+    : identifier
+    ;
+
+arguments
+    : argument
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Argument) },
+                       SType::ArgumentList); }
+    | arguments ',' argument
+    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+                            tb->addNode($3, @3, SType::Argument) }); }
+    ;
+
+argument
+    : expressions
+    ;
+
+rule
+    : target ':' prerequisites
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3) },
+                       SType::LabelStmt); }
+    | target ':' prerequisites recipes
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4) },
+                       SType::LabelStmt); }
+    ;
+
+target
+    : pattern
+    ;
+
+pattern
+    : identifier
+    ;
+
+prerequisites
+    : target
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | prerequisites WS target
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
+recipes
+    : recipe
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | recipes recipe
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+recipe
+    : LEADING_TAB expressions
+    { $$ = $2; }
+
+identifier
+    : CHAR
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | identifier CHAR
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+text
+    : char_like
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | text char_like
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+char_like
+    : CHAR       { $$ = tb->addNode($1, @1); }
+    | ASSIGN_OP  { $$ = tb->addNode($1, @1, 0); }
+    | ':'        { $$ = tb->addNode($1, @1, 0); }
+    ;
+
+%%
+
+TreeBuilder
+make_parse(const std::string &contents, const std::string &fileName, bool debug,
+           cpp17::pmr::monolithic &mr)
+{
+    TreeBuilder tb(mr);
+    MakeParseData pd { contents, fileName, false };
+    MakeLexerData ld(contents, tb, pd);
+
+    yyscan_t scanner;
+    make_lex_init_extra(&ld, &scanner);
+#if YYDEBUG
+    make_debug = debug;
+    make_set_debug(debug, scanner);
+#endif
+
+    const bool failed = (yyparse(scanner, &tb, &pd) != 0);
+    tb.finish(failed || pd.hitError);
+
+    make_lex_destroy(scanner);
+
+    return tb;
+}
+
+void
+make_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
+           MakeParseData *pd, const char s[])
+{
+    std::cout << pd->fileName << ':'
+              << loc->first_line << ':' << loc->first_column
+              << ": parse error: " << s << std::endl;
+    pd->hitError = true;
+}

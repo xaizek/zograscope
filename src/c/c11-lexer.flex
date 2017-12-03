@@ -472,7 +472,7 @@ reportError(YYLTYPE *loc, const char text[], std::size_t len,
 }
 
 void
-fakeYYunputUse()
+fakeYYunputUseC11()
 {
     // This is needed to prevent compilation error on -Werror=unused.
     static_cast<void>(&yyunput);

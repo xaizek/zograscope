@@ -66,6 +66,12 @@ cIsParsed(const std::string &str)
     return isParsed("test-input.c", str);
 }
 
+bool
+makeIsParsed(const std::string &str)
+{
+    return isParsed("Makefile", str);
+}
+
 // Checks whether source can be parsed or not.
 static bool
 isParsed(const std::string &fileName, const std::string &str)
@@ -79,6 +85,12 @@ Tree
 parseC(const std::string &str, bool coarse)
 {
     return parse("test-input.c", str, coarse);
+}
+
+Tree
+parseMake(const std::string &str)
+{
+    return parse("Makefile", str, true);
 }
 
 // Parses source into a tree.
