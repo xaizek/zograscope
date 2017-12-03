@@ -28,8 +28,8 @@
 
 TEST_CASE("Function specifiers are detected as such", "[comparison][parsing]")
 {
-    Tree oldTree = makeTree("TYPEMACRO void f();", true);
-    Tree newTree = makeTree("void f();", true);
+    Tree oldTree = parseC("TYPEMACRO void f();", true);
+    Tree newTree = parseC("void f();", true);
 
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
@@ -189,14 +189,14 @@ TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Node type is propagated", "[comparison][parsing]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void func()
         {
             /* Comment. */
             return;
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void func()
         {
             char array[1];
@@ -219,10 +219,10 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
 
 TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         int var;
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         // Comment.
         int var;
     )", true);
@@ -242,7 +242,7 @@ TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
 TEST_CASE("Compound statement doesn't unite statements",
           "[comparison][parsing]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f() {
             if(condition1) {
                 if(condition2) {
@@ -250,7 +250,7 @@ TEST_CASE("Compound statement doesn't unite statements",
             }
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void f() {
             if(condition1) {
                 // comment
@@ -275,12 +275,12 @@ TEST_CASE("Compound statement doesn't unite statements",
 TEST_CASE("Declarations differ by whether they have initializers",
           "[comparison][parsing]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f() {
             int a = {};
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void f() {
             int a;
         }

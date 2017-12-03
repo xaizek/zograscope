@@ -50,12 +50,12 @@ TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
 
 TEST_CASE("Different trees are recognized as different", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         aggregate var = {
             { .field = 1 },
         };
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         aggregate var = {
             { .field = 2 },
         };
@@ -142,7 +142,7 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
 
 TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f()
         {
             column_data_t cdt = {
@@ -154,7 +154,7 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
             cdt.column_offset = 1;
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void f()
         {
             const column_data_t cdt = {
@@ -391,13 +391,13 @@ TEST_CASE("Unmoved statement is detected as such", "[comparison][moves]")
 
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         // Comment.
         struct s {
             gid_t gid;
         };
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         // Comment.
         struct s {
             id_t gid;
@@ -1348,7 +1348,7 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
 {
     // Internal node containing `default:` was marked as updated.
 
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f() {
             switch (v) {
                 default:
@@ -1359,7 +1359,7 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
             }
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void f() {
             switch (v) {
                 case 1:
@@ -1579,10 +1579,10 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
 
 TEST_CASE("Refining works for fine trees", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         format_str("...%s", str);
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         format_str("%s%s", ell, str);
     )");
 

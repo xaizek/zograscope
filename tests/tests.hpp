@@ -76,7 +76,8 @@ private:
 // Checks whether C source can be parsed or not.
 bool cIsParsed(const std::string &str);
 
-Tree makeTree(const std::string &str, bool coarse = false);
+// Parses C source into a tree.
+Tree parseC(const std::string &str, bool coarse = false);
 
 const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});

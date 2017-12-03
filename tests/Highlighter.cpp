@@ -31,7 +31,7 @@ TEST_CASE("Multiline tokens don't mess up positioning", "[highlighter]")
         /* line1
          * line2 */  /* this */)";
 
-    Tree tree = makeTree(input);
+    Tree tree = parseC(input);
 
     std::string output = Highlighter(*tree.getRoot()).print();
     CHECK(split(output, '\n') == split(input, '\n'));
@@ -39,7 +39,7 @@ TEST_CASE("Multiline tokens don't mess up positioning", "[highlighter]")
 
 TEST_CASE("Ranges are printed correctly", "[highlighter]")
 {
-    Tree tree = makeTree(
+    Tree tree = parseC(
 R"(/* line1
 
  * line3 */

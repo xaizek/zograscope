@@ -41,7 +41,7 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
     CHECK(cIsParsed("      "));
     CHECK(cIsParsed("\t\n \t \n"));
 
-    Tree tree = makeTree("");
+    Tree tree = parseC("");
     CHECK(tree.getRoot()->stype == SType::TranslationUnit);
 }
 
@@ -49,12 +49,12 @@ TEST_CASE("Missing final newline is added", "[parser][extensions]")
 {
     Tree tree;
 
-    tree = makeTree("\n// Comment");
+    tree = parseC("\n// Comment");
     CHECK(findNode(tree, Type::Comments, "// Comment") != nullptr);
 
     // Parsing such line second time messed up state of the lexer and caused
     // attempt to allocate (size_t)-1 bytes.
-    tree = makeTree("\n// Comment");
+    tree = parseC("\n// Comment");
     CHECK(findNode(tree, Type::Comments, "// Comment") != nullptr);
 }
 
@@ -101,7 +101,7 @@ TEST_CASE("Conversion is not ambiguous", "[parser][conflicts]")
 TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
           "[parser][postponed][conflicts]")
 {
-    Tree tree = makeTree(R"(
+    Tree tree = parseC(R"(
         struct s {
             // Comment1
             int b : 1; // Comment2
@@ -113,7 +113,7 @@ TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
 
 TEST_CASE("sizeof() expr is resolved to a builtin type", "[parser][conflicts]")
 {
-    Tree tree = makeTree(R"(
+    Tree tree = parseC(R"(
         void f() {
             sizeof(int);
         }
@@ -125,7 +125,7 @@ TEST_CASE("sizeof() expr is resolved to a builtin type", "[parser][conflicts]")
 TEST_CASE("sizeof() is resolved to expression by default",
           "[parser][conflicts]")
 {
-    Tree tree = makeTree(R"(
+    Tree tree = parseC(R"(
         void f() {
             sizeof(var);
         }
@@ -137,7 +137,7 @@ TEST_CASE("sizeof() is resolved to expression by default",
 TEST_CASE("Declaration/statement conflict is resolved as expected",
           "[parser][conflicts]")
 {
-    Tree tree = makeTree(R"(
+    Tree tree = parseC(R"(
         void f() {
             stmt;
             userType var;
@@ -167,7 +167,7 @@ TEST_CASE("Multi-line string literals are parsed", "[parser]")
 TEST_CASE("Postponed nodes before string literals are preserved",
           "[parser][postponed]")
 {
-    Tree tree = makeTree(R"(
+    Tree tree = parseC(R"(
         const char *str = /*str*/ "";
     )");
 
@@ -177,7 +177,7 @@ TEST_CASE("Postponed nodes before string literals are preserved",
 TEST_CASE("Postponed nodes between string literals are preserved",
           "[parser][postponed]")
 {
-    Tree tree = makeTree(R"(
+    Tree tree = parseC(R"(
         const char *str = "" /*str*/ "";
     )");
 
@@ -273,19 +273,19 @@ TEST_CASE("asm volatile directive", "[parser]")
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
           "[parser][conflicts]")
 {
-    Tree tree = makeTree("struct s { int b : 1; };");
+    Tree tree = parseC("struct s { int b : 1; };");
     CHECK(findNode(tree, Type::Identifiers, "b") != nullptr);
 }
 
 TEST_CASE("Single comment adds just one node to the tree",
           "[parser][postponed]")
 {
-    Tree withoutComment = makeTree(R"(
+    Tree withoutComment = parseC(R"(
         void f()
         {
         }
     )");
-    Tree withComment = makeTree(R"(
+    Tree withComment = parseC(R"(
         // Comment
         void f()
         {
@@ -331,7 +331,7 @@ TEST_CASE("Single argument in parameter list is recognized as type",
 {
     // This should be a macro, because parameters must be named, but that's not
     // that important.
-    Tree tree = makeTree("void f(C) { }");
+    Tree tree = parseC("void f(C) { }");
     CHECK(findNode(tree, Type::Functions, "f") != nullptr);
     CHECK(findNode(tree, Type::UserTypes, "C") != nullptr);
 }
@@ -340,12 +340,12 @@ TEST_CASE("Single argument function declarations", "[parser][extensions]")
 {
     Tree tree;
 
-    tree = makeTree("void func(type **arg);");
+    tree = parseC("void func(type **arg);");
     CHECK(findNode(tree, Type::Functions, "func") != nullptr);
     CHECK(findNode(tree, Type::UserTypes, "type") != nullptr);
     CHECK(findNode(tree, Type::Identifiers, "arg") != nullptr);
 
-    tree = makeTree("void func(const type *arg UNUSED);");
+    tree = parseC("void func(const type *arg UNUSED);");
     CHECK(findNode(tree, Type::Functions, "func") != nullptr);
     CHECK(findNode(tree, Type::UserTypes, "type") != nullptr);
     CHECK(findNode(tree, Type::Identifiers, "arg") != nullptr);
@@ -357,13 +357,13 @@ TEST_CASE("Function name token is identified when followed with whitespace",
 {
     Tree tree;
 
-    tree = makeTree("void f();");
+    tree = parseC("void f();");
     CHECK(findNode(tree, Type::Functions, "f") != nullptr);
 
-    tree = makeTree("void f ();");
+    tree = parseC("void f ();");
     CHECK(findNode(tree, Type::Functions, "f") != nullptr);
 
-    tree = makeTree("void f\n();");
+    tree = parseC("void f\n();");
     CHECK(findNode(tree, Type::Functions, "f") != nullptr);
 }
 
@@ -398,13 +398,13 @@ TEST_CASE("Comments don't affect resolution of declaration/statement conflict",
 {
     Tree tree;
 
-    tree = makeTree("void f() { thisIsStatement; }");
+    tree = parseC("void f() { thisIsStatement; }");
     CHECK(findNode(tree, Type::Identifiers, "thisIsStatement") != nullptr);
 
-    tree = makeTree("void f() { /* comment */ thisIsStatement; }");
+    tree = parseC("void f() { /* comment */ thisIsStatement; }");
     CHECK(findNode(tree, Type::Identifiers, "thisIsStatement") != nullptr);
 
-    tree = makeTree(R"(
+    tree = parseC(R"(
         void f() {
         #include "file.h"
             thisIsStatement;
@@ -416,13 +416,13 @@ TEST_CASE("Comments don't affect resolution of declaration/statement conflict",
 TEST_CASE("Single-parameter macro at global scope",
           "[parser][conflicts][extensions]")
 {
-    Tree tree = makeTree("DECLARE(rename_inside_subdir_ok);");
+    Tree tree = parseC("DECLARE(rename_inside_subdir_ok);");
     CHECK(findNode(tree, Type::Functions, "DECLARE") != nullptr);
 }
 
 TEST_CASE("Multiple type specifiers inside structures", "[parser]")
 {
-    Tree tree = makeTree("struct name { unsigned int field; };", true);
+    Tree tree = parseC("struct name { unsigned int field; };", true);
     CHECK(findNode(tree, Type::Virtual, "unsignedintfield;") != nullptr);
 }
 

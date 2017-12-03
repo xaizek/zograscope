@@ -66,7 +66,7 @@ cIsParsed(const std::string &str)
 }
 
 Tree
-makeTree(const std::string &str, bool coarse)
+parseC(const std::string &str, bool coarse)
 {
     cpp17::pmr::monolithic mr;
 
@@ -168,8 +168,8 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine)
     std::tie(cleanedLeft, expectedOld) = extractExpectations(left);
     std::tie(cleanedRight, expectedNew) = extractExpectations(right);
 
-    Tree oldTree = makeTree(cleanedLeft, true);
-    Tree newTree = makeTree(cleanedRight, true);
+    Tree oldTree = parseC(cleanedLeft, true);
+    Tree newTree = parseC(cleanedRight, true);
 
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
@@ -186,8 +186,8 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine)
     }
 
     if (needPrint) {
-        Tree oldTree = makeTree(left, true);
-        Tree newTree = makeTree(right, true);
+        Tree oldTree = parseC(left, true);
+        Tree newTree = parseC(right, true);
 
         compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
 
