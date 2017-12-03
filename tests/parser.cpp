@@ -37,9 +37,9 @@ static int countNodes(const Node &root);
 
 TEST_CASE("Empty input is OK", "[parser][extensions]")
 {
-    CHECK(parsed(""));
-    CHECK(parsed("      "));
-    CHECK(parsed("\t\n \t \n"));
+    CHECK(cIsParsed(""));
+    CHECK(cIsParsed("      "));
+    CHECK(cIsParsed("\t\n \t \n"));
 
     Tree tree = makeTree("");
     CHECK(tree.getRoot()->stype == SType::TranslationUnit);
@@ -60,42 +60,42 @@ TEST_CASE("Missing final newline is added", "[parser][extensions]")
 
 TEST_CASE("Non-UNIX EOLs are allowed", "[parser]")
 {
-    CHECK(parsed("int\r\na\r;\n"));
+    CHECK(cIsParsed("int\r\na\r;\n"));
 }
 
 TEST_CASE("Error message counts tabulation as single character", "[parser]")
 {
     StreamCapture coutCapture(std::cout);
-    CHECK_FALSE(parsed("\t\x01;"));
+    CHECK_FALSE(cIsParsed("\t\x01;"));
     REQUIRE(boost::starts_with(coutCapture.get(), "<input>:1:2:"));
 }
 
 TEST_CASE("Top-level macros are parsed successfully", "[parser][extensions]")
 {
-    CHECK(parsed("TSTATIC_DEFS(int func(type *var);)"));
-    CHECK(parsed("ARRAY_GUARD(sort_enum, 1 + SK_COUNT);"));
-    CHECK(parsed("XX(state_t) st;"));
-    CHECK(parsed("MACRO();"));
+    CHECK(cIsParsed("TSTATIC_DEFS(int func(type *var);)"));
+    CHECK(cIsParsed("ARRAY_GUARD(sort_enum, 1 + SK_COUNT);"));
+    CHECK(cIsParsed("XX(state_t) st;"));
+    CHECK(cIsParsed("MACRO();"));
 }
 
 TEST_CASE("Empty initializer list is parsed", "[parser][extensions]")
 {
-    CHECK(parsed("args_t args = {};"));
+    CHECK(cIsParsed("args_t args = {};"));
 }
 
 TEST_CASE("Bit field is parsed", "[parser][conflicts]")
 {
-    CHECK(parsed("struct s { unsigned int stuff : 1; };"));
+    CHECK(cIsParsed("struct s { unsigned int stuff : 1; };"));
 }
 
 TEST_CASE("Conversion is not ambiguous", "[parser][conflicts]")
 {
-    CHECK(parsed("void f() { if ((size_t)*nlines == 1); }"));
-    CHECK(parsed("int a = (type)&a;"));
-    CHECK(parsed("int a = (type)*a;"));
-    CHECK(parsed("int a = (type)+a;"));
-    CHECK(parsed("int a = (type)-a;"));
-    CHECK(parsed("int a = (type)~a;"));
+    CHECK(cIsParsed("void f() { if ((size_t)*nlines == 1); }"));
+    CHECK(cIsParsed("int a = (type)&a;"));
+    CHECK(cIsParsed("int a = (type)*a;"));
+    CHECK(cIsParsed("int a = (type)+a;"));
+    CHECK(cIsParsed("int a = (type)-a;"));
+    CHECK(cIsParsed("int a = (type)~a;"));
 }
 
 TEST_CASE("Postponed nodes aren't lost on conflict resolution via merging",
@@ -161,7 +161,7 @@ TEST_CASE("Multi-line string literals are parsed", "[parser]")
         ";
     )";
 
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Postponed nodes before string literals are preserved",
@@ -192,7 +192,7 @@ TEST_CASE("Escaping of newline isn't rejected", "[parser]")
             a;
     )";
 
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Macros without args after function declaration are parsed",
@@ -200,41 +200,41 @@ TEST_CASE("Macros without args after function declaration are parsed",
 {
     const char *const str =
         "char * format(const char fmt[], ...) _gnuc_printf;";
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Macros with args after function declaration are parsed", "[parser]")
 {
     const char *const str =
         "char * format(const char fmt[], ...) _gnuc_printf(1, 2);";
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Function pointers returning user-defined types", "[parser]")
 {
-    CHECK(parsed("typedef wint_t (*f)(int);"));
+    CHECK(cIsParsed("typedef wint_t (*f)(int);"));
 }
 
 TEST_CASE("Attributes in typedef", "[parser]")
 {
     const char *const str =
         "typedef union { int a, b; } __attribute__((packed)) u;";
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Extra braces around call", "[parser][conflict]")
 {
-    CHECK(parsed("int x = (U64)(func(a)) * b;"));
+    CHECK(cIsParsed("int x = (U64)(func(a)) * b;"));
 }
 
 TEST_CASE("Types in macro arguments", "[parser][conflict]")
 {
-    CHECK(parsed("int x = va_arg(ap, int);"));
+    CHECK(cIsParsed("int x = va_arg(ap, int);"));
 }
 
 TEST_CASE("Macro definition of function declaration", "[parser]")
 {
-    CHECK(parsed("int DECL(func, (int arg), stuff);"));
+    CHECK(cIsParsed("int DECL(func, (int arg), stuff);"));
 }
 
 TEST_CASE("asm directive", "[parser]")
@@ -245,7 +245,7 @@ TEST_CASE("asm directive", "[parser]")
         }
     )";
 
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("extern C", "[parser]")
@@ -256,7 +256,7 @@ TEST_CASE("extern C", "[parser]")
         }
     )";
 
-    CHECK(parsed(R"(extern "C" { void f(); })"));
+    CHECK(cIsParsed(R"(extern "C" { void f(); })"));
 }
 
 TEST_CASE("asm volatile directive", "[parser]")
@@ -267,7 +267,7 @@ TEST_CASE("asm volatile directive", "[parser]")
         }
     )";
 
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
@@ -297,33 +297,33 @@ TEST_CASE("Single comment adds just one node to the tree",
 
 TEST_CASE("Floating point suffix isn't parsed standalone", "[parser]")
 {
-    CHECK(parsed("float a = p+0;"));
-    CHECK(parsed("float a = p+0.5;"));
-    CHECK(parsed("double a = p+0;"));
-    CHECK(parsed("double a = p-0.1;"));
+    CHECK(cIsParsed("float a = p+0;"));
+    CHECK(cIsParsed("float a = p+0.5;"));
+    CHECK(cIsParsed("double a = p+0;"));
+    CHECK(cIsParsed("double a = p-0.1;"));
 }
 
 TEST_CASE("All forms of struct/union declarations are recognized", "[parser]")
 {
-    CHECK(parsed("struct { };"));
-    CHECK(parsed("struct name { };"));
-    CHECK(parsed("struct name;"));
-    CHECK(parsed("union { };"));
-    CHECK(parsed("union name { };"));
-    CHECK(parsed("union name;"));
+    CHECK(cIsParsed("struct { };"));
+    CHECK(cIsParsed("struct name { };"));
+    CHECK(cIsParsed("struct name;"));
+    CHECK(cIsParsed("union { };"));
+    CHECK(cIsParsed("union name { };"));
+    CHECK(cIsParsed("union name;"));
 }
 
 TEST_CASE("Parameter declaration can be followed by a macro",
           "[parser][extensions]")
 {
-    CHECK(parsed("void f(char *name attr);"));
+    CHECK(cIsParsed("void f(char *name attr);"));
 }
 
 TEST_CASE("Function pointer can have its type modifiers",
           "[parser][conflicts][extensions]")
 {
-    CHECK(parsed("int a = (LONG (WINAPI *)(HKEY))GPA();"));
-    CHECK(parsed("void (_cdecl *fptr)();"));
+    CHECK(cIsParsed("int a = (LONG (WINAPI *)(HKEY))GPA();"));
+    CHECK(cIsParsed("void (_cdecl *fptr)();"));
 }
 
 TEST_CASE("Single argument in parameter list is recognized as type",
@@ -390,7 +390,7 @@ TEST_CASE("Control-flow macros are allowed", "[parser][extensions]")
         }
     )";
 
-    CHECK(parsed(str));
+    CHECK(cIsParsed(str));
 }
 
 TEST_CASE("Comments don't affect resolution of declaration/statement conflict",

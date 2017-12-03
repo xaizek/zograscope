@@ -73,7 +73,8 @@ private:
     std::streambuf *rdbuf;  //!< Original output buffer of the stream.
 };
 
-bool parsed(const std::string &str);
+// Checks whether C source can be parsed or not.
+bool cIsParsed(const std::string &str);
 
 Tree makeTree(const std::string &str, bool coarse = false);
 

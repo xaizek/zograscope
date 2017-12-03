@@ -58,7 +58,7 @@ static std::vector<Changes> makeChangeMap(Node &root);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
 
 bool
-parsed(const std::string &str)
+cIsParsed(const std::string &str)
 {
     std::unique_ptr<Language> lang = Language::create("test-input.c");
     cpp17::pmr::monolithic mr;
