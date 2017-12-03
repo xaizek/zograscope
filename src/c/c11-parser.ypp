@@ -1746,6 +1746,7 @@ c11_parse(const std::string &contents, const std::string &fileName, bool debug,
     yyscan_t scanner;
     c11_lex_init_extra(&ld, &scanner);
 #if YYDEBUG
+    c11_debug = debug;
     c11_set_debug(debug, scanner);
 #endif
 
