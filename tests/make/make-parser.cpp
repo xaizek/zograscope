@@ -166,3 +166,8 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
     )";
     CHECK(makeIsParsed(nested));
 }
+
+TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
+{
+    CHECK(makeIsParsed("lib_objects := $(lib_sources:%.cpp=$(out_dir)/%.o)"));
+}
