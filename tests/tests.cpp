@@ -50,6 +50,9 @@ enum class Changes
     Mixed,
 };
 
+static bool isParsed(const std::string &fileName, const std::string &str);
+static Tree parse(const std::string &fileName, const std::string &str,
+                  bool coarse);
 static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
@@ -60,17 +63,30 @@ static std::ostream & operator<<(std::ostream &os, Changes changes);
 bool
 cIsParsed(const std::string &str)
 {
-    std::unique_ptr<Language> lang = Language::create("test-input.c");
+    return isParsed("test-input.c", str);
+}
+
+// Checks whether source can be parsed or not.
+static bool
+isParsed(const std::string &fileName, const std::string &str)
+{
     cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create(fileName);
     return !lang->parse(str, "<input>", false, mr).hasFailed();
 }
 
 Tree
 parseC(const std::string &str, bool coarse)
 {
-    cpp17::pmr::monolithic mr;
+    return parse("test-input.c", str, coarse);
+}
 
-    std::unique_ptr<Language> lang = Language::create("test-input.c");
+// Parses source into a tree.
+static Tree
+parse(const std::string &fileName, const std::string &str, bool coarse)
+{
+    cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create(fileName);
 
     TreeBuilder tb = lang->parse(str, "<input>", false, mr);
     REQUIRE_FALSE(tb.hasFailed());
