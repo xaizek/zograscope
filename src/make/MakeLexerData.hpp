@@ -38,6 +38,7 @@ struct MakeLexerData : LexerData
 
     std::size_t lastCharOffset = static_cast<std::size_t>(-1);
     int contiguousChars = 0;
+    int callNesting = 0;
 
     MakeParseData *pd;
 

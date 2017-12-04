@@ -77,6 +77,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> ',' ':' '(' ')'
 %token <text> COMMENT ASSIGN_OP CHARS WS NL
 %token <text> CALL_PREFIX "$("
+%token <text> CALL_SUFFIX ")"
 %token <text> IFEQ "ifeq"
 %token <text> IFNEQ "ifneq"
 %token <text> ELSE "else"
@@ -101,7 +102,10 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> function
 %type <node> rule target pattern targets
 %type <node> recipes recipe
-%type <node> if_else_kw function_name identifier text char_like
+%type <node> if_else_kw function_name identifier text char
+
+%type <node> expressions_v expression_v expression_text_v expression_function_v
+%type <node> text_v char_v
 
 %start makefile
 
@@ -186,7 +190,7 @@ assignment
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator) },
                        SType::AssignmentExpr); }
-    | identifier ASSIGN_OP expressions
+    | identifier ASSIGN_OP expressions_v
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
@@ -200,15 +204,34 @@ expressions
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
+expressions_v
+    : expression_v
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expressions_v WS expression_v
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
 expression
     : expression_text
     | expression_function
+    ;
+
+expression_v
+    : expression_text_v
+    | expression_function_v
     ;
 
 expression_text
     : text
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     | expression_function text
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+expression_text_v
+    : text_v
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_function_v text_v
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -219,26 +242,33 @@ expression_function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
+expression_function_v
+    : function
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_text_v function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
 function
-    : "$(" function_name ')'
+    : "$(" function_name ")"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator) },
                        SType::CallExpr); }
-    | "$(" function_name WS arguments ')'
+    | "$(" function_name WS arguments ")"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, SType::Separator) },
                        SType::CallExpr); }
-    | "$(" function_name ',' arguments ')'
+    | "$(" function_name ',' arguments ")"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5, SType::Separator) },
                        SType::CallExpr); }
-    | "$(" function_name ':' expressions ')'
+    | "$(" function_name ':' expressions ")"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator),
@@ -321,7 +351,7 @@ recipes
     ;
 
 recipe
-    : LEADING_TAB expressions
+    : LEADING_TAB expressions_v
     { $$ = $2; }
 
 identifier
@@ -332,16 +362,29 @@ identifier
     ;
 
 text
-    : char_like
+    : char
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
-    | text char_like
+    | text char
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-char_like
+text_v
+    : char_v
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | text_v char_v
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+char
     : CHARS      { $$ = tb->addNode($1, @1); }
     | ASSIGN_OP  { $$ = tb->addNode($1, @1, 0); }
     | ':'        { $$ = tb->addNode($1, @1, 0); }
+    ;
+
+char_v
+    : char
+    | '('        { $$ = tb->addNode($1, @1, 0); }
+    | ')'        { $$ = tb->addNode($1, @1, 0); }
     ;
 
 %%

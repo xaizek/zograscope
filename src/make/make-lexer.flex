@@ -55,7 +55,7 @@
         if ((t) != WS) { \
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
-        if ((t) == CHARS || (t) == ')') { \
+        if ((t) == CHARS || (t) == CALL_SUFFIX) { \
             ++yyextra->contiguousChars; \
         } else { \
             yyextra->contiguousChars = 0; \
@@ -139,10 +139,17 @@ NL                      \n|\r|\r\n
         TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
+    ++yyextra->callNesting;
     TOKEN(CALL_PREFIX);
 }
 "("                            TOKEN('(');
-")"                            TOKEN(')');
+")" {
+    if (yyextra->callNesting == 0) {
+        TOKEN(')');
+    }
+    --yyextra->callNesting;
+    TOKEN(CALL_SUFFIX);
+}
 ","                            TOKEN(',');
 ":"                            TOKEN(':');
 .|[-a-zA-Z0-9_]+ {

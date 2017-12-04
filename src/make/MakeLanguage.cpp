@@ -25,6 +25,7 @@ MakeLanguage::MakeLanguage() : map()
     map[COMMENT] = Type::Comments;
     map[ASSIGN_OP] = Type::Assignments;
     map[CALL_PREFIX] = Type::LeftBrackets;
+    map[CALL_SUFFIX] = Type::LeftBrackets;
     map['('] = Type::LeftBrackets;
     map[')'] = Type::RightBrackets;
     map[':'] = Type::Operators;

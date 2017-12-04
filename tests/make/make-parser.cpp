@@ -138,6 +138,12 @@ target: prereq
 	second recipe
     )";
     CHECK(makeIsParsed(multipleLines));
+
+    const char *const withParens = R"(
+target: prereq
+	(echo something)
+    )";
+    CHECK(makeIsParsed(withParens ));
 }
 
 TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
