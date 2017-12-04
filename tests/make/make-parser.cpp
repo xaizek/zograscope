@@ -111,6 +111,9 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("target : prereq"));
         CHECK(makeIsParsed("target :prereq"));
     }
+    SECTION("No prerequisites") {
+        CHECK(makeIsParsed("target:"));
+    }
     SECTION("Multiple prerequisites") {
         CHECK(makeIsParsed("target: prereq1 prereq2"));
     }
