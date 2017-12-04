@@ -114,6 +114,9 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
     SECTION("Multiple prerequisites") {
         CHECK(makeIsParsed("target: prereq1 prereq2"));
     }
+    SECTION("Multiple targets") {
+        CHECK(makeIsParsed("debug release sanitize-basic: all"));
+    }
     SECTION("Expressions in prerequisites and targets") {
         CHECK(makeIsParsed("target: $(dependencies)"));
         CHECK(makeIsParsed("$(target): dependencies"));

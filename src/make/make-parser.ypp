@@ -99,7 +99,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> pattern_text pattern_function
 %type <node> arguments argument
 %type <node> function
-%type <node> rule target pattern prerequisites
+%type <node> rule target pattern targets
 %type <node> recipes recipe
 %type <node> if_else_kw function_name identifier text char_like
 
@@ -270,12 +270,12 @@ argument
     ;
 
 rule
-    : target ':' prerequisites
+    : targets ':' targets
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
                        SType::LabelStmt); }
-    | target ':' prerequisites recipes
+    | targets ':' targets recipes
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -306,10 +306,10 @@ pattern_function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-prerequisites
+targets
     : target
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
-    | prerequisites WS target
+    | targets WS target
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
