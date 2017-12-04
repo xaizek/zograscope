@@ -183,6 +183,20 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed(noSuffix));
 }
 
+TEST_CASE("Line escaping works in a Makefile", "[make][parser]")
+{
+    const char *const multiline = R"(
+        pos = $(strip $(eval T := ) \
+                      $(eval i := -1) \
+                      $(foreach elem, $1, \
+                                $(if $(filter $2,$(elem)), \
+                                              $(eval i := $(words $T)), \
+                                              $(eval T := $T $(elem)))) \
+                      $i)
+    )";
+    CHECK(makeIsParsed(multiline));
+}
+
 TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
 {
     CHECK(makeIsParsed("lib_objects := $(lib_sources:%.cpp=$(out_dir)/%.o)"));

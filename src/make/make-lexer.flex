@@ -52,7 +52,9 @@
 
 #define TOKEN(t) \
     do { \
-        yyextra->tb->markWithPostponed(yylval->text); \
+        if ((t) != WS) { \
+            yyextra->tb->markWithPostponed(yylval->text); \
+        } \
         if ((t) == CHAR || (t) == ')') { \
             ++yyextra->contiguousChars; \
         } else { \
@@ -92,12 +94,12 @@ NL                      \n|\r|\r\n
     ADVANCE_LINE();
     TOKEN(NL);
 }
- /* \\{NL} { */
- /*     yylval->text.len = 1; */
- /*     yylloc->last_column = yylloc->first_column + 1; */
- /*     yyextra->tb->addPostponed(yylval->text, *yylloc, SType::LineGlue); */
- /*     ADVANCE_LINE(); */
- /* } */
+\\{NL} {
+    yylval->text.len = 1;
+    yylloc->last_column = yylloc->first_column + 1;
+    yyextra->tb->addPostponed(yylval->text, *yylloc, SType::LineGlue);
+    ADVANCE_LINE();
+}
 
 # {
     yyextra->startTok = *yylval;
