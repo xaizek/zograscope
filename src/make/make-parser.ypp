@@ -75,7 +75,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %token END 0 "end of file"
 %token <text> ',' ':' '(' ')'
-%token <text> COMMENT ASSIGN_OP CHAR WS NL
+%token <text> COMMENT ASSIGN_OP CHARS WS NL
 %token <text> CALL_PREFIX "$("
 %token <text> IFEQ "ifeq"
 %token <text> IFNEQ "ifneq"
@@ -325,9 +325,9 @@ recipe
     { $$ = $2; }
 
 identifier
-    : CHAR
+    : CHARS
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
-    | identifier CHAR
+    | identifier CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -339,7 +339,7 @@ text
     ;
 
 char_like
-    : CHAR       { $$ = tb->addNode($1, @1); }
+    : CHARS      { $$ = tb->addNode($1, @1); }
     | ASSIGN_OP  { $$ = tb->addNode($1, @1, 0); }
     | ':'        { $$ = tb->addNode($1, @1, 0); }
     ;

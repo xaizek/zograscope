@@ -212,3 +212,8 @@ TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
 {
     CHECK(makeIsParsed("lib_objects := $(lib_sources:%.cpp=$(out_dir)/%.o)"));
 }
+
+TEST_CASE("Makefile keywords are not found inside text/ids", "[make][parser]")
+{
+    CHECK(makeIsParsed("EXTRA_CXXFLAGS += -fsanitize=undefined"));
+}

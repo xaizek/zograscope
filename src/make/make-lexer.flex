@@ -55,7 +55,7 @@
         if ((t) != WS) { \
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
-        if ((t) == CHAR || (t) == ')') { \
+        if ((t) == CHARS || (t) == ')') { \
             ++yyextra->contiguousChars; \
         } else { \
             yyextra->contiguousChars = 0; \
@@ -131,32 +131,30 @@ NL                      \n|\r|\r\n
 
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$(" {
-    if (yylval->text.from != yyextra->lastCharOffset + 1U &&
+    if (yylval->text.from != yyextra->lastCharOffset &&
         yyextra->contiguousChars != 0) {
-        yyextra->lastCharOffset = yylval->text.from - 1U;
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
         TOKEN(WS);
     }
-    yyextra->lastCharOffset = yylval->text.from;
+    yyextra->lastCharOffset = yyextra->offset;
     TOKEN(CALL_PREFIX);
 }
 "("                            TOKEN('(');
 ")"                            TOKEN(')');
 ","                            TOKEN(',');
 ":"                            TOKEN(':');
-. {
-    if (yylval->text.from != yyextra->lastCharOffset + 1U &&
+.|[-a-zA-Z0-9_]+ {
+    if (yylval->text.from != yyextra->lastCharOffset &&
         yyextra->contiguousChars != 0) {
-        yyextra->lastCharOffset = yylval->text.from - 1U;
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
         TOKEN(WS);
     }
-    yyextra->lastCharOffset = yylval->text.from;
-    TOKEN(CHAR);
+    yyextra->lastCharOffset = yyextra->offset;
+    TOKEN(CHARS);
 }
 
  /* . { reportError(yylloc, yytext, yyleng, yyextra); } */
