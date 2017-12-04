@@ -96,6 +96,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %type <node> statement statements statements_opt if_else define assignment
 %type <node> expressions expression expression_text expression_function
+%type <node> pattern_text pattern_function
 %type <node> arguments argument
 %type <node> function
 %type <node> rule target pattern prerequisites
@@ -287,7 +288,22 @@ target
     ;
 
 pattern
+    : pattern_text
+    | pattern_function
+    ;
+
+pattern_text
     : identifier
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | pattern_function identifier
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+pattern_function
+    : function
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | pattern_text function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 prerequisites

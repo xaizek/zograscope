@@ -114,6 +114,11 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
     SECTION("Multiple prerequisites") {
         CHECK(makeIsParsed("target: prereq1 prereq2"));
     }
+    SECTION("Expressions in prerequisites and targets") {
+        CHECK(makeIsParsed("target: $(dependencies)"));
+        CHECK(makeIsParsed("$(target): dependencies"));
+        CHECK(makeIsParsed("$(target): $(dependencies)"));
+    }
 }
 
 TEST_CASE("Recipes are parsed in a Makefile", "[make][parser]")
