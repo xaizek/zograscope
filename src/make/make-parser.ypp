@@ -230,6 +230,13 @@ function
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, SType::Separator) },
                        SType::CallExpr); }
+    | "$(" function_name ',' arguments ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::CallExpr); }
     | "$(" function_name ':' expressions ')'
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
@@ -244,9 +251,14 @@ function_name
     ;
 
 arguments
-    : argument
+    : %empty
+    { $$ = tb->addNode({ tb->addNode({ }, SType::Argument) },
+                       SType::ArgumentList); }
+    | argument
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Argument) },
                        SType::ArgumentList); }
+    | arguments ','
+    { $$ = tb->append($1, tb->addNode($2, @2, SType::Separator)); }
     | arguments ',' argument
     { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
                             tb->addNode($3, @3, SType::Argument) }); }

@@ -96,6 +96,12 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(info arg1 ,arg2)"));
         CHECK(makeIsParsed("$(info arg1 , arg2)"));
     }
+    SECTION("Empty arguments") {
+        CHECK(makeIsParsed("$(patsubst , ,)"));
+        CHECK(makeIsParsed("$(patsubst ,,)"));
+        CHECK(makeIsParsed("$(patsubst a,,)"));
+        CHECK(makeIsParsed("$(patsubst a,b,)"));
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
