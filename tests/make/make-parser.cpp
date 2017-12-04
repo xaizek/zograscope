@@ -167,6 +167,22 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed(nested));
 }
 
+TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
+{
+    const char *const noBody = R"(
+        define pattern
+        endef
+    )";
+    CHECK(makeIsParsed(noBody));
+
+    const char *const noSuffix = R"(
+        define pattern
+            bin_suffix :=
+        endef
+    )";
+    CHECK(makeIsParsed(noSuffix));
+}
+
 TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
 {
     CHECK(makeIsParsed("lib_objects := $(lib_sources:%.cpp=$(out_dir)/%.o)"));

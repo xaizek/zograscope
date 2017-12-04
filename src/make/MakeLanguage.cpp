@@ -33,6 +33,9 @@ MakeLanguage::MakeLanguage() : map()
     map[IFNEQ] = Type::Directives;
     map[ELSE] = Type::Directives;
     map[ENDIF] = Type::Directives;
+
+    map[DEFINE] = Type::Directives;
+    map[ENDEF] = Type::Directives;
 }
 
 Type

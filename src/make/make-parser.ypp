@@ -81,6 +81,8 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> IFNEQ "ifneq"
 %token <text> ELSE "else"
 %token <text> ENDIF "endif"
+%token <text> DEFINE "define"
+%token <text> ENDEF "endef"
 %token <text> LEADING_TAB
 %token <text> NTOKENS
 
@@ -92,7 +94,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
     }
 } <text>
 
-%type <node> statement statements statements_opt if_else assignment
+%type <node> statement statements statements_opt if_else define assignment
 %type <node> expressions expression expression_text expression_function
 %type <node> arguments argument
 %type <node> function
@@ -148,6 +150,15 @@ if_else
                        SType::IfStmt); }
     ;
 
+define
+    : "define" expressions NL statements_opt "endef"
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::Declaration); }
+    ;
+
 statements_opt
     : %empty      { $$ = tb->addNode({ }, SType::Statements); }
     | statements
@@ -166,6 +177,7 @@ statement
     | function
     | rule
     | if_else
+    | define
     ;
 
 assignment
