@@ -146,7 +146,12 @@ target: prereq
 target: prereq
 	(echo something)
     )";
-    CHECK(makeIsParsed(withParens ));
+    CHECK(makeIsParsed(withParens));
+
+    const char *const assignment = R"(
+        $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses
+    )";
+    CHECK(makeIsParsed(assignment));
 }
 
 TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
