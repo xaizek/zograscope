@@ -98,7 +98,8 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %type <node> statement statements statements_opt assignment
 %type <node> if_else if_else_r define include
-%type <node> expressions expression expression_text expression_function
+%type <node> expressions expressions_opt
+%type <node> expression expression_text expression_function
 %type <node> pattern_text pattern_function
 %type <node> arguments argument
 %type <node> function
@@ -135,7 +136,8 @@ statements
     ;
 
 if_else
-    : if_else_kw '(' expressions ',' expressions ')' NL statements_opt "endif" NL
+    : if_else_kw '(' expressions_opt ',' expressions_opt ')' NL statements_opt
+      "endif" NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -145,7 +147,7 @@ if_else
                          tb->addNode($8, @8),
                          tb->addNode($9, @9, SType::Separator) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions ',' expressions ')' NL statements_opt
+    | if_else_kw '(' expressions_opt ',' expressions_opt ')' NL statements_opt
       "else" NL statements_opt "endif" NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -161,7 +163,7 @@ if_else
     ;
 
 if_else_r
-    : if_else_kw '(' expressions ',' expressions ')' recipes_opt "endif"
+    : if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt "endif"
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -171,7 +173,7 @@ if_else_r
                          tb->addNode($7, @7),
                          tb->addNode($8, @8, SType::Separator) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions ',' expressions ')' recipes_opt
+    | if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
       "else" recipes_opt "endif"
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -234,6 +236,11 @@ assignment
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
                        SType::AssignmentExpr); }
+    ;
+
+expressions_opt
+    : %empty       { $$ = tb->addNode({ }, SType::TemporaryContainer); }
+    | expressions
     ;
 
 expressions

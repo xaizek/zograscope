@@ -194,6 +194,16 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
     )";
     CHECK(makeIsParsed(nested));
 
+    const char *const emptyArgs = R"(
+        ifneq ($(OS),)
+        endif
+        ifneq (,$(OS))
+        endif
+        ifneq (,)
+        endif
+    )";
+    CHECK(makeIsParsed(emptyArgs));
+
     const char *const conditionalInRecipes = R"(
 reset-coverage:
 ifeq ($(with_cov),1)
