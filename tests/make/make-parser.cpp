@@ -170,7 +170,7 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed(withoutBody_withoutElse));
 
     const char *const withBody_withElse = R"(
-        ifeq ($(OS),Windows_NT)
+        ifndef tool_template
             bin_suffix :=
         else
             bin_suffix := .exe
@@ -214,7 +214,7 @@ endif
 
     const char *const conditionalsInRecipes = R"(
 reset-coverage:
-ifeq ($(with_cov),1)
+ifdef tool_template
 	find $(out_dir)/ -name '*.gcda' -delete
 endif
 ifeq ($(with_cov),1)

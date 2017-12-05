@@ -78,6 +78,8 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> COMMENT ASSIGN_OP CHARS WS NL
 %token <text> CALL_PREFIX "$("
 %token <text> CALL_SUFFIX ")"
+%token <text> IFDEF "ifdef"
+%token <text> IFNDEF "ifndef"
 %token <text> IFEQ "ifeq"
 %token <text> IFNEQ "ifneq"
 %token <text> ELSE "else"
@@ -97,7 +99,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 } <text>
 
 %type <node> statement statements statements_opt assignment
-%type <node> if_else if_else_r define include
+%type <node> conditionals conditionals_r define include
 %type <node> expressions expressions_opt
 %type <node> expression expression_text expression_function
 %type <node> pattern_text pattern_function
@@ -105,13 +107,13 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> function
 %type <node> rule target pattern targets prerequisites
 %type <node> recipes recipes_opt recipe
-%type <node> if_else_kw function_name identifier text char
+%type <node> if_def_kw if_else_kw function_name identifier text char
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
 %type <node> text_v char_v
 
 %precedence NL
-%precedence "ifeq" "ifneq"
+%precedence "ifdef" "ifndef" "ifeq" "ifneq"
 
 %start makefile
 
@@ -135,7 +137,7 @@ statements
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-if_else
+conditionals
     : if_else_kw '(' expressions_opt ',' expressions_opt ')' NL statements_opt
       "endif" NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
@@ -160,9 +162,23 @@ if_else
                          tb->addNode($11, @11),
                          tb->addNode($12, @12, SType::Separator) },
                        SType::IfStmt); }
+    | if_def_kw identifier NL statements_opt "endif" NL
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::IfStmt); }
+    | if_def_kw identifier NL statements_opt "else" NL statements_opt "endif" NL
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, SType::Separator),
+                         tb->addNode($6, @6),
+                         tb->addNode($7, @7, SType::Separator) },
+                       SType::IfStmt); }
     ;
 
-if_else_r
+conditionals_r
     : if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt "endif"
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -185,6 +201,20 @@ if_else_r
                          tb->addNode($8, @8, SType::Separator),
                          tb->addNode($9, @9),
                          tb->addNode($10, @10, SType::Separator) },
+                       SType::IfStmt); }
+    | if_def_kw identifier recipes_opt "endif"
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator) },
+                       SType::IfStmt); }
+    | if_def_kw identifier recipes_opt "else" recipes_opt "endif"
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator) },
                        SType::IfStmt); }
     ;
 
@@ -209,11 +239,14 @@ statements_opt
     | statements
     ;
 
+if_def_kw
+    : "ifdef"   { $$ = tb->addNode($1, @1, SType::Separator); }
+    | "ifndef"  { $$ = tb->addNode($1, @1, SType::Separator); }
+    ;
+
 if_else_kw
-    : "ifeq"
-    { $$ = tb->addNode($1, @1, SType::Separator); }
-    | "ifneq"
-    { $$ = tb->addNode($1, @1, SType::Separator); }
+    : "ifeq"   { $$ = tb->addNode($1, @1, SType::Separator); }
+    | "ifneq"  { $$ = tb->addNode($1, @1, SType::Separator); }
     ;
 
 statement
@@ -221,7 +254,7 @@ statement
     | assignment NL
     | function NL
     | rule
-    | if_else
+    | conditionals
     | define
     | include
     ;
@@ -413,7 +446,7 @@ recipes_opt
 
 recipe
     : LEADING_TAB expressions_v  { $$ = $2; }
-    | NL if_else_r               { $$ = $2; }
+    | NL conditionals_r          { $$ = $2; }
     ;
 
 identifier

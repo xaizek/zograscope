@@ -30,6 +30,8 @@ MakeLanguage::MakeLanguage() : map()
     map[')'] = Type::RightBrackets;
     map[':'] = Type::Operators;
 
+    map[IFDEF] = Type::Directives;
+    map[IFNDEF] = Type::Directives;
     map[IFEQ] = Type::Directives;
     map[IFNEQ] = Type::Directives;
     map[ELSE] = Type::Directives;
