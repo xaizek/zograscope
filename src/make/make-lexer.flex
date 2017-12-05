@@ -129,6 +129,8 @@ NL                      \n|\r|\r\n
 "define"                       TOKEN(DEFINE);
 "endef"                        TOKEN(ENDEF);
 
+"include"                      TOKEN(INCLUDE);
+
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$(" {
     if (yylval->text.from != yyextra->lastCharOffset &&

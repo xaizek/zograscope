@@ -254,3 +254,9 @@ TEST_CASE("Makefile keywords are not found inside text/ids", "[make][parser]")
 {
     CHECK(makeIsParsed("EXTRA_CXXFLAGS += -fsanitize=undefined"));
 }
+
+TEST_CASE("Includes are parsed in a Makefile", "[make][parser]")
+{
+    CHECK(makeIsParsed("include $(wildcard *.d)"));
+    CHECK(makeIsParsed("include config.mk"));
+}
