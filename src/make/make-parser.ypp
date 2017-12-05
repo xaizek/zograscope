@@ -79,6 +79,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> CALL_PREFIX "$("
 %token <text> CALL_SUFFIX ")"
 %token <text> OVERRIDE "override"
+%token <text> EXPORT "export"
 %token <text> IFDEF "ifdef"
 %token <text> IFNDEF "ifndef"
 %token <text> IFEQ "ifeq"
@@ -292,6 +293,13 @@ assignment
 
 specifiers
     : "override"  { $$ = tb->addNode($1, @1); }
+    | "export"    { $$ = tb->addNode($1, @1); }
+    | "override" "export"
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
+    | "export" "override"
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
     ;
 
 expressions_opt

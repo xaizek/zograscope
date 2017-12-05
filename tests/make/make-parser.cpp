@@ -79,8 +79,11 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("CXXFLAGS = val$(var1)$(var2)val"));
         CHECK(makeIsParsed("CXXFLAGS = val$(var1)val$(var2)val"));
     }
-    SECTION("Override") {
+    SECTION("Override and/or export") {
         CHECK(makeIsParsed("override CXXFLAGS = $(CFLAGS)suffix"));
+        CHECK(makeIsParsed("override export CXXFLAGS = $(CFLAGS)suffix"));
+        CHECK(makeIsParsed("export override CXXFLAGS = $(CFLAGS)suffix"));
+        CHECK(makeIsParsed("export CXXFLAGS = $(CFLAGS)suffix"));
     }
 }
 
@@ -248,6 +251,18 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
         endef
     )";
     CHECK(makeIsParsed(withOverride));
+
+    const char *const withExport = R"(
+        export define pattern
+        endef
+    )";
+    CHECK(makeIsParsed(withExport));
+
+    const char *const withOverrideAndExport = R"(
+        export override define pattern
+        endef
+    )";
+    CHECK(makeIsParsed(withOverrideAndExport));
 }
 
 TEST_CASE("Line escaping works in a Makefile", "[make][parser]")
