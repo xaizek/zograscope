@@ -78,6 +78,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> COMMENT ASSIGN_OP CHARS WS NL
 %token <text> CALL_PREFIX "$("
 %token <text> CALL_SUFFIX ")"
+%token <text> OVERRIDE "override"
 %token <text> IFDEF "ifdef"
 %token <text> IFNDEF "ifndef"
 %token <text> IFEQ "ifeq"
@@ -98,7 +99,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
     }
 } <text>
 
-%type <node> statement statements statements_opt assignment
+%type <node> statement statements statements_opt assignment specifiers
 %type <node> conditionals conditionals_r define include
 %type <node> expressions expressions_opt
 %type <node> expression expression_text expression_function
@@ -225,6 +226,13 @@ define
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, SType::Separator) },
                        SType::Declaration); }
+    | specifiers "define" expressions NL statements_opt "endef" NL
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator) },
+                       SType::Declaration); }
     ;
 
 include
@@ -269,6 +277,21 @@ assignment
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
                        SType::AssignmentExpr); }
+    | specifiers identifier ASSIGN_OP
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator) },
+                       SType::AssignmentExpr); }
+    | specifiers identifier ASSIGN_OP expressions_v
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($4, @4) },
+                       SType::AssignmentExpr); }
+    ;
+
+specifiers
+    : "override"  { $$ = tb->addNode($1, @1); }
     ;
 
 expressions_opt

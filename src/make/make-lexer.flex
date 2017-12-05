@@ -121,6 +121,8 @@ NL                      \n|\r|\r\n
 }
 <slcomment>.            ;
 
+"override"                     TOKEN(OVERRIDE);
+
 "ifdef"                        TOKEN(IFDEF);
 "ifndef"                       TOKEN(IFNDEF);
 "ifeq"                         TOKEN(IFEQ);
