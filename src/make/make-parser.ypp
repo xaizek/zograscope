@@ -95,17 +95,21 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
     }
 } <text>
 
-%type <node> statement statements statements_opt if_else define assignment
+%type <node> statement statements statements_opt assignment
+%type <node> if_else if_else_r define
 %type <node> expressions expression expression_text expression_function
 %type <node> pattern_text pattern_function
 %type <node> arguments argument
 %type <node> function
 %type <node> rule target pattern targets prerequisites
-%type <node> recipes recipe
+%type <node> recipes recipes_opt recipe
 %type <node> if_else_kw function_name identifier text char
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
 %type <node> text_v char_v
+
+%precedence NL
+%precedence "ifeq" "ifneq"
 
 %start makefile
 
@@ -121,16 +125,16 @@ makefile
 statements
     : NL
     { $$ = tb->addNode({ }, SType::Statements); }
-    | statement NL
+    | statement
     { $$ = tb->addNode({ $1 }, SType::Statements); }
     | statements NL
     { $$ = $1; }
-    | statements statement NL
+    | statements statement
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 if_else
-    : if_else_kw '(' expressions ',' expressions ')' NL statements_opt "endif"
+    : if_else_kw '(' expressions ',' expressions ')' NL statements_opt "endif" NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -141,7 +145,7 @@ if_else
                          tb->addNode($9, @9, SType::Separator) },
                        SType::IfStmt); }
     | if_else_kw '(' expressions ',' expressions ')' NL statements_opt
-      "else" NL statements_opt "endif"
+      "else" NL statements_opt "endif" NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -155,8 +159,34 @@ if_else
                        SType::IfStmt); }
     ;
 
+if_else_r
+    : if_else_kw '(' expressions ',' expressions ')' recipes_opt "endif"
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($7, @7),
+                         tb->addNode($8, @8, SType::Separator) },
+                       SType::IfStmt); }
+    | if_else_kw '(' expressions ',' expressions ')' recipes_opt
+      "else" recipes_opt "endif"
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($7, @7),
+                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($9, @9),
+                         tb->addNode($10, @10, SType::Separator) },
+                       SType::IfStmt); }
+    ;
+
 define
-    : "define" expressions NL statements_opt "endef"
+    : "define" expressions NL statements_opt "endef" NL
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($4, @4),
@@ -178,8 +208,8 @@ if_else_kw
 
 statement
     : COMMENT     { $$ = tb->addNode($1, @1, SType::Comment); }
-    | assignment
-    | function
+    | assignment NL
+    | function NL
     | rule
     | if_else
     | define
@@ -300,12 +330,12 @@ argument
     ;
 
 rule
-    : targets ':' prerequisites
+    : targets ':' prerequisites NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
                        SType::LabelStmt); }
-    | targets ':' prerequisites recipes
+    | targets ':' prerequisites recipes NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -355,9 +385,15 @@ recipes
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
+recipes_opt
+    : NL         { $$ = tb->addNode({ }, SType::TemporaryContainer); }
+    | recipes NL { $$ = $1; }
+    ;
+
 recipe
-    : LEADING_TAB expressions_v
-    { $$ = $2; }
+    : LEADING_TAB expressions_v  { $$ = $2; }
+    | NL if_else_r               { $$ = $2; }
+    ;
 
 identifier
     : CHARS

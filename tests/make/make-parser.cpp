@@ -188,6 +188,26 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
         endif
     )";
     CHECK(makeIsParsed(nested));
+
+    const char *const conditionalInRecipes = R"(
+reset-coverage:
+ifeq ($(with_cov),1)
+	find $(out_dir)/ -name '*.gcda' -delete
+endif
+    )";
+    CHECK(makeIsParsed(conditionalInRecipes));
+
+    const char *const conditionalsInRecipes = R"(
+reset-coverage:
+ifeq ($(with_cov),1)
+	find $(out_dir)/ -name '*.gcda' -delete
+endif
+ifeq ($(with_cov),1)
+	find $(out_dir)/ -name '*.gcda' -delete
+else
+endif
+    )";
+    CHECK(makeIsParsed(conditionalsInRecipes));
 }
 
 TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
