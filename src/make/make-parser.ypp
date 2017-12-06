@@ -115,7 +115,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> text_v char_v
 
 %precedence NL
-%precedence "ifdef" "ifndef" "ifeq" "ifneq"
+%precedence COMMENT "ifdef" "ifndef" "ifeq" "ifneq"
 
 %start makefile
 
@@ -478,6 +478,7 @@ recipes_opt
 recipe
     : LEADING_TAB expressions_v  { $$ = $2; }
     | NL conditionals_r          { $$ = $2; }
+    | NL COMMENT                 { $$ = tb->addNode($2, @2, SType::Comment); }
     ;
 
 identifier

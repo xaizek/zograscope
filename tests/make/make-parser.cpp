@@ -154,6 +154,15 @@ target: prereq
     )";
     CHECK(makeIsParsed(multipleLines));
 
+    const char *const withComments = R"(
+target: prereq
+# comment
+	first recipe
+# comment
+	second recipe
+    )";
+    CHECK(makeIsParsed(withComments));
+
     const char *const withParens = R"(
 target: prereq
 	(echo something)
