@@ -166,6 +166,7 @@ NL                      \n|\r|\r\n
         TOKEN(')');
     }
     --yyextra->callNesting;
+    yyextra->lastCharOffset = yyextra->offset;
     TOKEN(CALL_SUFFIX);
 }
 ","                            TOKEN(',');

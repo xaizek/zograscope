@@ -287,21 +287,21 @@ statement
     ;
 
 assignment
-    : identifier ASSIGN_OP
+    : pattern ASSIGN_OP
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator) },
                        SType::AssignmentExpr); }
-    | identifier ASSIGN_OP expressions_v
+    | pattern ASSIGN_OP expressions_v
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
                        SType::AssignmentExpr); }
-    | specifiers identifier ASSIGN_OP
+    | specifiers pattern ASSIGN_OP
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator) },
                        SType::AssignmentExpr); }
-    | specifiers identifier ASSIGN_OP expressions_v
+    | specifiers pattern ASSIGN_OP expressions_v
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator),
@@ -373,6 +373,8 @@ expression_function
 expression_function_v
     : function
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_function_v function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     | expression_text_v function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
