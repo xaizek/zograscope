@@ -85,6 +85,12 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("export override CXXFLAGS = $(CFLAGS)suffix"));
         CHECK(makeIsParsed("export CXXFLAGS = $(CFLAGS)suffix"));
     }
+    SECTION("Keywords in the value") {
+        CHECK(makeIsParsed("KEYWORDS := ifdef/ifndef/ifeq/ifneq/else/endif"));
+        CHECK(makeIsParsed("KEYWORDS += include"));
+        CHECK(makeIsParsed("KEYWORDS += override/export"));
+        CHECK(makeIsParsed("KEYWORDS += define/endef"));
+    }
 }
 
 TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")

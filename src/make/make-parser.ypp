@@ -511,6 +511,17 @@ char_v
     : char
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
+    | "include"  { $$ = tb->addNode($1, @1, 0); }
+    | "override" { $$ = tb->addNode($1, @1, 0); }
+    | "export"   { $$ = tb->addNode($1, @1, 0); }
+    | "ifdef"    { $$ = tb->addNode($1, @1, 0); }
+    | "ifndef"   { $$ = tb->addNode($1, @1, 0); }
+    | "ifeq"     { $$ = tb->addNode($1, @1, 0); }
+    | "ifneq"    { $$ = tb->addNode($1, @1, 0); }
+    | "else"     { $$ = tb->addNode($1, @1, 0); }
+    | "endif"    { $$ = tb->addNode($1, @1, 0); }
+    | "define"   { $$ = tb->addNode($1, @1, 0); }
+    | "endef"    { $$ = tb->addNode($1, @1, 0); }
     ;
 
 %%
