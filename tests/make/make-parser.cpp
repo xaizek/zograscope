@@ -123,6 +123,12 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
     SECTION("Expression in the name") {
         CHECK(makeIsParsed("$(AT_$(V))"));
     }
+    SECTION("Keywords in the arguments") {
+        CHECK(makeIsParsed("$(info ifdef/ifndef/ifeq/ifneq/else/endif)"));
+        CHECK(makeIsParsed("$(info include)"));
+        CHECK(makeIsParsed("$(info override/export)"));
+        CHECK(makeIsParsed("$(info define/endef)"));
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")

@@ -63,6 +63,17 @@
         return (yylval->text.token = (t)); \
     } while (false)
 
+#define KW(t) \
+    do { \
+        if (yyextra->callNesting == 0) { \
+            TOKEN(t); \
+        } else { \
+            yyextra->offset -= yyleng; \
+            yyextra->col -= yyleng; \
+            REJECT; \
+        } \
+    } while (false)
+
 #define ADVANCE_LINE() \
     do { \
         ++yyextra->line; \
@@ -121,20 +132,20 @@ NL                      \n|\r|\r\n
 }
 <slcomment>.            ;
 
-"override"                     TOKEN(OVERRIDE);
-"export"                       TOKEN(EXPORT);
+"override"                     KW(OVERRIDE);
+"export"                       KW(EXPORT);
 
-"ifdef"                        TOKEN(IFDEF);
-"ifndef"                       TOKEN(IFNDEF);
-"ifeq"                         TOKEN(IFEQ);
-"ifneq"                        TOKEN(IFNEQ);
-"else"                         TOKEN(ELSE);
-"endif"                        TOKEN(ENDIF);
+"ifdef"                        KW(IFDEF);
+"ifndef"                       KW(IFNDEF);
+"ifeq"                         KW(IFEQ);
+"ifneq"                        KW(IFNEQ);
+"else"                         KW(ELSE);
+"endif"                        KW(ENDIF);
 
-"define"                       TOKEN(DEFINE);
-"endef"                        TOKEN(ENDEF);
+"define"                       KW(DEFINE);
+"endef"                        KW(ENDEF);
 
-"include"                      TOKEN(INCLUDE);
+"include"                      KW(INCLUDE);
 
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$(" {
