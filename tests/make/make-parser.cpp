@@ -361,6 +361,7 @@ TEST_CASE("Line escaping works in a Makefile", "[make][parser]")
 TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
 {
     CHECK(makeIsParsed("lib_objects := $(lib_sources:%.cpp=$(out_dir)/%.o)"));
+    CHECK(makeIsParsed("am__test_logs1 = $(TESTS:=.log)"));
 }
 
 TEST_CASE("Makefile keywords are not found inside text/ids", "[make][parser]")
