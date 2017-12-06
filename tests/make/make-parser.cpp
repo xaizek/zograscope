@@ -156,6 +156,9 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
     SECTION("Multiple targets") {
         CHECK(makeIsParsed("debug release sanitize-basic: all"));
     }
+    SECTION("Double-colon") {
+        CHECK(makeIsParsed("debug:: all"));
+    }
     SECTION("Keywords in targets") {
         CHECK(makeIsParsed("include.b: all"));
         CHECK(makeIsParsed("x.include.b: all"));
