@@ -145,7 +145,7 @@ NL                      \n|\r|\r\n
 "define"                       KW(DEFINE);
 "endef"                        KW(ENDEF);
 
-"include"                      KW(INCLUDE);
+-?"include"                    KW(INCLUDE);
 
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$(" {
