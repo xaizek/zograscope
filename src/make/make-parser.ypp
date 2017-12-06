@@ -525,8 +525,10 @@ char
 
 char_v
     : char
+    | COMMENT    { $$ = tb->addNode($1, @1, 0); }
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
+    | ','        { $$ = tb->addNode($1, @1, 0); }
     | "include"  { $$ = tb->addNode($1, @1, 0); }
     | "override" { $$ = tb->addNode($1, @1, 0); }
     | "export"   { $$ = tb->addNode($1, @1, 0); }

@@ -93,6 +93,10 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("KEYWORDS += override/export"));
         CHECK(makeIsParsed("KEYWORDS += define/endef"));
     }
+    SECTION("Special symbols in the value") {
+        CHECK(makeIsParsed(R"(var += sed_first='s,^\([^/]*\)/.*$$,\1,';)"));
+        CHECK(makeIsParsed(R"(var != test $$# -gt 0)"));
+    }
 }
 
 TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
