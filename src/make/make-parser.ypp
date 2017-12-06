@@ -109,7 +109,9 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> function
 %type <node> rule target pattern targets prerequisites
 %type <node> recipes recipes_opt recipe
-%type <node> if_def_kw if_else_kw function_name identifier text char br
+%type <node> function_name function_name_text function_name_function
+%type <node> function_name_piece
+%type <node> if_def_kw if_else_kw identifier text char br
 %type <node> keywords
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
@@ -404,7 +406,31 @@ function
     ;
 
 function_name
-    : pattern
+    : function_name_text
+    | function_name_function
+    ;
+
+function_name_text
+    : function_name_piece
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | function_name_function function_name_piece
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+function_name_piece
+    : CHARS
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | function_name_piece CHARS
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | function_name_piece keywords
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+function_name_function
+    : function
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | function_name_text function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 arguments
@@ -500,9 +526,13 @@ recipe
 identifier
     : CHARS
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | ','
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
     | identifier CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | identifier keywords
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | identifier ','
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 

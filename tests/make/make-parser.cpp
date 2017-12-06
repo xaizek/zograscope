@@ -97,6 +97,7 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("a.ifndef.b = a"));
         CHECK(makeIsParsed("ifndef.b = a"));
         CHECK(makeIsParsed("ifndef/b = a"));
+        CHECK(makeIsParsed(",ifdef,b = b"));
     }
     SECTION("Special symbols in the value") {
         CHECK(makeIsParsed(R"(var += sed_first='s,^\([^/]*\)/.*$$,\1,';)"));
