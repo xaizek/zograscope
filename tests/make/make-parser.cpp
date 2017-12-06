@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+#include "tree.hpp"
+
 #include "tests.hpp"
 
 TEST_CASE("Error is printed on incorrect Makefile syntax", "[make][parser]")
@@ -281,6 +283,37 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
         endef
     )";
     CHECK(makeIsParsed(withOverrideAndExport));
+
+    const char *const eqSuffix = R"(
+        define pattern =
+            bin_suffix :=
+        endef
+    )";
+    CHECK(makeIsParsed(eqSuffix));
+
+    const char *const immSuffix = R"(
+        define pattern :=
+        endef
+
+        define pattern ::=
+            bin_suffix :=
+        endef
+    )";
+    CHECK(makeIsParsed(immSuffix));
+
+    const char *const appendSuffix = R"(
+        define pattern +=
+            bin_suffix :=
+        endef
+    )";
+    CHECK(makeIsParsed(appendSuffix));
+
+    const char *const bangSuffix = R"(
+        define pattern +=
+        endef
+    )";
+    Tree tree = parseMake(bangSuffix);
+    CHECK(findNode(tree, Type::Assignments, "+=") != nullptr);
 }
 
 TEST_CASE("Line escaping works in a Makefile", "[make][parser]")

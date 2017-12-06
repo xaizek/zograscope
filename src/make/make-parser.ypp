@@ -221,18 +221,33 @@ conditionals_r
     ;
 
 define
-    : "define" expressions statements_opt "endef" br
+    : "define" pattern statements_opt "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, SType::Separator) },
                        SType::Declaration); }
-    | specifiers "define" expressions statements_opt "endef" br
+    | specifiers "define" pattern statements_opt "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, SType::Separator) },
+                       SType::Declaration); }
+    | "define" pattern ASSIGN_OP statements_opt "endef" br
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, SType::Separator) },
+                       SType::Declaration); }
+    | specifiers "define" pattern ASSIGN_OP statements_opt "endef" br
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator) },
                        SType::Declaration); }
     ;
 
