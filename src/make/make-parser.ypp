@@ -109,7 +109,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> function
 %type <node> rule target pattern targets prerequisites
 %type <node> recipes recipes_opt recipe
-%type <node> if_def_kw if_else_kw function_name identifier text char
+%type <node> if_def_kw if_else_kw function_name identifier text char br
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
 %type <node> text_v char_v
@@ -129,54 +129,54 @@ makefile
     ;
 
 statements
-    : NL
+    : br
     { $$ = tb->addNode({ }, SType::Statements); }
     | statement
     { $$ = tb->addNode({ $1 }, SType::Statements); }
-    | statements NL
+    | statements br
     { $$ = $1; }
     | statements statement
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 conditionals
-    : if_else_kw '(' expressions_opt ',' expressions_opt ')' NL statements_opt
-      "endif" NL
+    : if_else_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
+      "endif" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, SType::Separator),
-                         tb->addNode($8, @8),
-                         tb->addNode($9, @9, SType::Separator) },
+                         tb->addNode($7, @7),
+                         tb->addNode($8, @8, SType::Separator) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions_opt ',' expressions_opt ')' NL statements_opt
-      "else" NL statements_opt "endif" NL
+    | if_else_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
+      "else" statements_opt "endif" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, SType::Separator),
-                         tb->addNode($8, @8),
-                         tb->addNode($9, @9, SType::Separator),
-                         tb->addNode($11, @11),
-                         tb->addNode($12, @12, SType::Separator) },
+                         tb->addNode($7, @7),
+                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($9, @9),
+                         tb->addNode($10, @10, SType::Separator) },
                        SType::IfStmt); }
-    | if_def_kw identifier NL statements_opt "endif" NL
+    | if_def_kw identifier statements_opt "endif" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
-                         tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator) },
                        SType::IfStmt); }
-    | if_def_kw identifier NL statements_opt "else" NL statements_opt "endif" NL
+    | if_def_kw identifier statements_opt "else" statements_opt "endif" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
-                         tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator),
-                         tb->addNode($6, @6),
-                         tb->addNode($7, @7, SType::Separator) },
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator) },
                        SType::IfStmt); }
     ;
 
@@ -221,31 +221,31 @@ conditionals_r
     ;
 
 define
-    : "define" expressions NL statements_opt "endef" NL
+    : "define" expressions statements_opt "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator) },
                        SType::Declaration); }
-    | specifiers "define" expressions NL statements_opt "endef" NL
+    | specifiers "define" expressions statements_opt "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator) },
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, SType::Separator) },
                        SType::Declaration); }
     ;
 
 include
-    : "include" expressions NL
+    : "include" expressions br
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2) },
                        SType::Directive); }
     ;
 
 statements_opt
-    : %empty      { $$ = tb->addNode({ }, SType::Statements); }
-    | statements
+    : br             { $$ = tb->addNode({ }, SType::Statements); }
+    | br statements  { $$ = $2; }
     ;
 
 if_def_kw
@@ -260,8 +260,8 @@ if_else_kw
 
 statement
     : COMMENT        { $$ = tb->addNode($1, @1, SType::Comment); }
-    | assignment NL
-    | function NL
+    | assignment br
+    | function br
     | rule
     | conditionals
     | define
@@ -522,6 +522,11 @@ char_v
     | "endif"    { $$ = tb->addNode($1, @1, 0); }
     | "define"   { $$ = tb->addNode($1, @1, 0); }
     | "endef"    { $$ = tb->addNode($1, @1, 0); }
+    ;
+
+br
+    : NL           { $$ = tb->addNode($1, @1, 0); }
+    | LEADING_TAB  { $$ = tb->addNode($1, @1, 0); }
     ;
 
 %%

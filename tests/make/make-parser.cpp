@@ -300,3 +300,26 @@ TEST_CASE("Includes are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed("include $(wildcard *.d)"));
     CHECK(makeIsParsed("include config.mk"));
 }
+
+TEST_CASE("Leading tabs are allowed not only for recipes in Makefiles",
+          "[make][parser]")
+{
+    const char *const conditional = R"(
+	ifeq (,$(findstring gcc,$(CC)))
+		set := to this
+	endif
+    )";
+    CHECK(makeIsParsed(conditional));
+
+    const char *const emptyConditional = R"(
+	ifeq (,$(findstring gcc,$(CC)))
+	endif
+    )";
+    CHECK(makeIsParsed(emptyConditional));
+
+    const char *const statements = R"(
+	set := to this
+	# comment
+    )";
+    CHECK(makeIsParsed(statements));
+}
