@@ -93,6 +93,11 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("KEYWORDS += override/export"));
         CHECK(makeIsParsed("KEYWORDS += define/endef"));
     }
+    SECTION("Keywords in the name") {
+        CHECK(makeIsParsed("a.ifndef.b = a"));
+        CHECK(makeIsParsed("ifndef.b = a"));
+        CHECK(makeIsParsed("ifndef/b = a"));
+    }
     SECTION("Special symbols in the value") {
         CHECK(makeIsParsed(R"(var += sed_first='s,^\([^/]*\)/.*$$,\1,';)"));
         CHECK(makeIsParsed(R"(var != test $$# -gt 0)"));
@@ -146,6 +151,12 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
     }
     SECTION("Multiple targets") {
         CHECK(makeIsParsed("debug release sanitize-basic: all"));
+    }
+    SECTION("Keywords in targets") {
+        CHECK(makeIsParsed("include.b: all"));
+        CHECK(makeIsParsed("x.include.b: all"));
+        CHECK(makeIsParsed("all: b.override.b"));
+        CHECK(makeIsParsed("all: override.b"));
     }
     SECTION("Expressions in prerequisites and targets") {
         CHECK(makeIsParsed("target: $(dependencies)"));

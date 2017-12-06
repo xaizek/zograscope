@@ -170,7 +170,7 @@ NL                      \n|\r|\r\n
 }
 ","                            TOKEN(',');
 ":"                            TOKEN(':');
-.|[-a-zA-Z0-9_]+ {
+.|[-a-zA-Z0-9_/.]+ {
     if (yylval->text.from != yyextra->lastCharOffset &&
         yyextra->contiguousChars != 0) {
         yyextra->offset -= yyleng;

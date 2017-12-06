@@ -110,6 +110,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> rule target pattern targets prerequisites
 %type <node> recipes recipes_opt recipe
 %type <node> if_def_kw if_else_kw function_name identifier text char br
+%type <node> keywords
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
 %type <node> text_v char_v
@@ -501,6 +502,8 @@ identifier
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
     | identifier CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | identifier keywords
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 text
@@ -529,7 +532,11 @@ char_v
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
     | ','        { $$ = tb->addNode($1, @1, 0); }
-    | "include"  { $$ = tb->addNode($1, @1, 0); }
+    | keywords
+    ;
+
+keywords
+    : "include"  { $$ = tb->addNode($1, @1, 0); }
     | "override" { $$ = tb->addNode($1, @1, 0); }
     | "export"   { $$ = tb->addNode($1, @1, 0); }
     | "ifdef"    { $$ = tb->addNode($1, @1, 0); }
