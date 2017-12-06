@@ -388,7 +388,7 @@ function
     ;
 
 function_name
-    : identifier
+    : pattern
     ;
 
 arguments

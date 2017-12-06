@@ -114,6 +114,9 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(patsubst a,,)"));
         CHECK(makeIsParsed("$(patsubst a,b,)"));
     }
+    SECTION("Expression in the name") {
+        CHECK(makeIsParsed("$(AT_$(V))"));
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
