@@ -125,6 +125,9 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(info arg1 ,arg2)"));
         CHECK(makeIsParsed("$(info arg1 , arg2)"));
     }
+    SECTION("Functions in arguments") {
+        CHECK(makeIsParsed("$(info $(f1)$(f2))"));
+    }
     SECTION("Empty arguments") {
         CHECK(makeIsParsed("$(patsubst , ,)"));
         CHECK(makeIsParsed("$(patsubst ,,)"));

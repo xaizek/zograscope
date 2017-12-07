@@ -416,6 +416,8 @@ expression_function
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     | expression_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | expression_function function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 expression_function_v
