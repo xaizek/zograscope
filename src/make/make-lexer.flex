@@ -81,9 +81,6 @@
         yyextra->lineoffset = yyextra->offset; \
     } while (false)
 
-static void reportError(YYLTYPE *loc, const char text[], std::size_t len,
-                        MakeLexerData *data);
-
 %}
 
 %X slcomment
@@ -183,33 +180,11 @@ NL                      \n|\r|\r\n
     TOKEN(CHARS);
 }
 
- /* . { reportError(yylloc, yytext, yyleng, yyextra); } */
-
 %%
-
-static void
-reportError(YYLTYPE *loc, const char text[], std::size_t len,
-            MakeLexerData *data)
-{
-    std::string error;
-
-    if (len > 1U) {
-        error = std::string("Unknown token: ") + text;
-    } else if (std::isprint(text[0], std::locale())) {
-        error = std::string("Unknown token: ") + text[0];
-    } else {
-        error = std::string("Unknown token: <") + std::to_string(text[0]) + '>';
-    }
-
-    YYLTYPE changedLoc = *loc;
-    changedLoc.first_column = data->offset - data->lineoffset;
-    make_error(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
-}
 
 void
 fakeYYunputUseMake()
 {
-(void)reportError;
     // This is needed to prevent compilation error on -Werror=unused.
     static_cast<void>(&yyunput);
 }
