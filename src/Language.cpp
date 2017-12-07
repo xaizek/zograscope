@@ -34,7 +34,7 @@ Language::create(const std::string &fileName, const std::string &l)
 {
     std::string lang = l;
     if (lang.empty()) {
-        auto name = boost::filesystem::path(fileName).filename().string();
+        std::string name = boost::filesystem::path(fileName).stem().string();
         boost::algorithm::to_lower(name);
         lang = (name == "makefile" ? "make" : "c");
     }

@@ -80,6 +80,9 @@ TEST_CASE("Make is detected", "[language]")
     SECTION("Upper case") {
         fileName = "MAKEFILE";
     }
+    SECTION("With suffix") {
+        fileName = "Makefile.win";
+    }
 
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
