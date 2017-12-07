@@ -82,6 +82,7 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("CXXFLAGS = val$(var1)val$(var2)val"));
     }
     SECTION("Override and/or export") {
+        CHECK(makeIsParsed("override CXXFLAGS ::="));
         CHECK(makeIsParsed("override CXXFLAGS = $(CFLAGS)suffix"));
         CHECK(makeIsParsed("override export CXXFLAGS = $(CFLAGS)suffix"));
         CHECK(makeIsParsed("export override CXXFLAGS = $(CFLAGS)suffix"));
@@ -97,7 +98,8 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("a.ifndef.b = a"));
         CHECK(makeIsParsed("ifndef.b = a"));
         CHECK(makeIsParsed("ifndef/b = a"));
-        CHECK(makeIsParsed(",ifdef,b = b"));
+        CHECK(makeIsParsed(",ifdef,ifndef,ifeq,ifneq,else,endif = b"));
+        CHECK(makeIsParsed(",override,include,export,define,endef = b"));
     }
     SECTION("Functions in the name") {
         CHECK(makeIsParsed(R"($(1).stuff :=)"));
@@ -242,7 +244,7 @@ TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
 
     const char *const nested = R"(
         ifneq ($(OS),Windows_NT)
-            ifneq ($(OS),Windows_NT)
+            ifdef OS
             endif
         endif
     )";
@@ -299,7 +301,8 @@ ifdef tool_template
 	find $(out_dir)/ -name '*.gcda' -delete
 else ifeq ($(with_cov),1)
 	find $(out_dir)/ -name '*.gcda' -delete
-else ifneq (1,2)
+else ifdef something
+else
 endif
     )";
     CHECK(makeIsParsed(elseIfInRecipes));
@@ -331,7 +334,7 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed(noSuffix));
 
     const char *const withOverride = R"(
-        override define pattern
+        override define pattern ?=
         endef
     )";
     CHECK(makeIsParsed(withOverride));
