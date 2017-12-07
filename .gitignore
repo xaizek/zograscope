@@ -2,6 +2,7 @@
 /coverage/
 /debug/
 /release/
+/sanitize-basic/
 /tests/tests
 /zs-hi
 /zs-diff
