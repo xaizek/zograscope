@@ -23,6 +23,7 @@
 #include <stdexcept>
 #include <string>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include "c/C11Language.hpp"
@@ -33,9 +34,9 @@ Language::create(const std::string &fileName, const std::string &l)
 {
     std::string lang = l;
     if (lang.empty()) {
-        lang = (boost::filesystem::path(fileName).filename() == "Makefile")
-             ? "make"
-             : "c";
+        auto name = boost::filesystem::path(fileName).filename().string();
+        boost::algorithm::to_lower(name);
+        lang = (name == "makefile" ? "make" : "c");
     }
 
     if (lang == "c") {

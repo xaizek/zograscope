@@ -71,8 +71,14 @@ TEST_CASE("Make is detected", "[language]")
 {
     std::string fileName;
 
-    SECTION("Makefile") {
+    SECTION("Canonical Makefile name") {
         fileName = "Makefile";
+    }
+    SECTION("Lower case") {
+        fileName = "makefile";
+    }
+    SECTION("Upper case") {
+        fileName = "MAKEFILE";
     }
 
     cpp17::pmr::monolithic mr;
