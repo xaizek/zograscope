@@ -111,7 +111,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> recipes recipes_opt recipe
 %type <node> function_name function_name_text function_name_function
 %type <node> function_name_piece
-%type <node> if_def_kw if_else_kw identifier text char br colon
+%type <node> if_def_kw if_eq_kw identifier text char br colon
 %type <node> keywords comment_opt
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
@@ -143,7 +143,7 @@ statements
     ;
 
 conditionals
-    : if_else_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
+    : if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
       "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -155,7 +155,7 @@ conditionals
                          tb->addNode($8, @8, SType::Separator),
                          tb->addNode($9, @9) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
+    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
       "else" statements_opt "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -169,7 +169,7 @@ conditionals
                          tb->addNode($10, @10, SType::Separator),
                          tb->addNode($11, @11) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
+    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
       "else" conditionals
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -208,7 +208,7 @@ conditionals
     ;
 
 conditionals_r
-    : if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt "endif"
+    : if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt "endif"
       comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -220,7 +220,7 @@ conditionals_r
                          tb->addNode($8, @8, SType::Separator),
                          tb->addNode($9, @9) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
+    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
       "else" recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -234,7 +234,7 @@ conditionals_r
                          tb->addNode($10, @10, SType::Separator),
                          tb->addNode($11, @11) },
                        SType::IfStmt); }
-    | if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
+    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
       "else" conditionals_r
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
@@ -319,7 +319,7 @@ if_def_kw
     | "ifndef"  { $$ = tb->addNode($1, @1, SType::Separator); }
     ;
 
-if_else_kw
+if_eq_kw
     : "ifeq"   { $$ = tb->addNode($1, @1, SType::Separator); }
     | "ifneq"  { $$ = tb->addNode($1, @1, SType::Separator); }
     ;
