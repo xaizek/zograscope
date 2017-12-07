@@ -548,6 +548,8 @@ pattern_function
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     | pattern_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | pattern_function function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 prerequisites

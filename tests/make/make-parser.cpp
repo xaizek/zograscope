@@ -171,6 +171,7 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("target: $(dependencies)"));
         CHECK(makeIsParsed("$(target): dependencies"));
         CHECK(makeIsParsed("$(target): $(dependencies)"));
+        CHECK(makeIsParsed("$(tar)$(get): $(dependencies)"));
     }
 }
 
