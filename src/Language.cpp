@@ -20,6 +20,7 @@
 #include <cstdint>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include <boost/filesystem/path.hpp>
@@ -28,10 +29,20 @@
 #include "make/MakeLanguage.hpp"
 
 std::unique_ptr<Language>
-Language::create(const std::string &fileName)
+Language::create(const std::string &fileName, const std::string &l)
 {
-    if (boost::filesystem::path(fileName).filename() == "Makefile") {
+    std::string lang = l;
+    if (lang.empty()) {
+        lang = (boost::filesystem::path(fileName).filename() == "Makefile")
+             ? "make"
+             : "c";
+    }
+
+    if (lang == "c") {
+        return std::unique_ptr<C11Language>(new C11Language());
+    }
+    if (lang == "make") {
         return std::unique_ptr<MakeLanguage>(new MakeLanguage());
     }
-    return std::unique_ptr<C11Language>(new C11Language());
+    throw std::runtime_error("Unknown language: \"" + lang + '"');
 }

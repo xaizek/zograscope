@@ -37,8 +37,11 @@ enum class Type : std::uint8_t;
 class Language
 {
 public:
-    // Determines and creates language based on file name.
-    static std::unique_ptr<Language> create(const std::string &fileName);
+    // Determines and creates language based on file name.  Non-empty `lang`
+    // parameter forces specific language ("c" or "make").  Throws
+    // `std::runtime_error` on incorrect language name.
+    static std::unique_ptr<Language> create(const std::string &fileName,
+                                            const std::string &lang = {});
 
 public:
     // Virtual destructor for a base class.
