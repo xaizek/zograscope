@@ -167,6 +167,18 @@ conditionals
                          tb->addNode($9, @9),
                          tb->addNode($10, @10, SType::Separator) },
                        SType::IfStmt); }
+    | if_else_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
+      "else" conditionals
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($7, @7),
+                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($9, @9) },
+                       SType::IfStmt); }
     | if_def_kw identifier statements_opt "endif" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
@@ -180,6 +192,13 @@ conditionals
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, SType::Separator) },
+                       SType::IfStmt); }
+    | if_def_kw identifier statements_opt "else" conditionals
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5) },
                        SType::IfStmt); }
     ;
 
@@ -207,6 +226,18 @@ conditionals_r
                          tb->addNode($9, @9),
                          tb->addNode($10, @10, SType::Separator) },
                        SType::IfStmt); }
+    | if_else_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
+      "else" conditionals_r
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($7, @7),
+                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($9, @9) },
+                       SType::IfStmt); }
     | if_def_kw identifier recipes_opt "endif"
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
@@ -220,6 +251,13 @@ conditionals_r
                          tb->addNode($4, @4, SType::Separator),
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, SType::Separator) },
+                       SType::IfStmt); }
+    | if_def_kw identifier recipes_opt "else" conditionals_r
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($5, @5) },
                        SType::IfStmt); }
     ;
 
