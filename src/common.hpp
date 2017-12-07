@@ -40,6 +40,7 @@ namespace cpp17 {
 struct CommonArgs
 {
     std::vector<std::string> pos; // Positional arguments.
+    std::string lang;             // Forced language.
     bool help;                    // Print help message.
     bool debug;                   // Whether grammar debugging is enabled.
     bool sdebug;                  // Whether stree debugging is enabled.

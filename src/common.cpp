@@ -59,6 +59,7 @@ Environment::setup(const std::vector<std::string> &argv)
     args.color = varMap.count("color");
     args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
+    args.lang = varMap["lang"].as<std::string>();
 
     if (args.color) {
         decor::enableDecorations();
@@ -91,7 +92,9 @@ parseOptions(const std::vector<std::string> &args,
         ("dump-tree",   "display tree(s)")
         ("time-report", "report time spent on different activities")
         ("fine-only",   "use only fine-grained tree")
-        ("color",       "force colorization of output");
+        ("color",       "force colorization of output")
+        ("lang",        po::value<std::string>()->default_value({}),
+                        "force specific language (c, make)");
 
     po::options_description allOptions;
     allOptions.add(options).add(hiddenOpts);
@@ -133,7 +136,7 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
 {
     auto timer = tr.measure("parsing: " + path);
 
-    std::unique_ptr<Language> lang = Language::create(path);
+    std::unique_ptr<Language> lang = Language::create(path, args.lang);
 
     const std::string contents = readFile(path);
 
