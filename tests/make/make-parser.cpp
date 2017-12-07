@@ -110,6 +110,16 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
     }
 }
 
+TEST_CASE("Variables are parsed in a Makefile", "[make][parser]")
+{
+    CHECK(makeIsParsed("$(AT_$(V))"));
+    CHECK(makeIsParsed("target: )()("));
+
+    Tree tree = parseMake("target: $$($1.name)");
+    CHECK(findNode(tree, Type::UserTypes, "$$") != nullptr);
+    CHECK(findNode(tree, Type::UserTypes, "$1") != nullptr);
+}
+
 TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
 {
     SECTION("Whitespace around function statement") {
@@ -133,9 +143,6 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(patsubst ,,)"));
         CHECK(makeIsParsed("$(patsubst a,,)"));
         CHECK(makeIsParsed("$(patsubst a,b,)"));
-    }
-    SECTION("Expression in the name") {
-        CHECK(makeIsParsed("$(AT_$(V))"));
     }
     SECTION("Keywords in the arguments") {
         CHECK(makeIsParsed("$(info ifdef/ifndef/ifeq/ifneq/else/endif)"));

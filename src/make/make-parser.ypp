@@ -75,7 +75,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %token END 0 "end of file"
 %token <text> ',' ':' '(' ')'
-%token <text> COMMENT ASSIGN_OP CHARS WS NL
+%token <text> COMMENT ASSIGN_OP CHARS WS NL VAR
 %token <text> CALL_PREFIX "$("
 %token <text> CALL_SUFFIX ")"
 %token <text> OVERRIDE "override"
@@ -430,7 +430,9 @@ expression_function_v
     ;
 
 function
-    : "$(" function_name ")"
+    : VAR
+    { $$ = tb->addNode($1, @1); }
+    | "$(" function_name ")"
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator) },
@@ -589,11 +591,19 @@ identifier
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
     | ','
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | '('
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
     | identifier CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | identifier keywords
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | identifier ','
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | identifier '('
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | identifier ')'
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 

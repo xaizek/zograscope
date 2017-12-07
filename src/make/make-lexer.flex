@@ -157,6 +157,7 @@ NL                      \n|\r|\r\n
     ++yyextra->callNesting;
     TOKEN(CALL_PREFIX);
 }
+$.                             TOKEN(VAR);
 "("                            TOKEN('(');
 ")" {
     if (yyextra->callNesting == 0) {

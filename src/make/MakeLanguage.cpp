@@ -30,6 +30,8 @@ MakeLanguage::MakeLanguage() : map()
     map[')'] = Type::RightBrackets;
     map[':'] = Type::Operators;
 
+    map[VAR] = Type::UserTypes;
+
     map[OVERRIDE] = Type::Keywords;
     map[EXPORT] = Type::Keywords;
 
