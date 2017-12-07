@@ -49,7 +49,7 @@ static int run(const Args &args, TimeReport &tr);
 int
 main(int argc, char *argv[])
 {
-    Args args;
+    Args args = { };
     int result;
 
     try {
