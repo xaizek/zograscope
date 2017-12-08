@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -29,9 +30,9 @@
 #include <boost/utility/string_ref.hpp>
 #include "pmr/monolithic.hpp"
 
-#include "c/parser.hpp"
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
+#include "Language.hpp"
 #include "Printer.hpp"
 #include "STree.hpp"
 #include "compare.hpp"
@@ -49,34 +50,68 @@ enum class Changes
     Mixed,
 };
 
+static bool isParsed(const std::string &fileName, const std::string &str);
+static Tree parse(const std::string &fileName, const std::string &str,
+                  bool coarse);
+static void diffSources(const std::string &left, const std::string &right,
+                        bool skipRefine, const std::string &fileName,
+                        const std::string &marker);
 static std::pair<std::string, std::vector<Changes>>
-extractExpectations(const std::string &src);
+extractExpectations(const std::string &src, const std::string &marker);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
                                                    const std::string &delim);
 static std::vector<Changes> makeChangeMap(Node &root);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
 
 bool
-parsed(const std::string &str)
+cIsParsed(const std::string &str)
+{
+    return isParsed("test-input.c", str);
+}
+
+bool
+makeIsParsed(const std::string &str)
+{
+    return isParsed("Makefile", str);
+}
+
+// Checks whether source can be parsed or not.
+static bool
+isParsed(const std::string &fileName, const std::string &str)
 {
     cpp17::pmr::monolithic mr;
-    return !parse(str, "<input>", false, mr).hasFailed();
+    std::unique_ptr<Language> lang = Language::create(fileName);
+    return !lang->parse(str, "<input>", false, mr).hasFailed();
 }
 
 Tree
-makeTree(const std::string &str, bool coarse)
+parseC(const std::string &str, bool coarse)
+{
+    return parse("test-input.c", str, coarse);
+}
+
+Tree
+parseMake(const std::string &str)
+{
+    return parse("Makefile", str, true);
+}
+
+// Parses source into a tree.
+static Tree
+parse(const std::string &fileName, const std::string &str, bool coarse)
 {
     cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create(fileName);
 
-    TreeBuilder tb = parse(str, "<input>", false, mr);
+    TreeBuilder tb = lang->parse(str, "<input>", false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {
-        return Tree(str, tb.getRoot());
+        return Tree(std::move(lang), str, tb.getRoot());
     }
 
     STree stree(std::move(tb), str, false, false, mr);
-    return Tree(str, stree.getRoot());
+    return Tree(std::move(lang), str, stree.getRoot());
 }
 
 const Node *
@@ -157,15 +192,30 @@ countInternal(const Node &root, SType stype, State state)
 }
 
 void
-diffSources(const std::string &left, const std::string &right, bool skipRefine)
+diffC(const std::string &left, const std::string &right, bool skipRefine)
+{
+    diffSources(left, right, skipRefine, "test-input.c", "/// ");
+}
+
+void
+diffMake(const std::string &left, const std::string &right)
+{
+    diffSources(left, right, true, "Makefile.test", "## ");
+}
+
+// Compares two sources with expectation being embedded in them in form of
+// trailing markers.
+static void
+diffSources(const std::string &left, const std::string &right, bool skipRefine,
+            const std::string &fileName, const std::string &marker)
 {
     std::string cleanedLeft, cleanedRight;
     std::vector<Changes> expectedOld, expectedNew;
-    std::tie(cleanedLeft, expectedOld) = extractExpectations(left);
-    std::tie(cleanedRight, expectedNew) = extractExpectations(right);
+    std::tie(cleanedLeft, expectedOld) = extractExpectations(left, marker);
+    std::tie(cleanedRight, expectedNew) = extractExpectations(right, marker);
 
-    Tree oldTree = makeTree(cleanedLeft, true);
-    Tree newTree = makeTree(cleanedRight, true);
+    Tree oldTree = parse(fileName, cleanedLeft, true);
+    Tree newTree = parse(fileName, cleanedRight, true);
 
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
@@ -182,8 +232,8 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine)
     }
 
     if (needPrint) {
-        Tree oldTree = makeTree(left, true);
-        Tree newTree = makeTree(right, true);
+        Tree oldTree = parseC(left, true);
+        Tree newTree = parseC(right, true);
 
         compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
 
@@ -198,7 +248,7 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine)
 }
 
 static std::pair<std::string, std::vector<Changes>>
-extractExpectations(const std::string &src)
+extractExpectations(const std::string &src, const std::string &marker)
 {
     std::vector<boost::string_ref> lines = split(src, '\n');
 
@@ -218,7 +268,7 @@ extractExpectations(const std::string &src)
 
     for (boost::string_ref line : lines) {
         std::string src, expectation;
-        std::tie(src, expectation) = splitAt(line, "/// ");
+        std::tie(src, expectation) = splitAt(line, marker);
 
         cleanedSrc += src;
         cleanedSrc += '\n';

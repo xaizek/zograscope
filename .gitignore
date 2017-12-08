@@ -2,6 +2,7 @@
 /coverage/
 /debug/
 /release/
+/sanitize-basic/
 /tests/tests
 /zs-hi
 /zs-diff
@@ -11,5 +12,7 @@
 
 # auto-generated files
 *.gen.*
-c11-parser.hpp
-c11-lexer.hpp
+src/c/c11-parser.hpp
+src/c/c11-lexer.hpp
+src/make/make-parser.hpp
+src/make/make-lexer.hpp

@@ -24,7 +24,7 @@
 
 TEST_CASE("Comment is marked as unmodified", "[ted][postponed]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void func() {
             /* Comment. */
             something();
@@ -32,7 +32,7 @@ TEST_CASE("Comment is marked as unmodified", "[ted][postponed]")
             func();
         }
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void func() {
             /* Comment. */
             if(0) { }
@@ -48,13 +48,13 @@ TEST_CASE("Comment is marked as unmodified", "[ted][postponed]")
 
 TEST_CASE("Removal of accessor is identified as such", "[ted]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void func()
         {
             menu_state.d->state = NULL;
         }
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void func()
         {
             menu_state.d = NULL;
@@ -73,14 +73,14 @@ TEST_CASE("Removal of accessor is identified as such", "[ted]")
 
 TEST_CASE("Changes are detected in presence of comments", "[ted][postponed]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         // comment1
         void func() { abc; }
 
         // comment3
         void f() { }
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         // comment1
         void func() { xyz; }
 
@@ -100,14 +100,14 @@ TEST_CASE("Changes are detected in presence of comments", "[ted][postponed]")
 
 TEST_CASE("All postponed nodes are pulled into parents", "[ted][postponed]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         typedef struct
         {
             int a; // Comment 1.
         }
         str;
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         typedef struct
         {
             int a; // Comment 1.

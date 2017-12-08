@@ -19,19 +19,18 @@
 %{
 
 #include "c/c11-parser.hpp"
-#include "c/parser.hpp"
 
 #include <cstdio>
 
 #include <iostream>
 #include <string>
 
-#include "c/LexerData.hpp"
+#include "c/C11LexerData.hpp"
 #include "c/c11-lexer.hpp"
 #include "TreeBuilder.hpp"
 #include "stypes.hpp"
 
-struct ParseData
+struct C11ParseData
 {
     std::string fileName;
     bool hitError;
@@ -115,18 +114,28 @@ suckIn(PNode *node, PNode *child)
 #include "TreeBuilder.hpp"
 #define YYLTYPE Location
 
-struct ParseData;
+namespace cpp17 {
+    namespace pmr {
+        class monolithic;
+    }
+}
 
-void yyerror(YYLTYPE *loc, void *scanner, TreeBuilder *tb, ParseData *pd,
-             const char s[]);
+struct C11ParseData;
+
+TreeBuilder c11_parse(const std::string &contents, const std::string &fileName,
+                      bool debug, cpp17::pmr::monolithic &mr);
+
+void c11_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
+               const char s[]);
 
 }
 
+%name-prefix "c11_"
 %glr-parser
 %define parse.error verbose
 %define api.pure
 %param {void *scanner}
-%parse-param {TreeBuilder *tb} {ParseData *pd}
+%parse-param {TreeBuilder *tb} {C11ParseData *pd}
 /* %define lr.type ielr */
 %locations
 
@@ -1727,31 +1736,32 @@ macro_invocation
 %%
 
 TreeBuilder
-parse(const std::string &contents, const std::string &fileName, bool debug,
-      cpp17::pmr::monolithic &mr)
+c11_parse(const std::string &contents, const std::string &fileName, bool debug,
+          cpp17::pmr::monolithic &mr)
 {
     TreeBuilder tb(mr);
-    ParseData pd = { fileName, false };
-    LexerData ld(contents, tb, pd);
+    C11ParseData pd = { fileName, false };
+    C11LexerData ld(contents, tb, pd);
 
     yyscan_t scanner;
-    yylex_init_extra(&ld, &scanner);
+    c11_lex_init_extra(&ld, &scanner);
 #if YYDEBUG
-    yyset_debug(debug, scanner);
+    c11_debug = debug;
+    c11_set_debug(debug, scanner);
 #endif
 
     // parse through the input until there is no more:
     const bool failed = (yyparse(scanner, &tb, &pd) != 0);
     tb.finish(failed || pd.hitError);
 
-    yylex_destroy(scanner);
+    c11_lex_destroy(scanner);
 
     return tb;
 }
 
 void
-yyerror(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/, ParseData *pd,
-        const char s[])
+c11_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
+          C11ParseData *pd, const char s[])
 {
     std::cout << pd->fileName << ':'
               << loc->first_line << ':' << loc->first_column

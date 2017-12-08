@@ -20,12 +20,14 @@
 
 #include <cstdint>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "pmr/pmr_deque.hpp"
 #include "pmr/pmr_vector.hpp"
 
+#include "Language.hpp"
 #include "types.hpp"
 
 enum class State : std::uint8_t
@@ -122,10 +124,10 @@ public:
     }
     Tree(const Tree &rhs) = delete;
     Tree(Tree &&rhs) = default;
-    Tree(const std::string &contents, const PNode *node,
-         allocator_type al = {});
-    Tree(const std::string &contents, const SNode *node,
-         allocator_type al = {});
+    Tree(std::unique_ptr<Language> lang, const std::string &contents,
+         const PNode *node, allocator_type al = {});
+    Tree(std::unique_ptr<Language> lang, const std::string &contents,
+         const SNode *node, allocator_type al = {});
 
     Tree & operator=(const Tree &rhs) = delete;
     Tree & operator=(Tree &&rhs) = default;
@@ -147,7 +149,14 @@ public:
         return nodes.back();
     }
 
+    // Retrieves language associated with this tree.
+    Language * getLanguage()
+    {
+        return lang.get();
+    }
+
 private:
+    std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;
     Node *root = nullptr;
 };

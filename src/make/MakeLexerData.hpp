@@ -15,22 +15,37 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__C__PARSER_HPP__
-#define ZOGRASCOPE__C__PARSER_HPP__
+#ifndef ZOGRASCOPE__MAKE__MAKELEXERDATA_HPP__
+#define ZOGRASCOPE__MAKE__MAKELEXERDATA_HPP__
+
+#include <cstddef>
+#include <cstring>
 
 #include <string>
 
-namespace cpp17 {
-    namespace pmr {
-        class monolithic;
+#include "make/make-parser.hpp"
+#include "LexerData.hpp"
+
+struct MakeLexerData : LexerData
+{
+    std::size_t offset = 0U;
+    std::size_t lineoffset = 0U;
+    std::size_t line = 1U;
+    std::size_t col = 1U;
+
+    YYSTYPE startTok = {};
+    YYLTYPE startLoc = {};
+
+    std::size_t lastCharOffset = static_cast<std::size_t>(-1);
+    int contiguousChars = 0;
+    int callNesting = 0;
+
+    MakeParseData *pd;
+
+    MakeLexerData(const std::string &str, TreeBuilder &tb, MakeParseData &pd)
+        : LexerData(str, tb), pd(&pd)
+    {
     }
-}
+};
 
-class TreeBuilder;
-
-TreeBuilder parse(const std::string &contents,
-                  const std::string &fileName,
-                  bool debug,
-                  cpp17::pmr::monolithic &mr);
-
-#endif // ZOGRASCOPE__C__PARSER_HPP__
+#endif // ZOGRASCOPE__MAKE__MAKELEXERDATA_HPP__

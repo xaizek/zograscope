@@ -22,6 +22,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <boost/optional.hpp>
 #include <boost/program_options/options_description.hpp>
@@ -30,9 +31,9 @@
 #include <boost/program_options/variables_map.hpp>
 #include "pmr/monolithic.hpp"
 
-#include "c/parser.hpp"
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
+#include "Language.hpp"
 #include "TreeBuilder.hpp"
 #include "STree.hpp"
 #include "decoration.hpp"
@@ -58,6 +59,7 @@ Environment::setup(const std::vector<std::string> &argv)
     args.color = varMap.count("color");
     args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
+    args.lang = varMap["lang"].as<std::string>();
 
     if (args.color) {
         decor::enableDecorations();
@@ -90,7 +92,9 @@ parseOptions(const std::vector<std::string> &args,
         ("dump-tree",   "display tree(s)")
         ("time-report", "report time spent on different activities")
         ("fine-only",   "use only fine-grained tree")
-        ("color",       "force colorization of output");
+        ("color",       "force colorization of output")
+        ("lang",        po::value<std::string>()->default_value({}),
+                        "force specific language (c, make)");
 
     po::options_description allOptions;
     allOptions.add(options).add(hiddenOpts);
@@ -132,11 +136,13 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
 {
     auto timer = tr.measure("parsing: " + path);
 
+    std::unique_ptr<Language> lang = Language::create(path, args.lang);
+
     const std::string contents = readFile(path);
 
     cpp17::pmr::monolithic localMR;
 
-    TreeBuilder tb = parse(contents, path, args.debug, localMR);
+    TreeBuilder tb = lang->parse(contents, path, args.debug, localMR);
     if (tb.hasFailed()) {
         return {};
     }
@@ -144,11 +150,11 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
     Tree t(mr);
 
     if (args.fine) {
-        t = Tree(contents, tb.getRoot(), &localMR);
+        t = Tree(std::move(lang), contents, tb.getRoot(), &localMR);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
                     localMR);
-        t = Tree(contents, stree.getRoot(), mr);
+        t = Tree(std::move(lang), contents, stree.getRoot(), mr);
     }
 
     return optional_t<Tree>(std::move(t));

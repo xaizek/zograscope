@@ -35,8 +35,8 @@ static std::string normalizeText(const std::string &s);
 
 TEST_CASE("Width of titles is considered on determining width", "[printer]")
 {
-    Tree oldTree = makeTree("");
-    Tree newTree = makeTree("");
+    Tree oldTree = parseC("");
+    Tree newTree = parseC("");
 
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
@@ -72,8 +72,8 @@ TEST_CASE("Width of titles is considered on determining width", "[printer]")
 
 TEST_CASE("Comment contents is compared", "[printer]")
 {
-    Tree oldTree = makeTree("// This is that comment.\n");
-    Tree newTree = makeTree("// This is this comment.\n");
+    Tree oldTree = parseC("// This is that comment.\n");
+    Tree newTree = parseC("// This is this comment.\n");
 
     TimeReport tr;
     compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
@@ -93,12 +93,12 @@ TEST_CASE("Comment contents is compared", "[printer]")
 
 TEST_CASE("String literal contents is compared", "[printer]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         char str[] = "this is
         a
         string";
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         char str[] = "this is
         the
         string";
@@ -126,10 +126,10 @@ TEST_CASE("String literal contents is compared", "[printer]")
 
 TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         format_str("...%s", str);
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         format_str("%s%s", ell, str);
     )", true);
 
@@ -152,12 +152,12 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
 
 TEST_CASE("Comment contents is not marked as updated on move", "[printer]")
 {
-    Tree oldTree = makeTree(
+    Tree oldTree = parseC(
 R"(void f() {
     /* This is bad. */
 }
     )");
-    Tree newTree = makeTree(
+    Tree newTree = parseC(
 R"(void f() {
     {
         /* Failure is bad. */
@@ -188,7 +188,7 @@ R"(void f() {
 
 TEST_CASE("Lines with changes aren't folded", "[printer]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f() {
         }
 
@@ -203,7 +203,7 @@ TEST_CASE("Lines with changes aren't folded", "[printer]")
         void h() {
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void h() {
         }
 
@@ -250,8 +250,8 @@ TEST_CASE("Lines with changes aren't folded", "[printer]")
 
 TEST_CASE("Highlighting skips leading whitespace", "[printer]")
 {
-    Tree oldTree = makeTree("");
-    Tree newTree = makeTree(R"(
+    Tree oldTree = parseC("");
+    Tree newTree = parseC(R"(
         /* This
          * is
          * a

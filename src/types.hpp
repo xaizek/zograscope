@@ -168,8 +168,6 @@ enum class Type : std::uint8_t
 
 std::ostream & operator<<(std::ostream &os, Type type);
 
-Type tokenToType(int token);
-
 Type canonizeType(Type type);
 
 #endif // ZOGRASCOPE__TYPES_HPP__

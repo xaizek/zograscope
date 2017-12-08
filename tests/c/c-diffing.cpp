@@ -30,7 +30,7 @@
 
 TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (
                 variable < 2 ||  /// Deletions
@@ -50,12 +50,12 @@ TEST_CASE("Reduced tree is compared correctly", "[comparison][reduction]")
 
 TEST_CASE("Different trees are recognized as different", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         aggregate var = {
             { .field = 1 },
         };
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         aggregate var = {
             { .field = 2 },
         };
@@ -75,7 +75,7 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
 
 TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             while (condition1) {
                 if (condition2) {
@@ -108,7 +108,7 @@ TEST_CASE("Spaces are ignored during comparsion", "[comparison]")
 
 TEST_CASE("Only similar enough functions are matched", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         int f() {
             int i = 3;             /// Moves
             return i;              /// Moves
@@ -127,7 +127,7 @@ TEST_CASE("Only similar enough functions are matched", "[comparison]")
 
 TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f(int a,
                int b)  /// Mixed
         {
@@ -142,7 +142,7 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
 
 TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f()
         {
             column_data_t cdt = {
@@ -154,7 +154,7 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
             cdt.column_offset = 1;
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void f()
         {
             const column_data_t cdt = {
@@ -188,7 +188,7 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
 
 TEST_CASE("Comments are ignored on high-level comparison", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         typedef enum {
             NF_NONE,
             NF_ROOT,
@@ -210,7 +210,7 @@ TEST_CASE("Comments are ignored on high-level comparison", "[comparison]")
 TEST_CASE("Declarations with and without initializer are not the same",
           "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         int
             var
             ;
@@ -225,7 +225,7 @@ TEST_CASE("Declarations with and without initializer are not the same",
 
 TEST_CASE("Adding/removing/modifying initializers", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         char ARR1[] =
                     "a"        /// Deletions
                     ;
@@ -251,7 +251,7 @@ TEST_CASE("Adding/removing/modifying initializers", "[comparison]")
 TEST_CASE("Move detection isn't thrown off by large changes",
           "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f()
         {
             stmt1;
@@ -279,7 +279,7 @@ TEST_CASE("Move detection isn't thrown off by large changes",
 
 TEST_CASE("Move detection works on top level", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         #include "this.h"  /// Moves
         #include "bla.h"
 
@@ -298,7 +298,7 @@ TEST_CASE("Move detection works on top level", "[comparison][moves]")
 
 TEST_CASE("Move detection works in a function", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             call1();  /// Moves
             call2();
@@ -312,7 +312,7 @@ TEST_CASE("Move detection works in a function", "[comparison][moves]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             int a;  /// Moves
             int b;
@@ -329,7 +329,7 @@ TEST_CASE("Move detection works in a function", "[comparison][moves]")
 
 TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (cond) {
                 a = b;   /// Moves
@@ -363,7 +363,7 @@ TEST_CASE("Move detection works across nested nodes", "[comparison][moves]")
 TEST_CASE("Move detection doesn't falsely mark root children moved",
           "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         #include <stdio.h>
     )", R"(
         #include <stdio.h>
@@ -373,7 +373,7 @@ TEST_CASE("Move detection doesn't falsely mark root children moved",
 
 TEST_CASE("Unmoved statement is detected as such", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             int i;
             int j;        /// Moves
@@ -391,13 +391,13 @@ TEST_CASE("Unmoved statement is detected as such", "[comparison][moves]")
 
 TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         // Comment.
         struct s {
             gid_t gid;
         };
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         // Comment.
         struct s {
             id_t gid;
@@ -418,7 +418,7 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
 
 TEST_CASE("Else branch addition", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f()
         {
             if(condition)
@@ -443,7 +443,7 @@ TEST_CASE("Else branch addition", "[comparison]")
 
 TEST_CASE("Else branch removal", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f()
         {
             if(condition)
@@ -468,7 +468,7 @@ TEST_CASE("Else branch removal", "[comparison]")
 
 TEST_CASE("Preserved child preserves its parent", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (cond)           /// Deletions
             {                   /// Deletions
@@ -489,7 +489,7 @@ TEST_CASE("Preserved child preserves its parent", "[comparison]")
 
 TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             nread = fscanf(f, "%30d\n", &num);
             if(nread != 1) {
@@ -514,7 +514,7 @@ TEST_CASE("Parent nodes bind leaves on matching", "[comparison]")
 
 TEST_CASE("Functions are matched by content also", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         entries_t f() {                         /// Mixed
             entries_t parent_dirs = {};         /// Deletions
             char *path;
@@ -556,7 +556,7 @@ TEST_CASE("Functions are matched by content also", "[comparison]")
 
 TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (cond1) { }
             else                      /// Deletions
@@ -573,7 +573,7 @@ TEST_CASE("Removed/added subtrees aren't marked moved", "[comparison][moves]")
 TEST_CASE("Removing/adding block braces don't make single statement moved",
           "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (1)
                 call();
@@ -586,7 +586,7 @@ TEST_CASE("Removing/adding block braces don't make single statement moved",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (1) {
                 call();
@@ -599,7 +599,7 @@ TEST_CASE("Removing/adding block braces don't make single statement moved",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             while (true)
                 doSomething();
@@ -612,7 +612,7 @@ TEST_CASE("Removing/adding block braces don't make single statement moved",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             switch (true)
                 doSomething();
@@ -629,7 +629,7 @@ TEST_CASE("Removing/adding block braces don't make single statement moved",
 TEST_CASE("Moves in nested structures are detected meaningfully",
           "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (cond1) {
                 stmt0;        /// Moves
@@ -648,7 +648,7 @@ TEST_CASE("Moves in nested structures are detected meaningfully",
 
 TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         size_t                 /// Updates
             func();
         void g(
@@ -665,7 +665,7 @@ TEST_CASE("Builtin type to user defined type is detected", "[comparison]")
 
 TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if(cond1) {
                 int a;
@@ -686,7 +686,7 @@ TEST_CASE("Identical non-interchangeable nodes are matched", "[comparison]")
 TEST_CASE("Curly braces are considered part of if block",
           "[comparison][splicing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f()
         {
             if (cond) {
@@ -704,7 +704,7 @@ TEST_CASE("Curly braces are considered part of if block",
 
 TEST_CASE("Whitespace after newline in comments is ignored", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         /* line1
          * line2 */
     )", R"(
@@ -715,7 +715,7 @@ TEST_CASE("Whitespace after newline in comments is ignored", "[comparison]")
 
 TEST_CASE("Conditional expression is decomposed", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         const int a = cond
                       ?
                       yes1  /// Updates
@@ -734,7 +734,7 @@ TEST_CASE("Conditional expression is decomposed", "[comparison]")
 
 TEST_CASE("Return statement with value is decomposed", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             return
                    cond ? view->list_pos >= view->run_size :  /// Deletions
@@ -755,7 +755,7 @@ TEST_CASE("Return statement with value is decomposed", "[comparison]")
 TEST_CASE("If condition is matched separately from if-statement structure",
           "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (
                 doit(1)
@@ -781,7 +781,7 @@ TEST_CASE("If condition is matched separately from if-statement structure",
 
 TEST_CASE("Constants can be updated", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         int i =
                 1             /// Updates
                 ;
@@ -812,7 +812,7 @@ TEST_CASE("Constants can be updated", "[comparison]")
 
 TEST_CASE("Top-level declarations aren't mixed", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         typedef struct {
             view_t left;                              /// Deletions
             view_t right;                             /// Deletions
@@ -851,7 +851,7 @@ TEST_CASE("Top-level declarations aren't mixed", "[comparison]")
 
 TEST_CASE("Return with value is on a separate layer", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             return 0;
         }
@@ -865,7 +865,7 @@ TEST_CASE("Return with value is on a separate layer", "[comparison]")
 
 TEST_CASE("Translation unit is not moved", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         int a;
 
         MACRO(      /// Deletions
@@ -880,7 +880,7 @@ TEST_CASE("Translation unit is not moved", "[comparison]")
 
 TEST_CASE("Matching parent value guides how leaves are matched", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (descr == NULL) {
                 statement;        /// Moves
@@ -901,7 +901,7 @@ TEST_CASE("Matching parent value guides how leaves are matched", "[comparison]")
         }
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (descr == NULL) {
                 statement;        /// Moves
@@ -924,7 +924,7 @@ TEST_CASE("Matching parent value guides how leaves are matched", "[comparison]")
 
 TEST_CASE("Expressions are matched against if condition", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             magic_load(magic, NULL)      /// Moves
                 ;                        /// Deletions
@@ -938,7 +938,7 @@ TEST_CASE("Expressions are matched against if condition", "[comparison][moves]")
         }
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             tabs_new_inner(&         /// Moves
                            rwin      /// Updates
@@ -955,7 +955,7 @@ TEST_CASE("Expressions are matched against if condition", "[comparison][moves]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             tabs_new_inner(&         /// Moves
                            lwin      /// Moves
@@ -972,7 +972,7 @@ TEST_CASE("Expressions are matched against if condition", "[comparison][moves]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             tabs_new_inner(&new_tab->left, &lwin)       /// Moves
                 ;                                       /// Deletions
@@ -993,7 +993,7 @@ TEST_CASE("Expressions are matched against if condition", "[comparison][moves]")
 
 TEST_CASE("Refining doesn't cause segfault", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             &stats->
                     preview_cleanup  /// Updates
@@ -1012,7 +1012,7 @@ TEST_CASE("Refining doesn't cause segfault", "[comparison][moves]")
 TEST_CASE("Postponed node in initializer is matched on adding elements",
           "[comparison][postponed]")
 {
-    diffSources(R"(
+    diffC(R"(
         const char *list[] = {
         #ifndef MACRO
             [SK_BY_NLINKS] = "nlinks",
@@ -1030,7 +1030,7 @@ TEST_CASE("Postponed node in initializer is matched on adding elements",
         };
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         const char *list[] = {
         #include "xmacro-file.h"
         };
@@ -1041,7 +1041,7 @@ TEST_CASE("Postponed node in initializer is matched on adding elements",
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         const char *list[] = {
         #include "xmacro-file.h"
         };
@@ -1056,7 +1056,7 @@ TEST_CASE("Postponed node in initializer is matched on adding elements",
 TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
           "[comparison][postponed]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             movedStatement;    /// Moves
             // comment
@@ -1070,7 +1070,7 @@ TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             movedStatement;    /// Moves
         #include "file.h"
@@ -1084,7 +1084,7 @@ TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             movedStatement;    /// Moves
             // comment1
@@ -1100,7 +1100,7 @@ TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             movedStatement;    /// Moves
             // comment1
@@ -1116,7 +1116,7 @@ TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             #include "a"
         }
@@ -1130,7 +1130,7 @@ TEST_CASE("Postponed nodes aren't marked moved on falling out of a container",
 
 TEST_CASE("Postponed nodes in structures", "[comparison][postponed]")
 {
-    diffSources(R"(
+    diffC(R"(
         struct {
             int bla; // comment
         };
@@ -1141,7 +1141,7 @@ TEST_CASE("Postponed nodes in structures", "[comparison][postponed]")
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct name {
             int bla; // comment
         };
@@ -1152,7 +1152,7 @@ TEST_CASE("Postponed nodes in structures", "[comparison][postponed]")
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct {
             // comment
         };
@@ -1163,7 +1163,7 @@ TEST_CASE("Postponed nodes in structures", "[comparison][postponed]")
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct aReallyLongName {
             // comment
         };
@@ -1178,7 +1178,7 @@ TEST_CASE("Postponed nodes in structures", "[comparison][postponed]")
 TEST_CASE("Comma after initializer element is bundled with the element",
           "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         const char *list[] = {
             "nlinks",           /// Deletions
             "inode",
@@ -1189,7 +1189,7 @@ TEST_CASE("Comma after initializer element is bundled with the element",
         };
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         const char *list[] = {
             "long string value"
             ,                    /// Deletions
@@ -1203,7 +1203,7 @@ TEST_CASE("Comma after initializer element is bundled with the element",
 
 TEST_CASE("Parameter moves are detected", "[comparison][moves]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f(
                int a    /// Moves
                ,
@@ -1220,7 +1220,7 @@ TEST_CASE("Parameter moves are detected", "[comparison][moves]")
 
 TEST_CASE("For loop header is on a separate layer", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (i = 0; i < cs->file_hi_count; ++i) {             /// Deletions
                 add_match(expr, "");                              /// Deletions
@@ -1243,7 +1243,7 @@ TEST_CASE("For loop header is on a separate layer", "[comparison]")
 
 TEST_CASE("Widely different comments aren't matched", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         //          /// Deletions
     )", R"(
         /* Bla. */  /// Additions
@@ -1252,7 +1252,7 @@ TEST_CASE("Widely different comments aren't matched", "[comparison]")
 
 TEST_CASE("Widely different directives aren't matched", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         #if 0                    /// Deletions
         #endif                   /// Deletions
     )", R"(
@@ -1262,7 +1262,7 @@ TEST_CASE("Widely different directives aren't matched", "[comparison]")
 
 TEST_CASE("Logical operators are a separate category", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         int a = 1
              &&     /// Deletions
                 2;
@@ -1272,7 +1272,7 @@ TEST_CASE("Logical operators are a separate category", "[comparison]")
                 2;
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         int a = 1
              &&     /// Updates
                 2;
@@ -1285,7 +1285,7 @@ TEST_CASE("Logical operators are a separate category", "[comparison]")
 
 TEST_CASE("Somewhat complex expression changes", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         int primary =
                     (                                      /// Deletions
                     id == SK_BY_NAME || id == SK_BY_INAME  /// Moves
@@ -1301,7 +1301,7 @@ TEST_CASE("Somewhat complex expression changes", "[comparison]")
 
 TEST_CASE("Almost matched if-statement is matched till the end", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (msg == NULL ||
                 vle_mode_is(CMDLINE_MODE)  /// Deletions
@@ -1320,7 +1320,7 @@ TEST_CASE("Almost matched if-statement is matched till the end", "[comparison]")
 
 TEST_CASE("Function bodies are matched even when headers don't", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         TEST(path_is_invalidated_in_fsdata)                  /// Deletions
         {
             fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
@@ -1348,7 +1348,7 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
 {
     // Internal node containing `default:` was marked as updated.
 
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         void f() {
             switch (v) {
                 default:
@@ -1359,7 +1359,7 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
             }
         }
     )", true);
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         void f() {
             switch (v) {
                 case 1:
@@ -1382,7 +1382,7 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
 
 TEST_CASE("Head of while-loop is treated correctly", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             while (new_jobs != NULL) {
                 new_job->err_next = *jobs;
@@ -1412,7 +1412,7 @@ TEST_CASE("Head of while-loop is treated correctly", "[comparison]")
 
 TEST_CASE("Statements are matched by common bodies", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (
                 !at_first_line(view)                               /// Deletions
@@ -1430,7 +1430,7 @@ TEST_CASE("Statements are matched by common bodies", "[comparison]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             while (
                    new_jobs != NULL                    /// Deletions
@@ -1453,7 +1453,7 @@ TEST_CASE("Statements are matched by common bodies", "[comparison]")
 
 TEST_CASE("Simple expressions are matched consistently", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             !
              to_tree      /// Updates
@@ -1476,7 +1476,7 @@ TEST_CASE("Simple expressions are matched consistently", "[comparison]")
 
 TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             while(new_jobs != NULL) {
                 bg_job_t *const new_job = new_jobs;
@@ -1507,7 +1507,7 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             list.ntrashes =                                   /// Deletions
                 add_to_string_array(&list.trashes,            /// Deletions
@@ -1519,7 +1519,7 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             dcache_get_of(entry,
                           size               /// Updates
@@ -1579,10 +1579,10 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
 
 TEST_CASE("Refining works for fine trees", "[comparison]")
 {
-    Tree oldTree = makeTree(R"(
+    Tree oldTree = parseC(R"(
         format_str("...%s", str);
     )");
-    Tree newTree = makeTree(R"(
+    Tree newTree = parseC(R"(
         format_str("%s%s", ell, str);
     )");
 
@@ -1594,7 +1594,7 @@ TEST_CASE("Refining works for fine trees", "[comparison]")
 
 TEST_CASE("Nested statements with values are matched correctly", "[comparison]")
 {
-    diffSources(R"(
+    diffC(R"(
         void g() {
             if(strcmp(part, "normal") == 0)         new_value |= SF_NORMAL;
             else if(strcmp(part, "visual") == 0)    new_value |= SF_VISUAL;

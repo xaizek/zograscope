@@ -33,14 +33,13 @@ static int run(const CommonArgs &args, TimeReport &tr);
 int
 main(int argc, char *argv[])
 {
-    CommonArgs args;
     int result;
 
     try {
         Environment env;
         env.setup({ argv + 1, argv + argc });
 
-        args = env.getCommonArgs();
+        CommonArgs args = env.getCommonArgs();
         if (args.help) {
             env.printOptions();
             return EXIT_SUCCESS;

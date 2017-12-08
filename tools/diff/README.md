@@ -118,8 +118,12 @@ Add `zs-diff` as a diff tool to `git` with these lines (`.git/config`):
 Then configure which files it should be used for (`.git/info/attributes`):
 
 ```gitattributes
-*.[ch]      diff=zs-diff
-*.h.in      diff=zs-diff
+*.[ch]        diff=zs-diff
+*.h.in        diff=zs-diff
+
+Makefile      diff=zs-diff
+Makefile.am   diff=zs-diff
+Makefile.win  diff=zs-diff
 ```
 
 This will make it work for `git diff`, but `git show`, `git log` or other

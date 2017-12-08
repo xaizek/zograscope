@@ -73,9 +73,17 @@ private:
     std::streambuf *rdbuf;  //!< Original output buffer of the stream.
 };
 
-bool parsed(const std::string &str);
+// Checks whether C source can be parsed or not.
+bool cIsParsed(const std::string &str);
 
-Tree makeTree(const std::string &str, bool coarse = false);
+// Checks whether Make source can be parsed or not.
+bool makeIsParsed(const std::string &str);
+
+// Parses C source into a tree.
+Tree parseC(const std::string &str, bool coarse = false);
+
+// Parses Make source into a tree.
+Tree parseMake(const std::string &str);
 
 const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});
@@ -84,7 +92,12 @@ int countLeaves(const Node &root, State state);
 
 int countInternal(const Node &root, SType stype, State state);
 
-void diffSources(const std::string &left, const std::string &right,
-                 bool skipRefine);
+// Compares two C sources with expectation being embedded in them in form of
+// trailing `/// <expectation>` markers.
+void diffC(const std::string &left, const std::string &right, bool skipRefine);
+
+// Compares two Make sources with expectation being embedded in them in form of
+// trailing `## <expectation>` markers.
+void diffMake(const std::string &left, const std::string &right);
 
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__

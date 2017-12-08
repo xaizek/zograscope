@@ -20,7 +20,8 @@
 %option bison-locations
 %option reentrant
 %option noyywrap
-%option extra-type="struct LexerData *"
+%option extra-type="struct C11LexerData *"
+%option prefix="c11_"
 
 %{
 
@@ -28,7 +29,7 @@
 #include <locale>
 #include <string>
 
-#include "c/LexerData.hpp"
+#include "c/C11LexerData.hpp"
 #include "c/c11-parser.hpp"
 #include "TreeBuilder.hpp"
 #include "stypes.hpp"
@@ -61,7 +62,7 @@
     yyextra->lineoffset = yyextra->offset;
 
 static void reportError(YYLTYPE *loc, const char text[], std::size_t len,
-                        LexerData *data);
+                        C11LexerData *data);
 
 %}
 
@@ -452,7 +453,8 @@ NL                      \n|\r|\r\n
 %%
 
 static void
-reportError(YYLTYPE *loc, const char text[], std::size_t len, LexerData *data)
+reportError(YYLTYPE *loc, const char text[], std::size_t len,
+            C11LexerData *data)
 {
     std::string error;
 
@@ -466,11 +468,11 @@ reportError(YYLTYPE *loc, const char text[], std::size_t len, LexerData *data)
 
     YYLTYPE changedLoc = *loc;
     changedLoc.first_column = data->offset - data->lineoffset;
-    yyerror(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
+    c11_error(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
 }
 
 void
-fakeYYunputUse()
+fakeYYunputUseC11()
 {
     // This is needed to prevent compilation error on -Werror=unused.
     static_cast<void>(&yyunput);

@@ -15,41 +15,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__C__LEXERDATA_HPP__
-#define ZOGRASCOPE__C__LEXERDATA_HPP__
-
-#include <cstddef>
-#include <cstring>
-
-#include <string>
+#ifndef ZOGRASCOPE__C__C11LANGUAGE_HPP__
+#define ZOGRASCOPE__C__C11LANGUAGE_HPP__
 
 #include "c/c11-parser.hpp"
+#include "Language.hpp"
 
-struct LexerData
+// C11-specific routines.
+class C11Language : public Language
 {
-    enum { tabWidth = 4 };
+public:
+    // Initializes C11-specific data.
+    C11Language();
 
-    std::size_t offset = 0U;
-    std::size_t lineoffset = 0U;
-    std::size_t line = 1U;
-    std::size_t col = 1U;
-
-    YYSTYPE startTok = {};
-    YYLTYPE startLoc = {};
-
-    TreeBuilder *tb;
-    ParseData *pd;
-
-    LexerData(const std::string &str, TreeBuilder &tb, ParseData &pd)
-        : tb(&tb), pd(&pd), next(str.data()), finish(str.data() + str.size())
-    {
-    }
-
-    std::size_t readInput(char buf[], std::size_t maxSize);
+public:
+    // Maps language-specific token to an element of Type enumeration.
+    virtual Type mapToken(int token) const override;
+    // Parses source file into a tree.
+    virtual TreeBuilder parse(const std::string &contents,
+                              const std::string &fileName,
+                              bool debug,
+                              cpp17::pmr::monolithic &mr) const override;
 
 private:
-    const char *next;
-    const char *finish;
+    Type map[NTOKENS]; // Static token-type to Type map.
 };
 
-#endif // ZOGRASCOPE__C__LEXERDATA_HPP__
+#endif // ZOGRASCOPE__C__C11LANGUAGE_HPP__
