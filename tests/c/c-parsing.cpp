@@ -45,7 +45,7 @@ TEST_CASE("Function specifiers are detected as such", "[comparison][parsing]")
 
 TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         type var = {
             .oldfield = oldValue,
         };
@@ -59,7 +59,7 @@ TEST_CASE("Flat initializer is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         aggregate var = {
             { .field =
               1                    /// Updates
@@ -80,7 +80,7 @@ TEST_CASE("Nested initializer is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Structure is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         struct s {
             int a;   /// Deletions
             int b :
@@ -96,7 +96,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct S {
             int
                 field1  /// Updates
@@ -110,7 +110,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         typedef struct {
             view_t left;   /// Deletions
             view_t right;  /// Deletions
@@ -121,7 +121,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
         } tab_t;
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct tab {
             view_t left;   /// Deletions
             view_t right;  /// Deletions
@@ -132,7 +132,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
         };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct tab {
             view_t left;   /// Deletions
         };
@@ -140,7 +140,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
         struct tab { };
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         struct {
             int left;      /// Deletions
         } instance;
@@ -151,7 +151,7 @@ TEST_CASE("Structure is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         typedef struct
         {
             int a;
@@ -170,7 +170,7 @@ TEST_CASE("Structure with one element is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Enumeration is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         enum {
             A,
             B,
@@ -301,7 +301,7 @@ TEST_CASE("Declarations differ by whether they have initializers",
 TEST_CASE("Returns with and without value aren't matched",
           "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             return 1;    /// Deletions
         }
@@ -316,7 +316,7 @@ TEST_CASE("Returns with and without value aren't matched",
 
 TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             func(arg, arg
                  , structure->field    /// Deletions
@@ -330,7 +330,7 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
         }
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             function(firstArg);
         }
@@ -345,7 +345,7 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Comma is bundled to arguments", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             call(arg1, arg3);
         }
@@ -360,7 +360,7 @@ TEST_CASE("Comma is bundled to arguments", "[comparison][parsing]")
 
 TEST_CASE("Parameter list of prototypes is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void function(
             void        /// Deletions
         );
@@ -370,7 +370,7 @@ TEST_CASE("Parameter list of prototypes is decomposed", "[comparison][parsing]")
         );
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void func(const char str[]);
     )", R"(
         void func(const char str[]
@@ -383,7 +383,7 @@ TEST_CASE("Parameter list of prototypes is decomposed", "[comparison][parsing]")
 TEST_CASE("Parameter list of definitions is decomposed",
           "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void func(const char str[])
         {
         }
@@ -398,7 +398,7 @@ TEST_CASE("Parameter list of definitions is decomposed",
 
 TEST_CASE("Assignment is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             var = func(arg, arg
                        , p->dir_field  /// Deletions
@@ -416,7 +416,7 @@ TEST_CASE("Assignment is decomposed", "[comparison][parsing]")
 TEST_CASE("Nesting of calls is considered on comparison",
           "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (call(
                      val        /// Deletions
@@ -437,7 +437,7 @@ TEST_CASE("Nesting of calls is considered on comparison",
 
 TEST_CASE("Removing enumeration element", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         enum {
             UUE_FULL_RELOAD, /* Full view reload. */
         };
@@ -447,7 +447,7 @@ TEST_CASE("Removing enumeration element", "[comparison][parsing]")
         };
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         enum {
             UUE_REDRAW,
             UUE_RELOAD,      /* View reload. */
@@ -460,7 +460,7 @@ TEST_CASE("Removing enumeration element", "[comparison][parsing]")
         };
     )", false);
 
-    diffSources(R"(
+    diffC(R"(
         enum {
             UUE_RELOAD,      /* View reload. */
             UUE_FULL_RELOAD, /* Full view reload. */  /// Deletions
@@ -475,7 +475,7 @@ TEST_CASE("Removing enumeration element", "[comparison][parsing]")
 TEST_CASE("Variable name isn't removed/added with initializer",
           "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             const char
                       *       /// Deletions
@@ -495,7 +495,7 @@ TEST_CASE("Variable name isn't removed/added with initializer",
 
 TEST_CASE("Parenthesised expression is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         int a = (
                  1002  /// Updates
                 );
@@ -508,7 +508,7 @@ TEST_CASE("Parenthesised expression is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Additive expression is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         int a = 101 +
                 202    /// Updates
                 ;
@@ -521,7 +521,7 @@ TEST_CASE("Additive expression is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Assignments aren't equal to each other", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             vvar1
             =         /// Updates
@@ -558,7 +558,7 @@ TEST_CASE("Assignments aren't equal to each other", "[comparison][parsing]")
 
 TEST_CASE("For loop is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (
                  i = 0;
@@ -575,7 +575,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (
                  i = 0;
@@ -593,7 +593,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (
                  i = 0            /// Deletions
@@ -610,7 +610,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (
                  i = 0            /// Moves
@@ -626,7 +626,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (
                  i = 0            /// Moves
@@ -641,7 +641,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (;;) { }
         }
@@ -654,7 +654,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (int i = 0;
                  i < 0       /// Deletions
@@ -672,7 +672,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
         }
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (int i = 0; ; ) { }
         }
@@ -689,7 +689,7 @@ TEST_CASE("For loop is decomposed", "[comparison][parsing]")
 TEST_CASE("Moves in statements with fixed structure",
           "[comparison][parsing][postponed]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             for (
                  i = 0;
@@ -715,7 +715,7 @@ TEST_CASE("Moves in statements with fixed structure",
 
 TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             ++         /// Updates
             variable;
@@ -731,7 +731,7 @@ TEST_CASE("Prefix increment/decrement is decomposed", "[comparison][parsing]")
 TEST_CASE("Comparison operator change is detected as update",
           "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         int a = variable
                 ==        /// Updates
                 value;
@@ -741,7 +741,7 @@ TEST_CASE("Comparison operator change is detected as update",
                 value;
     )", true);
 
-    diffSources(R"(
+    diffC(R"(
         int a = variable
                 ==        /// Updates
                 value;
@@ -755,7 +755,7 @@ TEST_CASE("Comparison operator change is detected as update",
 TEST_CASE("Negation is decomposed", "[comparison][parsing]")
 {
     /* The code is relatively complex, because it works otherwise. */
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (var == 0 &&
                 !                                    /// Deletions
@@ -770,7 +770,7 @@ TEST_CASE("Negation is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Inversion of relatively complex condition", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             if (var
                 ==                                   /// Updates
@@ -792,7 +792,7 @@ TEST_CASE("Inversion of relatively complex condition", "[comparison][parsing]")
 
 TEST_CASE("Switch and label statements are decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             switch (v) {
                 default:
@@ -821,7 +821,7 @@ TEST_CASE("Switch and label statements are decomposed", "[comparison][parsing]")
 
 TEST_CASE("Do-while loop is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         void f() {
             do
                 step();
@@ -839,7 +839,7 @@ TEST_CASE("Do-while loop is decomposed", "[comparison][parsing]")
 
 TEST_CASE("Call without arguments is decomposed", "[comparison][parsing]")
 {
-    diffSources(R"(
+    diffC(R"(
         trashes_list list = get_list_of_trashes();
     )", R"(
         trashes_list list = get_list_of_trashes(

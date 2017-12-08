@@ -92,7 +92,8 @@ int countLeaves(const Node &root, State state);
 
 int countInternal(const Node &root, SType stype, State state);
 
-void diffSources(const std::string &left, const std::string &right,
-                 bool skipRefine);
+// Compares two C sources with expectation being embedded in them in form of
+// trailing `/// <expectation>` markers.
+void diffC(const std::string &left, const std::string &right, bool skipRefine);
 
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__

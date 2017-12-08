@@ -189,7 +189,7 @@ countInternal(const Node &root, SType stype, State state)
 }
 
 void
-diffSources(const std::string &left, const std::string &right, bool skipRefine)
+diffC(const std::string &left, const std::string &right, bool skipRefine)
 {
     std::string cleanedLeft, cleanedRight;
     std::vector<Changes> expectedOld, expectedNew;
