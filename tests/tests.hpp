@@ -96,4 +96,8 @@ int countInternal(const Node &root, SType stype, State state);
 // trailing `/// <expectation>` markers.
 void diffC(const std::string &left, const std::string &right, bool skipRefine);
 
+// Compares two Make sources with expectation being embedded in them in form of
+// trailing `## <expectation>` markers.
+void diffMake(const std::string &left, const std::string &right);
+
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__
