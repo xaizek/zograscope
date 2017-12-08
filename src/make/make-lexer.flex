@@ -145,7 +145,7 @@ NL                      \n|\r|\r\n
 -?"include"                    KW(INCLUDE);
 
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
-"$(" {
+"$("|"${" {
     if (yylval->text.from != yyextra->lastCharOffset &&
         yyextra->contiguousChars != 0) {
         yyextra->offset -= yyleng;
@@ -162,6 +162,16 @@ $.                             TOKEN(VAR);
 ")" {
     if (yyextra->callNesting == 0) {
         TOKEN(')');
+    }
+    --yyextra->callNesting;
+    yyextra->lastCharOffset = yyextra->offset;
+    TOKEN(CALL_SUFFIX);
+}
+"}" {
+    if (yyextra->callNesting == 0) {
+        yyextra->offset -= yyleng;
+        yyextra->col -= yyleng;
+        REJECT;
     }
     --yyextra->callNesting;
     yyextra->lastCharOffset = yyextra->offset;

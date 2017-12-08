@@ -150,6 +150,11 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(info override/export)"));
         CHECK(makeIsParsed("$(info define/endef)"));
     }
+    SECTION("Curly braces") {
+        Tree tree = parseMake("target: ${name}");
+        CHECK(findNode(tree, Type::LeftBrackets, "${") != nullptr);
+        CHECK(findNode(tree, Type::RightBrackets, "}") != nullptr);
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
