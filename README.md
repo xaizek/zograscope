@@ -31,12 +31,20 @@ experiment, but this should improve over time.
 
 #### C ####
 
-At the moment only C of various standards is supported to some degree (the
-exact grammar is that of C11 with extensions):
+The exact grammar is that of C11 with extensions implemented in popular
+compilers and additional extensions needed to allow processing of code with
+macros.
+
+Note the following:
+ * old K&R style of function declarations isn't parsed (there might be a
+   workaround for it, but this syntax is deprecated either way)
  * preprocessor directives aren't tokenized yet (treated as a single entity),
    which doesn't seem to be a problem in practice
  * extensive use of macros in unusual places might not be parsed (this probably
    won't change)
+
+Other than that code in C89, C99, C11 and GNU-versions of C language should be
+recognized.
 
 #### Other ####
 
