@@ -30,6 +30,9 @@
 #include "c/C11Language.hpp"
 #include "make/MakeLanguage.hpp"
 
+static std::string detectLanguage(const std::string &stem,
+                                  const std::string &ext);
+
 std::unique_ptr<Language>
 Language::create(const std::string &fileName, const std::string &l)
 {
@@ -37,12 +40,9 @@ Language::create(const std::string &fileName, const std::string &l)
     if (lang.empty()) {
         boost::filesystem::path path = fileName;
 
-        using namespace boost::algorithm;
-        const std::string stem = to_lower_copy(path.stem().string());
-        const std::string ext = to_lower_copy(path.extension().string());
-        lang = ends_with(stem, "makefile") || ext == ".mk" || ext == ".mak"
-             ? "make"
-             : "c";
+        using boost::algorithm::to_lower_copy;
+        lang = detectLanguage(to_lower_copy(path.stem().string()),
+                              to_lower_copy(path.extension().string()));
     }
 
     if (lang == "c") {
@@ -52,4 +52,21 @@ Language::create(const std::string &fileName, const std::string &l)
         return std::unique_ptr<MakeLanguage>(new MakeLanguage());
     }
     throw std::runtime_error("Unknown language: \"" + lang + '"');
+}
+
+// Determines language from normalized stem and extension of a file.
+static std::string
+detectLanguage(const std::string &stem, const std::string &ext)
+{
+    if (ext == ".c" || ext == ".h") {
+        return "c";
+    }
+
+    using boost::algorithm::ends_with;
+    if (ends_with(stem, "makefile") || ext == ".mk" || ext == ".mak") {
+        return "make";
+    }
+
+    // Assume C by default.
+    return "c";
 }

@@ -67,6 +67,22 @@ TEST_CASE("C is the default", "[language]")
     CHECK_FALSE(lang->parse(cFile, "<input>", false, mr).hasFailed());
 }
 
+TEST_CASE("C is detected", "[language]")
+{
+    std::string fileName;
+
+    SECTION("Makefile stem of source file") {
+        fileName = "Makefile.c";
+    }
+    SECTION("Makefile stem of header file") {
+        fileName = "Makefile.h";
+    }
+
+    cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create(fileName);
+    CHECK_FALSE(lang->parse(cFile, "<input>", false, mr).hasFailed());
+}
+
 TEST_CASE("Make is detected", "[language]")
 {
     std::string fileName;
