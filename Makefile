@@ -39,25 +39,23 @@ else
 
     ifneq ($(call pos,debug,$(MAKECMDGOALS)),-1)
         out_dir := debug
+    else ifneq ($(call pos,sanitize-basic,$(MAKECMDGOALS)),-1)
+        out_dir := sanitize-basic
+        EXTRA_CXXFLAGS += -fsanitize=address -fsanitize=undefined
+        EXTRA_LDFLAGS  += -fsanitize=address -fsanitize=undefined -pthread
     else
-        ifneq ($(call pos,sanitize-basic,$(MAKECMDGOALS)),-1)
-            out_dir := sanitize-basic
-            EXTRA_CXXFLAGS += -fsanitize=address -fsanitize=undefined
-            EXTRA_LDFLAGS  += -fsanitize=address -fsanitize=undefined -pthread
-        else
-            with_cov := 0
-            ifneq ($(call pos,coverage,$(MAKECMDGOALS)),-1)
-                with_cov := 1
-            endif
+        with_cov := 0
+        ifneq ($(call pos,coverage,$(MAKECMDGOALS)),-1)
+            with_cov := 1
+        endif
 
-            ifneq ($(with_cov),0)
-                out_dir := coverage
-                EXTRA_CXXFLAGS += --coverage
-                EXTRA_LDFLAGS  += --coverage
-            else
-                EXTRA_CXXFLAGS := -Og -g
-                out_dir := .
-            endif
+        ifneq ($(with_cov),0)
+            out_dir := coverage
+            EXTRA_CXXFLAGS += --coverage
+            EXTRA_LDFLAGS  += --coverage
+        else
+            EXTRA_CXXFLAGS := -Og -g
+            out_dir := .
         endif
     endif
     target := debug
