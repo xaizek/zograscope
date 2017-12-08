@@ -83,6 +83,15 @@ TEST_CASE("Make is detected", "[language]")
     SECTION("With suffix") {
         fileName = "Makefile.win";
     }
+    SECTION("With prefix") {
+        fileName = "prefix_Makefile";
+    }
+    SECTION("With .mk suffix") {
+        fileName = "config.mk";
+    }
+    SECTION("With .mak suffix") {
+        fileName = "config.mak";
+    }
 
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);

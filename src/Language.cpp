@@ -24,6 +24,7 @@
 #include <string>
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include "c/C11Language.hpp"
@@ -34,9 +35,14 @@ Language::create(const std::string &fileName, const std::string &l)
 {
     std::string lang = l;
     if (lang.empty()) {
-        std::string name = boost::filesystem::path(fileName).stem().string();
-        boost::algorithm::to_lower(name);
-        lang = (name == "makefile" ? "make" : "c");
+        boost::filesystem::path path = fileName;
+
+        using namespace boost::algorithm;
+        const std::string stem = to_lower_copy(path.stem().string());
+        const std::string ext = to_lower_copy(path.extension().string());
+        lang = ends_with(stem, "makefile") || ext == ".mk" || ext == ".mak"
+             ? "make"
+             : "c";
     }
 
     if (lang == "c") {
