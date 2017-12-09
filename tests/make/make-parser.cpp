@@ -114,6 +114,21 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed(R"(var += sed_first='s,^\([^/]*\)/.*$$,\1,';)"));
         CHECK(makeIsParsed(R"(var != test $$# -gt 0)"));
     }
+    SECTION("Whitespace around assignment statement") {
+        Tree tree;
+
+        tree = parseMake("var := #comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+
+        tree = parseMake("var := val#comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+
+        tree = parseMake("override var := #comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+
+        tree = parseMake("export var := val #comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+    }
 }
 
 TEST_CASE("Variables are parsed in a Makefile", "[make][parser]")

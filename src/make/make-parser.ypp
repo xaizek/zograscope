@@ -114,6 +114,9 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> if_def_kw if_eq_kw identifier text char br colon
 %type <node> keywords comment_opt
 
+%type <node> expressions_a expression_a expression_text_a expression_function_a
+%type <node> text_a char_a
+
 %type <node> expressions_v expression_v expression_text_v expression_function_v
 %type <node> text_v char_v
 
@@ -337,25 +340,29 @@ statement
     ;
 
 assignment
-    : pattern ASSIGN_OP
-    { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator) },
-                       SType::AssignmentExpr); }
-    | pattern ASSIGN_OP expressions_v
+    : pattern ASSIGN_OP comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3) },
                        SType::AssignmentExpr); }
-    | specifiers pattern ASSIGN_OP
+    | pattern ASSIGN_OP expressions_a comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator) },
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4) },
                        SType::AssignmentExpr); }
-    | specifiers pattern ASSIGN_OP expressions_v
+    | specifiers pattern ASSIGN_OP comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator),
                          tb->addNode($4, @4) },
+                       SType::AssignmentExpr); }
+    | specifiers pattern ASSIGN_OP expressions_a comment_opt
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5) },
                        SType::AssignmentExpr); }
     ;
 
@@ -382,6 +389,13 @@ expressions
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
+expressions_a
+    : expression_a
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expressions_a WS expression_a
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
 expressions_v
     : expression_v
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
@@ -394,6 +408,11 @@ expression
     | expression_function
     ;
 
+expression_a
+    : expression_text_a
+    | expression_function_a
+    ;
+
 expression_v
     : expression_text_v
     | expression_function_v
@@ -403,6 +422,13 @@ expression_text
     : text
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     | expression_function text
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+expression_text_a
+    : text_a
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_function_a text_a
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -419,6 +445,15 @@ expression_function
     | expression_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | expression_function function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+expression_function_a
+    : function
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | expression_function_a function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | expression_text_a function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -616,6 +651,13 @@ text
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
+text_a
+    : char_a
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    | text_a char_a
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
 text_v
     : char_v
     { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
@@ -629,13 +671,17 @@ char
     | ':'        { $$ = tb->addNode($1, @1, 0); }
     ;
 
-char_v
+char_a
     : char
-    | COMMENT    { $$ = tb->addNode($1, @1, 0); }
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
     | ','        { $$ = tb->addNode($1, @1, 0); }
     | keywords
+    ;
+
+char_v
+    : char_a
+    | COMMENT    { $$ = tb->addNode($1, @1, 0); }
     ;
 
 keywords
