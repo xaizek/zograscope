@@ -92,7 +92,7 @@ NL                      \n|\r|\r\n
 [ ]                     ;
 {NL}\t|^\t {
     ADVANCE_LINE();
-    yyextra->col = yyextra->tabWidth;
+    yyextra->col = yyextra->tabWidth + 1;
     TOKEN(LEADING_TAB);
 }
 \t {

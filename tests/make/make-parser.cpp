@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+#include "utils/strings.hpp"
+#include "Highlighter.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -473,4 +475,22 @@ TEST_CASE("Leading tabs are allowed not only for recipes in Makefiles",
 	# comment
     )";
     CHECK(makeIsParsed(statements));
+}
+
+TEST_CASE("Column of recipe is computed correctly", "[make][parser]")
+{
+    std::string input = R"(
+target:
+	command1
+	command2
+    )";
+    std::string expected = R"(
+target:
+    command1
+    command2)";
+
+    Tree tree = parseMake(input);
+
+    std::string output = Highlighter(*tree.getRoot()).print();
+    CHECK(split(output, '\n') == split(expected, '\n'));
 }
