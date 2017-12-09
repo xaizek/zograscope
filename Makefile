@@ -108,7 +108,7 @@ all: $$($1.bin)
 $$($1.bin): | $(out_dirs)
 
 $$($1.bin): $$($1.objects)
-	$(CXX) -o $$@ $$^ $(LDFLAGS) $(EXTRA_LDFLAGS)
+	$(CXX) $(LDFLAGS) $(EXTRA_LDFLAGS) $$^ -o $$@
 
 endef
 
@@ -174,13 +174,13 @@ $(lib_objects): | $(lib_autohpp)
 # work around parenthesis warning in tests somehow caused by ccache
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses -Itests/
 $(out_dir)/tests/tests: $(tests_objects) tests/. | $(out_dirs)
-	$(CXX) -o $@ $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS)
+	$(CXX) $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@
 
 $(out_dir)/%.gen.o: $(out_dir)/%.gen.cpp | $(out_dirs)
-	$(CXX) -o $@ -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $<
+	$(CXX) -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 $(out_dir)/%.o: %.cpp | $(out_dirs)
-	$(CXX) -o $@ -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $<
+	$(CXX) -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 $(out_dirs):
 	mkdir -p $@
