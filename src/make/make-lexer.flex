@@ -114,6 +114,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc = *yylloc;
     BEGIN(slcomment);
 }
+<slcomment>\\{NL}              ADVANCE_LINE();
 <slcomment>{NL} {
     yylval->text.from = yyextra->startTok.text.from;
     yylval->text.len = yyextra->offset - yyextra->startTok.text.from - 1;

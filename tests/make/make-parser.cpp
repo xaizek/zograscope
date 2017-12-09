@@ -49,6 +49,12 @@ TEST_CASE("Comments are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed(" # comment"));
     CHECK(makeIsParsed("# comment "));
     CHECK(makeIsParsed(" # comment "));
+
+    const char *const multiline = R"(
+        a := a#b \
+               asdf
+    )";
+    CHECK(makeIsParsed(multiline));
 }
 
 TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
