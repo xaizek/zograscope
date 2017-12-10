@@ -99,7 +99,7 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
     SECTION("Keywords in the value") {
         CHECK(makeIsParsed("KEYWORDS := ifdef/ifndef/ifeq/ifneq/else/endif"));
         CHECK(makeIsParsed("KEYWORDS += include"));
-        CHECK(makeIsParsed("KEYWORDS += override/export"));
+        CHECK(makeIsParsed("KEYWORDS += override/export/unexport"));
         CHECK(makeIsParsed("KEYWORDS += define/endef"));
     }
     SECTION("Keywords in the name") {
@@ -107,7 +107,8 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("ifndef.b = a"));
         CHECK(makeIsParsed("ifndef/b = a"));
         CHECK(makeIsParsed(",ifdef,ifndef,ifeq,ifneq,else,endif = b"));
-        CHECK(makeIsParsed(",override,include,export,define,endef = b"));
+        CHECK(makeIsParsed(",override,include,define,endef = b"));
+        CHECK(makeIsParsed(",export,unexport = b"));
     }
     SECTION("Functions in the name") {
         CHECK(makeIsParsed(R"($(1).stuff :=)"));
@@ -170,7 +171,7 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
     SECTION("Keywords in the arguments") {
         CHECK(makeIsParsed("$(info ifdef/ifndef/ifeq/ifneq/else/endif)"));
         CHECK(makeIsParsed("$(info include)"));
-        CHECK(makeIsParsed("$(info override/export)"));
+        CHECK(makeIsParsed("$(info override/export/unexport)"));
         CHECK(makeIsParsed("$(info define/endef)"));
     }
     SECTION("Curly braces") {
@@ -535,4 +536,19 @@ target:
 
     std::string output = Highlighter(*tree.getRoot()).print();
     CHECK(split(output, '\n') == split(expected, '\n'));
+}
+
+TEST_CASE("Export/unexport directives", "[make][parser]")
+{
+    CHECK(makeIsParsed("export"));
+    CHECK(makeIsParsed("export var"));
+    CHECK(makeIsParsed("export $(vars)"));
+    CHECK(makeIsParsed("export var $(vars)"));
+    CHECK(makeIsParsed("export var$(vars)"));
+
+    CHECK(makeIsParsed("unexport"));
+    CHECK(makeIsParsed("unexport var"));
+    CHECK(makeIsParsed("unexport $(vars)"));
+    CHECK(makeIsParsed("unexport var $(vars)"));
+    CHECK(makeIsParsed("unexport var$(vars)"));
 }

@@ -34,6 +34,7 @@ MakeLanguage::MakeLanguage() : map()
 
     map[OVERRIDE] = Type::Keywords;
     map[EXPORT] = Type::Keywords;
+    map[UNEXPORT] = Type::Keywords;
 
     map[IFDEF] = Type::Directives;
     map[IFNDEF] = Type::Directives;

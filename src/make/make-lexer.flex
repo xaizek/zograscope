@@ -132,6 +132,7 @@ NL                      \n|\r|\r\n
 
 "override"                     KW(OVERRIDE);
 "export"                       KW(EXPORT);
+"unexport"                     KW(UNEXPORT);
 
 "ifdef"                        KW(IFDEF);
 "ifndef"                       KW(IFNDEF);

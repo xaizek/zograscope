@@ -80,6 +80,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> CALL_SUFFIX ")"
 %token <text> OVERRIDE "override"
 %token <text> EXPORT "export"
+%token <text> UNEXPORT "unexport"
 %token <text> IFDEF "ifdef"
 %token <text> IFNDEF "ifndef"
 %token <text> IFEQ "ifeq"
@@ -100,7 +101,8 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
     }
 } <text>
 
-%type <node> statement statements statements_opt assignment specifiers
+%type <node> statement statements statements_opt specifiers export
+%type <node> assignment assignment_prefix
 %type <node> conditionals conditionals_r define include
 %type <node> expressions expressions_opt
 %type <node> expression expression_text expression_function
@@ -346,6 +348,16 @@ statement
     | conditionals
     | define
     | include
+    | export br
+    ;
+
+export
+    : "export"    { $$ = tb->addNode($1, @1, SType::Separator); }
+    | "unexport"  { $$ = tb->addNode($1, @1, SType::Separator); }
+    | assignment_prefix
+    | assignment_prefix WS targets
+    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+                         tb->addNode($3, @3) }, SType::Directive); }
     ;
 
 assignment
@@ -360,24 +372,29 @@ assignment
                          tb->addNode($3, @3),
                          tb->addNode($4, @4) },
                        SType::AssignmentExpr); }
-    | specifiers pattern ASSIGN_OP comment_opt
+    | assignment_prefix ASSIGN_OP comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3) },
+                       SType::AssignmentExpr); }
+    | assignment_prefix ASSIGN_OP expressions_a comment_opt
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($3, @3),
                          tb->addNode($4, @4) },
                        SType::AssignmentExpr); }
-    | specifiers pattern ASSIGN_OP expressions_a comment_opt
-    { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
-                         tb->addNode($4, @4),
-                         tb->addNode($5, @5) },
-                       SType::AssignmentExpr); }
+    ;
+
+assignment_prefix
+    : specifiers pattern
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
     ;
 
 specifiers
     : "override"  { $$ = tb->addNode($1, @1); }
     | "export"    { $$ = tb->addNode($1, @1); }
+    | "unexport"  { $$ = tb->addNode($1, @1); }
     | "override" "export"
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::TemporaryContainer); }
@@ -722,6 +739,7 @@ char_d
     | "include"  { $$ = tb->addNode($1, @1, 0); }
     | "override" { $$ = tb->addNode($1, @1, 0); }
     | "export"   { $$ = tb->addNode($1, @1, 0); }
+    | "unexport" { $$ = tb->addNode($1, @1, 0); }
     | "ifdef"    { $$ = tb->addNode($1, @1, 0); }
     | "ifndef"   { $$ = tb->addNode($1, @1, 0); }
     | "ifeq"     { $$ = tb->addNode($1, @1, 0); }
@@ -740,6 +758,7 @@ keywords
     : "include"  { $$ = tb->addNode($1, @1, 0); }
     | "override" { $$ = tb->addNode($1, @1, 0); }
     | "export"   { $$ = tb->addNode($1, @1, 0); }
+    | "unexport" { $$ = tb->addNode($1, @1, 0); }
     | "ifdef"    { $$ = tb->addNode($1, @1, 0); }
     | "ifndef"   { $$ = tb->addNode($1, @1, 0); }
     | "ifeq"     { $$ = tb->addNode($1, @1, 0); }
