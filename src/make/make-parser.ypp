@@ -89,6 +89,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %token <text> ENDIF "endif"
 %token <text> DEFINE "define"
 %token <text> ENDEF "endef"
+%token <text> UNDEFINE "undefine"
 %token <text> INCLUDE "include"
 %token <text> LEADING_TAB
 %token <text> NTOKENS
@@ -399,6 +400,14 @@ specifiers
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::TemporaryContainer); }
     | "export" "override"
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
+    | "undefine"
+    { $$ = tb->addNode($1, @1); }
+    | "override" "undefine"
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       SType::TemporaryContainer); }
+    | "undefine" "override"
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
                        SType::TemporaryContainer); }
     ;
@@ -747,6 +756,7 @@ char_d
     | "else"     { $$ = tb->addNode($1, @1, 0); }
     | "endif"    { $$ = tb->addNode($1, @1, 0); }
     | "define"   { $$ = tb->addNode($1, @1, 0); }
+    | "undefine" { $$ = tb->addNode($1, @1, 0); }
     ;
 
 char_v
@@ -767,6 +777,7 @@ keywords
     | "endif"    { $$ = tb->addNode($1, @1, 0); }
     | "define"   { $$ = tb->addNode($1, @1, 0); }
     | "endef"    { $$ = tb->addNode($1, @1, 0); }
+    | "undefine" { $$ = tb->addNode($1, @1, 0); }
     ;
 
 br

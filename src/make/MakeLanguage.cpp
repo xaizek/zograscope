@@ -45,6 +45,7 @@ MakeLanguage::MakeLanguage() : map()
 
     map[DEFINE] = Type::Directives;
     map[ENDEF] = Type::Directives;
+    map[UNDEFINE] = Type::Directives;
 
     map[INCLUDE] = Type::Directives;
 }

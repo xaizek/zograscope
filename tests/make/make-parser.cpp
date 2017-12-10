@@ -100,14 +100,14 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("KEYWORDS := ifdef/ifndef/ifeq/ifneq/else/endif"));
         CHECK(makeIsParsed("KEYWORDS += include"));
         CHECK(makeIsParsed("KEYWORDS += override/export/unexport"));
-        CHECK(makeIsParsed("KEYWORDS += define/endef"));
+        CHECK(makeIsParsed("KEYWORDS += define/endef/undefine"));
     }
     SECTION("Keywords in the name") {
         CHECK(makeIsParsed("a.ifndef.b = a"));
         CHECK(makeIsParsed("ifndef.b = a"));
         CHECK(makeIsParsed("ifndef/b = a"));
         CHECK(makeIsParsed(",ifdef,ifndef,ifeq,ifneq,else,endif = b"));
-        CHECK(makeIsParsed(",override,include,define,endef = b"));
+        CHECK(makeIsParsed(",override,include,define,endef,undefine = b"));
         CHECK(makeIsParsed(",export,unexport = b"));
     }
     SECTION("Functions in the name") {
@@ -172,7 +172,7 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(info ifdef/ifndef/ifeq/ifneq/else/endif)"));
         CHECK(makeIsParsed("$(info include)"));
         CHECK(makeIsParsed("$(info override/export/unexport)"));
-        CHECK(makeIsParsed("$(info define/endef)"));
+        CHECK(makeIsParsed("$(info define/endef/undefine)"));
     }
     SECTION("Curly braces") {
         Tree tree = parseMake("target: ${name}");
@@ -551,4 +551,13 @@ TEST_CASE("Export/unexport directives", "[make][parser]")
     CHECK(makeIsParsed("unexport $(vars)"));
     CHECK(makeIsParsed("unexport var $(vars)"));
     CHECK(makeIsParsed("unexport var$(vars)"));
+}
+
+TEST_CASE("Undefine directive", "[make][parser]")
+{
+    CHECK(makeIsParsed("undefine something"));
+    CHECK(makeIsParsed("undefine this and that"));
+    CHECK(makeIsParsed("undefine some $(things)"));
+    CHECK(makeIsParsed("undefine override something"));
+    CHECK(makeIsParsed("override undefine something"));
 }

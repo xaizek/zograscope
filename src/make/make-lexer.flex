@@ -143,6 +143,7 @@ NL                      \n|\r|\r\n
 
 "define"                       KW(DEFINE);
 "endef"                        KW(ENDEF);
+"undefine"                     KW(UNDEFINE);
 
 -?"include"                    KW(INCLUDE);
 
