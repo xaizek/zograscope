@@ -420,6 +420,48 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
     )";
     Tree tree = parseMake(bangSuffix);
     CHECK(findNode(tree, Type::Assignments, "+=") != nullptr);
+
+    const char *const expresion = R"(
+        define tool_template
+            $1.bin
+        endef
+    )";
+    CHECK(makeIsParsed(expresion));
+
+    const char *const expresions = R"(
+        define vifm_SOURCES :=
+            $(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+        endef
+    )";
+    CHECK(makeIsParsed(expresions));
+
+    const char *const textFirstEmptyLine = R"(
+        define vifm_SOURCES :=
+
+            bla $(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+        endef
+    )";
+    CHECK(makeIsParsed(textFirstEmptyLine));
+
+    const char *const multipleEmptyLines = R"(
+        define vifm_SOURCES :=
+
+
+            bla$(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+        endef
+    )";
+    CHECK(makeIsParsed(multipleEmptyLines));
+
+    const char *const emptyLinesEverywhere = R"(
+        define vifm_SOURCES :=
+
+            $(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+
+            something
+
+        endef
+    )";
+    CHECK(makeIsParsed(emptyLinesEverywhere));
 }
 
 TEST_CASE("Line escaping works in a Makefile", "[make][parser]")

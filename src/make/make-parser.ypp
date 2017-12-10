@@ -106,7 +106,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> expression expression_text expression_function
 %type <node> pattern_text pattern_function
 %type <node> arguments argument
-%type <node> function
+%type <node> function definition
 %type <node> rule target pattern targets prerequisites
 %type <node> recipes recipes_opt recipe
 %type <node> function_name function_name_text function_name_function
@@ -116,6 +116,8 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %type <node> expressions_a expression_a expression_text_a expression_function_a
 %type <node> text_a char_a
+
+%type <node> expressions_d first_expression_d char_d
 
 %type <node> expressions_v expression_v expression_text_v expression_function_v
 %type <node> text_v char_v
@@ -275,27 +277,27 @@ conditionals_r
     ;
 
 define
-    : "define" pattern statements_opt "endef" br
+    : "define" pattern definition "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, SType::Separator) },
                        SType::Declaration); }
-    | specifiers "define" pattern statements_opt "endef" br
+    | specifiers "define" pattern definition "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, SType::Separator) },
                        SType::Declaration); }
-    | "define" pattern ASSIGN_OP statements_opt "endef" br
+    | "define" pattern ASSIGN_OP definition "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3, SType::Separator),
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, SType::Separator) },
                        SType::Declaration); }
-    | specifiers "define" pattern ASSIGN_OP statements_opt "endef" br
+    | specifiers "define" pattern ASSIGN_OP definition "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, SType::Separator),
                          tb->addNode($3, @3),
@@ -303,6 +305,13 @@ define
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, SType::Separator) },
                        SType::Declaration); }
+    ;
+
+definition
+    : comment_opt br
+    { $$ = $1; }
+    | comment_opt br expressions_d br
+    { $$ = tb->addNode({ $1, $3, $4 }, SType::TemporaryContainer); }
     ;
 
 include
@@ -394,6 +403,31 @@ expressions_a
     { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     | expressions_a WS expression_a
     { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
+expressions_d
+    : first_expression_d
+    | br
+    { $$ = tb->addNode({ }, SType::TemporaryContainer); }
+    | br first_expression_d
+    { $$ = $2; }
+    | expressions_d br
+    { $$ = $1; }
+    | expressions_d WS expression_v
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    | expressions_d br first_expression_d
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
+first_expression_d
+    : char_d expression_v
+    { $$ = tb->addNode({ $1, $2 }, SType::TemporaryContainer); }
+    | function expression_v
+    { $$ = tb->addNode({ $1, $2 }, SType::TemporaryContainer); }
+    | char_d
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    | function
+    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
     ;
 
 expressions_v
@@ -677,6 +711,24 @@ char_a
     | ')'        { $$ = tb->addNode($1, @1, 0); }
     | ','        { $$ = tb->addNode($1, @1, 0); }
     | keywords
+    ;
+
+char_d
+    : char
+    | '('        { $$ = tb->addNode($1, @1, 0); }
+    | ')'        { $$ = tb->addNode($1, @1, 0); }
+    | ','        { $$ = tb->addNode($1, @1, 0); }
+    | COMMENT    { $$ = tb->addNode($1, @1, 0); }
+    | "include"  { $$ = tb->addNode($1, @1, 0); }
+    | "override" { $$ = tb->addNode($1, @1, 0); }
+    | "export"   { $$ = tb->addNode($1, @1, 0); }
+    | "ifdef"    { $$ = tb->addNode($1, @1, 0); }
+    | "ifndef"   { $$ = tb->addNode($1, @1, 0); }
+    | "ifeq"     { $$ = tb->addNode($1, @1, 0); }
+    | "ifneq"    { $$ = tb->addNode($1, @1, 0); }
+    | "else"     { $$ = tb->addNode($1, @1, 0); }
+    | "endif"    { $$ = tb->addNode($1, @1, 0); }
+    | "define"   { $$ = tb->addNode($1, @1, 0); }
     ;
 
 char_v
