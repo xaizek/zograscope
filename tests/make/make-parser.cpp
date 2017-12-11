@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+#include "utils/strings.hpp"
+#include "Highlighter.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -49,6 +51,12 @@ TEST_CASE("Comments are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed(" # comment"));
     CHECK(makeIsParsed("# comment "));
     CHECK(makeIsParsed(" # comment "));
+
+    const char *const multiline = R"(
+        a := a#b \
+               asdf
+    )";
+    CHECK(makeIsParsed(multiline));
 }
 
 TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
@@ -91,15 +99,16 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
     SECTION("Keywords in the value") {
         CHECK(makeIsParsed("KEYWORDS := ifdef/ifndef/ifeq/ifneq/else/endif"));
         CHECK(makeIsParsed("KEYWORDS += include"));
-        CHECK(makeIsParsed("KEYWORDS += override/export"));
-        CHECK(makeIsParsed("KEYWORDS += define/endef"));
+        CHECK(makeIsParsed("KEYWORDS += override/export/unexport"));
+        CHECK(makeIsParsed("KEYWORDS += define/endef/undefine"));
     }
     SECTION("Keywords in the name") {
         CHECK(makeIsParsed("a.ifndef.b = a"));
         CHECK(makeIsParsed("ifndef.b = a"));
         CHECK(makeIsParsed("ifndef/b = a"));
         CHECK(makeIsParsed(",ifdef,ifndef,ifeq,ifneq,else,endif = b"));
-        CHECK(makeIsParsed(",override,include,export,define,endef = b"));
+        CHECK(makeIsParsed(",override,include,define,endef,undefine = b"));
+        CHECK(makeIsParsed(",export,unexport = b"));
     }
     SECTION("Functions in the name") {
         CHECK(makeIsParsed(R"($(1).stuff :=)"));
@@ -107,6 +116,21 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
     SECTION("Special symbols in the value") {
         CHECK(makeIsParsed(R"(var += sed_first='s,^\([^/]*\)/.*$$,\1,';)"));
         CHECK(makeIsParsed(R"(var != test $$# -gt 0)"));
+    }
+    SECTION("Whitespace around assignment statement") {
+        Tree tree;
+
+        tree = parseMake("var := #comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+
+        tree = parseMake("var := val#comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+
+        tree = parseMake("override var := #comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
+
+        tree = parseMake("export var := val #comment");
+        CHECK(findNode(tree, Type::Comments, "#comment") != nullptr);
     }
 }
 
@@ -147,8 +171,8 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
     SECTION("Keywords in the arguments") {
         CHECK(makeIsParsed("$(info ifdef/ifndef/ifeq/ifneq/else/endif)"));
         CHECK(makeIsParsed("$(info include)"));
-        CHECK(makeIsParsed("$(info override/export)"));
-        CHECK(makeIsParsed("$(info define/endef)"));
+        CHECK(makeIsParsed("$(info override/export/unexport)"));
+        CHECK(makeIsParsed("$(info define/endef/undefine)"));
     }
     SECTION("Curly braces") {
         Tree tree = parseMake("target: ${name}");
@@ -397,6 +421,48 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
     )";
     Tree tree = parseMake(bangSuffix);
     CHECK(findNode(tree, Type::Assignments, "+=") != nullptr);
+
+    const char *const expresion = R"(
+        define tool_template
+            $1.bin
+        endef
+    )";
+    CHECK(makeIsParsed(expresion));
+
+    const char *const expresions = R"(
+        define vifm_SOURCES :=
+            $(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+        endef
+    )";
+    CHECK(makeIsParsed(expresions));
+
+    const char *const textFirstEmptyLine = R"(
+        define vifm_SOURCES :=
+
+            bla $(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+        endef
+    )";
+    CHECK(makeIsParsed(textFirstEmptyLine));
+
+    const char *const multipleEmptyLines = R"(
+        define vifm_SOURCES :=
+
+
+            bla$(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+        endef
+    )";
+    CHECK(makeIsParsed(multipleEmptyLines));
+
+    const char *const emptyLinesEverywhere = R"(
+        define vifm_SOURCES :=
+
+            $(cfg) $(compat) $(engine) endef $(int) $(io) $(menus) $(modes)
+
+            something
+
+        endef
+    )";
+    CHECK(makeIsParsed(emptyLinesEverywhere));
 }
 
 TEST_CASE("Line escaping works in a Makefile", "[make][parser]")
@@ -452,4 +518,46 @@ TEST_CASE("Leading tabs are allowed not only for recipes in Makefiles",
 	# comment
     )";
     CHECK(makeIsParsed(statements));
+}
+
+TEST_CASE("Column of recipe is computed correctly", "[make][parser]")
+{
+    std::string input = R"(
+target:
+	command1
+	command2
+    )";
+    std::string expected = R"(
+target:
+    command1
+    command2)";
+
+    Tree tree = parseMake(input);
+
+    std::string output = Highlighter(*tree.getRoot()).print();
+    CHECK(split(output, '\n') == split(expected, '\n'));
+}
+
+TEST_CASE("Export/unexport directives", "[make][parser]")
+{
+    CHECK(makeIsParsed("export"));
+    CHECK(makeIsParsed("export var"));
+    CHECK(makeIsParsed("export $(vars)"));
+    CHECK(makeIsParsed("export var $(vars)"));
+    CHECK(makeIsParsed("export var$(vars)"));
+
+    CHECK(makeIsParsed("unexport"));
+    CHECK(makeIsParsed("unexport var"));
+    CHECK(makeIsParsed("unexport $(vars)"));
+    CHECK(makeIsParsed("unexport var $(vars)"));
+    CHECK(makeIsParsed("unexport var$(vars)"));
+}
+
+TEST_CASE("Undefine directive", "[make][parser]")
+{
+    CHECK(makeIsParsed("undefine something"));
+    CHECK(makeIsParsed("undefine this and that"));
+    CHECK(makeIsParsed("undefine some $(things)"));
+    CHECK(makeIsParsed("undefine override something"));
+    CHECK(makeIsParsed("override undefine something"));
 }

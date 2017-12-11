@@ -92,7 +92,7 @@ NL                      \n|\r|\r\n
 [ ]                     ;
 {NL}\t|^\t {
     ADVANCE_LINE();
-    yyextra->col = yyextra->tabWidth;
+    yyextra->col = yyextra->tabWidth + 1;
     TOKEN(LEADING_TAB);
 }
 \t {
@@ -114,6 +114,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc = *yylloc;
     BEGIN(slcomment);
 }
+<slcomment>\\{NL}              ADVANCE_LINE();
 <slcomment>{NL} {
     yylval->text.from = yyextra->startTok.text.from;
     yylval->text.len = yyextra->offset - yyextra->startTok.text.from - 1;
@@ -131,6 +132,7 @@ NL                      \n|\r|\r\n
 
 "override"                     KW(OVERRIDE);
 "export"                       KW(EXPORT);
+"unexport"                     KW(UNEXPORT);
 
 "ifdef"                        KW(IFDEF);
 "ifndef"                       KW(IFNDEF);
@@ -141,6 +143,7 @@ NL                      \n|\r|\r\n
 
 "define"                       KW(DEFINE);
 "endef"                        KW(ENDEF);
+"undefine"                     KW(UNDEFINE);
 
 -?"include"                    KW(INCLUDE);
 
