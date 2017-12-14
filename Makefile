@@ -1,6 +1,6 @@
 NAME := zograscope
 
-CXXFLAGS += -std=c++11 -Wall -Wextra -Werror -MMD -Isrc/ -Ithird-party/
+CXXFLAGS += -std=c++11 -Wall -Wextra -MMD -Isrc/ -Ithird-party/
 CXXFLAGS += -DYYDEBUG
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
 LDFLAGS  += -lboost_system
@@ -60,6 +60,8 @@ else
     endif
     target := debug
 endif
+
+-include config.mk
 
 CXXFLAGS := -I$(out_dir)/src/ $(CXXFLAGS)
 
