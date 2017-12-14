@@ -177,10 +177,6 @@ bool hasMoveableItems(const Node *x);
 
 bool isContainer(const Node *x);
 
-// Checks whether the node enforces fixed structure (fixed number of children at
-// particular places).
-bool hasFixedStructure(const Node *x);
-
 bool canForceLeafMatch(const Node *x, const Node *y);
 
 void markTreeAsMoved(Node *node);

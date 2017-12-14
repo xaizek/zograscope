@@ -85,3 +85,9 @@ Language::isTravellingNode(const Node *x) const
 {
     return (x->stype == SType::Directive || x->stype == SType::Comment);
 }
+
+bool
+Language::hasFixedStructure(const Node *x) const
+{
+    return (x->stype == SType::ForHead);
+}

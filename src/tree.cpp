@@ -560,12 +560,6 @@ isContainer(const Node *x)
 }
 
 bool
-hasFixedStructure(const Node *x)
-{
-    return (x->stype == SType::ForHead);
-}
-
-bool
 canForceLeafMatch(const Node *x, const Node *y)
 {
     if (!x->children.empty() || !y->children.empty()) {

@@ -63,6 +63,9 @@ public:
     // Checks whether node doesn't have fixed position within a tree and can
     // move between internal nodes as long as post-order of leafs is preserved.
     bool isTravellingNode(const Node *x) const;
+    // Checks whether the node enforces fixed structure (fixed number of
+    // children at particular places).
+    bool hasFixedStructure(const Node *x) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__
