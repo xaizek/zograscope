@@ -39,7 +39,7 @@ TEST_CASE("Width of titles is considered on determining width", "[printer]")
     Tree newTree = parseC("");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
@@ -76,7 +76,7 @@ TEST_CASE("Comment contents is compared", "[printer]")
     Tree newTree = parseC("// This is this comment.\n");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
@@ -105,7 +105,7 @@ TEST_CASE("String literal contents is compared", "[printer]")
     )");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
@@ -134,7 +134,7 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+    compare(oldTree, newTree, tr, true, false);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
@@ -166,7 +166,7 @@ R"(void f() {
     )");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
@@ -220,7 +220,7 @@ TEST_CASE("Lines with changes aren't folded", "[printer]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
@@ -259,7 +259,7 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
     )");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
     Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);

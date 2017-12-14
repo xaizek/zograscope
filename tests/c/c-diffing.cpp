@@ -62,7 +62,7 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -177,7 +177,7 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+    compare(oldTree, newTree, tr, true, false);
 
     // If functions matched correctly, only one leaf of the old tree will be
     // updated.
@@ -405,7 +405,7 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -1372,7 +1372,7 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countInternal(*oldTree.getRoot(), SType::LabelStmt, State::Updated)
           == 0);
@@ -1587,7 +1587,7 @@ TEST_CASE("Refining works for fine trees", "[comparison]")
     )");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+    compare(oldTree, newTree, tr, true, false);
 
     // Just checking that it doesn't crash.
 }

@@ -218,7 +218,7 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     Tree newTree = parse(fileName, cleanedRight, true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
+    compare(oldTree, newTree, tr, true, skipRefine);
 
     std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
     std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
@@ -235,7 +235,7 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
         Tree oldTree = parseC(left, true);
         Tree newTree = parseC(right, true);
 
-        compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
+        compare(oldTree, newTree, tr, true, skipRefine);
 
         decor::enableDecorations();
 

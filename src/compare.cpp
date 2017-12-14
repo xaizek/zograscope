@@ -39,7 +39,7 @@ class Comparator
 {
 public:
     // Records arguments for future use.
-    Comparator(Node *T1, Node *T2, TimeReport &tr, bool coarse,
+    Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
                bool skipRefine);
 
 public:
@@ -54,7 +54,7 @@ private:
     void compareChanged(Node *node);
 
 private:
-    Node *T1, *T2;   // Two trees being compared.
+    Tree &T1, &T2;   // Two trees being compared.
     TimeReport &tr;  // Time keeper.
     bool coarse;     // Do only fine-grained comparison.
     bool skipRefine; // Do not perform fine-grained refining.
@@ -73,7 +73,7 @@ static void markMoved(Node *x);
 static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
-Comparator::Comparator(Node *T1, Node *T2, TimeReport &tr, bool coarse,
+Comparator::Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
                        bool skipRefine)
     : T1(T1), T2(T2), tr(tr), coarse(coarse), skipRefine(skipRefine)
 {
@@ -82,7 +82,7 @@ Comparator::Comparator(Node *T1, Node *T2, TimeReport &tr, bool coarse,
 void
 Comparator::compare()
 {
-    compare(T1, T2);
+    compare(T1.getRoot(), T2.getRoot());
 }
 
 void
@@ -434,7 +434,7 @@ refine(Node &node)
 }
 
 void
-compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
+compare(Tree &T1, Tree &T2, TimeReport &tr, bool coarse, bool skipRefine)
 {
     return Comparator(T1, T2, tr, coarse, skipRefine).compare();
 }

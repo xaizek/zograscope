@@ -147,12 +147,11 @@ run(const Args &args, TimeReport &tr)
         return EXIT_SUCCESS;
     }
 
-    Node *T1 = treeA.getRoot(), *T2 = treeB.getRoot();
-    compare(T1, T2, tr, !args.fine, args.noRefine);
+    compare(treeA, treeB, tr, !args.fine, args.noRefine);
 
     dumpTrees(args, treeA, treeB);
 
-    Printer printer(*T1, *T2, std::cout);
+    Printer printer(*treeA.getRoot(), *treeB.getRoot(), std::cout);
     if (args.gitDiff) {
         printer.addHeader({ args.pos[3], args.pos[6] });
         printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });
