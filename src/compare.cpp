@@ -28,6 +28,7 @@
 
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
+#include "Language.hpp"
 #include "change-distilling.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
@@ -52,31 +53,46 @@ private:
     void compare(Node *T1, Node *T2);
     // Recursively compares nodes that are marked as changed.
     void compareChanged(Node *node);
+    // Detects moves within subtree.
+    void detectMoves(Node *x);
+    // Performs single-level move detection for nodes with fixed structure.
+    void detectMovesInFixedStructure(Node *x, Node *y);
+    // Computes position of auxiliary node of a parent with fixed structure
+    // offset by added and removed nodes.
+    int getMovePosOfAux(Node *node);
 
 private:
     Tree &T1, &T2;   // Two trees being compared.
+    Language &lang;  // Language being used.
     TimeReport &tr;  // Time keeper.
     bool coarse;     // Do only fine-grained comparison.
     bool skipRefine; // Do not perform fine-grained refining.
 };
+
+template <typename T, typename... Args>
+auto bind(const T &f, Args&&... a)
+    -> decltype(std::bind(f, std::forward<Args>(a)..., std::placeholders::_1))
+{
+    return std::bind(f, std::forward<Args>(a)..., std::placeholders::_1);
+}
 
 }
 
 static bool flatten(Node *x, Node *y, int level);
 static int flatten(Node *n, int level, bool dry);
 static void setParentLinks(Node *x, Node *parent);
-static void detectMoves(Node *x);
 static const Node * getParent(const Node *x);
-static void detectMovesInFixedStructure(Node *x, Node *y);
-static int getMovePosOfAux(Node *node);
 static void markMoved(Node *x);
 static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
 Comparator::Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
                        bool skipRefine)
-    : T1(T1), T2(T2), tr(tr), coarse(coarse), skipRefine(skipRefine)
+    : T1(T1), T2(T2), lang(*T1.getLanguage()),
+      tr(tr), coarse(coarse), skipRefine(skipRefine)
 {
+    // XXX: the assumption is that both trees have the same language.
+    //      Might be a good idea to actually check this somewhere.
 }
 
 void
@@ -248,8 +264,8 @@ setParentLinks(Node *x, Node *parent)
     }
 }
 
-static void
-detectMoves(Node *x)
+void
+Comparator::detectMoves(Node *x)
 {
     Node *const y = x->relative;
     const Node *const px = getParent(x);
@@ -302,19 +318,19 @@ getParent(const Node *x)
     return x;
 }
 
-// Performs single-level move detection for nodes with fixed structure.
-static void
-detectMovesInFixedStructure(Node *x, Node *y)
+void
+Comparator::detectMovesInFixedStructure(Node *x, Node *y)
 {
     std::vector<Node *> xChildren, yChildren;
 
     // Extract payload of the structure to compare it separately.
+    auto predicate = bind(&Language::isPayloadOfFixed, &lang);
     xChildren.reserve(x->children.size());
     std::copy_if(x->children.cbegin(), x->children.cend(),
-                 std::back_inserter(xChildren), &isPayloadOfFixed);
+                 std::back_inserter(xChildren), predicate );
     yChildren.reserve(y->children.size());
     std::copy_if(y->children.cbegin(), y->children.cend(),
-                 std::back_inserter(yChildren), &isPayloadOfFixed);
+                 std::back_inserter(yChildren), predicate );
 
     assert(xChildren.size() == yChildren.size() && "Must be in sync.");
 
@@ -338,10 +354,8 @@ detectMovesInFixedStructure(Node *x, Node *y)
     }
 }
 
-// Computes position of auxiliary node of a parent with fixed structure offset
-// by added and removed nodes.
-static int
-getMovePosOfAux(Node *node)
+int
+Comparator::getMovePosOfAux(Node *node)
 {
     cpp17::pmr::vector<Node *> &children = node->parent->children;
     int pos = 0;
@@ -349,7 +363,7 @@ getMovePosOfAux(Node *node)
         if (child == node) {
             break;
         }
-        if (child->relative != nullptr && !isPayloadOfFixed(child) &&
+        if (child->relative != nullptr && !lang.isPayloadOfFixed(child) &&
             child->relative->parent == node->relative->parent &&
             !child->moved) {
             ++pos;

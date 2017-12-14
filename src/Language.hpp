@@ -29,6 +29,7 @@ namespace cpp17 {
     }
 }
 
+class Node;
 class TreeBuilder;
 
 enum class Type : std::uint8_t;
@@ -55,6 +56,10 @@ public:
                               const std::string &fileName,
                               bool debug,
                               cpp17::pmr::monolithic &mr) const = 0;
+
+    // For children of nodes with fixed structure this checks whether this child
+    // is first-class member of the structure or not (e.g., not punctuation).
+    bool isPayloadOfFixed(const Node *x) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__

@@ -181,10 +181,6 @@ bool isContainer(const Node *x);
 // particular places).
 bool hasFixedStructure(const Node *x);
 
-// For children of nodes with fixed structure this checks whether this child is
-// first-class member of the structure or not (e.g., not punctuation).
-bool isPayloadOfFixed(const Node *x);
-
 // Checks whether node doesn't have fixed position within a tree and can move
 // between internal nodes as long as post-order of leafs is preserved.
 bool isTravellingNode(const Node *x);

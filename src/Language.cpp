@@ -29,6 +29,8 @@
 
 #include "c/C11Language.hpp"
 #include "make/MakeLanguage.hpp"
+#include "stypes.hpp"
+#include "tree.hpp"
 
 static std::string detectLanguage(const std::string &stem,
                                   const std::string &ext);
@@ -69,4 +71,11 @@ detectLanguage(const std::string &stem, const std::string &ext)
 
     // Assume C by default.
     return "c";
+}
+
+bool
+Language::isPayloadOfFixed(const Node *x) const
+{
+    return x->stype != SType::Separator
+        && !isTravellingNode(x);
 }

@@ -566,13 +566,6 @@ hasFixedStructure(const Node *x)
 }
 
 bool
-isPayloadOfFixed(const Node *x)
-{
-    return x->stype != SType::Separator
-        && !isTravellingNode(x);
-}
-
-bool
 isTravellingNode(const Node *x)
 {
     return (x->stype == SType::Directive || x->stype == SType::Comment);
