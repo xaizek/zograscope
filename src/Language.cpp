@@ -79,3 +79,9 @@ Language::isPayloadOfFixed(const Node *x) const
     return x->stype != SType::Separator
         && !isTravellingNode(x);
 }
+
+bool
+Language::isTravellingNode(const Node *x) const
+{
+    return (x->stype == SType::Directive || x->stype == SType::Comment);
+}

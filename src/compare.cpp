@@ -60,6 +60,12 @@ private:
     // Computes position of auxiliary node of a parent with fixed structure
     // offset by added and removed nodes.
     int getMovePosOfAux(Node *node);
+    // Marks subtree of this node and its relative accounting for special cases.
+    void markMoved(Node *x);
+    // This is a workaround to compensate the fact that travelling nodes (called
+    // postponed on parser/lexer level) can fall off container when they are in
+    // front of it.
+    bool isTravellingPair(const Node *x, const Node *y);
 
 private:
     Tree &T1, &T2;   // Two trees being compared.
@@ -82,8 +88,6 @@ static bool flatten(Node *x, Node *y, int level);
 static int flatten(Node *n, int level, bool dry);
 static void setParentLinks(Node *x, Node *parent);
 static const Node * getParent(const Node *x);
-static void markMoved(Node *x);
-static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
 Comparator::Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
@@ -372,9 +376,8 @@ Comparator::getMovePosOfAux(Node *node)
     return pos;
 }
 
-// Marks subtree of this node and its relative accounting for special cases.
-static void
-markMoved(Node *x)
+void
+Comparator::markMoved(Node *x)
 {
     Node *const y = x->relative;
     if (y != nullptr && !isTravellingPair(x, y) && !isTravellingPair(y, x)) {
@@ -383,13 +386,10 @@ markMoved(Node *x)
     }
 }
 
-// This is a workaround to compensate the fact that travelling nodes (called
-// postponed on parser/lexer level) can fall off container when they are in
-// front of it.
-static bool
-isTravellingPair(const Node *x, const Node *y)
+bool
+Comparator::isTravellingPair(const Node *x, const Node *y)
 {
-    if (!isTravellingNode(x)) {
+    if (!lang.isTravellingNode(x)) {
         return false;
     }
 
@@ -400,7 +400,8 @@ isTravellingPair(const Node *x, const Node *y)
                             x->parent->children.cend(),
                             x);
 
-        while (++it != x->parent->children.cend() && isTravellingNode(*it)) {
+        while (++it != x->parent->children.cend() &&
+               lang.isTravellingNode(*it)) {
             // Skip other traveling nodes.
         }
         if (it != x->parent->children.cend()) {
