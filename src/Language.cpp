@@ -91,3 +91,25 @@ Language::hasFixedStructure(const Node *x) const
 {
     return (x->stype == SType::ForHead);
 }
+
+bool
+Language::canBeFlattened(const Node *, const Node *child, int level) const
+{
+    switch (level) {
+        case 0:
+            return (child->stype == SType::IfCond);
+
+        case 1:
+            return (child->stype == SType::ExprStatement);
+
+        case 2:
+            return (child->stype == SType::AnyExpression);
+
+        default:
+            return child->stype != SType::Declaration
+                && child->stype != SType::ReturnValueStmt
+                && child->stype != SType::CallExpr
+                && child->stype != SType::Initializer
+                && child->stype != SType::Parameter;
+    }
+}

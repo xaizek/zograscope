@@ -53,6 +53,13 @@ private:
     void compare(Node *T1, Node *T2);
     // Recursively compares nodes that are marked as changed.
     void compareChanged(Node *node);
+    // Attempts to flatten subtrees on a specific level.  Returns `true` if
+    // anything was flattened.
+    bool flatten(Node *x, Node *y, int level);
+    // Either attempts to flatten nodes of a subtree on a specific level or
+    // simulates it to see how many nodes would be flattened.  Returns number of
+    // nodes flattened or that would be flattened.
+    int flatten(Node *n, int level, bool dry);
     // Detects moves within subtree.
     void detectMoves(Node *x);
     // Performs single-level move detection for nodes with fixed structure.
@@ -84,8 +91,6 @@ auto bind(const T &f, Args&&... a)
 
 }
 
-static bool flatten(Node *x, Node *y, int level);
-static int flatten(Node *n, int level, bool dry);
 static void setParentLinks(Node *x, Node *parent);
 static const Node * getParent(const Node *x);
 static void refine(Node &node);
@@ -219,18 +224,18 @@ Comparator::compareChanged(Node *node)
     }
 }
 
-static bool
-flatten(Node *x, Node *y, int level)
+bool
+Comparator::flatten(Node *x, Node *y, int level)
 {
     const int wouldFlatten = flatten(x, level, true) + flatten(y, level, true);
     if (wouldFlatten < 5) {
         return (flatten(x, level, false) + flatten(y, level, false) > 0);
     }
-    return true;
+    return false;
 }
 
-static int
-flatten(Node *n, int level, bool dry)
+int
+Comparator::flatten(Node *n, int level, bool dry)
 {
     int flattened = 0;
 
@@ -248,7 +253,7 @@ flatten(Node *n, int level, bool dry)
             continue;
         }
 
-        if (c->next != nullptr && canBeFlattened(n, c, level)) {
+        if (c->next != nullptr && lang.canBeFlattened(n, c, level)) {
             if (!dry) {
                 c = c->next;
             }

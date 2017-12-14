@@ -169,8 +169,6 @@ void reduceTreesCoarse(Node *T1, Node *T2);
 
 std::string printSubTree(const Node &root, bool withComments);
 
-bool canBeFlattened(const Node *parent, const Node *child, int level);
-
 bool isUnmovable(const Node *x);
 
 bool hasMoveableItems(const Node *x);

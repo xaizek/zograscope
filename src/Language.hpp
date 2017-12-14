@@ -66,6 +66,8 @@ public:
     // Checks whether the node enforces fixed structure (fixed number of
     // children at particular places).
     bool hasFixedStructure(const Node *x) const;
+    // Checks whether a node can be flattened on a specific level of flattening.
+    bool canBeFlattened(const Node *parent, const Node *child, int level) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__
