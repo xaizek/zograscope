@@ -32,8 +32,36 @@
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
-static void compareChanged(Node *node, TimeReport &tr, bool coarse,
-                           bool skipRefine);
+namespace {
+
+// Coordinates tree comparison.
+class Comparator
+{
+public:
+    // Records arguments for future use.
+    Comparator(Node *T1, Node *T2, TimeReport &tr, bool coarse,
+               bool skipRefine);
+
+public:
+    // Launches comparison.
+    void compare();
+
+private:
+    // Performs comparison of trees available at this level and if necessary of
+    // trees from the following levels.
+    void compare(Node *T1, Node *T2);
+    // Recursively compares nodes that are marked as changed.
+    void compareChanged(Node *node);
+
+private:
+    Node *T1, *T2;   // Two trees being compared.
+    TimeReport &tr;  // Time keeper.
+    bool coarse;     // Do only fine-grained comparison.
+    bool skipRefine; // Do not perform fine-grained refining.
+};
+
+}
+
 static bool flatten(Node *x, Node *y, int level);
 static int flatten(Node *n, int level, bool dry);
 static void setParentLinks(Node *x, Node *parent);
@@ -45,8 +73,20 @@ static void markMoved(Node *x);
 static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
+Comparator::Comparator(Node *T1, Node *T2, TimeReport &tr, bool coarse,
+                       bool skipRefine)
+    : T1(T1), T2(T2), tr(tr), coarse(coarse), skipRefine(skipRefine)
+{
+}
+
 void
-compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
+Comparator::compare()
+{
+    compare(T1, T2);
+}
+
+void
+Comparator::compare(Node *T1, Node *T2)
 {
     struct Match
     {
@@ -64,12 +104,6 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         tr.measure("diffing"), ted(*T1, *T2);
         return;
     }
-
-    auto refine = [skipRefine](Node &root) {
-        if (!skipRefine) {
-            ::refine(root);
-        }
-    };
 
     std::vector<Match> matches;
 
@@ -141,14 +175,15 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
     detectMoves(T1);
 
     timer.measure("descending");
-    compareChanged(T1, tr, coarse, skipRefine);
+    compareChanged(T1);
 
-    refine(*T1);
+    if (!skipRefine) {
+        refine(*T1);
+    }
 }
 
-// Recursively compares nodes that are marked as changed.
-static void
-compareChanged(Node *node, TimeReport &tr, bool coarse, bool skipRefine)
+void
+Comparator::compareChanged(Node *node)
 {
     for (Node *x : node->children) {
         Node *y = x->relative;
@@ -156,10 +191,10 @@ compareChanged(Node *node, TimeReport &tr, bool coarse, bool skipRefine)
             if (!x->next->last && !x->satellite) {
                 x->state = State::Unchanged;
                 y->state = State::Unchanged;
-                compare(x->next, y->next, tr, coarse, skipRefine);
+                compare(x->next, y->next);
             }
         } else {
-            compareChanged(x, tr, coarse, skipRefine);
+            compareChanged(x);
         }
     }
 }
@@ -396,4 +431,10 @@ refine(Node &node)
     for (Node *child : node.children) {
         refine(*child);
     }
+}
+
+void
+compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
+{
+    return Comparator(T1, T2, tr, coarse, skipRefine).compare();
 }
