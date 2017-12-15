@@ -44,6 +44,12 @@ static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::string getSpelling(const Node &node, const decor::Decoration &dec,
                                bool original);
 
+// Single processing entry.
+struct Highlighter::Entry
+{
+    Node *node; // Node to be processed.
+};
+
 class Highlighter::ColorPicker
 {
 public:
@@ -94,7 +100,7 @@ Highlighter::Highlighter(Node &root, bool original)
     : line(1), col(1), colorPicker(new ColorPicker()), original(original),
       current(nullptr)
 {
-    toProcess.push(&root);
+    toProcess.push({ &root });
 }
 
 Highlighter::~Highlighter()
@@ -147,9 +153,10 @@ Highlighter::skipUntil(int targetLine)
     }
 
     while (!toProcess.empty()) {
-        Node *const node = getNode();
+        Entry entry = getEntry();
+        Node *const node = entry.node;
         if (!node->leaf) {
-            advanceNode(node);
+            advance(entry);
             continue;
         }
 
@@ -161,7 +168,7 @@ Highlighter::skipUntil(int targetLine)
             }
         }
 
-        advanceNode(node);
+        advance(entry);
 
         split(node->spelling, '\n', olines);
 
@@ -194,9 +201,10 @@ Highlighter::print(int n)
     }
 
     while (!toProcess.empty() && n != 0) {
-        Node *const node = getNode();
+        Entry entry = getEntry();
+        Node *const node = entry.node;
         if (!node->leaf) {
-            advanceNode(node);
+            advance(entry);
             continue;
         }
 
@@ -228,7 +236,7 @@ Highlighter::print(int n)
             oss << decor::def;
         }
 
-        advanceNode(node);
+        advance(entry);
 
         spelling = getSpelling(*node, colorPicker->getHighlight(), original);
         split(node->spelling, '\n', olines);
@@ -279,10 +287,11 @@ Highlighter::printSpelling(int &n)
     lines.clear();
 }
 
-Node *
-Highlighter::getNode()
+Highlighter::Entry
+Highlighter::getEntry()
 {
-    Node *node = toProcess.top();
+    Entry entry = toProcess.top();
+    Node *node = entry.node;
 
     if (node->next != nullptr) {
         if (node->state != State::Unchanged) {
@@ -291,18 +300,18 @@ Highlighter::getNode()
         if (node->moved) {
             markTreeAsMoved(node->next);
         }
-        node = node->next;
+        entry.node = node->next;
     }
 
-    return node;
+    return entry;
 }
 
 void
-Highlighter::advanceNode(Node *node)
+Highlighter::advance(const Entry &entry)
 {
     toProcess.pop();
-    for (Node *child : boost::adaptors::reverse(node->children)) {
-        toProcess.push(child);
+    for (Node *child : boost::adaptors::reverse(entry.node->children)) {
+        toProcess.push({ child });
     }
 }
 

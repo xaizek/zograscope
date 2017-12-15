@@ -32,6 +32,7 @@ class Node;
 class Highlighter
 {
     class ColorPicker;
+    class Entry;
 
 public:
     // Stores arguments for future reference.  The original flag specifies
@@ -62,11 +63,11 @@ private:
     void print(int n);
     // Prints lines of spelling decreasing `n` on advancing through lines.
     void printSpelling(int &n);
-    // Retrieves the next node to be processed.
-    Node * getNode();
-    // Advances processing to the next node.  The node here is the one that was
-    // returned by `getNode()` earlier.
-    void advanceNode(Node *node);
+    // Retrieves the next entry to be processed.
+    Entry getEntry();
+    // Advances processing to the next node.  The entry here is the one that was
+    // returned by `getEntry()` earlier.
+    void advance(const Entry &entry);
 
 private:
     std::ostringstream oss;                   // Temporary output buffer.
@@ -74,7 +75,7 @@ private:
     std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.
     std::vector<boost::string_ref> olines;    // Undiffed spelling.
     std::vector<boost::string_ref> lines;     // Possibly diffed spelling.
-    std::stack<Node *> toProcess;             // State of tree traversal.
+    std::stack<Entry> toProcess;              // State of tree traversal.
     std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
     Node *current;                            // Node that's being processed.
