@@ -22,14 +22,13 @@
 #include <vector>
 
 #include "utils/strings.hpp"
+#include "Language.hpp"
 #include "stypes.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
 static void postOrderAndInit(Node &root, std::vector<Node *> &v);
 static void postOrderAndInitImpl(Node &node, std::vector<Node *> &v);
-static float childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
-                                const Node *y, const std::vector<Node *> &po2);
 static bool isTerminal(const Node *n);
 
 namespace {
@@ -223,16 +222,6 @@ alwaysMatches(const Node *node)
     return (node->stype == SType::TranslationUnit);
 }
 
-static const Node *
-getParent(const Node *n)
-{
-    const Node *parent = n->parent;
-    if (parent != nullptr && isContainer(parent)) {
-        return parent->parent;
-    }
-    return parent;
-}
-
 static bool
 haveValues(const Node *x, const Node *y)
 {
@@ -242,8 +231,8 @@ haveValues(const Node *x, const Node *y)
         && y->hasValue();
 }
 
-static int
-rateMatch(const Node *x, const Node *y)
+int
+Distiller::rateMatch(const Node *x, const Node *y) const
 {
     const Node *xParent = getParent(x);
     const Node *yParent = getParent(y);
@@ -427,7 +416,7 @@ Distiller::distill(Node &T1, Node &T2)
 
                 // Containers are there to hold elements of their parent nodes
                 // and can be matched only to containers of matched parents.
-                if (isContainer(x) && haveValues(xParent, yParent) &&
+                if (lang.isContainer(x) && haveValues(xParent, yParent) &&
                     xParent->getValue()->relative != nullptr) {
                     if (xParent->getValue()->relative != yParent->getValue()) {
                         continue;
@@ -589,11 +578,11 @@ postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
     v.push_back(&node);
 }
 
-// Computes children similarity.  Returns the similarity, which is 0.0 if it's
-// too small to consider nodes as matching.
-static float
-childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
-                   const Node *y, const std::vector<Node *> &po2)
+float
+Distiller::childrenSimilarity(const Node *x,
+                              const std::vector<Node *> &po1,
+                              const Node *y,
+                              const std::vector<Node *> &po2) const
 {
     NodeRange xChildren(descendants, po1, x), yChildren(descendants, po2, y);
 
@@ -676,4 +665,14 @@ isTerminal(const Node *n)
 {
     // XXX: should we check for isTravellingNode() instead of just comments?
     return (n->children.empty() && n->type != Type::Comments);
+}
+
+const Node *
+Distiller::getParent(const Node *n) const
+{
+    const Node *parent = n->parent;
+    if (parent != nullptr && lang.isContainer(parent)) {
+        return parent->parent;
+    }
+    return parent;
 }

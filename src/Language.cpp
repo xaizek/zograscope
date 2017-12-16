@@ -117,11 +117,21 @@ Language::canBeFlattened(const Node *, const Node *child, int level) const
 bool
 Language::hasMoveableItems(const Node *x) const
 {
+    // XXX: with current implementations of isUnmovable() and isContainer()
+    //      (they are identical) this condition is always true.
     return (!isUnmovable(x) || isContainer(x));
 }
 
 bool
 Language::isUnmovable(const Node *x) const
+{
+    return x->stype == SType::Statements
+        || x->stype == SType::Bundle
+        || x->stype == SType::BundleComma;
+}
+
+bool
+Language::isContainer(const Node *x) const
 {
     return x->stype == SType::Statements
         || x->stype == SType::Bundle

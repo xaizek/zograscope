@@ -101,7 +101,7 @@ static void refine(Node &node);
 Comparator::Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
                        bool skipRefine)
     : T1(T1), T2(T2), lang(*T1.getLanguage()),
-      tr(tr), coarse(coarse), skipRefine(skipRefine)
+      tr(tr), coarse(coarse), skipRefine(skipRefine), distiller(lang)
 {
     // XXX: the assumption is that both trees have the same language.
     //      Might be a good idea to actually check this somewhere.

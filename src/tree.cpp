@@ -516,14 +516,6 @@ printSubTree(const Node &root, bool withComments)
 }
 
 bool
-isContainer(const Node *x)
-{
-    return x->stype == SType::Statements
-        || x->stype == SType::Bundle
-        || x->stype == SType::BundleComma;
-}
-
-bool
 canForceLeafMatch(const Node *x, const Node *y)
 {
     if (!x->children.empty() || !y->children.empty()) {

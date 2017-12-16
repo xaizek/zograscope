@@ -72,6 +72,8 @@ public:
     bool hasMoveableItems(const Node *x) const;
     // Checks whether a node should be considered for a move.
     bool isUnmovable(const Node *x) const;
+    // Checks whether a node is a container.
+    bool isContainer(const Node *x) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__
