@@ -47,7 +47,7 @@ static std::string getSpelling(const Node &node, State state,
 // Single processing entry.
 struct Highlighter::Entry
 {
-    Node *node;          // Node to be processed.
+    const Node *node;    // Node to be processed.
     bool moved;          // Move status override for descendants.
     State state;         // State override for descendants.
     bool propagateMoved; // Moved field should be passed to all descendants.
@@ -100,7 +100,7 @@ private:
     const Node *prevNode = nullptr;
 };
 
-Highlighter::Highlighter(Node &root, bool original)
+Highlighter::Highlighter(const Node &root, bool original)
     : line(1), col(1), colorPicker(new ColorPicker()), original(original),
       current(nullptr)
 {
@@ -158,7 +158,7 @@ Highlighter::skipUntil(int targetLine)
 
     while (!toProcess.empty()) {
         Entry entry = getEntry();
-        Node *const node = entry.node;
+        const Node *const node = entry.node;
         if (!node->leaf) {
             advance(entry);
             continue;
@@ -206,7 +206,7 @@ Highlighter::print(int n)
 
     while (!toProcess.empty() && n != 0) {
         Entry entry = getEntry();
-        Node *const node = entry.node;
+        const Node *const node = entry.node;
         if (!node->leaf) {
             advance(entry);
             continue;
@@ -296,7 +296,7 @@ Highlighter::Entry
 Highlighter::getEntry()
 {
     Entry entry = toProcess.top();
-    Node *node = entry.node;
+    const Node *node = entry.node;
 
     if (node->next != nullptr || node->leaf) {
         if (!entry.propagateState && node->state != State::Unchanged) {

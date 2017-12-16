@@ -38,7 +38,7 @@ public:
     // Stores arguments for future reference.  The original flag specifies
     // whether this is an old version of a file (matters only for trees marked
     // with results of comparison).
-    Highlighter(Node &root, bool original = true);
+    Highlighter(const Node &root, bool original = true);
 
     // No copying.
     Highlighter(const Highlighter&) = delete;
@@ -78,7 +78,7 @@ private:
     std::stack<Entry> toProcess;              // State of tree traversal.
     std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
-    Node *current;                            // Node that's being processed.
+    const Node *current;                      // Node that's being processed.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__
