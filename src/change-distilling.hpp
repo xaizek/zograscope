@@ -18,8 +18,20 @@
 #ifndef ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 #define ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 
+#include <vector>
+
 class Node;
 
-void distill(Node &T1, Node &T2);
+// Implements change-distilling algorithm.
+class Distiller
+{
+public:
+    // Computes changes between two disjoint subtrees and marks nodes
+    // appropriately.
+    void distill(Node &T1, Node &T2);
+
+private:
+    std::vector<Node *> po1, po2; // Nodes in post-order traversal order.
+};
 
 #endif // ZOGRASCOPE__CHANGE_DISTILLING_HPP__

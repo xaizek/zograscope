@@ -78,11 +78,12 @@ private:
     bool isTravellingPair(const Node *x, const Node *y);
 
 private:
-    Tree &T1, &T2;   // Two trees being compared.
-    Language &lang;  // Language being used.
-    TimeReport &tr;  // Time keeper.
-    bool coarse;     // Do only fine-grained comparison.
-    bool skipRefine; // Do not perform fine-grained refining.
+    Tree &T1, &T2;       // Two trees being compared.
+    Language &lang;      // Language being used.
+    TimeReport &tr;      // Time keeper.
+    bool coarse;         // Do only fine-grained comparison.
+    bool skipRefine;     // Do not perform fine-grained refining.
+    Distiller distiller; // Implementation of change-distilling algorithm.
 };
 
 template <typename T, typename... Args>
@@ -180,7 +181,7 @@ Comparator::compare(Node *T1, Node *T2)
         }
 
         Node *subT1 = match.x, *subT2 = match.y;
-        distill(*subT1, *subT2);
+        distiller.distill(*subT1, *subT2);
     }
 
     int flattenLevel = 0;
@@ -196,7 +197,7 @@ Comparator::compare(Node *T1, Node *T2)
             break;
         }
     }
-    distill(*T1, *T2);
+    distiller.distill(*T1, *T2);
     setParentLinks(T1, nullptr);
     setParentLinks(T2, nullptr);
     detectMoves(T1);

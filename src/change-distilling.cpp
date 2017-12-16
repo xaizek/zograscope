@@ -26,6 +26,8 @@
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
+static void postOrderAndInit(Node &root, std::vector<Node *> &v);
+static void postOrderAndInitImpl(Node &node, std::vector<Node *> &v);
 static float childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
                                 const Node *y, const std::vector<Node *> &po2);
 static bool isTerminal(const Node *n);
@@ -105,33 +107,6 @@ private:
     const std::vector<Node *> *po; // External storage of nodes in post-order.
 };
 
-}
-
-static void
-postOrderAndInit(Node &node, std::vector<Node *> &v)
-{
-    if (node.satellite) {
-        return;
-    }
-
-    node.relative = nullptr;
-
-    for (Node *child : node.children) {
-        child->parent = &node;
-        postOrderAndInit(*child, v);
-    }
-    node.poID = v.size();
-
-    v.push_back(&node);
-}
-
-static std::vector<Node *>
-postOrderAndInit(Node &root)
-{
-    std::vector<Node *> v;
-    root.parent = nullptr;
-    postOrderAndInit(root, v);
-    return v;
 }
 
 static bool
@@ -367,7 +342,7 @@ matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
 }
 
 void
-distill(Node &T1, Node &T2)
+Distiller::distill(Node &T1, Node &T2)
 {
     struct Match
     {
@@ -377,8 +352,8 @@ distill(Node &T1, Node &T2)
         mutable int common;
     };
 
-    std::vector<Node *> po1 = postOrderAndInit(T1);
-    std::vector<Node *> po2 = postOrderAndInit(T2);
+    postOrderAndInit(T1, po1);
+    postOrderAndInit(T2, po2);
 
     std::vector<DiceString> dice1;
     dice1.reserve(po1.size());
@@ -582,6 +557,36 @@ distill(Node &T1, Node &T2)
             markNode(*y, State::Inserted);
         }
     }
+}
+
+// Initializes nodes state preparing them for comparison and fills `v` with
+// pointers to nodes in post-order.
+static void
+postOrderAndInit(Node &root, std::vector<Node *> &v)
+{
+    root.parent = nullptr;
+    v.clear();
+    postOrderAndInitImpl(root, v);
+}
+
+// Build list of nodes in post-order initializing their `parent`, `relative` and
+// `poID` fields on the way.
+static void
+postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
+{
+    if (node.satellite) {
+        return;
+    }
+
+    node.relative = nullptr;
+
+    for (Node *child : node.children) {
+        child->parent = &node;
+        postOrderAndInitImpl(*child, v);
+    }
+    node.poID = v.size();
+
+    v.push_back(&node);
 }
 
 // Computes children similarity.  Returns the similarity, which is 0.0 if it's
