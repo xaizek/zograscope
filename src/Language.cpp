@@ -113,3 +113,9 @@ Language::canBeFlattened(const Node *, const Node *child, int level) const
                 && child->stype != SType::Parameter;
     }
 }
+
+bool
+Language::hasMoveableItems(const Node *x) const
+{
+    return (!isUnmovable(x) || isContainer(x));
+}

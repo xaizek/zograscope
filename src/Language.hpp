@@ -68,6 +68,8 @@ public:
     bool hasFixedStructure(const Node *x) const;
     // Checks whether a node can be flattened on a specific level of flattening.
     bool canBeFlattened(const Node *parent, const Node *child, int level) const;
+    // Checks whether children of the node can be considered for a move.
+    bool hasMoveableItems(const Node *x) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__

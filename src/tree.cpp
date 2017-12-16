@@ -524,12 +524,6 @@ isUnmovable(const Node *x)
 }
 
 bool
-hasMoveableItems(const Node *x)
-{
-    return (!isUnmovable(x) || isContainer(x));
-}
-
-bool
 isContainer(const Node *x)
 {
     return x->stype == SType::Statements
@@ -556,7 +550,7 @@ canForceLeafMatch(const Node *x, const Node *y)
 void
 Tree::markTreeAsMoved(Node *node)
 {
-    if (hasMoveableItems(node)) {
+    if (lang->hasMoveableItems(node)) {
         markAsMoved(node);
     }
 }

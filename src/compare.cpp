@@ -293,7 +293,7 @@ Comparator::detectMoves(Node *x)
         return x->relative == y;
     };
 
-    if (y != nullptr && hasMoveableItems(x)) {
+    if (y != nullptr && lang.hasMoveableItems(x)) {
         if (lang.hasFixedStructure(x)) {
             detectMovesInFixedStructure(x, y);
             for (Node *child : x->children) {
