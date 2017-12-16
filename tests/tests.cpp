@@ -60,7 +60,7 @@ static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src, const std::string &marker);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
                                                    const std::string &delim);
-static std::vector<Changes> makeChangeMap(Node &root);
+static std::vector<Changes> makeChangeMap(Tree &tree);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
 
 bool
@@ -220,8 +220,8 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     TimeReport tr;
     compare(oldTree, newTree, tr, true, skipRefine);
 
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+    std::vector<Changes> oldMap = makeChangeMap(oldTree);
+    std::vector<Changes> newMap = makeChangeMap(newTree);
 
     bool needPrint = false;
     CHECKED_ELSE(oldMap == expectedOld) {
@@ -324,7 +324,7 @@ splitAt(const boost::string_ref &s, const std::string &delim)
 }
 
 static std::vector<Changes>
-makeChangeMap(Node &root)
+makeChangeMap(Tree &tree)
 {
     std::vector<Changes> map;
 
@@ -364,7 +364,7 @@ makeChangeMap(Node &root)
                 mark(*node.next, node.state);
             }
             if (node.moved) {
-                markTreeAsMoved(node.next);
+                tree.markTreeAsMoved(node.next);
             }
             return visit(*node.next);
         }
@@ -382,7 +382,7 @@ makeChangeMap(Node &root)
             visit(*child);
         }
     };
-    visit(root);
+    visit(*tree.getRoot());
 
     return map;
 }

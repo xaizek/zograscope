@@ -386,8 +386,8 @@ Comparator::markMoved(Node *x)
 {
     Node *const y = x->relative;
     if (y != nullptr && !isTravellingPair(x, y) && !isTravellingPair(y, x)) {
-        markTreeAsMoved(x);
-        markTreeAsMoved(y);
+        T1.markTreeAsMoved(x);
+        T2.markTreeAsMoved(y);
     }
 }
 

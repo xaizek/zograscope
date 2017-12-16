@@ -554,7 +554,7 @@ canForceLeafMatch(const Node *x, const Node *y)
 }
 
 void
-markTreeAsMoved(Node *node)
+Tree::markTreeAsMoved(Node *node)
 {
     if (hasMoveableItems(node)) {
         markAsMoved(node);

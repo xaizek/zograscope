@@ -155,6 +155,9 @@ public:
         return lang.get();
     }
 
+    // Marks nodes of the subtree as moved if that makes sense for them.
+    void markTreeAsMoved(Node *node);
+
 private:
     std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;
@@ -176,7 +179,5 @@ bool hasMoveableItems(const Node *x);
 bool isContainer(const Node *x);
 
 bool canForceLeafMatch(const Node *x, const Node *y);
-
-void markTreeAsMoved(Node *node);
 
 #endif // ZOGRASCOPE__TREE_HPP__
