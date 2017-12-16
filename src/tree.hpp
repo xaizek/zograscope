@@ -172,8 +172,6 @@ void reduceTreesCoarse(Node *T1, Node *T2);
 
 std::string printSubTree(const Node &root, bool withComments);
 
-bool isUnmovable(const Node *x);
-
 bool isContainer(const Node *x);
 
 bool canForceLeafMatch(const Node *x, const Node *y);

@@ -62,6 +62,9 @@ private:
     int flatten(Node *n, int level, bool dry);
     // Detects moves within subtree.
     void detectMoves(Node *x);
+    // Finds first movable parent.  Stops at the root (no parent).  Might return
+    // `nullptr`.
+    const Node * getParent(const Node *x);
     // Performs single-level move detection for nodes with fixed structure.
     void detectMovesInFixedStructure(Node *x, Node *y);
     // Computes position of auxiliary node of a parent with fixed structure
@@ -92,7 +95,6 @@ auto bind(const T &f, Args&&... a)
 }
 
 static void setParentLinks(Node *x, Node *parent);
-static const Node * getParent(const Node *x);
 static void refine(Node &node);
 
 Comparator::Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
@@ -281,7 +283,7 @@ Comparator::detectMoves(Node *x)
     const Node *const py = (y ? getParent(y) : nullptr);
 
     // Mark nodes which switched their parents as moved.
-    if (px && py && px->relative != py && !isUnmovable(x)) {
+    if (px && py && px->relative != py && !lang.isUnmovable(x)) {
         markMoved(x);
     }
 
@@ -318,12 +320,12 @@ Comparator::detectMoves(Node *x)
     }
 }
 
-static const Node *
-getParent(const Node *x)
+const Node *
+Comparator::getParent(const Node *x)
 {
     do {
         x = x->parent;
-    } while (x != nullptr && isUnmovable(x));
+    } while (x != nullptr && lang.isUnmovable(x));
     return x;
 }
 

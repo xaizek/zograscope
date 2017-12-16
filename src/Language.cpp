@@ -119,3 +119,11 @@ Language::hasMoveableItems(const Node *x) const
 {
     return (!isUnmovable(x) || isContainer(x));
 }
+
+bool
+Language::isUnmovable(const Node *x) const
+{
+    return x->stype == SType::Statements
+        || x->stype == SType::Bundle
+        || x->stype == SType::BundleComma;
+}

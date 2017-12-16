@@ -52,7 +52,7 @@ static void materializeLabel(const std::string &contents, const PNode *node,
 static void postOrder(Node &node, std::vector<Node *> &v);
 static std::vector<std::size_t> hashChildren(const Node &node);
 static std::size_t hashNode(const Node *node);
-static void markAsMoved(Node *node);
+static void markAsMoved(Node *node, Language &lang);
 
 void
 print(const Node &node)
@@ -516,14 +516,6 @@ printSubTree(const Node &root, bool withComments)
 }
 
 bool
-isUnmovable(const Node *x)
-{
-    return x->stype == SType::Statements
-        || x->stype == SType::Bundle
-        || x->stype == SType::BundleComma;
-}
-
-bool
 isContainer(const Node *x)
 {
     return x->stype == SType::Statements
@@ -551,16 +543,17 @@ void
 Tree::markTreeAsMoved(Node *node)
 {
     if (lang->hasMoveableItems(node)) {
-        markAsMoved(node);
+        markAsMoved(node, *lang);
     }
 }
 
+// Marks all movable nodes in the subtree as moved.
 static void
-markAsMoved(Node *node)
+markAsMoved(Node *node, Language &lang)
 {
-    node->moved = !isUnmovable(node);
+    node->moved = !lang.isUnmovable(node);
 
     for (Node *child : node->children) {
-        markAsMoved(child);
+        markAsMoved(child, lang);
     }
 }

@@ -70,6 +70,8 @@ public:
     bool canBeFlattened(const Node *parent, const Node *child, int level) const;
     // Checks whether children of the node can be considered for a move.
     bool hasMoveableItems(const Node *x) const;
+    // Checks whether a node should be considered for a move.
+    bool isUnmovable(const Node *x) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__
