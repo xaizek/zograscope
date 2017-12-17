@@ -137,3 +137,41 @@ Language::isContainer(const Node *x) const
         || x->stype == SType::Bundle
         || x->stype == SType::BundleComma;
 }
+
+bool
+Language::shouldSplice(SType parent, const Node *childNode) const
+{
+    SType child = childNode->stype;
+
+    if (parent == SType::Statements && child == SType::Statements) {
+        return true;
+    }
+
+    if (parent == SType::FunctionDefinition &&
+        child == SType::CompoundStatement) {
+        return true;
+    }
+
+    if (childNode->type == Type::Virtual &&
+        child == SType::TemporaryContainer) {
+        return true;
+    }
+
+    // Work around situation when addition of compound block to a statement
+    // leads to the only statement that was there being marked as moved.
+    if (parent == SType::IfThen || parent == SType::IfElse ||
+        parent == SType::SwitchStmt || parent == SType::WhileStmt ||
+        parent == SType::DoWhileStmt) {
+        if (child == SType::CompoundStatement) {
+            return true;
+        }
+    }
+
+    if (parent == SType::IfStmt) {
+        if (child == SType::IfThen) {
+            return true;
+        }
+    }
+
+    return false;
+}

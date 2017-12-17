@@ -32,6 +32,7 @@ namespace cpp17 {
 class Node;
 class TreeBuilder;
 
+enum class SType : std::uint8_t;
 enum class Type : std::uint8_t;
 
 // Language-specific routines.
@@ -74,6 +75,9 @@ public:
     bool isUnmovable(const Node *x) const;
     // Checks whether a node is a container.
     bool isContainer(const Node *x) const;
+    // Checks whether child node needs to be replaced in its parent with its
+    // children.
+    bool shouldSplice(SType parent, const Node *childNode) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__
