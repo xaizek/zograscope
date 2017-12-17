@@ -78,6 +78,8 @@ public:
     // Checks whether child node needs to be replaced in its parent with its
     // children.
     bool shouldSplice(SType parent, const Node *childNode) const;
+    // Checks whether the type corresponds to a value node.
+    bool isValueNode(SType stype) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__

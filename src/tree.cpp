@@ -159,14 +159,6 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
 }
 
 static bool
-isValueSNode(const SNode *n)
-{
-    return n->value->stype == SType::FunctionDeclaration
-        || n->value->stype == SType::IfCond
-        || n->value->stype == SType::WhileCond;
-}
-
-static bool
 isLayerBreak(SType stype)
 {
     switch (stype) {
@@ -243,9 +235,11 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
         }
     }
 
-    auto valueChild = std::find_if(node->children.begin(),
-                                   node->children.end(),
-                                   &isValueSNode);
+    auto valueChild = std::find_if(node->children.begin(), node->children.end(),
+                                   [lang](const SNode *node) {
+                                       const SType stype = node->value->stype;
+                                       return lang->isValueNode(stype);
+                                   });
     if (valueChild != node->children.end()) {
         n.label = materializePTree(contents, (*valueChild)->value);
         n.valueChild = valueChild - node->children.begin();

@@ -175,3 +175,11 @@ Language::shouldSplice(SType parent, const Node *childNode) const
 
     return false;
 }
+
+bool
+Language::isValueNode(SType stype) const
+{
+    return stype == SType::FunctionDeclaration
+        || stype == SType::IfCond
+        || stype == SType::WhileCond;
+}
