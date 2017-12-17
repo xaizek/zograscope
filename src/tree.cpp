@@ -158,32 +158,6 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
     root = materializePNode(*this, contents, node);
 }
 
-static bool
-isLayerBreak(SType stype)
-{
-    switch (stype) {
-        case SType::FunctionDeclaration:
-        case SType::FunctionDefinition:
-        case SType::InitializerElement:
-        case SType::InitializerList:
-        case SType::Initializer:
-        case SType::Declaration:
-        case SType::IfCond:
-        case SType::WhileCond:
-        case SType::CallExpr:
-        case SType::AssignmentExpr:
-        case SType::ExprStatement:
-        case SType::AnyExpression:
-        case SType::ReturnValueStmt:
-        case SType::Parameter:
-        case SType::ForHead:
-            return true;
-
-        default:
-            return false;
-    };
-}
-
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const SNode *node, allocator_type al)
     : lang(std::move(lang)), nodes(al)
@@ -247,8 +221,8 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
         n.valueChild = -1;
     }
 
-    // move certain nodes onto the next layer
-    if (isLayerBreak(n.stype)) {
+    // Move certain nodes onto the next layer.
+    if (lang->isLayerBreak(n.stype)) {
         Node &nextLevel = tree.makeNode();
         nextLevel.next = &n;
         nextLevel.stype = n.stype;

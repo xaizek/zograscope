@@ -80,6 +80,9 @@ public:
     bool shouldSplice(SType parent, const Node *childNode) const;
     // Checks whether the type corresponds to a value node.
     bool isValueNode(SType stype) const;
+    // Checks whether this node with its descendants should be placed one level
+    // deeper.
+    bool isLayerBreak(SType stype) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__
