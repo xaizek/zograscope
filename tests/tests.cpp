@@ -239,7 +239,8 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
 
         decor::enableDecorations();
 
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(), std::cout);
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), std::cout);
         printer.addHeader({ "old", "new" });
         printer.print(tr);
 

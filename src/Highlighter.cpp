@@ -31,17 +31,19 @@
 
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
+#include "Language.hpp"
 #include "decoration.hpp"
-#include "stypes.hpp"
 #include "tree.hpp"
 
 static const decor::Decoration & getHighlight(const Node &node, int moved,
-                                              State state);
-static bool isDiffable(const Node &node, State state);
+                                              State state,
+                                              const Language &lang);
+static bool isDiffable(const Node &node, State state, const Language &lang);
 static std::string diffSpelling(const std::string &l, const std::string &r,
                                 const decor::Decoration &dec, bool original);
 static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::string getSpelling(const Node &node, State state,
+                               const Language &lang,
                                const decor::Decoration &dec, bool original);
 
 // Single processing entry.
@@ -57,13 +59,19 @@ struct Highlighter::Entry
 class Highlighter::ColorPicker
 {
 public:
+    ColorPicker(const Language &lang) : lang(lang)
+    {
+    }
+
+public:
     void setEntry(const Entry &entry)
     {
         prevNode = (currNode == entry.node ? nullptr : currNode);
         currNode = entry.node;
 
         prevHighlight = currHighlight;
-        currHighlight = &::getHighlight(*currNode, entry.moved, entry.state);
+        currHighlight = &::getHighlight(*currNode, entry.moved, entry.state,
+                                        lang);
     }
 
     void advancedLine()
@@ -94,15 +102,21 @@ public:
     }
 
 private:
+    const Language &lang;
     const decor::Decoration *currHighlight = &decor::none;
     const decor::Decoration *prevHighlight = &decor::none;
     const Node *currNode = nullptr;
     const Node *prevNode = nullptr;
 };
 
-Highlighter::Highlighter(const Node &root, bool original)
-    : line(1), col(1), colorPicker(new ColorPicker()), original(original),
-      current(nullptr)
+Highlighter::Highlighter(const Tree &tree, bool original)
+    : Highlighter(*tree.getRoot(), *tree.getLanguage(), original)
+{
+}
+
+Highlighter::Highlighter(const Node &root, const Language &lang, bool original)
+    : lang(lang), line(1), col(1), colorPicker(new ColorPicker(lang)),
+      original(original), current(nullptr)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
@@ -181,7 +195,7 @@ Highlighter::skipUntil(int targetLine)
                 current = node;
                 colorPicker->advancedLine();
                 const decor::Decoration &dec = colorPicker->getHighlight();
-                spelling = getSpelling(*node, entry.state, dec, original);
+                spelling = getSpelling(*node, entry.state, lang, dec, original);
                 split(spelling, '\n', lines);
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
@@ -242,8 +256,8 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        spelling = getSpelling(*node, entry.state, colorPicker->getHighlight(),
-                               original);
+        spelling = getSpelling(*node, entry.state, lang,
+                               colorPicker->getHighlight(), original);
         split(node->spelling, '\n', olines);
         split(spelling, '\n', lines);
         current = node;
@@ -341,7 +355,7 @@ Highlighter::advance(const Entry &entry)
 // Retrieves decoration for the specified node considering overrides of its
 // properties.
 static const decor::Decoration &
-getHighlight(const Node &node, int moved, State state)
+getHighlight(const Node &node, int moved, State state, const Language &lang)
 {
     static ColorScheme cs;
 
@@ -356,7 +370,7 @@ getHighlight(const Node &node, int moved, State state)
             //       special color?
             //       Or update kinda implies move, since it's obvious that there
             //       was a match between nodes?
-            if (!isDiffable(node, state)) {
+            if (!isDiffable(node, state, lang)) {
                 return cs[ColorGroup::Updated];
             }
             break;
@@ -406,10 +420,10 @@ getHighlight(const Node &node, int moved, State state)
 
 // Checks whether node spelling can be diffed.
 static bool
-isDiffable(const Node &node, State state)
+isDiffable(const Node &node, State state, const Language &lang)
 {
     return node.relative != nullptr
-        && (node.stype == SType::Comment || node.type == Type::StrConstants)
+        && lang.isDiffable(&node)
         && state == State::Updated;
 }
 
@@ -529,10 +543,10 @@ toWords(const std::string &s)
 
 // Formats spelling of a node into a colored string.
 static std::string
-getSpelling(const Node &node, State state, const decor::Decoration &dec,
-            bool original)
+getSpelling(const Node &node, State state, const Language &lang,
+            const decor::Decoration &dec, bool original)
 {
-    if (!isDiffable(node, state)) {
+    if (!isDiffable(node, state, lang)) {
         return node.spelling;
     }
 

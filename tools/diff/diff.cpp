@@ -28,7 +28,6 @@
 #include "pmr/monolithic.hpp"
 
 #include "utils/optional.hpp"
-#include "Highlighter.hpp"
 #include "Printer.hpp"
 #include "common.hpp"
 #include "compare.hpp"
@@ -151,7 +150,8 @@ run(const Args &args, TimeReport &tr)
 
     dumpTrees(args, treeA, treeB);
 
-    Printer printer(*treeA.getRoot(), *treeB.getRoot(), std::cout);
+    Printer printer(*treeA.getRoot(), *treeB.getRoot(), *treeA.getLanguage(),
+                    std::cout);
     if (args.gitDiff) {
         printer.addHeader({ args.pos[3], args.pos[6] });
         printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });

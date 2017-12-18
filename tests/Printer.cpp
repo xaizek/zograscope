@@ -42,7 +42,8 @@ TEST_CASE("Width of titles is considered on determining width", "[printer]")
     compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     std::string expected;
 
     SECTION("e1/e2")
@@ -79,7 +80,8 @@ TEST_CASE("Comment contents is compared", "[printer]")
     compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -108,7 +110,8 @@ TEST_CASE("String literal contents is compared", "[printer]")
     compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -137,7 +140,8 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
     compare(oldTree, newTree, tr, true, false);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -169,7 +173,8 @@ R"(void f() {
     compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -223,7 +228,8 @@ TEST_CASE("Lines with changes aren't folded", "[printer]")
     compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
@@ -262,7 +268,8 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
     compare(oldTree, newTree, tr, true, true);
 
     std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(), oss);
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
     printer.print(tr);
 
     std::string expected = normalizeText(R"(

@@ -33,7 +33,7 @@ TEST_CASE("Multiline tokens don't mess up positioning", "[highlighter]")
 
     Tree tree = parseC(input);
 
-    std::string output = Highlighter(*tree.getRoot()).print();
+    std::string output = Highlighter(tree).print();
     CHECK(split(output, '\n') == split(input, '\n'));
 }
 
@@ -55,7 +55,7 @@ R"(/* line1
 int f() { return 10; }
 // line14)", true);
 
-    Highlighter hi(*tree.getRoot());
+    Highlighter hi(tree);
     CHECK(hi.print(1, 2) == "/* line1\n");
     CHECK(hi.print(4, 2) == "// line4\n/* line5");
     CHECK(hi.print(7, 1) == " * line7 */");

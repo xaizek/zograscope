@@ -161,6 +161,12 @@ public:
         return lang.get();
     }
 
+    // Retrieves language associated with this tree as constant object.
+    const Language * getLanguage() const
+    {
+        return lang.get();
+    }
+
     // Marks nodes of the subtree as moved if that makes sense for them.
     void markTreeAsMoved(Node *node);
 

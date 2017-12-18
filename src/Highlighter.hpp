@@ -26,7 +26,9 @@
 
 #include <boost/utility/string_ref.hpp>
 
+class Language;
 class Node;
+class Tree;
 
 // Tree highlighter.  Highlights either all at once or by line ranges.
 class Highlighter
@@ -38,7 +40,15 @@ public:
     // Stores arguments for future reference.  The original flag specifies
     // whether this is an old version of a file (matters only for trees marked
     // with results of comparison).
-    Highlighter(const Node &root, bool original = true);
+    Highlighter(const Tree &tree, bool original = true);
+
+    // Tree can't be a temporary.
+    Highlighter(Tree &&tree, bool original = true) = delete;
+
+    // Stores arguments for future reference.  The original flag specifies
+    // whether this is an old version of a file (matters only for trees marked
+    // with results of comparison).
+    Highlighter(const Node &root, const Language &lang, bool original = true);
 
     // No copying.
     Highlighter(const Highlighter&) = delete;
@@ -70,6 +80,7 @@ private:
     void advance(const Entry &entry);
 
 private:
+    const Language &lang;                     // Language services.
     std::ostringstream oss;                   // Temporary output buffer.
     int line, col;                            // Current position.
     std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.

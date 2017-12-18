@@ -534,7 +534,7 @@ target:
 
     Tree tree = parseMake(input);
 
-    std::string output = Highlighter(*tree.getRoot()).print();
+    std::string output = Highlighter(tree).print();
     CHECK(split(output, '\n') == split(expected, '\n'));
 }
 
