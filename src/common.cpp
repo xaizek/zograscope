@@ -153,7 +153,7 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
         t = Tree(std::move(lang), contents, tb.getRoot(), &localMR);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
-                    localMR);
+                    *lang, localMR);
         t = Tree(std::move(lang), contents, stree.getRoot(), mr);
     }
 

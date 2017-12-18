@@ -31,6 +31,8 @@ namespace cpp17 {
     }
 }
 
+class Language;
+
 struct SNode
 {
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
@@ -48,7 +50,7 @@ class STree
 {
 public:
     STree(TreeBuilder &&ptree, const std::string &contents,
-          bool dumpWhole, bool dumpUnclear,
+          bool dumpWhole, bool dumpUnclear, Language &lang,
           cpp17::pmr::monolithic &mr);
 
     STree(const STree &rhs) = delete;

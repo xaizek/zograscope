@@ -51,9 +51,9 @@ static void postOrder(Node &node, std::vector<Node *> &v);
 static std::vector<std::size_t> hashChildren(const Node &node);
 static std::size_t hashNode(const Node *node);
 static void markAsMoved(Node *node, Language &lang);
-static void dumpTree(std::ostream &os, const Node *node,
+static void dumpTree(std::ostream &os, const Node *node, const Language *lang,
                      std::vector<bool> &trace, int depth);
-static void dumpNode(std::ostream &os, const Node *node);
+static void dumpNode(std::ostream &os, const Node *node, const Language *lang);
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
@@ -390,14 +390,14 @@ Tree::dump() const
 {
     if (root != nullptr) {
         std::vector<bool> trace;
-        dumpTree(std::cout, root, trace, 0);
+        dumpTree(std::cout, root, lang.get(), trace, 0);
     }
 }
 
 // Dumps subtree onto standard output.
 static void
-dumpTree(std::ostream &os, const Node *node, std::vector<bool> &trace,
-         int depth)
+dumpTree(std::ostream &os, const Node *node, const Language *lang,
+         std::vector<bool> &trace, int depth)
 {
     using namespace decor;
     using namespace decor::literals;
@@ -421,18 +421,18 @@ dumpTree(std::ostream &os, const Node *node, std::vector<bool> &trace,
     os << def;
 
     os << (depthHi << depth) << (sepHi << " | ");
-    dumpNode(os, node);
+    dumpNode(os, node, lang);
 
     trace.push_back(false);
     for (unsigned int i = 0U, n = node->children.size(); i < n; ++i) {
         Node *child = node->children[i];
 
         trace.back() = (i == n - 1U);
-        dumpTree(os, child, trace, depth);
+        dumpTree(os, child, lang, trace, depth);
 
         if (child->next != nullptr && !child->next->last) {
             trace.push_back(true);
-            dumpTree(os, child->next, trace, depth + 1);
+            dumpTree(os, child->next, lang, trace, depth + 1);
             trace.pop_back();
         }
     }
@@ -441,7 +441,7 @@ dumpTree(std::ostream &os, const Node *node, std::vector<bool> &trace,
 
 // Dumps single node into a stream.
 static void
-dumpNode(std::ostream &os, const Node *node)
+dumpNode(std::ostream &os, const Node *node, const Language *lang)
 {
     using namespace decor;
     using namespace decor::literals;
@@ -477,7 +477,7 @@ dumpNode(std::ostream &os, const Node *node)
 
     os << (node->satellite ? ", Satellite" : "") << ", "
        << (typeHi << "Type::" << node->type) << ", "
-       << (stypeHi << "SType::" << node->stype);
+       << (stypeHi << lang->toString(node->stype));
 
     if (node->relative != nullptr) {
         os << (relHi << " -> ") << (relLabelHi << l(node->relative->label))

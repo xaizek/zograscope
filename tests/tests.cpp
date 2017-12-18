@@ -110,7 +110,7 @@ parse(const std::string &fileName, const std::string &str, bool coarse)
         return Tree(std::move(lang), str, tb.getRoot());
     }
 
-    STree stree(std::move(tb), str, false, false, mr);
+    STree stree(std::move(tb), str, false, false, *lang, mr);
     return Tree(std::move(lang), str, stree.getRoot());
 }
 

@@ -85,6 +85,8 @@ public:
     // Checks whether this node with its descendants should be placed one level
     // deeper.
     bool isLayerBreak(SType stype) const;
+    // Stringifies value of SType enumeration.
+    const char * toString(SType stype) const;
 };
 
 #endif // ZOGRASCOPE__LANGUAGE_HPP__

@@ -24,22 +24,23 @@
 
 #include "utils/Pool.hpp"
 #include "utils/trees.hpp"
+#include "Language.hpp"
 #include "decoration.hpp"
-#include "stypes.hpp"
 
-static void print(const PNode *node, const std::string &contents);
+static void print(const PNode *node, const std::string &contents,
+                  Language &lang);
 static PNode * findSNode(PNode *node);
 static SNode * makeSNode(Pool<SNode> &snodes, const std::string &contents,
-                         PNode *pnode, bool dumpUnclear);
+                         Language &lang, PNode *pnode, bool dumpUnclear);
 
 STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
-             bool dumpUnclear, cpp17::pmr::monolithic &mr)
+             bool dumpUnclear, Language &lang, cpp17::pmr::monolithic &mr)
     : ptree(std::move(ptree)), pool(&mr)
 {
     PNode *proot = ptree.getRoot();
 
     if (dumpWhole) {
-        print(proot, contents);
+        print(proot, contents, lang);
     }
 
     PNode *rootNode = findSNode(proot);
@@ -48,11 +49,11 @@ STree::STree(TreeBuilder &&ptree, const std::string &contents, bool dumpWhole,
         return;
     }
 
-    root = makeSNode(pool, contents, rootNode, dumpUnclear);
+    root = makeSNode(pool, contents, lang, rootNode, dumpUnclear);
 }
 
 static void
-print(const PNode *node, const std::string &contents)
+print(const PNode *node, const std::string &contents, Language &lang)
 {
     using namespace decor;
     using namespace decor::literals;
@@ -65,7 +66,7 @@ print(const PNode *node, const std::string &contents)
                        << contents.substr(node->value.from, node->value.len)
                        << '`')
            << ", "
-           << (stypeHi << "SType::" << node->stype)
+           << (stypeHi << lang.toString(node->stype))
            << '\n';
     });
 }
@@ -83,8 +84,8 @@ findSNode(PNode *node)
 }
 
 static SNode *
-makeSNode(Pool<SNode> &pool, const std::string &contents, PNode *pnode,
-          bool dumpUnclear)
+makeSNode(Pool<SNode> &pool, const std::string &contents, Language &lang,
+          PNode *pnode, bool dumpUnclear)
 {
     SNode *snode = pool.make(pnode);
 
@@ -100,10 +101,10 @@ makeSNode(Pool<SNode> &pool, const std::string &contents, PNode *pnode,
     c.reserve(pnode->children.size());
     for (PNode *child : pnode->children) {
         if (PNode *schild = findSNode(child)) {
-            c.push_back(makeSNode(pool, contents, schild, dumpUnclear));
+            c.push_back(makeSNode(pool, contents, lang, schild, dumpUnclear));
         } else {
             if (dumpUnclear) {
-                print(child, contents);
+                print(child, contents, lang);
             }
             c.push_back(pool.make(pnode->children[c.size()]));
         }

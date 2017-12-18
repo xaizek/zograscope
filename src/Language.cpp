@@ -17,6 +17,7 @@
 
 #include "Language.hpp"
 
+#include <cassert>
 #include <cstdint>
 
 #include <memory>
@@ -214,4 +215,67 @@ Language::isLayerBreak(SType stype) const
         default:
             return false;
     }
+}
+
+const char *
+Language::toString(SType stype) const
+{
+    switch (stype) {
+        case SType::None:                return "SType::None";
+        case SType::TranslationUnit:     return "SType::TranslationUnit";
+        case SType::Declaration:         return "SType::Declaration";
+        case SType::FunctionDeclaration: return "SType::FunctionDeclaration";
+        case SType::FunctionDefinition:  return "SType::FunctionDefinition";
+        case SType::Directive:           return "SType::Directive";
+        case SType::LineGlue:            return "SType::LineGlue";
+        case SType::Comment:             return "SType::Comment";
+        case SType::Macro:               return "SType::Macro";
+        case SType::CompoundStatement:   return "SType::CompoundStatement";
+        case SType::Separator:           return "SType::Separator";
+        case SType::Punctuation:         return "SType::Punctuation";
+        case SType::Statements:          return "SType::Statements";
+        case SType::ExprStatement:       return "SType::ExprStatement";
+        case SType::IfStmt:              return "SType::IfStmt";
+        case SType::IfCond:              return "SType::IfCond";
+        case SType::IfThen:              return "SType::IfThen";
+        case SType::IfElse:              return "SType::IfElse";
+        case SType::WhileStmt:           return "SType::WhileStmt";
+        case SType::DoWhileStmt:         return "SType::DoWhileStmt";
+        case SType::WhileCond:           return "SType::WhileCond";
+        case SType::ForStmt:             return "SType::ForStmt";
+        case SType::LabelStmt:           return "SType::LabelStmt";
+        case SType::ForHead:             return "SType::ForHead";
+        case SType::Expression:          return "SType::Expression";
+        case SType::AnyExpression:       return "SType::AnyExpression";
+        case SType::Declarator:          return "SType::Declarator";
+        case SType::Initializer:         return "SType::Initializer";
+        case SType::InitializerList:     return "SType::InitializerList";
+        case SType::Specifiers:          return "SType::Specifiers";
+        case SType::WithInitializer:     return "SType::WithInitializer";
+        case SType::WithoutInitializer:  return "SType::WithoutInitializer";
+        case SType::InitializerElement:  return "SType::InitializerElement";
+        case SType::SwitchStmt:          return "SType::SwitchStmt";
+        case SType::GotoStmt:            return "SType::GotoStmt";
+        case SType::ContinueStmt:        return "SType::ContinueStmt";
+        case SType::BreakStmt:           return "SType::BreakStmt";
+        case SType::ReturnValueStmt:     return "SType::ReturnValueStmt";
+        case SType::ReturnNothingStmt:   return "SType::ReturnNothingStmt";
+        case SType::ArgumentList:        return "SType::ArgumentList";
+        case SType::Argument:            return "SType::Argument";
+        case SType::ParameterList:       return "SType::ParameterList";
+        case SType::Parameter:           return "SType::Parameter";
+        case SType::CallExpr:            return "SType::CallExpr";
+        case SType::AssignmentExpr:      return "SType::AssignmentExpr";
+        case SType::ConditionExpr:       return "SType::ConditionExpr";
+        case SType::ComparisonExpr:      return "SType::ComparisonExpr";
+        case SType::AdditiveExpr:        return "SType::AdditiveExpr";
+        case SType::PointerDecl:         return "SType::PointerDecl";
+        case SType::DirectDeclarator:    return "SType::DirectDeclarator";
+        case SType::TemporaryContainer:  return "SType::TemporaryContainer";
+        case SType::Bundle:              return "SType::Bundle";
+        case SType::BundleComma:         return "SType::BundleComma";
+    }
+
+    assert(false && "Unhandled enumeration item");
+    return "<UNKNOWN>";
 }

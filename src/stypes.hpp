@@ -20,8 +20,6 @@
 
 #include <cstdint>
 
-#include <iosfwd>
-
 enum class SType : std::uint8_t
 {
     None,
@@ -78,7 +76,5 @@ enum class SType : std::uint8_t
     Bundle,
     BundleComma,
 };
-
-std::ostream & operator<<(std::ostream &os, SType stype);
 
 #endif // ZOGRASCOPE__STYPES_HPP__
