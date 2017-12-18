@@ -38,8 +38,6 @@
 #include "stypes.hpp"
 #include "types.hpp"
 
-static void printTree(const Node *node, std::vector<bool> &trace, int depth);
-static void printNode(std::ostream &os, const Node *node);
 static Node * materializeSNode(Tree &tree, const std::string &contents,
                                const SNode *node);
 static const PNode * leftmostChild(const PNode *node);
@@ -53,103 +51,9 @@ static void postOrder(Node &node, std::vector<Node *> &v);
 static std::vector<std::size_t> hashChildren(const Node &node);
 static std::size_t hashNode(const Node *node);
 static void markAsMoved(Node *node, Language &lang);
-
-void
-print(const Node &node)
-{
-    std::vector<bool> trace;
-    printTree(&node, trace, 0);
-}
-
-static void
-printTree(const Node *node, std::vector<bool> &trace, int depth)
-{
-    using namespace decor;
-    using namespace decor::literals;
-
-    Decoration sepHi = 246_fg;
-    Decoration depthHi = 250_fg;
-
-    std::cout << sepHi;
-
-    std::cout << (trace.empty() ? "--- " : "    ");
-
-    for (unsigned int i = 0U, n = trace.size(); i < n; ++i) {
-        bool last = (i == n - 1U);
-        if (trace[i]) {
-            std::cout << (last ? "`-- " : "    ");
-        } else {
-            std::cout << (last ? "|-- " : "|   ");
-        }
-    }
-
-    std::cout << def;
-
-    std::cout << (depthHi << depth) << (sepHi << " | ");
-    printNode(std::cout, node);
-
-    trace.push_back(false);
-    for (unsigned int i = 0U, n = node->children.size(); i < n; ++i) {
-        Node *child = node->children[i];
-
-        trace.back() = (i == n - 1U);
-        printTree(child, trace, depth);
-
-        if (child->next != nullptr && !child->next->last) {
-            trace.push_back(true);
-            printTree(child->next, trace, depth + 1);
-            trace.pop_back();
-        }
-    }
-    trace.pop_back();
-}
-
-static void
-printNode(std::ostream &os, const Node *node)
-{
-    using namespace decor;
-    using namespace decor::literals;
-
-    Decoration labelHi = 78_fg + bold;
-    Decoration relLabelHi = 78_fg;
-    Decoration idHi = bold;
-    Decoration movedHi = 33_fg + inv + bold + 231_bg;
-    Decoration insHi = 82_fg + inv + bold;
-    Decoration updHi = 226_fg + inv + bold;
-    Decoration delHi = 160_fg + inv + bold + 231_bg;
-    Decoration relHi = 226_fg + bold;
-    Decoration typeHi = 51_fg;
-    Decoration stypeHi = 222_fg;
-
-    auto l = [](const std::string &s) {
-        return '`' + boost::replace_all_copy(s, "\n", "<NL>") + '`';
-    };
-
-    if (node->moved) {
-        os << (movedHi << '!');
-    }
-
-    switch (node->state) {
-        case State::Unchanged: break;
-        case State::Deleted:  os << (delHi << '-'); break;
-        case State::Inserted: os << (insHi << '+'); break;
-        case State::Updated:  os << (updHi << '~'); break;
-    }
-
-    os << (labelHi << l(node->label))
-       << (idHi << " #" << node->poID);
-
-    os << (node->satellite ? ", Satellite" : "") << ", "
-       << (typeHi << "Type::" << node->type) << ", "
-       << (stypeHi << "SType::" << node->stype);
-
-    if (node->relative != nullptr) {
-        os << (relHi << " -> ") << (relLabelHi << l(node->relative->label))
-           << (idHi << " #" << node->relative->poID);
-    }
-
-    os << '\n';
-}
+static void dumpTree(std::ostream &os, const Node *node,
+                     std::vector<bool> &trace, int depth);
+static void dumpNode(std::ostream &os, const Node *node);
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
@@ -479,4 +383,106 @@ markAsMoved(Node *node, Language &lang)
     for (Node *child : node->children) {
         markAsMoved(child, lang);
     }
+}
+
+void
+Tree::dump() const
+{
+    if (root != nullptr) {
+        std::vector<bool> trace;
+        dumpTree(std::cout, root, trace, 0);
+    }
+}
+
+// Dumps subtree onto standard output.
+static void
+dumpTree(std::ostream &os, const Node *node, std::vector<bool> &trace,
+         int depth)
+{
+    using namespace decor;
+    using namespace decor::literals;
+
+    Decoration sepHi = 246_fg;
+    Decoration depthHi = 250_fg;
+
+    os << sepHi;
+
+    os << (trace.empty() ? "--- " : "    ");
+
+    for (unsigned int i = 0U, n = trace.size(); i < n; ++i) {
+        bool last = (i == n - 1U);
+        if (trace[i]) {
+            os << (last ? "`-- " : "    ");
+        } else {
+            os << (last ? "|-- " : "|   ");
+        }
+    }
+
+    os << def;
+
+    os << (depthHi << depth) << (sepHi << " | ");
+    dumpNode(os, node);
+
+    trace.push_back(false);
+    for (unsigned int i = 0U, n = node->children.size(); i < n; ++i) {
+        Node *child = node->children[i];
+
+        trace.back() = (i == n - 1U);
+        dumpTree(os, child, trace, depth);
+
+        if (child->next != nullptr && !child->next->last) {
+            trace.push_back(true);
+            dumpTree(os, child->next, trace, depth + 1);
+            trace.pop_back();
+        }
+    }
+    trace.pop_back();
+}
+
+// Dumps single node into a stream.
+static void
+dumpNode(std::ostream &os, const Node *node)
+{
+    using namespace decor;
+    using namespace decor::literals;
+
+    Decoration labelHi = 78_fg + bold;
+    Decoration relLabelHi = 78_fg;
+    Decoration idHi = bold;
+    Decoration movedHi = 33_fg + inv + bold + 231_bg;
+    Decoration insHi = 82_fg + inv + bold;
+    Decoration updHi = 226_fg + inv + bold;
+    Decoration delHi = 160_fg + inv + bold + 231_bg;
+    Decoration relHi = 226_fg + bold;
+    Decoration typeHi = 51_fg;
+    Decoration stypeHi = 222_fg;
+
+    auto l = [](const std::string &s) {
+        return '`' + boost::replace_all_copy(s, "\n", "<NL>") + '`';
+    };
+
+    if (node->moved) {
+        os << (movedHi << '!');
+    }
+
+    switch (node->state) {
+        case State::Unchanged: break;
+        case State::Deleted:  os << (delHi << '-'); break;
+        case State::Inserted: os << (insHi << '+'); break;
+        case State::Updated:  os << (updHi << '~'); break;
+    }
+
+    os << (labelHi << l(node->label))
+       << (idHi << " #" << node->poID);
+
+    os << (node->satellite ? ", Satellite" : "") << ", "
+       << (typeHi << "Type::" << node->type) << ", "
+       << (stypeHi << "SType::" << node->stype);
+
+    if (node->relative != nullptr) {
+        os << (relHi << " -> ") << (relLabelHi << l(node->relative->label))
+           << (idHi << " #" << node->relative->poID);
+    }
+
+    os << '\n';
 }

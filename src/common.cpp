@@ -178,7 +178,7 @@ dumpTree(const CommonArgs &args, Tree &tree)
 {
     if (args.dumpTree && !tree.isEmpty()) {
         std::cout << "Tree:\n";
-        print(*tree.getRoot());
+        tree.dump();
     }
 }
 
@@ -191,11 +191,11 @@ dumpTrees(const CommonArgs &args, Tree &treeA, Tree &treeB)
 
     if (!treeA.isEmpty()) {
         std::cout << "Old tree:\n";
-        print(*treeA.getRoot());
+        treeA.dump();
     }
 
     if (!treeB.isEmpty()) {
         std::cout << "New tree:\n";
-        print(*treeB.getRoot());
+        treeB.dump();
     }
 }

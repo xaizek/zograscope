@@ -164,13 +164,14 @@ public:
     // Marks nodes of the subtree as moved if that makes sense for them.
     void markTreeAsMoved(Node *node);
 
+    // Dumps tree on standard output for debugging purposes.
+    void dump() const;
+
 private:
     std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;
     Node *root = nullptr;
 };
-
-void print(const Node &node);
 
 std::vector<Node *> postOrder(Node &root);
 
