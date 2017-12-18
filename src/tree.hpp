@@ -133,6 +133,12 @@ public:
     Tree & operator=(Tree &&rhs) = default;
 
 public:
+    // Checks whether the tree is empty and thus shouldn't be used.
+    bool isEmpty() const
+    {
+        return (root == nullptr);
+    }
+
     Node * getRoot()
     {
         return root;

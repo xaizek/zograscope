@@ -176,11 +176,9 @@ readFile(const std::string &path)
 void
 dumpTree(const CommonArgs &args, Tree &tree)
 {
-    if (args.dumpTree) {
-        if (Node *root = tree.getRoot()) {
-            std::cout << "Tree:\n";
-            print(*root);
-        }
+    if (args.dumpTree && !tree.isEmpty()) {
+        std::cout << "Tree:\n";
+        print(*tree.getRoot());
     }
 }
 
@@ -191,13 +189,13 @@ dumpTrees(const CommonArgs &args, Tree &treeA, Tree &treeB)
         return;
     }
 
-    if (Node *root = treeA.getRoot()) {
+    if (!treeA.isEmpty()) {
         std::cout << "Old tree:\n";
-        print(*root);
+        print(*treeA.getRoot());
     }
 
-    if (Node *root = treeB.getRoot()) {
+    if (!treeB.isEmpty()) {
         std::cout << "New tree:\n";
-        print(*root);
+        print(*treeB.getRoot());
     }
 }
