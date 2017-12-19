@@ -217,12 +217,6 @@ countSatelliteNodes(const Node *node)
 }
 
 static bool
-alwaysMatches(const Node *node)
-{
-    return (node->stype == SType::TranslationUnit);
-}
-
-static bool
 haveValues(const Node *x, const Node *y)
 {
     return x != nullptr
@@ -406,7 +400,7 @@ Distiller::distill(Node &T1, Node &T2)
                     continue;
                 }
 
-                if (alwaysMatches(y)) {
+                if (lang.alwaysMatches(y)) {
                     match(x, y, State::Unchanged);
                     break;
                 }

@@ -146,6 +146,12 @@ Language::isDiffable(const Node *x) const
 }
 
 bool
+Language::alwaysMatches(const Node *x) const
+{
+    return (x->stype == SType::TranslationUnit);
+}
+
+bool
 Language::shouldSplice(SType parent, const Node *childNode) const
 {
     SType child = childNode->stype;

@@ -77,6 +77,8 @@ public:
     bool isContainer(const Node *x) const;
     // Checks whether spelling of a node can be diffed.
     bool isDiffable(const Node *x) const;
+    // Checks whether a node always matches another node with the same stype.
+    bool alwaysMatches(const Node *x) const;
     // Checks whether child node needs to be replaced in its parent with its
     // children.
     bool shouldSplice(SType parent, const Node *childNode) const;
