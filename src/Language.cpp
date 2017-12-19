@@ -224,6 +224,12 @@ Language::isLayerBreak(SType stype) const
 }
 
 bool
+Language::shouldDropLeadingWS(SType stype) const
+{
+    return (stype == SType::Comment);
+}
+
+bool
 Language::isSatellite(SType stype) const
 {
     return (stype == SType::Separator);

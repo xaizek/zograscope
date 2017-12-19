@@ -87,6 +87,9 @@ public:
     // Checks whether this node with its descendants should be placed one level
     // deeper.
     bool isLayerBreak(SType stype) const;
+    // Checks whether leading space in spelling of nodes of this kind should be
+    // skipped for the purposes of comparison.
+    bool shouldDropLeadingWS(SType stype) const;
     // Checks whether nodes of this kind are secondary for comparison.
     bool isSatellite(SType stype) const;
     // Stringifies value of SType enumeration.

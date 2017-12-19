@@ -35,18 +35,18 @@
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "decoration.hpp"
-#include "stypes.hpp"
 #include "types.hpp"
 
 static Node * materializeSNode(Tree &tree, const std::string &contents,
                                const SNode *node);
 static const PNode * leftmostChild(const PNode *node);
-static std::string materializePTree(const std::string &contents,
-                                    const PNode *node);
+static std::string stringifyPTree(const std::string &contents,
+                                  const PNode *node, const Language *lang);
 static Node * materializePNode(Tree &tree, const std::string &contents,
                                const PNode *node);
-static void materializeLabel(const std::string &contents, const PNode *node,
-                             bool spelling, std::string &str);
+static void stringifyPNode(const std::string &contents, const PNode *node,
+                           bool spelling, const Language *lang,
+                           std::string &str);
 static void postOrder(Node &node, std::vector<Node *> &v);
 static std::vector<std::size_t> hashChildren(const Node &node);
 static std::size_t hashNode(const Node *node);
@@ -69,9 +69,12 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
     root = materializeSNode(*this, contents, node);
 }
 
+// Turns SNode-subtree into a corresponding Node-subtree.
 static Node *
 materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
 {
+    const Language *const lang = tree.getLanguage();
+
     Node &n = tree.makeNode();
     n.stype = node->value->stype;
     n.satellite = tree.getLanguage()->isSatellite(n.stype);
@@ -79,7 +82,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
     if (node->children.empty()) {
         const PNode *leftmostLeaf = leftmostChild(node->value);
 
-        n.label = materializePTree(contents, node->value);
+        n.label = stringifyPTree(contents, node->value, lang);
         n.line = leftmostLeaf->line;
         n.col = leftmostLeaf->col;
         n.next = materializePNode(tree, contents, node->value);
@@ -89,7 +92,6 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
         return &n;
     }
 
-    const Language *const lang = tree.getLanguage();
     n.children.reserve(node->children.size());
     for (SNode *child : node->children) {
         Node *newChild = materializeSNode(tree, contents, child);
@@ -119,7 +121,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
                                        return lang->isValueNode(stype);
                                    });
     if (valueChild != node->children.end()) {
-        n.label = materializePTree(contents, (*valueChild)->value);
+        n.label = stringifyPTree(contents, (*valueChild)->value, lang);
         n.valueChild = valueChild - node->children.begin();
     } else {
         n.valueChild = -1;
@@ -146,42 +148,47 @@ leftmostChild(const PNode *node)
          : leftmostChild(node->children.front());
 }
 
+// Turns PNode-subtree into a string.
 static std::string
-materializePTree(const std::string &contents, const PNode *node)
+stringifyPTree(const std::string &contents, const PNode *node,
+               const Language *lang)
 {
     struct {
         const std::string &contents;
+        const Language *lang;
         std::string out;
         void run(const PNode *node)
         {
             if (node->line != 0 && node->col != 0) {
-                materializeLabel(contents, node, false, out);
+                stringifyPNode(contents, node, false, lang, out);
             }
 
             for (const PNode *child : node->children) {
                 run(child);
             }
         }
-    } visitor { contents, {} };
+    } visitor { contents, lang, {} };
 
     visitor.run(node);
 
     return visitor.out;
 }
 
+// Turns PNode-subtree into a corresponding Node-subtree.
 static Node *
 materializePNode(Tree &tree, const std::string &contents, const PNode *node)
 {
-    const Type type = tree.getLanguage()->mapToken(node->value.token);
+    const Language *const lang = tree.getLanguage();
+    const Type type = lang->mapToken(node->value.token);
 
     if (type == Type::Virtual && node->children.size() == 1U) {
         return materializePNode(tree, contents, node->children[0]);
     }
 
     Node &n = tree.makeNode();
-    materializeLabel(contents, node, false, n.label);
-    if (node->stype == SType::Comment) {
-        materializeLabel(contents, node, true, n.spelling);
+    stringifyPNode(contents, node, false, lang, n.label);
+    if (tree.getLanguage()->shouldDropLeadingWS(node->stype)) {
+        stringifyPNode(contents, node, true, lang, n.spelling);
     } else {
         n.spelling = n.label;
     }
@@ -199,9 +206,10 @@ materializePNode(Tree &tree, const std::string &contents, const PNode *node)
     return &n;
 }
 
+// Turns PNode into a string.
 static void
-materializeLabel(const std::string &contents, const PNode *node, bool spelling,
-                 std::string &str)
+stringifyPNode(const std::string &contents, const PNode *node, bool spelling,
+               const Language *lang, std::string &str)
 {
     // XXX: lexer also has such variable and they need to be synchronized
     //      (actually we should pass this to lexer).
@@ -220,7 +228,7 @@ materializeLabel(const std::string &contents, const PNode *node, bool spelling,
                 col = 1;
                 str += '\n';
                 leadingWhitespace = !spelling
-                                 && node->stype == SType::Comment;
+                                 && lang->shouldDropLeadingWS(node->stype);
                 break;
             case '\t':
                 width = tabWidth - (col - 1)%tabWidth;
