@@ -50,6 +50,10 @@ private:
     // Retrieves parent of the node possibly skipping container parents.  Might
     // return `nullptr`.
     const Node * getParent(const Node *n) const;
+    // Counts number of already matched elements in specified subtree.
+    int countAlreadyMatched(const Node *node) const;
+    // Counts number of already matched leaves in specified subtree.
+    int countAlreadyMatchedLeaves(const Node *node) const;
 
 private:
     Language &lang;               // Language of the nodes.

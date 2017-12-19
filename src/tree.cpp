@@ -74,7 +74,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
 {
     Node &n = tree.makeNode();
     n.stype = node->value->stype;
-    n.satellite = (n.stype == SType::Separator);
+    n.satellite = tree.getLanguage()->isSatellite(n.stype);
 
     if (node->children.empty()) {
         const PNode *leftmostLeaf = leftmostChild(node->value);

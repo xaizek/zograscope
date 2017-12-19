@@ -87,6 +87,8 @@ public:
     // Checks whether this node with its descendants should be placed one level
     // deeper.
     bool isLayerBreak(SType stype) const;
+    // Checks whether nodes of this kind are secondary for comparison.
+    bool isSatellite(SType stype) const;
     // Stringifies value of SType enumeration.
     const char * toString(SType stype) const;
 };

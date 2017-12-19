@@ -184,38 +184,6 @@ markNode(Node &node, State state)
     }
 }
 
-static int
-countLeaves(const Node *node)
-{
-    if (node->stype == SType::Separator) {
-        return 0;
-    }
-
-    if (node->children.empty()) {
-        return 1;
-    }
-
-    int count = 0;
-    for (const Node *child : node->children) {
-        count += countLeaves(child);
-    }
-    return count;
-}
-
-static int
-countSatelliteNodes(const Node *node)
-{
-    if (node->satellite) {
-        return (node->stype == SType::Separator ? 0 : countLeaves(node));
-    }
-
-    int count = 0;
-    for (const Node *child : node->children) {
-        count += countSatelliteNodes(child);
-    }
-    return count;
-}
-
 static bool
 haveValues(const Node *x, const Node *y)
 {
@@ -617,8 +585,8 @@ Distiller::childrenSimilarity(const Node *x,
 
     int xLeaves = xChildren.terminalCount();
 
-    const int xExtra = countSatelliteNodes(x);
-    const int yExtra = countSatelliteNodes(y);
+    const int xExtra = countAlreadyMatched(x);
+    const int yExtra = countAlreadyMatched(y);
     selCommon += std::min(xExtra, yExtra);
     xLeaves += xExtra;
     yLeaves += yExtra;
@@ -669,4 +637,40 @@ Distiller::getParent(const Node *n) const
         return parent->parent;
     }
     return parent;
+}
+
+int
+Distiller::countAlreadyMatched(const Node *node) const
+{
+    if (node->satellite) {
+        return countAlreadyMatchedLeaves(node);
+    }
+
+    int count = 0;
+    for (const Node *child : node->children) {
+        count += countAlreadyMatched(child);
+    }
+    return count;
+}
+
+int
+Distiller::countAlreadyMatchedLeaves(const Node *node) const
+{
+    if (lang.isSatellite(node->stype)) {
+        // We aren't interested in satellites specified by the language, because
+        // they don't participate in comparison.
+        return 0;
+    }
+
+    if (node->children.empty()) {
+        // We get here only for descendants of non-language-specific satellites
+        // that are themselves aren't such satellites, so count the node.
+        return 1;
+    }
+
+    int count = 0;
+    for (const Node *child : node->children) {
+        count += countAlreadyMatchedLeaves(child);
+    }
+    return count;
 }

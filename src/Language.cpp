@@ -223,6 +223,12 @@ Language::isLayerBreak(SType stype) const
     }
 }
 
+bool
+Language::isSatellite(SType stype) const
+{
+    return (stype == SType::Separator);
+}
+
 const char *
 Language::toString(SType stype) const
 {
