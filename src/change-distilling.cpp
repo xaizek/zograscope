@@ -23,7 +23,6 @@
 
 #include "utils/strings.hpp"
 #include "Language.hpp"
-#include "stypes.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
@@ -173,7 +172,7 @@ markNode(Node &node, State state)
     for (Node *child : node.children) {
         child->parent = &node;
         if (child->satellite) {
-            if (child->stype == SType::None) {
+            if (child->stype == SType{}) {
                 child->state = leafState;
             } else if (node.hasValue()) {
                 child->state = leafState;
