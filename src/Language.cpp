@@ -77,7 +77,7 @@ detectLanguage(const std::string &stem, const std::string &ext)
 bool
 Language::isPayloadOfFixed(const Node *x) const
 {
-    return x->stype != SType::Separator
+    return !isSatellite(x->stype)
         && !isTravellingNode(x);
 }
 
