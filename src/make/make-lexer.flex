@@ -30,9 +30,9 @@
 #include <string>
 
 #include "make/MakeLexerData.hpp"
+#include "make/MakeSType.hpp"
 #include "make/make-parser.hpp"
 #include "TreeBuilder.hpp"
-#include "stypes.hpp"
 
 #define YY_INPUT(buf, result, maxSize) \
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
@@ -81,6 +81,8 @@
         yyextra->lineoffset = yyextra->offset; \
     } while (false)
 
+using namespace makestypes;
+
 %}
 
 %X slcomment
@@ -105,7 +107,7 @@ NL                      \n|\r|\r\n
 \\{NL} {
     yylval->text.len = 1;
     yylloc->last_column = yylloc->first_column + 1;
-    yyextra->tb->addPostponed(yylval->text, *yylloc, SType::LineGlue);
+    yyextra->tb->addPostponed(yylval->text, *yylloc, +MakeSType::LineGlue);
     ADVANCE_LINE();
 }
 

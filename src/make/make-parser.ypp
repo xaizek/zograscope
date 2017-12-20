@@ -26,9 +26,9 @@
 #include <string>
 
 #include "make/MakeLexerData.hpp"
+#include "make/MakeSType.hpp"
 #include "make/make-lexer.hpp"
 #include "TreeBuilder.hpp"
-#include "stypes.hpp"
 
 struct MakeParseData
 {
@@ -36,6 +36,8 @@ struct MakeParseData
     std::string fileName;
     bool hitError;
 };
+
+using namespace makestypes;
 
 %}
 
@@ -136,14 +138,14 @@ makefile
     : statements END
     { tb->setRoot($1); }
     | END
-    { tb->setRoot(tb->addNode({ }, SType::TranslationUnit)); }
+    { tb->setRoot(tb->addNode({ }, +MakeSType::Makefile)); }
     ;
 
 statements
     : br
-    { $$ = tb->addNode({ }, SType::Statements); }
+    { $$ = tb->addNode({ }, +MakeSType::Statements); }
     | statement
-    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    { $$ = tb->addNode({ $1 }, +MakeSType::Statements); }
     | statements br
     { $$ = $1; }
     | statements statement
@@ -154,195 +156,195 @@ conditionals
     : if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
       "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7),
-                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($8, @8, +MakeSType::Separator),
                          tb->addNode($9, @9) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
       "else" statements_opt "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7),
-                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($8, @8, +MakeSType::Separator),
                          tb->addNode($9, @9),
-                         tb->addNode($10, @10, SType::Separator),
+                         tb->addNode($10, @10, +MakeSType::Separator),
                          tb->addNode($11, @11) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
       "else" conditionals
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7),
-                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($8, @8, +MakeSType::Separator),
                          tb->addNode($9, @9) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_def_kw identifier statements_opt "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_def_kw identifier statements_opt "else" statements_opt "endif"
       comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_def_kw identifier statements_opt "else" conditionals
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     ;
 
 conditionals_r
     : if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt "endif"
       comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7),
-                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($8, @8, +MakeSType::Separator),
                          tb->addNode($9, @9) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
       "else" recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7),
-                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($8, @8, +MakeSType::Separator),
                          tb->addNode($9, @9),
-                         tb->addNode($10, @10, SType::Separator),
+                         tb->addNode($10, @10, +MakeSType::Separator),
                          tb->addNode($11, @11) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
       "else" conditionals_r
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7),
-                         tb->addNode($8, @8, SType::Separator),
+                         tb->addNode($8, @8, +MakeSType::Separator),
                          tb->addNode($9, @9) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_def_kw identifier recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_def_kw identifier recipes_opt "else" recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator),
+                         tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     | if_def_kw identifier recipes_opt "else" conditionals_r
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5) },
-                       SType::IfStmt); }
+                       +MakeSType::IfStmt); }
     ;
 
 define
     : "define" pattern definition "endef" br
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($4, @4, +MakeSType::Separator) },
+                       +MakeSType::MultilineAssignment); }
     | specifiers "define" pattern definition "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::MultilineAssignment); }
     | "define" pattern ASSIGN_OP definition "endef" br
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($3, @3, +MakeSType::Separator),
                          tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::MultilineAssignment); }
     | specifiers "define" pattern ASSIGN_OP definition "endef" br
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
+                         tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
-                         tb->addNode($6, @6, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($6, @6, +MakeSType::Separator) },
+                       +MakeSType::MultilineAssignment); }
     ;
 
 definition
     : comment_opt br
     { $$ = $1; }
     | comment_opt br expressions_d br
-    { $$ = tb->addNode({ $1, $3, $4 }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1, $3, $4 }, +MakeSType::TemporaryContainer); }
     ;
 
 include
     : "include" expressions br
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2) },
-                       SType::Directive); }
+                       +MakeSType::Include); }
     ;
 
 statements_opt
     : comment_opt br
     { $$ = $1; }
     | comment_opt br statements
-    { $$ = tb->addNode({ $1, $3 }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1, $3 }, +MakeSType::TemporaryContainer); }
     ;
 
 if_def_kw
-    : "ifdef"   { $$ = tb->addNode($1, @1, SType::Separator); }
-    | "ifndef"  { $$ = tb->addNode($1, @1, SType::Separator); }
+    : "ifdef"   { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    | "ifndef"  { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
     ;
 
 if_eq_kw
-    : "ifeq"   { $$ = tb->addNode($1, @1, SType::Separator); }
-    | "ifneq"  { $$ = tb->addNode($1, @1, SType::Separator); }
+    : "ifeq"   { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    | "ifneq"  { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
     ;
 
 statement
-    : COMMENT        { $$ = tb->addNode($1, @1, SType::Comment); }
+    : COMMENT        { $$ = tb->addNode($1, @1, +MakeSType::Comment); }
     | assignment br
     | function br
     | rule
@@ -353,43 +355,44 @@ statement
     ;
 
 export
-    : "export"    { $$ = tb->addNode($1, @1, SType::Separator); }
-    | "unexport"  { $$ = tb->addNode($1, @1, SType::Separator); }
+    : "export"    { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    | "unexport"  { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
     | assignment_prefix
+    { $$ = tb->addNode($1, @1, +MakeSType::AssignmentExpr); }
     | assignment_prefix WS targets
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($3, @3) }, SType::Directive); }
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($3, @3) },
+                       +MakeSType::Directive); }
     ;
 
 assignment
     : pattern ASSIGN_OP comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3) },
-                       SType::AssignmentExpr); }
+                       +MakeSType::TemporaryContainer); }
     | pattern ASSIGN_OP expressions_a comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4) },
-                       SType::AssignmentExpr); }
+                       +MakeSType::TemporaryContainer); }
     | assignment_prefix ASSIGN_OP comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3) },
-                       SType::AssignmentExpr); }
+                       +MakeSType::TemporaryContainer); }
     | assignment_prefix ASSIGN_OP expressions_a comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4) },
-                       SType::AssignmentExpr); }
+                       +MakeSType::TemporaryContainer); }
     ;
 
 assignment_prefix
     : specifiers pattern
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +MakeSType::TemporaryContainer); }
     ;
 
 specifiers
@@ -398,35 +401,35 @@ specifiers
     | "unexport"  { $$ = tb->addNode($1, @1); }
     | "override" "export"
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +MakeSType::TemporaryContainer); }
     | "export" "override"
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +MakeSType::TemporaryContainer); }
     | "undefine"
     { $$ = tb->addNode($1, @1); }
     | "override" "undefine"
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +MakeSType::TemporaryContainer); }
     | "undefine" "override"
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +MakeSType::TemporaryContainer); }
     ;
 
 expressions_opt
-    : %empty       { $$ = tb->addNode({ }, SType::TemporaryContainer); }
+    : %empty       { $$ = tb->addNode({ }, +MakeSType::TemporaryContainer); }
     | expressions
     ;
 
 expressions
     : expression
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expressions WS expression
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
 expressions_a
     : expression_a
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expressions_a WS expression_a
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
@@ -434,7 +437,7 @@ expressions_a
 expressions_d
     : first_expression_d
     | br
-    { $$ = tb->addNode({ }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ }, +MakeSType::TemporaryContainer); }
     | br first_expression_d
     { $$ = $2; }
     | expressions_d br
@@ -447,18 +450,18 @@ expressions_d
 
 first_expression_d
     : char_d expression_v
-    { $$ = tb->addNode({ $1, $2 }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1, $2 }, +MakeSType::TemporaryContainer); }
     | function expression_v
-    { $$ = tb->addNode({ $1, $2 }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1, $2 }, +MakeSType::TemporaryContainer); }
     | char_d
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | function
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     ;
 
 expressions_v
     : expression_v
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expressions_v WS expression_v
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
@@ -480,28 +483,28 @@ expression_v
 
 expression_text
     : text
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_function text
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 expression_text_a
     : text_a
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_function_a text_a
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 expression_text_v
     : text_v
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_function_v text_v
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 expression_function
     : function
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | expression_function function
@@ -510,7 +513,7 @@ expression_function
 
 expression_function_a
     : function
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_function_a function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | expression_text_a function
@@ -519,7 +522,7 @@ expression_function_a
 
 expression_function_v
     : function
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_function_v function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | expression_text_v function
@@ -530,37 +533,37 @@ function
     : VAR
     { $$ = tb->addNode($1, @1); }
     | "$(" function_name ")"
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($3, @3, +MakeSType::Separator) },
+                       +MakeSType::CallExpr); }
     | "$(" function_name WS arguments ")"
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::CallExpr); }
     | "$(" function_name ',' arguments ")"
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($4, @4, +MakeSType::Separator),
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::CallExpr); }
     | "$(" function_name ':' expressions ")"
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($3, @3, +MakeSType::Separator),
                          tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::CallExpr); }
     | "$(" function_name ASSIGN_OP expressions ")"
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator),
+                         tb->addNode($3, @3, +MakeSType::Separator),
                          tb->addNode($4, @4),
-                         tb->addNode($5, @5, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::CallExpr); }
     ;
 
 function_name
@@ -570,14 +573,15 @@ function_name
 
 function_name_text
     : function_name_piece
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | function_name_function function_name_piece
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 function_name_piece
     : CHARS
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | function_name_piece CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | function_name_piece keywords
@@ -586,23 +590,23 @@ function_name_piece
 
 function_name_function
     : function
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | function_name_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 arguments
     : %empty
-    { $$ = tb->addNode({ tb->addNode({ }, SType::Argument) },
-                       SType::ArgumentList); }
+    { $$ = tb->addNode({ tb->addNode({ }, +MakeSType::Argument) },
+                       +MakeSType::ArgumentList); }
     | argument
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Argument) },
-                       SType::ArgumentList); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Argument) },
+                       +MakeSType::ArgumentList); }
     | arguments ','
-    { $$ = tb->append($1, tb->addNode($2, @2, SType::Separator)); }
+    { $$ = tb->append($1, tb->addNode($2, @2, +MakeSType::Separator)); }
     | arguments ',' argument
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
-                            tb->addNode($3, @3, SType::Argument) }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, +MakeSType::Separator),
+                            tb->addNode($3, @3, +MakeSType::Argument) }); }
     ;
 
 argument
@@ -614,18 +618,18 @@ rule
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3) },
-                       SType::LabelStmt); }
+                       +MakeSType::Rule); }
     | targets colon prerequisites recipes NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
                          tb->addNode($4, @4) },
-                       SType::LabelStmt); }
+                       +MakeSType::Rule); }
     | targets colon assignment NL
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3) },
-                       SType::LabelStmt); }
+                       +MakeSType::Rule); }
     ;
 
 target
@@ -639,14 +643,14 @@ pattern
 
 pattern_text
     : identifier
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | pattern_function identifier
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 pattern_function
     : function
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | pattern_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | pattern_function function
@@ -654,20 +658,20 @@ pattern_function
     ;
 
 prerequisites
-    : %empty   { $$ = tb->addNode({ }, SType::TemporaryContainer); }
+    : %empty   { $$ = tb->addNode({ }, +MakeSType::TemporaryContainer); }
     | targets
     ;
 
 targets
     : target
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | targets WS target
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
 recipes
     : recipe
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | recipes recipe
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
@@ -680,18 +684,23 @@ recipes_opt
 recipe
     : LEADING_TAB expressions_v  { $$ = $2; }
     | NL conditionals_r          { $$ = $2; }
-    | NL COMMENT                 { $$ = tb->addNode($2, @2, SType::Comment); }
+    | NL COMMENT
+    { $$ = tb->addNode($2, @2, +MakeSType::Comment); }
     ;
 
 identifier
     : CHARS
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | ','
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | '('
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | identifier CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | identifier keywords
@@ -706,21 +715,24 @@ identifier
 
 text
     : char
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | text char
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 text_a
     : char_a
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | text_a char_a
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 text_v
     : char_v
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
     | text_v char_v
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
@@ -787,10 +799,10 @@ br
 
 colon
     : ':'
-    { $$ = tb->addNode($1, @1, SType::Separator); }
+    { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
     | ':' ':'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
+                         tb->addNode($2, @2, +MakeSType::Separator) }); }
     ;
 
 comment_opt
