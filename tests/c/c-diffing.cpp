@@ -21,9 +21,9 @@
 
 #include <functional>
 
+#include "c/C11SType.hpp"
 #include "utils/time.hpp"
 #include "compare.hpp"
-#include "stypes.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -1348,6 +1348,8 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
 {
     // Internal node containing `default:` was marked as updated.
 
+    using namespace c11stypes;
+
     Tree oldTree = parseC(R"(
         void f() {
             switch (v) {
@@ -1374,10 +1376,10 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
     TimeReport tr;
     compare(oldTree, newTree, tr, true, true);
 
-    CHECK(countInternal(*oldTree.getRoot(), SType::LabelStmt, State::Updated)
-          == 0);
-    CHECK(countInternal(*newTree.getRoot(), SType::LabelStmt, State::Updated)
-          == 0);
+    CHECK(countInternal(*oldTree.getRoot(), +C11SType::LabelStmt,
+                        State::Updated) == 0);
+    CHECK(countInternal(*newTree.getRoot(), +C11SType::LabelStmt,
+                        State::Updated) == 0);
 }
 
 TEST_CASE("Head of while-loop is treated correctly", "[comparison]")

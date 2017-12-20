@@ -60,35 +60,36 @@ public:
 
     // Checks whether node doesn't have fixed position within a tree and can
     // move between internal nodes as long as post-order of leafs is preserved.
-    virtual bool isTravellingNode(const Node *x) const;
+    virtual bool isTravellingNode(const Node *x) const = 0;
     // Checks whether the node enforces fixed structure (fixed number of
     // children at particular places).
-    virtual bool hasFixedStructure(const Node *x) const;
+    virtual bool hasFixedStructure(const Node *x) const = 0;
     // Checks whether a node can be flattened on a specific level of flattening.
-    virtual bool canBeFlattened(const Node *parent, const Node *child, int level) const;
+    virtual bool canBeFlattened(const Node *parent, const Node *child,
+                                int level) const = 0;
     // Checks whether a node should be considered for a move.
-    virtual bool isUnmovable(const Node *x) const;
+    virtual bool isUnmovable(const Node *x) const = 0;
     // Checks whether a node is a container.
-    virtual bool isContainer(const Node *x) const;
+    virtual bool isContainer(const Node *x) const = 0;
     // Checks whether spelling of a node can be diffed.
-    virtual bool isDiffable(const Node *x) const;
+    virtual bool isDiffable(const Node *x) const = 0;
     // Checks whether a node always matches another node with the same stype.
-    virtual bool alwaysMatches(const Node *x) const;
+    virtual bool alwaysMatches(const Node *x) const = 0;
     // Checks whether child node needs to be replaced in its parent with its
     // children.
-    virtual bool shouldSplice(SType parent, const Node *childNode) const;
+    virtual bool shouldSplice(SType parent, const Node *childNode) const = 0;
     // Checks whether the type corresponds to a value node.
-    virtual bool isValueNode(SType stype) const;
+    virtual bool isValueNode(SType stype) const = 0;
     // Checks whether this node with its descendants should be placed one level
     // deeper.
-    virtual bool isLayerBreak(SType stype) const;
+    virtual bool isLayerBreak(SType stype) const = 0;
     // Checks whether leading space in spelling of nodes of this kind should be
     // skipped for the purposes of comparison.
-    virtual bool shouldDropLeadingWS(SType stype) const;
+    virtual bool shouldDropLeadingWS(SType stype) const = 0;
     // Checks whether nodes of this kind are secondary for comparison.
-    virtual bool isSatellite(SType stype) const;
+    virtual bool isSatellite(SType stype) const = 0;
     // Stringifies value of SType enumeration.
-    virtual const char * toString(SType stype) const;
+    virtual const char * toString(SType stype) const = 0;
 
     // For children of nodes with fixed structure this checks whether this child
     // is first-class member of the structure or not (e.g., not punctuation).

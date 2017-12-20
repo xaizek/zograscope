@@ -15,12 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__STYPES_HPP__
-#define ZOGRASCOPE__STYPES_HPP__
+#ifndef ZOGRASCOPE__C__C11STYPE_HPP__
+#define ZOGRASCOPE__C__C11STYPE_HPP__
 
 #include <cstdint>
 
-enum class SType : std::uint8_t
+enum class SType : std::uint8_t;
+
+// The namespace is necessary to avoid ODR violation for negation operator.
+namespace c11stypes {
+
+// C-specific STypes.
+enum class C11SType : std::uint8_t
 {
     None,
     TranslationUnit,
@@ -77,4 +83,20 @@ enum class SType : std::uint8_t
     BundleComma,
 };
 
-#endif // ZOGRASCOPE__STYPES_HPP__
+// "Conversion operator": C11SType -> SType.
+inline SType
+operator+(C11SType stype)
+{
+    return static_cast<SType>(stype);
+}
+
+// "Conversion operator": SType -> C11SType.
+inline C11SType
+operator-(SType stype)
+{
+    return static_cast<C11SType>(stype);
+}
+
+}
+
+#endif // ZOGRASCOPE__C__C11STYPE_HPP__
