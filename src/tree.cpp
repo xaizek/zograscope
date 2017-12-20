@@ -302,13 +302,10 @@ reduceTreesCoarse(Node *T1, Node *T2)
     }
 }
 
+// Hashes direct children of the node individually.
 static std::vector<std::size_t>
 hashChildren(const Node &node)
 {
-    if (node.next != nullptr) {
-        return hashChildren(*node.next);
-    }
-
     std::vector<std::size_t> hashes;
     hashes.reserve(node.children.size());
     for (const Node *child : node.children) {
@@ -317,6 +314,7 @@ hashChildren(const Node &node)
     return hashes;
 }
 
+// Hashes all descendants of the node together.
 static std::size_t
 hashNode(const Node *node)
 {

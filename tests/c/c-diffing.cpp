@@ -1592,6 +1592,21 @@ TEST_CASE("Refining works for fine trees", "[comparison]")
     // Just checking that it doesn't crash.
 }
 
+TEST_CASE("Coarse reducing trees with and without layer breaks works",
+          "[comparison]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {}
+    )");
+    Tree newTree = parseC(R"(
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, false);
+
+    // Just checking that it doesn't crash.
+}
+
 TEST_CASE("Nested statements with values are matched correctly", "[comparison]")
 {
     diffC(R"(
