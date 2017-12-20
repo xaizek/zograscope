@@ -56,8 +56,8 @@ DiceString::compare(DiceString &other)
         return 0.0f;
     }
 
-    const std::vector<short> &bigrams = getBigrams();
-    const std::vector<short> &otherBigrams = other.getBigrams();
+    const std::vector<unsigned short> &bigrams = getBigrams();
+    const std::vector<unsigned short> &otherBigrams = other.getBigrams();
     const int common = std::set_intersection(bigrams.cbegin(), bigrams.cend(),
                                              otherBigrams.cbegin(),
                                              otherBigrams.cend(),
@@ -67,7 +67,7 @@ DiceString::compare(DiceString &other)
     return (2.0f*common)/(bigrams.size() + otherBigrams.size());
 }
 
-const std::vector<short> &
+const std::vector<unsigned short> &
 DiceString::getBigrams()
 {
     if (!bigrams.empty() || s.length() < 2U) {
