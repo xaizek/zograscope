@@ -243,8 +243,8 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     }
 
     if (needPrint) {
-        Tree oldTree = parseC(left, true);
-        Tree newTree = parseC(right, true);
+        Tree oldTree = parse(fileName, left, true);
+        Tree newTree = parse(fileName, right, true);
 
         compare(oldTree, newTree, tr, true, skipRefine);
 
