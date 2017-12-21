@@ -271,14 +271,11 @@ bool
 C11Language::isLayerBreak(SType stype) const
 {
     switch (-stype) {
-        case C11SType::FunctionDeclaration:
         case C11SType::FunctionDefinition:
         case C11SType::InitializerElement:
         case C11SType::InitializerList:
         case C11SType::Initializer:
         case C11SType::Declaration:
-        case C11SType::IfCond:
-        case C11SType::WhileCond:
         case C11SType::CallExpr:
         case C11SType::AssignmentExpr:
         case C11SType::ExprStatement:
@@ -289,7 +286,7 @@ C11Language::isLayerBreak(SType stype) const
             return true;
 
         default:
-            return false;
+            return isValueNode(stype);
     }
 }
 
