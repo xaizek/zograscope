@@ -47,14 +47,14 @@ enum class MakeSType : std::uint8_t
 };
 
 // "Conversion operator": MakeSType -> SType.
-inline SType
+constexpr SType
 operator+(MakeSType stype)
 {
     return static_cast<SType>(stype);
 }
 
 // "Conversion operator": SType -> MakeSType.
-inline MakeSType
+constexpr MakeSType
 operator-(SType stype)
 {
     return static_cast<MakeSType>(stype);

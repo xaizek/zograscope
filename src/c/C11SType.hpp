@@ -84,14 +84,14 @@ enum class C11SType : std::uint8_t
 };
 
 // "Conversion operator": C11SType -> SType.
-inline SType
+constexpr SType
 operator+(C11SType stype)
 {
     return static_cast<SType>(stype);
 }
 
 // "Conversion operator": SType -> C11SType.
-inline C11SType
+constexpr C11SType
 operator-(SType stype)
 {
     return static_cast<C11SType>(stype);
