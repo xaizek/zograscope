@@ -137,9 +137,9 @@ MakeLanguage::shouldSplice(SType parent, const Node *childNode) const
 }
 
 bool
-MakeLanguage::isValueNode(SType /*stype*/) const
+MakeLanguage::isValueNode(SType stype) const
 {
-    return false;
+    return (-stype == MakeSType::IfCond);
 }
 
 bool
@@ -172,6 +172,7 @@ MakeLanguage::toString(SType stype) const
         case MakeSType::Statements:          return "MakeSType::Statements";
         case MakeSType::Separator:           return "MakeSType::Separator";
         case MakeSType::IfStmt:              return "MakeSType::IfStmt";
+        case MakeSType::IfCond:              return "MakeSType::IfCond";
         case MakeSType::MultilineAssignment: return "MakeSType::MultilineAssignment";
         case MakeSType::TemporaryContainer:  return "MakeSType::TemporaryContainer";
         case MakeSType::Include:             return "MakeSType::Include";

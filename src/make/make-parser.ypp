@@ -106,7 +106,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %type <node> statement statements statements_opt specifiers export
 %type <node> assignment assignment_prefix
-%type <node> conditionals conditionals_r define include
+%type <node> conditionals conditionals_r condition define include
 %type <node> expressions expressions_opt
 %type <node> expression expression_text expression_function
 %type <node> pattern_text pattern_function
@@ -153,43 +153,29 @@ statements
     ;
 
 conditionals
-    : if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
-      "endif" comment_opt br
+    : if_eq_kw condition statements_opt "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, +MakeSType::Separator),
+                         $2,
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, +MakeSType::Separator),
-                         tb->addNode($5, @5),
-                         tb->addNode($6, @6, +MakeSType::Separator),
-                         tb->addNode($7, @7),
-                         tb->addNode($8, @8, +MakeSType::Separator),
-                         tb->addNode($9, @9) },
+                         tb->addNode($5, @5) },
                        +MakeSType::IfStmt); }
-    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
-      "else" statements_opt "endif" comment_opt br
+    | if_eq_kw condition statements_opt "else" statements_opt "endif"
+      comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, +MakeSType::Separator),
+                         $2,
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, +MakeSType::Separator),
-                         tb->addNode($7, @7),
-                         tb->addNode($8, @8, +MakeSType::Separator),
-                         tb->addNode($9, @9),
-                         tb->addNode($10, @10, +MakeSType::Separator),
-                         tb->addNode($11, @11) },
+                         tb->addNode($7, @7) },
                        +MakeSType::IfStmt); }
-    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' statements_opt
-      "else" conditionals
+    | if_eq_kw condition statements_opt "else" conditionals
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, +MakeSType::Separator),
+                         $2,
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, +MakeSType::Separator),
-                         tb->addNode($5, @5),
-                         tb->addNode($6, @6, +MakeSType::Separator),
-                         tb->addNode($7, @7),
-                         tb->addNode($8, @8, +MakeSType::Separator),
-                         tb->addNode($9, @9) },
+                         tb->addNode($5, @5) },
                        +MakeSType::IfStmt); }
     | if_def_kw identifier statements_opt "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
@@ -218,43 +204,28 @@ conditionals
     ;
 
 conditionals_r
-    : if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt "endif"
-      comment_opt
+    : if_eq_kw condition recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, +MakeSType::Separator),
+                         $2,
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, +MakeSType::Separator),
-                         tb->addNode($5, @5),
-                         tb->addNode($6, @6, +MakeSType::Separator),
-                         tb->addNode($7, @7),
-                         tb->addNode($8, @8, +MakeSType::Separator),
-                         tb->addNode($9, @9) },
+                         tb->addNode($5, @5) },
                        +MakeSType::IfStmt); }
-    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
-      "else" recipes_opt "endif" comment_opt
+    | if_eq_kw condition recipes_opt "else" recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, +MakeSType::Separator),
+                         $2,
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5),
                          tb->addNode($6, @6, +MakeSType::Separator),
-                         tb->addNode($7, @7),
-                         tb->addNode($8, @8, +MakeSType::Separator),
-                         tb->addNode($9, @9),
-                         tb->addNode($10, @10, +MakeSType::Separator),
-                         tb->addNode($11, @11) },
+                         tb->addNode($7, @7) },
                        +MakeSType::IfStmt); }
-    | if_eq_kw '(' expressions_opt ',' expressions_opt ')' recipes_opt
-      "else" conditionals_r
+    | if_eq_kw condition recipes_opt "else" conditionals_r
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, +MakeSType::Separator),
+                         $2,
                          tb->addNode($3, @3),
                          tb->addNode($4, @4, +MakeSType::Separator),
-                         tb->addNode($5, @5),
-                         tb->addNode($6, @6, +MakeSType::Separator),
-                         tb->addNode($7, @7),
-                         tb->addNode($8, @8, +MakeSType::Separator),
-                         tb->addNode($9, @9) },
+                         tb->addNode($5, @5) },
                        +MakeSType::IfStmt); }
     | if_def_kw identifier recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
@@ -279,6 +250,16 @@ conditionals_r
                          tb->addNode($4, @4, +MakeSType::Separator),
                          tb->addNode($5, @5) },
                        +MakeSType::IfStmt); }
+    ;
+
+condition
+    : '(' expressions_opt ',' expressions_opt ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, +MakeSType::Separator),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5, +MakeSType::Separator) },
+                       +MakeSType::IfCond); }
     ;
 
 define

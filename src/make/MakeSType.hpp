@@ -34,6 +34,7 @@ enum class MakeSType : std::uint8_t
     Statements,
     Separator,
     IfStmt,
+    IfCond,
     MultilineAssignment,
     TemporaryContainer,
     Include,
