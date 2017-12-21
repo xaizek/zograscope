@@ -35,199 +35,31 @@
 #include "STree.hpp"
 #include "TreeBuilder.hpp"
 #include "decoration.hpp"
-#include "stypes.hpp"
 #include "types.hpp"
 
-static void printTree(const Node *node, std::vector<bool> &trace, int depth);
-static void printNode(std::ostream &os, const Node *node);
 static Node * materializeSNode(Tree &tree, const std::string &contents,
                                const SNode *node);
 static const PNode * leftmostChild(const PNode *node);
-static std::string materializePTree(const std::string &contents,
-                                    const PNode *node);
+static std::string stringifyPTree(const std::string &contents,
+                                  const PNode *node, const Language *lang);
 static Node * materializePNode(Tree &tree, const std::string &contents,
                                const PNode *node);
-static void materializeLabel(const std::string &contents, const PNode *node,
-                             bool spelling, std::string &str);
+static void stringifyPNode(const std::string &contents, const PNode *node,
+                           bool spelling, const Language *lang,
+                           std::string &str);
 static void postOrder(Node &node, std::vector<Node *> &v);
 static std::vector<std::size_t> hashChildren(const Node &node);
 static std::size_t hashNode(const Node *node);
-static void markAsMoved(Node *node);
-
-void
-print(const Node &node)
-{
-    std::vector<bool> trace;
-    printTree(&node, trace, 0);
-}
-
-static void
-printTree(const Node *node, std::vector<bool> &trace, int depth)
-{
-    using namespace decor;
-    using namespace decor::literals;
-
-    Decoration sepHi = 246_fg;
-    Decoration depthHi = 250_fg;
-
-    std::cout << sepHi;
-
-    std::cout << (trace.empty() ? "--- " : "    ");
-
-    for (unsigned int i = 0U, n = trace.size(); i < n; ++i) {
-        bool last = (i == n - 1U);
-        if (trace[i]) {
-            std::cout << (last ? "`-- " : "    ");
-        } else {
-            std::cout << (last ? "|-- " : "|   ");
-        }
-    }
-
-    std::cout << def;
-
-    std::cout << (depthHi << depth) << (sepHi << " | ");
-    printNode(std::cout, node);
-
-    trace.push_back(false);
-    for (unsigned int i = 0U, n = node->children.size(); i < n; ++i) {
-        Node *child = node->children[i];
-
-        trace.back() = (i == n - 1U);
-        printTree(child, trace, depth);
-
-        if (child->next != nullptr && !child->next->last) {
-            trace.push_back(true);
-            printTree(child->next, trace, depth + 1);
-            trace.pop_back();
-        }
-    }
-    trace.pop_back();
-}
-
-static void
-printNode(std::ostream &os, const Node *node)
-{
-    using namespace decor;
-    using namespace decor::literals;
-
-    Decoration labelHi = 78_fg + bold;
-    Decoration relLabelHi = 78_fg;
-    Decoration idHi = bold;
-    Decoration movedHi = 33_fg + inv + bold + 231_bg;
-    Decoration insHi = 82_fg + inv + bold;
-    Decoration updHi = 226_fg + inv + bold;
-    Decoration delHi = 160_fg + inv + bold + 231_bg;
-    Decoration relHi = 226_fg + bold;
-    Decoration typeHi = 51_fg;
-    Decoration stypeHi = 222_fg;
-
-    auto l = [](const std::string &s) {
-        return '`' + boost::replace_all_copy(s, "\n", "<NL>") + '`';
-    };
-
-    if (node->moved) {
-        os << (movedHi << '!');
-    }
-
-    switch (node->state) {
-        case State::Unchanged: break;
-        case State::Deleted:  os << (delHi << '-'); break;
-        case State::Inserted: os << (insHi << '+'); break;
-        case State::Updated:  os << (updHi << '~'); break;
-    }
-
-    os << (labelHi << l(node->label))
-       << (idHi << " #" << node->poID);
-
-    os << (node->satellite ? ", Satellite" : "") << ", "
-       << (typeHi << "Type::" << node->type) << ", "
-       << (stypeHi << "SType::" << node->stype);
-
-    if (node->relative != nullptr) {
-        os << (relHi << " -> ") << (relLabelHi << l(node->relative->label))
-           << (idHi << " #" << node->relative->poID);
-    }
-
-    os << '\n';
-}
+static void markAsMoved(Node *node, Language &lang);
+static void dumpTree(std::ostream &os, const Node *node, const Language *lang,
+                     std::vector<bool> &trace, int depth);
+static void dumpNode(std::ostream &os, const Node *node, const Language *lang);
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
     : lang(std::move(lang)), nodes(al)
 {
     root = materializePNode(*this, contents, node);
-}
-
-static bool
-shouldSplice(SType parent, Node *childNode)
-{
-    SType child = childNode->stype;
-
-    if (parent == SType::Statements && child == SType::Statements) {
-        return true;
-    }
-
-    if (parent == SType::FunctionDefinition &&
-        child == SType::CompoundStatement) {
-        return true;
-    }
-
-    if (childNode->type == Type::Virtual &&
-        child == SType::TemporaryContainer) {
-        return true;
-    }
-
-    // Work around situation when addition of compound block to a statement
-    // leads to the only statement that was there being marked as moved.
-    if (parent == SType::IfThen || parent == SType::IfElse ||
-        parent == SType::SwitchStmt || parent == SType::WhileStmt ||
-        parent == SType::DoWhileStmt) {
-        if (child == SType::CompoundStatement) {
-            return true;
-        }
-    }
-
-    if (parent == SType::IfStmt) {
-        if (child == SType::IfThen) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool
-isValueSNode(const SNode *n)
-{
-    return n->value->stype == SType::FunctionDeclaration
-        || n->value->stype == SType::IfCond
-        || n->value->stype == SType::WhileCond;
-}
-
-static bool
-isLayerBreak(SType stype)
-{
-    switch (stype) {
-        case SType::FunctionDeclaration:
-        case SType::FunctionDefinition:
-        case SType::InitializerElement:
-        case SType::InitializerList:
-        case SType::Initializer:
-        case SType::Declaration:
-        case SType::IfCond:
-        case SType::WhileCond:
-        case SType::CallExpr:
-        case SType::AssignmentExpr:
-        case SType::ExprStatement:
-        case SType::AnyExpression:
-        case SType::ReturnValueStmt:
-        case SType::Parameter:
-        case SType::ForHead:
-            return true;
-
-        default:
-            return false;
-    };
 }
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
@@ -237,17 +69,20 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
     root = materializeSNode(*this, contents, node);
 }
 
+// Turns SNode-subtree into a corresponding Node-subtree.
 static Node *
 materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
 {
+    const Language *const lang = tree.getLanguage();
+
     Node &n = tree.makeNode();
     n.stype = node->value->stype;
-    n.satellite = (n.stype == SType::Separator);
+    n.satellite = tree.getLanguage()->isSatellite(n.stype);
 
     if (node->children.empty()) {
         const PNode *leftmostLeaf = leftmostChild(node->value);
 
-        n.label = materializePTree(contents, node->value);
+        n.label = stringifyPTree(contents, node->value, lang);
         n.line = leftmostLeaf->line;
         n.col = leftmostLeaf->col;
         n.next = materializePNode(tree, contents, node->value);
@@ -261,11 +96,15 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
     for (SNode *child : node->children) {
         Node *newChild = materializeSNode(tree, contents, child);
 
-        if (shouldSplice(node->value->stype, newChild)) {
+        if (lang->shouldSplice(node->value->stype, newChild)) {
             if (newChild->next != nullptr) {
                 // Make sure we don't splice last layer.
                 if (newChild->next->last) {
-                    n.children.emplace_back(newChild);
+                    // Unless it's empty (has neither children nor value).
+                    if (!newChild->next->children.empty() ||
+                        !newChild->next->label.empty()) {
+                        n.children.emplace_back(newChild);
+                    }
                     continue;
                 }
 
@@ -280,18 +119,20 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
         }
     }
 
-    auto valueChild = std::find_if(node->children.begin(),
-                                   node->children.end(),
-                                   &isValueSNode);
+    auto valueChild = std::find_if(node->children.begin(), node->children.end(),
+                                   [lang](const SNode *node) {
+                                       const SType stype = node->value->stype;
+                                       return lang->isValueNode(stype);
+                                   });
     if (valueChild != node->children.end()) {
-        n.label = materializePTree(contents, (*valueChild)->value);
+        n.label = stringifyPTree(contents, (*valueChild)->value, lang);
         n.valueChild = valueChild - node->children.begin();
     } else {
         n.valueChild = -1;
     }
 
-    // move certain nodes onto the next layer
-    if (isLayerBreak(n.stype)) {
+    // Move certain nodes onto the next layer.
+    if (lang->isLayerBreak(n.stype)) {
         Node &nextLevel = tree.makeNode();
         nextLevel.next = &n;
         nextLevel.stype = n.stype;
@@ -311,42 +152,47 @@ leftmostChild(const PNode *node)
          : leftmostChild(node->children.front());
 }
 
+// Turns PNode-subtree into a string.
 static std::string
-materializePTree(const std::string &contents, const PNode *node)
+stringifyPTree(const std::string &contents, const PNode *node,
+               const Language *lang)
 {
     struct {
         const std::string &contents;
+        const Language *lang;
         std::string out;
         void run(const PNode *node)
         {
             if (node->line != 0 && node->col != 0) {
-                materializeLabel(contents, node, false, out);
+                stringifyPNode(contents, node, false, lang, out);
             }
 
             for (const PNode *child : node->children) {
                 run(child);
             }
         }
-    } visitor { contents, {} };
+    } visitor { contents, lang, {} };
 
     visitor.run(node);
 
     return visitor.out;
 }
 
+// Turns PNode-subtree into a corresponding Node-subtree.
 static Node *
 materializePNode(Tree &tree, const std::string &contents, const PNode *node)
 {
-    const Type type = tree.getLanguage()->mapToken(node->value.token);
+    const Language *const lang = tree.getLanguage();
+    const Type type = lang->mapToken(node->value.token);
 
     if (type == Type::Virtual && node->children.size() == 1U) {
         return materializePNode(tree, contents, node->children[0]);
     }
 
     Node &n = tree.makeNode();
-    materializeLabel(contents, node, false, n.label);
-    if (node->stype == SType::Comment) {
-        materializeLabel(contents, node, true, n.spelling);
+    stringifyPNode(contents, node, false, lang, n.label);
+    if (tree.getLanguage()->shouldDropLeadingWS(node->stype)) {
+        stringifyPNode(contents, node, true, lang, n.spelling);
     } else {
         n.spelling = n.label;
     }
@@ -364,9 +210,10 @@ materializePNode(Tree &tree, const std::string &contents, const PNode *node)
     return &n;
 }
 
+// Turns PNode into a string.
 static void
-materializeLabel(const std::string &contents, const PNode *node, bool spelling,
-                 std::string &str)
+stringifyPNode(const std::string &contents, const PNode *node, bool spelling,
+               const Language *lang, std::string &str)
 {
     // XXX: lexer also has such variable and they need to be synchronized
     //      (actually we should pass this to lexer).
@@ -385,7 +232,7 @@ materializeLabel(const std::string &contents, const PNode *node, bool spelling,
                 col = 1;
                 str += '\n';
                 leadingWhitespace = !spelling
-                                 && node->stype == SType::Comment;
+                                 && lang->shouldDropLeadingWS(node->stype);
                 break;
             case '\t':
                 width = tabWidth - (col - 1)%tabWidth;
@@ -459,13 +306,10 @@ reduceTreesCoarse(Node *T1, Node *T2)
     }
 }
 
+// Hashes direct children of the node individually.
 static std::vector<std::size_t>
 hashChildren(const Node &node)
 {
-    if (node.next != nullptr) {
-        return hashChildren(*node.next);
-    }
-
     std::vector<std::size_t> hashes;
     hashes.reserve(node.children.size());
     for (const Node *child : node.children) {
@@ -474,6 +318,7 @@ hashChildren(const Node &node)
     return hashes;
 }
 
+// Hashes all descendants of the node together.
 static std::size_t
 hashNode(const Node *node)
 {
@@ -516,69 +361,6 @@ printSubTree(const Node &root, bool withComments)
 }
 
 bool
-canBeFlattened(const Node *, const Node *child, int level)
-{
-    switch (level) {
-        case 0:
-            return (child->stype == SType::IfCond);
-
-        case 1:
-            return (child->stype == SType::ExprStatement);
-
-        case 2:
-            return (child->stype == SType::AnyExpression);
-
-        default:
-            return child->stype != SType::Declaration
-                && child->stype != SType::ReturnValueStmt
-                && child->stype != SType::CallExpr
-                && child->stype != SType::Initializer
-                && child->stype != SType::Parameter;
-    }
-}
-
-bool
-isUnmovable(const Node *x)
-{
-    return x->stype == SType::Statements
-        || x->stype == SType::Bundle
-        || x->stype == SType::BundleComma;
-}
-
-bool
-hasMoveableItems(const Node *x)
-{
-    return (!isUnmovable(x) || isContainer(x));
-}
-
-bool
-isContainer(const Node *x)
-{
-    return x->stype == SType::Statements
-        || x->stype == SType::Bundle
-        || x->stype == SType::BundleComma;
-}
-
-bool
-hasFixedStructure(const Node *x)
-{
-    return (x->stype == SType::ForHead);
-}
-
-bool
-isPayloadOfFixed(const Node *x)
-{
-    return x->stype != SType::Separator
-        && !isTravellingNode(x);
-}
-
-bool
-isTravellingNode(const Node *x)
-{
-    return (x->stype == SType::Directive || x->stype == SType::Comment);
-}
-
-bool
 canForceLeafMatch(const Node *x, const Node *y)
 {
     if (!x->children.empty() || !y->children.empty()) {
@@ -595,19 +377,122 @@ canForceLeafMatch(const Node *x, const Node *y)
 }
 
 void
-markTreeAsMoved(Node *node)
+Tree::markTreeAsMoved(Node *node)
 {
-    if (hasMoveableItems(node)) {
-        markAsMoved(node);
+    if (lang->hasMoveableItems(node)) {
+        markAsMoved(node, *lang);
     }
 }
 
+// Marks all movable nodes in the subtree as moved.
 static void
-markAsMoved(Node *node)
+markAsMoved(Node *node, Language &lang)
 {
-    node->moved = !isUnmovable(node);
+    node->moved = !lang.isUnmovable(node);
 
     for (Node *child : node->children) {
-        markAsMoved(child);
+        markAsMoved(child, lang);
     }
+}
+
+void
+Tree::dump() const
+{
+    if (root != nullptr) {
+        std::vector<bool> trace;
+        dumpTree(std::cout, root, lang.get(), trace, 0);
+    }
+}
+
+// Dumps subtree onto standard output.
+static void
+dumpTree(std::ostream &os, const Node *node, const Language *lang,
+         std::vector<bool> &trace, int depth)
+{
+    using namespace decor;
+    using namespace decor::literals;
+
+    Decoration sepHi = 246_fg;
+    Decoration depthHi = 250_fg;
+
+    os << sepHi;
+
+    os << (trace.empty() ? "--- " : "    ");
+
+    for (unsigned int i = 0U, n = trace.size(); i < n; ++i) {
+        bool last = (i == n - 1U);
+        if (trace[i]) {
+            os << (last ? "`-- " : "    ");
+        } else {
+            os << (last ? "|-- " : "|   ");
+        }
+    }
+
+    os << def;
+
+    os << (depthHi << depth) << (sepHi << " | ");
+    dumpNode(os, node, lang);
+
+    trace.push_back(false);
+    for (unsigned int i = 0U, n = node->children.size(); i < n; ++i) {
+        Node *child = node->children[i];
+
+        trace.back() = (i == n - 1U);
+        dumpTree(os, child, lang, trace, depth);
+
+        if (child->next != nullptr && !child->next->last) {
+            trace.push_back(true);
+            dumpTree(os, child->next, lang, trace, depth + 1);
+            trace.pop_back();
+        }
+    }
+    trace.pop_back();
+}
+
+// Dumps single node into a stream.
+static void
+dumpNode(std::ostream &os, const Node *node, const Language *lang)
+{
+    using namespace decor;
+    using namespace decor::literals;
+
+    Decoration labelHi = 78_fg + bold;
+    Decoration relLabelHi = 78_fg;
+    Decoration idHi = bold;
+    Decoration movedHi = 33_fg + inv + bold + 231_bg;
+    Decoration insHi = 82_fg + inv + bold;
+    Decoration updHi = 226_fg + inv + bold;
+    Decoration delHi = 160_fg + inv + bold + 231_bg;
+    Decoration relHi = 226_fg + bold;
+    Decoration typeHi = 51_fg;
+    Decoration stypeHi = 222_fg;
+
+    auto l = [](const std::string &s) {
+        return '`' + boost::replace_all_copy(s, "\n", "<NL>") + '`';
+    };
+
+    if (node->moved) {
+        os << (movedHi << '!');
+    }
+
+    switch (node->state) {
+        case State::Unchanged: break;
+        case State::Deleted:  os << (delHi << '-'); break;
+        case State::Inserted: os << (insHi << '+'); break;
+        case State::Updated:  os << (updHi << '~'); break;
+    }
+
+    os << (labelHi << l(node->label))
+       << (idHi << " #" << node->poID);
+
+    os << (node->satellite ? ", Satellite" : "") << ", "
+       << (typeHi << "Type::" << node->type) << ", "
+       << (stypeHi << lang->toString(node->stype));
+
+    if (node->relative != nullptr) {
+        os << (relHi << " -> ") << (relLabelHi << l(node->relative->label))
+           << (idHi << " #" << node->relative->poID);
+    }
+
+    os << '\n';
 }

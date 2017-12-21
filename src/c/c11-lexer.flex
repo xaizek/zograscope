@@ -30,9 +30,9 @@
 #include <string>
 
 #include "c/C11LexerData.hpp"
+#include "c/C11SType.hpp"
 #include "c/c11-parser.hpp"
 #include "TreeBuilder.hpp"
-#include "stypes.hpp"
 
 #define YY_INPUT(buf, result, maxSize) \
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
@@ -60,6 +60,8 @@
     ++yyextra->line; \
     yyextra->col = 1U; \
     yyextra->lineoffset = yyextra->offset;
+
+using namespace c11stypes;
 
 static void reportError(YYLTYPE *loc, const char text[], std::size_t len,
                         C11LexerData *data);
@@ -243,7 +245,7 @@ NL                      \n|\r|\r\n
 \\{NL} {
     yylval->text.len = 1;
     yylloc->last_column = yylloc->first_column + 1;
-    yyextra->tb->addPostponed(yylval->text, *yylloc, SType::LineGlue);
+    yyextra->tb->addPostponed(yylval->text, *yylloc, +C11SType::LineGlue);
     ADVANCE_LINE();
 }
 <INITIAL,beforeparen>"case"                  { KW(CASE); }
@@ -393,7 +395,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc.last_line = yylloc->last_line;
     yyextra->startLoc.last_column = yylloc->last_column;
     yyextra->tb->addPostponed(yyextra->startTok.text, yyextra->startLoc,
-                              SType::Directive);
+                              +C11SType::Directive);
 
     ADVANCE_LINE();
     BEGIN(INITIAL);
@@ -417,7 +419,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc.last_line = yylloc->last_line;
     yyextra->startLoc.last_column = yylloc->last_column;
     yyextra->tb->addPostponed(yyextra->startTok.text, yyextra->startLoc,
-                              SType::Comment);
+                              +C11SType::Comment);
 
     ADVANCE_LINE();
     BEGIN(INITIAL);
@@ -435,7 +437,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc.last_line = yylloc->last_line;
     yyextra->startLoc.last_column = yylloc->last_column;
     yyextra->tb->addPostponed(yyextra->startTok.text, yyextra->startLoc,
-                              SType::Comment);
+                              +C11SType::Comment);
 
     BEGIN(INITIAL);
 }

@@ -145,8 +145,9 @@ DiffSource::DiffSource(const Node &root)
     }
 }
 
-Printer::Printer(Node &left, Node &right, std::ostream &os)
-    : left(left), right(right), os(os)
+Printer::Printer(Node &left, Node &right, const Language &lang,
+                 std::ostream &os)
+    : left(left), right(right), lang(lang), os(os)
 {
 }
 
@@ -171,8 +172,8 @@ Printer::print(TimeReport &tr)
 
     auto timer = tr.measure("printing");
 
-    Highlighter lh(left, true);
-    Highlighter rh(right, false);
+    Highlighter lh(left, lang, true);
+    Highlighter rh(right, lang, false);
     std::vector<std::string> l(lsrc.lines.size());
     std::vector<std::string> r(rsrc.lines.size());
 

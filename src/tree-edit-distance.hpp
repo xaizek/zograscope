@@ -21,8 +21,9 @@
 #include <string>
 
 class Node;
+class Tree;
 
-void printTree(const std::string &name, Node &root);
+void printTree(const std::string &name, Tree &tree);
 
 int ted(Node &T1, Node &T2);
 

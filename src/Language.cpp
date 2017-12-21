@@ -17,6 +17,7 @@
 
 #include "Language.hpp"
 
+#include <cassert>
 #include <cstdint>
 
 #include <memory>
@@ -29,6 +30,7 @@
 
 #include "c/C11Language.hpp"
 #include "make/MakeLanguage.hpp"
+#include "tree.hpp"
 
 static std::string detectLanguage(const std::string &stem,
                                   const std::string &ext);
@@ -69,4 +71,17 @@ detectLanguage(const std::string &stem, const std::string &ext)
 
     // Assume C by default.
     return "c";
+}
+
+bool
+Language::isPayloadOfFixed(const Node *x) const
+{
+    return !isSatellite(x->stype)
+        && !isTravellingNode(x);
+}
+
+bool
+Language::hasMoveableItems(const Node *x) const
+{
+    return (!isUnmovable(x) || isContainer(x));
 }

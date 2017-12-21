@@ -18,9 +18,9 @@
 #ifndef ZOGRASCOPE__COMPARE_HPP__
 #define ZOGRASCOPE__COMPARE_HPP__
 
-class Node;
 class TimeReport;
+class Tree;
 
-void compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine);
+void compare(Tree &T1, Tree &T2, TimeReport &tr, bool coarse, bool skipRefine);
 
 #endif // ZOGRASCOPE__COMPARE_HPP__

@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+class Language;
 class Node;
 class TimeReport;
 
@@ -34,7 +35,7 @@ class Printer
     };
 
 public:
-    Printer(Node &left, Node &right, std::ostream &os);
+    Printer(Node &left, Node &right, const Language &lang, std::ostream &os);
 
 public:
     void addHeader(Header header);
@@ -43,6 +44,7 @@ public:
 private:
     Node &left;
     Node &right;
+    const Language &lang;
     std::ostream &os;
     std::vector<Header> headers;
 };

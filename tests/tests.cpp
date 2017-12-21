@@ -60,7 +60,7 @@ static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src, const std::string &marker);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
                                                    const std::string &delim);
-static std::vector<Changes> makeChangeMap(Node &root);
+static std::vector<Changes> makeChangeMap(Tree &tree);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
 
 bool
@@ -110,21 +110,32 @@ parse(const std::string &fileName, const std::string &str, bool coarse)
         return Tree(std::move(lang), str, tb.getRoot());
     }
 
-    STree stree(std::move(tb), str, false, false, mr);
+    STree stree(std::move(tb), str, false, false, *lang, mr);
     return Tree(std::move(lang), str, stree.getRoot());
 }
 
 const Node *
 findNode(const Tree &tree, Type type, const std::string &label)
 {
+    return findNode(tree, [&](const Node *node) {
+                        if (node->type == type) {
+                            if (label.empty() || node->label == label) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+}
+
+const Node *
+findNode(const Tree &tree, std::function<bool(const Node *)> pred)
+{
     const Node *needle = nullptr;
 
     std::function<bool(const Node *)> visit = [&](const Node *node) {
-        if (node->type == type) {
-            if (label.empty() || node->label == label) {
-                needle = node;
-                return true;
-            }
+        if (pred(node)) {
+            needle = node;
+            return true;
         }
 
         for (const Node *child : node->children) {
@@ -218,10 +229,10 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     Tree newTree = parse(fileName, cleanedRight, true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
+    compare(oldTree, newTree, tr, true, skipRefine);
 
-    std::vector<Changes> oldMap = makeChangeMap(*oldTree.getRoot());
-    std::vector<Changes> newMap = makeChangeMap(*newTree.getRoot());
+    std::vector<Changes> oldMap = makeChangeMap(oldTree);
+    std::vector<Changes> newMap = makeChangeMap(newTree);
 
     bool needPrint = false;
     CHECKED_ELSE(oldMap == expectedOld) {
@@ -232,14 +243,15 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     }
 
     if (needPrint) {
-        Tree oldTree = parseC(left, true);
-        Tree newTree = parseC(right, true);
+        Tree oldTree = parse(fileName, left, true);
+        Tree newTree = parse(fileName, right, true);
 
-        compare(oldTree.getRoot(), newTree.getRoot(), tr, true, skipRefine);
+        compare(oldTree, newTree, tr, true, skipRefine);
 
         decor::enableDecorations();
 
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(), std::cout);
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), std::cout);
         printer.addHeader({ "old", "new" });
         printer.print(tr);
 
@@ -324,7 +336,7 @@ splitAt(const boost::string_ref &s, const std::string &delim)
 }
 
 static std::vector<Changes>
-makeChangeMap(Node &root)
+makeChangeMap(Tree &tree)
 {
     std::vector<Changes> map;
 
@@ -364,7 +376,7 @@ makeChangeMap(Node &root)
                 mark(*node.next, node.state);
             }
             if (node.moved) {
-                markTreeAsMoved(node.next);
+                tree.markTreeAsMoved(node.next);
             }
             return visit(*node.next);
         }
@@ -382,7 +394,7 @@ makeChangeMap(Node &root)
             visit(*child);
         }
     };
-    visit(root);
+    visit(*tree.getRoot());
 
     return map;
 }

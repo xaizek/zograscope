@@ -18,8 +18,46 @@
 #ifndef ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 #define ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 
+#include <vector>
+
+class Language;
 class Node;
 
-void distill(Node &T1, Node &T2);
+// Implements change-distilling algorithm.
+class Distiller
+{
+public:
+    // Creates an instance for the specific language.
+    Distiller(Language &lang) : lang(lang)
+    {
+    }
+
+public:
+    // Computes changes between two disjoint subtrees and marks nodes
+    // appropriately.
+    void distill(Node &T1, Node &T2);
+
+private:
+    // Computes children similarity.  Returns the similarity, which is 0.0 if
+    // it's too small to consider nodes as matching.
+    float childrenSimilarity(const Node *x,
+                             const std::vector<Node *> &po1,
+                             const Node *y,
+                             const std::vector<Node *> &po2) const;
+    // Computes rating of a match, which is to be compared with ratings of other
+    // matches.
+    int rateMatch(const Node *x, const Node *y) const;
+    // Retrieves parent of the node possibly skipping container parents.  Might
+    // return `nullptr`.
+    const Node * getParent(const Node *n) const;
+    // Counts number of already matched elements in specified subtree.
+    int countAlreadyMatched(const Node *node) const;
+    // Counts number of already matched leaves in specified subtree.
+    int countAlreadyMatchedLeaves(const Node *node) const;
+
+private:
+    Language &lang;               // Language of the nodes.
+    std::vector<Node *> po1, po2; // Nodes in post-order traversal order.
+};
 
 #endif // ZOGRASCOPE__CHANGE_DISTILLING_HPP__

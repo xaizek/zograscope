@@ -21,9 +21,9 @@
 
 #include <functional>
 
+#include "c/C11SType.hpp"
 #include "utils/time.hpp"
 #include "compare.hpp"
-#include "stypes.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -62,7 +62,7 @@ TEST_CASE("Different trees are recognized as different", "[comparison]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -177,7 +177,7 @@ TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+    compare(oldTree, newTree, tr, true, false);
 
     // If functions matched correctly, only one leaf of the old tree will be
     // updated.
@@ -405,7 +405,7 @@ TEST_CASE("Unchanged elements are those which compare equal", "[comparison]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 1);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -1348,6 +1348,8 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
 {
     // Internal node containing `default:` was marked as updated.
 
+    using namespace c11stypes;
+
     Tree oldTree = parseC(R"(
         void f() {
             switch (v) {
@@ -1372,12 +1374,12 @@ TEST_CASE("Nodes with zero common non-satellite leaves are not marked updated",
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
-    CHECK(countInternal(*oldTree.getRoot(), SType::LabelStmt, State::Updated)
-          == 0);
-    CHECK(countInternal(*newTree.getRoot(), SType::LabelStmt, State::Updated)
-          == 0);
+    CHECK(countInternal(*oldTree.getRoot(), +C11SType::LabelStmt,
+                        State::Updated) == 0);
+    CHECK(countInternal(*newTree.getRoot(), +C11SType::LabelStmt,
+                        State::Updated) == 0);
 }
 
 TEST_CASE("Head of while-loop is treated correctly", "[comparison]")
@@ -1587,7 +1589,22 @@ TEST_CASE("Refining works for fine trees", "[comparison]")
     )");
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, false);
+    compare(oldTree, newTree, tr, true, false);
+
+    // Just checking that it doesn't crash.
+}
+
+TEST_CASE("Coarse reducing trees with and without layer breaks works",
+          "[comparison]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {}
+    )");
+    Tree newTree = parseC(R"(
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, false);
 
     // Just checking that it doesn't crash.
 }

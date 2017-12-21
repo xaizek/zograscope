@@ -26,15 +26,17 @@
 #include <string>
 
 #include "c/C11LexerData.hpp"
+#include "c/C11SType.hpp"
 #include "c/c11-lexer.hpp"
 #include "TreeBuilder.hpp"
-#include "stypes.hpp"
 
 struct C11ParseData
 {
     std::string fileName;
     bool hitError;
 };
+
+using namespace c11stypes;
 
 static PNode *
 takeFirst(YYSTYPE x, YYSTYPE)
@@ -51,8 +53,8 @@ takeSecond(YYSTYPE, YYSTYPE x)
 static bool
 isNotPostponed(const PNode *node)
 {
-    return node->stype != SType::Comment
-        && node->stype != SType::Directive;
+    return node->stype != +C11SType::Comment
+        && node->stype != +C11SType::Directive;
 }
 
 static void
@@ -74,13 +76,13 @@ decStmtMerge(YYSTYPE x0, YYSTYPE x1)
     postOrderLeafs(x0.node, v);
 
     if (v.size() == 2U) {
-        return (x0.node->stype == SType::Declaration ? x1.node : x0.node);
+        return (x0.node->stype == +C11SType::Declaration ? x1.node : x0.node);
     }
 
     if (v.size() > 1U && (*(v.end() - 2))->value.token == ')') {
-        return (x0.node->stype == SType::Declaration ? x1.node : x0.node);
+        return (x0.node->stype == +C11SType::Declaration ? x1.node : x0.node);
     }
-    return (x0.node->stype == SType::Declaration ? x0.node : x1.node);
+    return (x0.node->stype == +C11SType::Declaration ? x0.node : x1.node);
 }
 
 // Moves children of node after specified one but before next non-postponed
@@ -225,19 +227,21 @@ primary_expression
     : constant           { $$ = tb->addNode($1, @1); }
     | string_lit         { $$ = tb->addNode($1, @1); }
     | '(' expression ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::Expression); }
+                         tb->addNode($3, @3, +C11SType::Separator) },
+                       +C11SType::Expression); }
     | generic_selection  { $$ = tb->addNode($1, @1); }
     ;
 
 /* Extension to accept concatenation of literals possibly with macros. */
 string_lit
     : SLIT
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +C11SType::TemporaryContainer); }
     | ID
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +C11SType::TemporaryContainer); }
     | string_lit SLIT { $$ = tb->append($1, tb->addNode($2, @2)); }
     | string_lit ID   { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
@@ -290,15 +294,15 @@ postfix_expression
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | postfix_expression '(' ')'
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($2, @2, +C11SType::Separator),
+                         tb->addNode($3, @3, +C11SType::Separator) },
+                       +C11SType::CallExpr); }
     | postfix_expression '(' argument_expression_list ')'
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +C11SType::Separator),
                          $3,
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::CallExpr); }
+                         tb->addNode($4, @4, +C11SType::Separator) },
+                       +C11SType::CallExpr); }
     | postfix_expression '.' ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
@@ -337,13 +341,16 @@ asm_argument_list
 /*     argument-expression-list , assignment-expression */
 argument_expression_list
     : expr_or_type
-    { $$ = tb->addNode({ tb->addNode({ tb->addNode($1, @1, SType::Argument) },
-                                     SType::Bundle) },
-                       SType::ArgumentList); }
+    { $$ = tb->addNode({ tb->addNode({ tb->addNode($1, @1,
+                                                   +C11SType::Argument) },
+                                     +C11SType::Bundle) },
+                       +C11SType::ArgumentList); }
     | argument_expression_list ',' expr_or_type
-    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2, SType::Separator),
-                                        tb->addNode($3, @3, SType::Argument) },
-                                      SType::Bundle)); }
+    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2,
+                                                    +C11SType::Separator),
+                                        tb->addNode($3, @3,
+                                                    +C11SType::Argument) },
+                                      +C11SType::Bundle)); }
     ;
 
 /* This is an extension to make macros like va_arg() work. */
@@ -366,17 +373,17 @@ unary_expression
     : postfix_expression
     { $$ = tb->addNode($1, @1); }
     | INC_OP unary_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
                          tb->addNode($2, @2) },
-                       SType::Expression); }
+                       +C11SType::Expression); }
     | DEC_OP unary_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
                          tb->addNode($2, @2) },
-                       SType::Expression); }
+                       +C11SType::Expression); }
     | unary_operator cast_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
                          tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +C11SType::TemporaryContainer); }
     | SIZEOF unary_expression  %dprec 2
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
     | SIZEOF '(' type_name ')' %dprec 1
@@ -434,21 +441,21 @@ additive_expression
     | additive_expression '+' multiplicative_expression %dprec 1
     { if ($1->children.size() <= 1U) {
           $$ = tb->addNode({ $1,
-                             tb->addNode($2, @2, SType::Separator),
+                             tb->addNode($2, @2, +C11SType::Separator),
                              tb->addNode($3, @3) },
-                           SType::AdditiveExpr);
+                           +C11SType::AdditiveExpr);
       } else {
-          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+          $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator),
                                 tb->addNode($3, @3) });
       } }
     | additive_expression '-' multiplicative_expression %dprec 1
     { if ($1->children.size() <= 1U) {
           $$ = tb->addNode({ $1,
-                             tb->addNode($2, @2, SType::Separator),
+                             tb->addNode($2, @2, +C11SType::Separator),
                              tb->addNode($3, @3) },
-                           SType::AdditiveExpr);
+                           +C11SType::AdditiveExpr);
       } else {
-          $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator),
+          $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator),
                                 tb->addNode($3, @3) });
       } }
     ;
@@ -477,24 +484,24 @@ relational_expression
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | relational_expression '<' shift_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          tb->addNode($3, @3) },
-                       SType::ComparisonExpr); }
+                       +C11SType::ComparisonExpr); }
     | relational_expression '>' shift_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          tb->addNode($3, @3) },
-                       SType::ComparisonExpr); }
+                       +C11SType::ComparisonExpr); }
     | relational_expression LTE_OP shift_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          tb->addNode($3, @3) },
-                       SType::ComparisonExpr); }
+                       +C11SType::ComparisonExpr); }
     | relational_expression GTE_OP shift_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          tb->addNode($3, @3) },
-                       SType::ComparisonExpr); }
+                       +C11SType::ComparisonExpr); }
     ;
 
 /* (6.5.9) equality-expression: */
@@ -505,14 +512,14 @@ equality_expression
     : relational_expression
     | equality_expression EQ_OP relational_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          tb->addNode($3, @3) },
-                       SType::ComparisonExpr); }
+                       +C11SType::ComparisonExpr); }
     | equality_expression NE_OP relational_expression
     { $$ = tb->addNode({ $1,
-                         tb->addNode($2, @2, SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          tb->addNode($3, @3) },
-                       SType::ComparisonExpr); }
+                       +C11SType::ComparisonExpr); }
     ;
 
 /* (6.5.10) AND-expression: */
@@ -574,7 +581,7 @@ conditional_expression
     | logical_OR_expression '?' expression ':' conditional_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }, SType::ConditionExpr); }
+                         tb->addNode($5, @5) }, +C11SType::ConditionExpr); }
     ;
 
 /* (6.5.16) assignment-expression: */
@@ -584,7 +591,7 @@ assignment_expression
     : conditional_expression
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     | unary_expression assignment_operator assignment_expression
-    { $$ = tb->addNode({ $1, $2, $3 }, SType::AssignmentExpr); }
+    { $$ = tb->addNode({ $1, $2, $3 }, +C11SType::AssignmentExpr); }
     ;
 
 /* (6.5.16) assignment-operator: one of */
@@ -627,14 +634,15 @@ constant_expression
 /*     static_assert-declaration */
 declaration
     : declaration_specifiers ';'                      %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
-                         tb->addNode($2, @2, SType::Separator) },
-                       SType::Declaration); }
-    | declaration_specifiers init_declarator_list ';' %dprec 2 %merge <takeFirst>
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Specifiers),
+                         tb->addNode($2, @2, +C11SType::Separator) },
+                       +C11SType::Declaration); }
+    | declaration_specifiers init_declarator_list ';' %dprec 2
+      %merge <takeFirst>
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Specifiers),
                          $2,
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($3, @3, +C11SType::Separator) },
+                       +C11SType::Declaration); }
     | static_assert_declaration
     { $$ = tb->addNode($1, @1); }
     ;
@@ -647,10 +655,10 @@ declaration
 /*     alignment-specifier declaration-specifiersopt */
 declaration_specifiers
     : declaration_specifier declaration_specifiers
-    { $$ = tb->prepend($2, tb->addNode($1, @1, SType::Specifiers)); }
+    { $$ = tb->prepend($2, tb->addNode($1, @1, +C11SType::Specifiers)); }
     | declaration_specifier
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Specifiers) },
-                       SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Specifiers) },
+                       +C11SType::TemporaryContainer); }
     ;
 
 declaration_specifier
@@ -668,7 +676,7 @@ init_declarator_list
     : init_declarator
     { $$ = $1; }
     | init_declarator_list ',' init_declarator
-    { $$ = tb->append($1, { tb->addNode($2, @2, SType::Separator), $3 }); }
+    { $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator), $3 }); }
     ;
 
 /* (6.7) init-declarator: */
@@ -676,16 +684,16 @@ init_declarator_list
 /*     declarator = initializer */
 init_declarator
     : declarator
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::WithoutInitializer) },
-                       SType::Declarator); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::WithoutInitializer) },
+                       +C11SType::Declarator); }
     | declarator '=' initializer
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::WithoutInitializer),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::WithoutInitializer),
                          tb->addNode({ tb->addNode({ tb->addNode($2, @2,
-                                                     SType::Separator) },
-                                                   SType::Bundle),
+                                                     +C11SType::Separator) },
+                                                   +C11SType::Bundle),
                                        $3 },
-                                     SType::WithoutInitializer) },
-                       SType::Declarator); }
+                                     +C11SType::WithoutInitializer) },
+                       +C11SType::Declarator); }
     ;
 
 /* (6.7.1) storage-class-specifier: */
@@ -753,32 +761,32 @@ type_specifier
 /*     struct-or-union identifier */
 struct_or_union_specifier
     : struct_or_union ID '{' struct_declaration_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Punctuation),
+                         tb->addNode($3, @3, +C11SType::Punctuation),
                          $4,
-                         tb->addNode($5, @5, SType::Punctuation) },
-                       SType::TemporaryContainer); }
+                         tb->addNode($5, @5, +C11SType::Punctuation) },
+                       +C11SType::TemporaryContainer); }
     | struct_or_union '{' struct_declaration_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
-                         tb->addNode($2, @2, SType::Punctuation),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
                          $3,
-                         tb->addNode($4, @4, SType::Punctuation) },
-                       SType::TemporaryContainer); }
+                         tb->addNode($4, @4, +C11SType::Punctuation) },
+                       +C11SType::TemporaryContainer); }
     | struct_or_union ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     /* These are extensions to allow structs and unions without members. */
     | struct_or_union ID '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Punctuation),
-                         tb->addNode($4, @4, SType::Punctuation) },
-                       SType::TemporaryContainer); }
+                         tb->addNode($3, @3, +C11SType::Punctuation),
+                         tb->addNode($4, @4, +C11SType::Punctuation) },
+                       +C11SType::TemporaryContainer); }
     | struct_or_union '{' '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Punctuation),
-                         tb->addNode($2, @2, SType::Punctuation),
-                         tb->addNode($3, @3, SType::Punctuation) },
-                       SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Punctuation),
+                         tb->addNode($2, @2, +C11SType::Punctuation),
+                         tb->addNode($3, @3, +C11SType::Punctuation) },
+                       +C11SType::TemporaryContainer); }
     ;
 
 /* (6.7.2.1) struct-or-union: */
@@ -794,22 +802,24 @@ struct_or_union
 /*     struct-declaration-list struct-declaration */
 struct_declaration_list
     : struct_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declaration) },
-                       SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Declaration) },
+                       +C11SType::TemporaryContainer); }
     | struct_declaration_list struct_declaration
-    { $$ = tb->append($1, tb->addNode($2, @2, SType::Declaration)); }
+    { $$ = tb->append($1, tb->addNode($2, @2, +C11SType::Declaration)); }
     ;
 
 /* (6.7.2.1) struct-declaration: */
 /*     specifier-qualifier-list struct-declarator-listopt ; */
 /*     static_assert-declaration */
 struct_declaration
-    : specifier_qualifier_list struct_declarator_list ';' %dprec 2 %merge <takeFirst>
+    : specifier_qualifier_list struct_declarator_list ';' %dprec 2
+      %merge <takeFirst>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }, SType::TemporaryContainer); }
+                         tb->addNode($3, @3) },
+                       +C11SType::TemporaryContainer); }
     | specifier_qualifier_list ';'                        %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +C11SType::TemporaryContainer); }
     | static_assert_declaration
     { $$ = tb->addNode($1, @1); }
     ;
@@ -821,11 +831,11 @@ specifier_qualifier_list
     : type_specifier specifier_qualifier_list
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
     | type_specifier
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +C11SType::TemporaryContainer); }
     | type_qualifier specifier_qualifier_list
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
     | type_qualifier
-    { $$ = tb->addNode($1, @1, SType::TemporaryContainer); }
+    { $$ = tb->addNode($1, @1, +C11SType::TemporaryContainer); }
     ;
 
 /* (6.7.2.1) struct-declarator-list: */
@@ -845,11 +855,11 @@ struct_declarator
     : declarator
     { $$ = tb->addNode($1, @1); }
     | declarator ':' constant_expression
-    { $$ = tb->addNode({ $1, tb->addNode($2, @2, SType::Separator), $3 },
-                       SType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1, tb->addNode($2, @2, +C11SType::Separator), $3 },
+                       +C11SType::TemporaryContainer); }
     | ':' constant_expression
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator), $2 },
-                       SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator), $2 },
+                       +C11SType::TemporaryContainer); }
     ;
 
 /* (6.7.2.2) enum-specifier (CHANGED): */
@@ -857,17 +867,17 @@ struct_declarator
 /*     enum identifier */
 enum_specifier
     : ENUM ID '{' enumerator_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) },
-                       SType::Declaration); }
+                       +C11SType::Declaration); }
     | ENUM '{' enumerator_list '}'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2, +C11SType::Separator),
                          $3,
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::Declaration); }
+                         tb->addNode($4, @4, +C11SType::Separator) },
+                       +C11SType::Declaration); }
     | ENUM ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     ;
@@ -877,19 +887,19 @@ enum_specifier
 /*     enumerator-list enumerator-item */
 enumerator_list
     : enumerator_item
-    { $$ = tb->addNode({ $1 }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1 }, +C11SType::TemporaryContainer); }
     | enumerator_list enumerator_item
     { $$ = tb->append($1, $2); }
     ;
 
 enumerator_item
     : enumerator
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator) },
-                       SType::Bundle); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Declarator) },
+                       +C11SType::Bundle); }
     | enumerator ','
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Declarator),
-                         tb->addNode($2, @2, SType::Separator) },
-                       SType::Bundle); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Declarator),
+                         tb->addNode($2, @2, +C11SType::Separator) },
+                       +C11SType::Bundle); }
     ;
 
 /* (6.7.2.2) enumerator: */
@@ -947,12 +957,12 @@ alignment_specifier
 /*     pointeropt direct-declarator */
 declarator
     : pointer direct_declarator
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::PointerDecl),
-                         tb->addNode($2, @2, SType::DirectDeclarator) },
-                       SType::Declarator); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::PointerDecl),
+                         tb->addNode($2, @2, +C11SType::DirectDeclarator) },
+                       +C11SType::Declarator); }
     | direct_declarator
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::DirectDeclarator) },
-                       SType::Declarator); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::DirectDeclarator) },
+                       +C11SType::Declarator); }
     ;
 
 /* (6.7.6) direct-declarator: */
@@ -983,7 +993,8 @@ direct_declarator
     | direct_declarator '[' ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
-    | direct_declarator '[' STATIC type_qualifier_list assignment_expression ']'
+    | direct_declarator
+      '[' STATIC type_qualifier_list assignment_expression ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
@@ -1004,10 +1015,10 @@ direct_declarator
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | direct_declarator '(' parameter_type_list ')' %dprec 3
     { $$ = tb->addNode({ tb->addNode($1, @1),
-                         tb->addNode($2, @2, SType::Separator),
+                         tb->addNode($2, @2, +C11SType::Separator),
                          tb->addNode($3, @3),
-                         tb->addNode($4, @4, SType::Separator) },
-                       SType::FunctionDeclaration); }
+                         tb->addNode($4, @4, +C11SType::Separator) },
+                       +C11SType::FunctionDeclaration); }
     | direct_declarator '(' identifier_list ')' %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
@@ -1091,32 +1102,33 @@ parameter_type_list
 /*     parameter-list , parameter-declaration */
 parameter_list
     : parameter_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Bundle) },
-                       SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Bundle) },
+                       +C11SType::TemporaryContainer); }
     | parameter_list ',' parameter_declaration
-    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2, SType::Separator),
+    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2,
+                                                    +C11SType::Separator),
                                         tb->addNode($3, @3) },
-                                      SType::Bundle)); }
+                                      +C11SType::Bundle)); }
     ;
 
 /* (6.7.6) parameter-declaration: */
 /*     declaration-specifiers declarator */
 /*     declaration-specifiers abstract-declaratoropt */
 parameter_declaration
-    : declaration_specifiers declarator           %dprec 4    %merge <takeSecond>
+    : declaration_specifiers declarator           %dprec 4   %merge <takeSecond>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::Parameter); }
+                       +C11SType::Parameter); }
     | declaration_specifiers abstract_declarator  %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::Parameter); }
+                       +C11SType::Parameter); }
     | declaration_specifiers                      %dprec 1
-    { $$ = tb->addNode($1, @1, SType::Parameter); }
+    { $$ = tb->addNode($1, @1, +C11SType::Parameter); }
     /* This is an extension to allow attributes behind macros after
        parameters. */
-    | declaration_specifiers declarator ID        %dprec 3    %merge <takeSecond>
+    | declaration_specifiers declarator ID        %dprec 3   %merge <takeSecond>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) },
-                       SType::Parameter); }
+                       +C11SType::Parameter); }
     ;
 
 /* (6.7.6) identifier-list: */
@@ -1161,7 +1173,8 @@ direct_abstract_declarator
     : '(' abstract_declarator ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
-    | direct_abstract_declarator '[' type_qualifier_list assignment_expression ']'
+    | direct_abstract_declarator
+      '[' type_qualifier_list assignment_expression ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }); }
@@ -1185,7 +1198,8 @@ direct_abstract_declarator
                          tb->addNode($3, @3) }); }
     | '[' ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
-    | direct_abstract_declarator '[' STATIC type_qualifier_list assignment_expression ']'
+    | direct_abstract_declarator
+     '[' STATIC type_qualifier_list assignment_expression ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
@@ -1200,7 +1214,8 @@ direct_abstract_declarator
     | '[' STATIC assignment_expression ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
-    | direct_abstract_declarator '[' type_qualifier_list STATIC assignment_expression ']'
+    | direct_abstract_declarator
+      '[' type_qualifier_list STATIC assignment_expression ']'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
@@ -1217,7 +1232,7 @@ direct_abstract_declarator
     | direct_abstract_declarator '(' parameter_type_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) },
-                       SType::FunctionDeclaration); }
+                       +C11SType::FunctionDeclaration); }
     | direct_abstract_declarator '(' ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }
@@ -1234,19 +1249,19 @@ direct_abstract_declarator
 /*     { initializer-list , } */
 initializer
     : assignment_expression
-    { $$ = tb->addNode($1, @1, SType::Initializer); }
+    { $$ = tb->addNode($1, @1, +C11SType::Initializer); }
     | '{' initializer_list '}'
-    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                 $2,
-                                tb->addNode($3, @3, SType::Separator) },
-                              SType::Initializer), $2); }
+                                tb->addNode($3, @3, +C11SType::Separator) },
+                              +C11SType::Initializer), $2); }
     /* This is an extension to allow {} initializer. */
     | '{' '}'
-    { PNode *ilist = tb->addNode({ }, SType::InitializerList);
-      $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { PNode *ilist = tb->addNode({ }, +C11SType::InitializerList);
+      $$ = suckIn(tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                 ilist,
-                                tb->addNode($2, @2, SType::Separator) },
-                              SType::Initializer), ilist); }
+                                tb->addNode($2, @2, +C11SType::Separator) },
+                              +C11SType::Initializer), ilist); }
     ;
 
 /* (6.7.9) initializer-list: */
@@ -1254,9 +1269,9 @@ initializer
 /*     initializer-list , designationopt initializer */
 initializer_list
     : initializer_element
-    { $$ = tb->addNode({ $1 }, SType::InitializerList); }
+    { $$ = tb->addNode({ $1 }, +C11SType::InitializerList); }
     | initializer_element_comma
-    { $$ = tb->addNode({ $1 }, SType::InitializerList); }
+    { $$ = tb->addNode({ $1 }, +C11SType::InitializerList); }
     | initializer_list_head initializer_element
     { $$ = tb->append($1, $2); }
     | initializer_list_head initializer_element_comma
@@ -1265,37 +1280,47 @@ initializer_list
 
 initializer_list_head
     : initializer_element_comma
-    { $$ = tb->addNode({ $1 }, SType::InitializerList); }
+    { $$ = tb->addNode({ $1 }, +C11SType::InitializerList); }
     | initializer_list_head initializer_element_comma
     { $$ = tb->append($1, $2); }
     ;
 
 initializer_element
     : designation initializer
-    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1, $2 },
-                                                   SType::InitializerElement) },
-                                     SType::Bundle) },
-                       SType::InitializerList); }
+    { $$ = tb->addNode({
+          tb->addNode({
+              tb->addNode({ $1, $2 }, +C11SType::InitializerElement)
+          },
+          +C11SType::Bundle)
+      },
+      +C11SType::InitializerList); }
     | initializer
-    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1 },
-                                                   SType::InitializerElement) },
-                                     SType::Bundle) },
-                       SType::InitializerList); }
+    { $$ = tb->addNode({
+          tb->addNode({
+              tb->addNode({ $1 }, +C11SType::InitializerElement)
+          }, +C11SType::Bundle)
+      }, +C11SType::InitializerList); }
     ;
 
 initializer_element_comma
     : designation initializer ','
-    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1, $2, },
-                                                   SType::InitializerElement),
-                                       tb->addNode($3, @3, SType::Separator) },
-                                     SType::BundleComma) },
-                       SType::InitializerList); }
+    { $$ = tb->addNode({
+          tb->addNode({
+              tb->addNode({ $1, $2, }, +C11SType::InitializerElement),
+              tb->addNode($3, @3, +C11SType::Separator)
+          },
+          +C11SType::BundleComma)
+      },
+      +C11SType::InitializerList); }
     | initializer ','
-    { $$ = tb->addNode({ tb->addNode({ tb->addNode({ $1 },
-                                                   SType::InitializerElement),
-                                       tb->addNode($2, @2, SType::Separator) },
-                                     SType::BundleComma) },
-                       SType::InitializerList); }
+    { $$ = tb->addNode({
+          tb->addNode({
+              tb->addNode({ $1 }, +C11SType::InitializerElement),
+              tb->addNode($2, @2, +C11SType::Separator)
+          },
+          +C11SType::BundleComma)
+      },
+      +C11SType::InitializerList); }
     ;
 
 /* (6.7.9) designation: */
@@ -1347,16 +1372,16 @@ static_assert_declaration
 /*     jump-statement */
 statement
     : labeled_statement
-    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    { $$ = tb->addNode({ $1 }, +C11SType::Statements); }
     | compound_statement
     | expression_statement
-    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    { $$ = tb->addNode({ $1 }, +C11SType::Statements); }
     | selection_statement
-    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    { $$ = tb->addNode({ $1 }, +C11SType::Statements); }
     | iteration_statement
-    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    { $$ = tb->addNode({ $1 }, +C11SType::Statements); }
     | jump_statement
-    { $$ = tb->addNode({ $1 }, SType::Statements); }
+    { $$ = tb->addNode({ $1 }, +C11SType::Statements); }
     ;
 
 /* (6.8.1) labeled-statement (CHANGED): */
@@ -1365,35 +1390,36 @@ statement
 /*     default : statement */
 labeled_statement
     : ID ':' ext_statement                        %dprec 2
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator), $3 },
-                       SType::LabelStmt); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2, +C11SType::Separator), $3 },
+                       +C11SType::LabelStmt); }
     | CASE constant_expression ':' ext_statement  %dprec 2
-    { PNode *prefix = tb->addNode({ tb->addNode($1, @1, SType::Separator), $2,
-                                    tb->addNode($3, @3, SType::Separator) },
-                                  SType::LabelStmt);
-      $$ = tb->addNode({ prefix, $4 }, SType::TemporaryContainer); }
+    { PNode *prefix = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                    $2,
+                                    tb->addNode($3, @3, +C11SType::Separator) },
+                                  +C11SType::LabelStmt);
+      $$ = tb->addNode({ prefix, $4 }, +C11SType::TemporaryContainer); }
     | DEFAULT ':' ext_statement                   %dprec 1
-    { PNode *prefix = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                    tb->addNode($2, @2, SType::Separator) },
-                                  SType::LabelStmt);
-      $$ = tb->addNode({ prefix, $3 }, SType::TemporaryContainer); }
+    { PNode *prefix = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                    tb->addNode($2, @2, +C11SType::Separator) },
+                                  +C11SType::LabelStmt);
+      $$ = tb->addNode({ prefix, $3 }, +C11SType::TemporaryContainer); }
     ;
 
 /* (6.8.2) compound-statement: */
 /*     { block-item-listopt } */
 compound_statement
     : '{' block_item_list '}'
-    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = suckIn(tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                 $2,
-                                tb->addNode($3, @3, SType::Separator) },
-                              SType::CompoundStatement), $2); }
+                                tb->addNode($3, @3, +C11SType::Separator) },
+                              +C11SType::CompoundStatement), $2); }
     | '{' '}'
-    { PNode *stmts = tb->addNode({ }, SType::Statements);
-      $$ = suckIn(tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { PNode *stmts = tb->addNode({ }, +C11SType::Statements);
+      $$ = suckIn(tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                 stmts,
-                                tb->addNode($2, @2, SType::Separator) },
-                              SType::CompoundStatement), stmts); }
+                                tb->addNode($2, @2, +C11SType::Separator) },
+                              +C11SType::CompoundStatement), stmts); }
     ;
 
 /* (6.8.2) block-item-list: */
@@ -1401,7 +1427,7 @@ compound_statement
 /*     block-item-list block-item */
 block_item_list
     : block_item
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::Statements); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) }, +C11SType::Statements); }
     | block_item_list block_item
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
@@ -1415,12 +1441,12 @@ block_item
     /* This is an extension to allow macros that define control-flow
        statements. */
     | macro_invocation statement          %dprec 1
-    { $$ = tb->addNode({ $1, $2 }, SType::Statements); }
+    { $$ = tb->addNode({ $1, $2 }, +C11SType::Statements); }
     ;
 
 ext_statement
     : macro_invocation statement          %dprec 1
-    { $$ = tb->addNode({ $1, $2 }, SType::Statements); }
+    { $$ = tb->addNode({ $1, $2 }, +C11SType::Statements); }
     | statement                           %dprec 2
     ;
 
@@ -1428,11 +1454,11 @@ ext_statement
 /*     expressionopt ; */
 expression_statement
     : ';'
-    { $$ = tb->addNode($1, @1, SType::ExprStatement); }
+    { $$ = tb->addNode($1, @1, +C11SType::ExprStatement); }
     | expression ';'
-    { $$ = tb->addNode({ tb->addNode($1, @2, SType::AnyExpression),
-                         tb->addNode($2, @2, SType::Separator) },
-                       SType::ExprStatement); }
+    { $$ = tb->addNode({ tb->addNode($1, @2, +C11SType::AnyExpression),
+                         tb->addNode($2, @2, +C11SType::Separator) },
+                       +C11SType::ExprStatement); }
     ;
 
 /* (6.8.4) selection-statement (CHANGED): */
@@ -1441,28 +1467,34 @@ expression_statement
 /*     switch ( expression ) statement */
 selection_statement
     : IF '(' expression ')' ext_statement %prec "then"
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
-                         tb->addNode(tb->addNode($3, @3, SType::AnyExpression), @3, SType::IfCond),
-                         tb->addNode($4, @4, SType::Separator),
-                         tb->addNode($5, @5, SType::IfThen) },
-                       SType::IfStmt); }
+    { $$ = tb->addNode({
+          tb->addNode($1, @1, +C11SType::Separator),
+          tb->addNode($2, @2, +C11SType::Separator),
+          tb->addNode(tb->addNode($3, @3, +C11SType::AnyExpression), @3,
+                      +C11SType::IfCond),
+          tb->addNode($4, @4, +C11SType::Separator),
+          tb->addNode($5, @5, +C11SType::IfThen)
+      },
+      +C11SType::IfStmt); }
     | IF '(' expression ')' ext_statement ELSE ext_statement
-    { auto ifElse = tb->addNode({ tb->addNode($6, @6, SType::Separator),
+    { auto ifElse = tb->addNode({ tb->addNode($6, @6, +C11SType::Separator),
                                   tb->addNode($7, @7) },
-                                SType::IfElse);
-      $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
-                         tb->addNode(tb->addNode($3, @3, SType::AnyExpression), @3, SType::IfCond),
-                         tb->addNode($4, @4, SType::Separator),
-                         tb->addNode($5, @5, SType::IfThen),
-                         ifElse },
-                       SType::IfStmt); }
+                                +C11SType::IfElse);
+      $$ = tb->addNode({
+          tb->addNode($1, @1, +C11SType::Separator),
+          tb->addNode($2, @2, +C11SType::Separator),
+          tb->addNode(tb->addNode($3, @3, +C11SType::AnyExpression), @3,
+                      +C11SType::IfCond),
+          tb->addNode($4, @4, +C11SType::Separator),
+          tb->addNode($5, @5, +C11SType::IfThen),
+          ifElse
+      },
+      +C11SType::IfStmt); }
     | SWITCH '(' expression ')' ext_statement
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator), $3,
-                         tb->addNode($4, @4, SType::Separator), $5 },
-                       SType::SwitchStmt); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2, +C11SType::Separator), $3,
+                         tb->addNode($4, @4, +C11SType::Separator), $5 },
+                       +C11SType::SwitchStmt); }
     ;
 
 /* (6.8.5) iteration-statement (CHANGED): */
@@ -1472,151 +1504,153 @@ selection_statement
 /*     for ( declaration expressionopt ; expressionopt ) statement */
 iteration_statement
     : WHILE '(' expression ')' ext_statement
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                         tb->addNode($2, @2, SType::Separator),
-                         tb->addNode($3, @3, SType::WhileCond),
-                         tb->addNode($4, @4, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2, +C11SType::Separator),
+                         tb->addNode($3, @3, +C11SType::WhileCond),
+                         tb->addNode($4, @4, +C11SType::Separator),
                          $5 },
-                       SType::WhileStmt); }
+                       +C11SType::WhileStmt); }
     | DO ext_statement WHILE '(' expression ')' ';'
-    { auto whileCond = tb->addNode({ tb->addNode($3, @3, SType::Separator),
-                                     tb->addNode($4, @4, SType::Separator),
-                                     $5,
-                                     tb->addNode($6, @6, SType::Separator) },
-                                   SType::WhileCond);
-      $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { auto whileCond = tb->addNode({
+          tb->addNode($3, @3, +C11SType::Separator),
+          tb->addNode($4, @4, +C11SType::Separator),
+          $5,
+          tb->addNode($6, @6, +C11SType::Separator)
+      },
+      +C11SType::WhileCond);
+      $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                          $2,
                          whileCond,
-                         tb->addNode($7, @7, SType::Separator) },
-                       SType::DoWhileStmt); }
+                         tb->addNode($7, @7, +C11SType::Separator) },
+                       +C11SType::DoWhileStmt); }
     | FOR '(' expression ';' expression ';' expression ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
-                                   tb->addNode($4, @4, SType::Separator),
+                                   tb->addNode($4, @4, +C11SType::Separator),
                                    $5,
-                                   tb->addNode($6, @6, SType::Separator),
+                                   tb->addNode($6, @6, +C11SType::Separator),
                                    $7,
-                                   tb->addNode($8, @8, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($9, @9) }, SType::ForStmt); }
+                                   tb->addNode($8, @8, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($9, @9) }, +C11SType::ForStmt); }
     | FOR '(' expression ';' expression ';' ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
-                                   tb->addNode($4, @4, SType::Separator),
+                                   tb->addNode($4, @4, +C11SType::Separator),
                                    $5,
-                                   tb->addNode($6, @6, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($7, @7, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, SType::ForStmt); }
+                                   tb->addNode($6, @6, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($7, @7, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, +C11SType::ForStmt); }
     | FOR '(' expression ';' ';' expression ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
-                                   tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($5, @5, SType::Separator),
+                                   tb->addNode($4, @4, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($5, @5, +C11SType::Separator),
                                    $6,
-                                   tb->addNode($7, @7, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, SType::ForStmt); }
+                                   tb->addNode($7, @7, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, +C11SType::ForStmt); }
     | FOR '(' ';' expression ';' expression ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($3, @3, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($3, @3, +C11SType::Separator),
                                    $4,
-                                   tb->addNode($5, @5, SType::Separator),
+                                   tb->addNode($5, @5, +C11SType::Separator),
                                    $6,
-                                   tb->addNode($7, @7, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, SType::ForStmt); }
+                                   tb->addNode($7, @7, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, +C11SType::ForStmt); }
     | FOR '(' ';' ';' expression ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($3, @3, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($4, @4, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($3, @3, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($4, @4, +C11SType::Separator),
                                    $5,
-                                   tb->addNode($6, @6, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
+                                   tb->addNode($6, @6, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
     | FOR '(' expression ';' ';' ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
-                                   tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($5, @5, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($6, @6, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
+                                   tb->addNode($4, @4, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($5, @5, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($6, @6, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
     | FOR '(' ';' expression ';' ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($3, @3, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($3, @3, +C11SType::Separator),
                                    $4,
-                                   tb->addNode($5, @5, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($6, @6, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
+                                   tb->addNode($5, @5, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($6, @6, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
     | FOR '(' ';' ';' ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($3, @3, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($5, @5, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, SType::ForStmt); }
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($3, @3, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($4, @4, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($5, @5, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, +C11SType::ForStmt); }
     | FOR '(' declaration expression ';' expression ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
                                    $4,
-                                   tb->addNode($5, @5, SType::Separator),
+                                   tb->addNode($5, @5, +C11SType::Separator),
                                    $6,
-                                   tb->addNode($7, @7, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, SType::ForStmt); }
+                                   tb->addNode($7, @7, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, +C11SType::ForStmt); }
     | FOR '(' declaration expression ';' ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
                                    $4,
-                                   tb->addNode($5, @5, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($6, @6, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
+                                   tb->addNode($5, @5, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($6, @6, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
     | FOR '(' declaration ';' expression ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($4, @4, SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($4, @4, +C11SType::Separator),
                                    $5,
-                                   tb->addNode($6, @6, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, SType::ForStmt); }
+                                   tb->addNode($6, @6, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
     | FOR '(' declaration ';' ')' ext_statement
-    { auto forHead = tb->addNode({ tb->addNode($1, @1, SType::Separator),
-                                   tb->addNode($2, @2, SType::Separator),
+    { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                                   tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($4, @4, SType::Separator),
-                                   tb->addNode({ }, SType::AnyExpression),
-                                   tb->addNode($5, @5, SType::Separator) },
-                                 SType::ForHead);
-      $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, SType::ForStmt); }
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($4, @4, +C11SType::Separator),
+                                   tb->addNode({ }, +C11SType::AnyExpression),
+                                   tb->addNode($5, @5, +C11SType::Separator) },
+                                 +C11SType::ForHead);
+      $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, +C11SType::ForStmt); }
     ;
 
 /* (6.8.6) jump-statement: */
@@ -1627,21 +1661,21 @@ iteration_statement
 jump_statement
     : GOTO ID ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }, SType::GotoStmt); }
+                         tb->addNode($3, @3) }, +C11SType::GotoStmt); }
     | CONTINUE ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::ContinueStmt); }
+                       +C11SType::ContinueStmt); }
     | BREAK ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::BreakStmt); }
+                       +C11SType::BreakStmt); }
     | RETURN expression ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::Separator),
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                          tb->addNode($2, @2),
-                         tb->addNode($3, @3, SType::Separator) },
-                       SType::ReturnValueStmt); }
+                         tb->addNode($3, @3, +C11SType::Separator) },
+                       +C11SType::ReturnValueStmt); }
     | RETURN ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::ReturnNothingStmt); }
+                       +C11SType::ReturnNothingStmt); }
     ;
 
 /* A.2.4 External definitions */
@@ -1650,18 +1684,19 @@ program
     : translation_unit { tb->setRoot($1); }
     /* This is effectively grammar extension that allows for empty input. */
     | END
-    { tb->setRoot(tb->addNode({}, SType::TranslationUnit)); };
+    { tb->setRoot(tb->addNode({}, +C11SType::TranslationUnit)); };
 
 /* (6.9) translation-unit: */
 /*     external-declaration */
 /*     translation-unit external-declaration */
 translation_unit
-    : top_level { $$ = tb->addNode($1, @1, SType::TranslationUnit); }
+    : top_level { $$ = tb->addNode($1, @1, +C11SType::TranslationUnit); }
     ;
 
 top_level
     : external_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1) }, SType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +C11SType::TemporaryContainer); }
     | top_level external_declaration
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
@@ -1678,15 +1713,15 @@ external_declaration
     | ID '(' top_level ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) },
-                       SType::Macro); }
+                       +C11SType::Macro); }
     | ID '(' ')' ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) },
-                       SType::Macro); }
+                       +C11SType::Macro); }
     | ID '(' argument_expression_list ')' ';'   %dprec 2
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }, SType::Macro); }
+                         tb->addNode($5, @5) }, +C11SType::Macro); }
     | EXTERN SLIT '{' top_level '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
@@ -1697,8 +1732,9 @@ external_declaration
 /*     declaration-specifiers declarator declaration-listopt compound-statement */
 function_definition
     : function_header compound_statement
-    { $$ = tb->addNode({ tb->addNode($1, @1, SType::FunctionDeclaration), $2 },
-                       SType::FunctionDefinition); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::FunctionDeclaration),
+                         $2 },
+                       +C11SType::FunctionDefinition); }
     ;
 
 function_header
@@ -1708,7 +1744,7 @@ function_header
     /*                      tb->addNode($4, @4) }); } */
     : declaration_specifiers declarator %dprec 1 %merge <takeFirst>
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
-                       SType::TemporaryContainer); }
+                       +C11SType::TemporaryContainer); }
     /* This is an extension to allow function headers to be defined by a
      * macro. */
     | macro_invocation                  %dprec 2

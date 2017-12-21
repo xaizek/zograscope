@@ -133,6 +133,12 @@ public:
     Tree & operator=(Tree &&rhs) = default;
 
 public:
+    // Checks whether the tree is empty and thus shouldn't be used.
+    bool isEmpty() const
+    {
+        return (root == nullptr);
+    }
+
     Node * getRoot()
     {
         return root;
@@ -155,13 +161,23 @@ public:
         return lang.get();
     }
 
+    // Retrieves language associated with this tree as constant object.
+    const Language * getLanguage() const
+    {
+        return lang.get();
+    }
+
+    // Marks nodes of the subtree as moved if that makes sense for them.
+    void markTreeAsMoved(Node *node);
+
+    // Dumps tree on standard output for debugging purposes.
+    void dump() const;
+
 private:
     std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;
     Node *root = nullptr;
 };
-
-void print(const Node &node);
 
 std::vector<Node *> postOrder(Node &root);
 
@@ -169,28 +185,6 @@ void reduceTreesCoarse(Node *T1, Node *T2);
 
 std::string printSubTree(const Node &root, bool withComments);
 
-bool canBeFlattened(const Node *parent, const Node *child, int level);
-
-bool isUnmovable(const Node *x);
-
-bool hasMoveableItems(const Node *x);
-
-bool isContainer(const Node *x);
-
-// Checks whether the node enforces fixed structure (fixed number of children at
-// particular places).
-bool hasFixedStructure(const Node *x);
-
-// For children of nodes with fixed structure this checks whether this child is
-// first-class member of the structure or not (e.g., not punctuation).
-bool isPayloadOfFixed(const Node *x);
-
-// Checks whether node doesn't have fixed position within a tree and can move
-// between internal nodes as long as post-order of leafs is preserved.
-bool isTravellingNode(const Node *x);
-
 bool canForceLeafMatch(const Node *x, const Node *y);
-
-void markTreeAsMoved(Node *node);
 
 #endif // ZOGRASCOPE__TREE_HPP__

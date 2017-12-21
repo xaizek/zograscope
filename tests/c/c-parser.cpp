@@ -26,8 +26,8 @@
 #include <functional>
 #include <iostream>
 
+#include "c/C11SType.hpp"
 #include "TreeBuilder.hpp"
-#include "stypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"
 
@@ -37,12 +37,14 @@ static int countNodes(const Node &root);
 
 TEST_CASE("Empty input is OK", "[parser][extensions]")
 {
+    using namespace c11stypes;
+
     CHECK(cIsParsed(""));
     CHECK(cIsParsed("      "));
     CHECK(cIsParsed("\t\n \t \n"));
 
     Tree tree = parseC("");
-    CHECK(tree.getRoot()->stype == SType::TranslationUnit);
+    CHECK(tree.getRoot()->stype == +C11SType::TranslationUnit);
 }
 
 TEST_CASE("Missing final newline is added", "[parser][extensions]")

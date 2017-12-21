@@ -22,12 +22,12 @@
 #include <vector>
 
 #include "utils/strings.hpp"
-#include "stypes.hpp"
+#include "Language.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
-static float childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
-                                const Node *y, const std::vector<Node *> &po2);
+static void postOrderAndInit(Node &root, std::vector<Node *> &v);
+static void postOrderAndInitImpl(Node &node, std::vector<Node *> &v);
 static bool isTerminal(const Node *n);
 
 namespace {
@@ -107,33 +107,6 @@ private:
 
 }
 
-static void
-postOrderAndInit(Node &node, std::vector<Node *> &v)
-{
-    if (node.satellite) {
-        return;
-    }
-
-    node.relative = nullptr;
-
-    for (Node *child : node.children) {
-        child->parent = &node;
-        postOrderAndInit(*child, v);
-    }
-    node.poID = v.size();
-
-    v.push_back(&node);
-}
-
-static std::vector<Node *>
-postOrderAndInit(Node &root)
-{
-    std::vector<Node *> v;
-    root.parent = nullptr;
-    postOrderAndInit(root, v);
-    return v;
-}
-
 static bool
 canMatch(const Node *x, const Node *y)
 {
@@ -199,7 +172,7 @@ markNode(Node &node, State state)
     for (Node *child : node.children) {
         child->parent = &node;
         if (child->satellite) {
-            if (child->stype == SType::None) {
+            if (child->stype == SType{}) {
                 child->state = leafState;
             } else if (node.hasValue()) {
                 child->state = leafState;
@@ -208,54 +181,6 @@ markNode(Node &node, State state)
             }
         }
     }
-}
-
-static int
-countLeaves(const Node *node)
-{
-    if (node->stype == SType::Separator) {
-        return 0;
-    }
-
-    if (node->children.empty()) {
-        return 1;
-    }
-
-    int count = 0;
-    for (const Node *child : node->children) {
-        count += countLeaves(child);
-    }
-    return count;
-}
-
-static int
-countSatelliteNodes(const Node *node)
-{
-    if (node->satellite) {
-        return (node->stype == SType::Separator ? 0 : countLeaves(node));
-    }
-
-    int count = 0;
-    for (const Node *child : node->children) {
-        count += countSatelliteNodes(child);
-    }
-    return count;
-}
-
-static bool
-alwaysMatches(const Node *node)
-{
-    return (node->stype == SType::TranslationUnit);
-}
-
-static const Node *
-getParent(const Node *n)
-{
-    const Node *parent = n->parent;
-    if (parent != nullptr && isContainer(parent)) {
-        return parent->parent;
-    }
-    return parent;
 }
 
 static bool
@@ -267,8 +192,8 @@ haveValues(const Node *x, const Node *y)
         && y->hasValue();
 }
 
-static int
-rateMatch(const Node *x, const Node *y)
+int
+Distiller::rateMatch(const Node *x, const Node *y) const
 {
     const Node *xParent = getParent(x);
     const Node *yParent = getParent(y);
@@ -367,7 +292,7 @@ matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
 }
 
 void
-distill(Node &T1, Node &T2)
+Distiller::distill(Node &T1, Node &T2)
 {
     struct Match
     {
@@ -377,8 +302,8 @@ distill(Node &T1, Node &T2)
         mutable int common;
     };
 
-    std::vector<Node *> po1 = postOrderAndInit(T1);
-    std::vector<Node *> po2 = postOrderAndInit(T2);
+    postOrderAndInit(T1, po1);
+    postOrderAndInit(T2, po2);
 
     std::vector<DiceString> dice1;
     dice1.reserve(po1.size());
@@ -442,7 +367,7 @@ distill(Node &T1, Node &T2)
                     continue;
                 }
 
-                if (alwaysMatches(y)) {
+                if (lang.alwaysMatches(y)) {
                     match(x, y, State::Unchanged);
                     break;
                 }
@@ -452,7 +377,7 @@ distill(Node &T1, Node &T2)
 
                 // Containers are there to hold elements of their parent nodes
                 // and can be matched only to containers of matched parents.
-                if (isContainer(x) && haveValues(xParent, yParent) &&
+                if (lang.isContainer(x) && haveValues(xParent, yParent) &&
                     xParent->getValue()->relative != nullptr) {
                     if (xParent->getValue()->relative != yParent->getValue()) {
                         continue;
@@ -584,11 +509,41 @@ distill(Node &T1, Node &T2)
     }
 }
 
-// Computes children similarity.  Returns the similarity, which is 0.0 if it's
-// too small to consider nodes as matching.
-static float
-childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
-                   const Node *y, const std::vector<Node *> &po2)
+// Initializes nodes state preparing them for comparison and fills `v` with
+// pointers to nodes in post-order.
+static void
+postOrderAndInit(Node &root, std::vector<Node *> &v)
+{
+    root.parent = nullptr;
+    v.clear();
+    postOrderAndInitImpl(root, v);
+}
+
+// Build list of nodes in post-order initializing their `parent`, `relative` and
+// `poID` fields on the way.
+static void
+postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
+{
+    if (node.satellite) {
+        return;
+    }
+
+    node.relative = nullptr;
+
+    for (Node *child : node.children) {
+        child->parent = &node;
+        postOrderAndInitImpl(*child, v);
+    }
+    node.poID = v.size();
+
+    v.push_back(&node);
+}
+
+float
+Distiller::childrenSimilarity(const Node *x,
+                              const std::vector<Node *> &po1,
+                              const Node *y,
+                              const std::vector<Node *> &po2) const
 {
     NodeRange xChildren(descendants, po1, x), yChildren(descendants, po2, y);
 
@@ -629,8 +584,8 @@ childrenSimilarity(const Node *x, const std::vector<Node *> &po1,
 
     int xLeaves = xChildren.terminalCount();
 
-    const int xExtra = countSatelliteNodes(x);
-    const int yExtra = countSatelliteNodes(y);
+    const int xExtra = countAlreadyMatched(x);
+    const int yExtra = countAlreadyMatched(y);
     selCommon += std::min(xExtra, yExtra);
     xLeaves += xExtra;
     yLeaves += yExtra;
@@ -671,4 +626,50 @@ isTerminal(const Node *n)
 {
     // XXX: should we check for isTravellingNode() instead of just comments?
     return (n->children.empty() && n->type != Type::Comments);
+}
+
+const Node *
+Distiller::getParent(const Node *n) const
+{
+    const Node *parent = n->parent;
+    if (parent != nullptr && lang.isContainer(parent)) {
+        return parent->parent;
+    }
+    return parent;
+}
+
+int
+Distiller::countAlreadyMatched(const Node *node) const
+{
+    if (node->satellite) {
+        return countAlreadyMatchedLeaves(node);
+    }
+
+    int count = 0;
+    for (const Node *child : node->children) {
+        count += countAlreadyMatched(child);
+    }
+    return count;
+}
+
+int
+Distiller::countAlreadyMatchedLeaves(const Node *node) const
+{
+    if (lang.isSatellite(node->stype)) {
+        // We aren't interested in satellites specified by the language, because
+        // they don't participate in comparison.
+        return 0;
+    }
+
+    if (node->children.empty()) {
+        // We get here only for descendants of non-language-specific satellites
+        // that are themselves aren't such satellites, so count the node.
+        return 1;
+    }
+
+    int count = 0;
+    for (const Node *child : node->children) {
+        count += countAlreadyMatchedLeaves(child);
+    }
+    return count;
 }

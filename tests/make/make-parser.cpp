@@ -25,11 +25,14 @@
 
 #include <iostream>
 
+#include "make/MakeSType.hpp"
 #include "utils/strings.hpp"
 #include "Highlighter.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
+
+using namespace makestypes;
 
 TEST_CASE("Error is printed on incorrect Makefile syntax", "[make][parser]")
 {
@@ -44,6 +47,28 @@ TEST_CASE("Empty Makefile is OK", "[make][parser]")
     CHECK(makeIsParsed("      "));
     CHECK(makeIsParsed("   \n   "));
     CHECK(makeIsParsed("\t\n \t \n"));
+}
+
+TEST_CASE("Root always has Makefile stype", "[make][parser]")
+{
+    Tree tree;
+
+    tree = parseMake("");
+    CHECK(tree.getRoot()->stype == +MakeSType::Makefile);
+
+    tree = parseMake("a = b");
+    CHECK(tree.getRoot()->stype == +MakeSType::Makefile);
+}
+
+TEST_CASE("Useless empty temporary containers are dropped", "[make][parser]")
+{
+    auto pred = [](const Node *node) {
+        return node->stype == +MakeSType::TemporaryContainer
+            && node->label.empty();
+    };
+
+    Tree tree = parseMake("set := to this");
+    CHECK(findNode(tree, pred) == nullptr);
 }
 
 TEST_CASE("Comments are parsed in a Makefile", "[make][parser]")
@@ -534,7 +559,7 @@ target:
 
     Tree tree = parseMake(input);
 
-    std::string output = Highlighter(*tree.getRoot()).print();
+    std::string output = Highlighter(tree).print();
     CHECK(split(output, '\n') == split(expected, '\n'));
 }
 

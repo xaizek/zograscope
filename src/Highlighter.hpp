@@ -26,18 +26,29 @@
 
 #include <boost/utility/string_ref.hpp>
 
+class Language;
 class Node;
+class Tree;
 
 // Tree highlighter.  Highlights either all at once or by line ranges.
 class Highlighter
 {
     class ColorPicker;
+    class Entry;
 
 public:
     // Stores arguments for future reference.  The original flag specifies
     // whether this is an old version of a file (matters only for trees marked
     // with results of comparison).
-    Highlighter(Node &root, bool original = true);
+    Highlighter(const Tree &tree, bool original = true);
+
+    // Tree can't be a temporary.
+    Highlighter(Tree &&tree, bool original = true) = delete;
+
+    // Stores arguments for future reference.  The original flag specifies
+    // whether this is an old version of a file (matters only for trees marked
+    // with results of comparison).
+    Highlighter(const Node &root, const Language &lang, bool original = true);
 
     // No copying.
     Highlighter(const Highlighter&) = delete;
@@ -62,22 +73,23 @@ private:
     void print(int n);
     // Prints lines of spelling decreasing `n` on advancing through lines.
     void printSpelling(int &n);
-    // Retrieves the next node to be processed.
-    Node * getNode();
-    // Advances processing to the next node.  The node here is the one that was
-    // returned by `getNode()` earlier.
-    void advanceNode(Node *node);
+    // Retrieves the next entry to be processed.
+    Entry getEntry();
+    // Advances processing to the next node.  The entry here is the one that was
+    // returned by `getEntry()` earlier.
+    void advance(const Entry &entry);
 
 private:
+    const Language &lang;                     // Language services.
     std::ostringstream oss;                   // Temporary output buffer.
     int line, col;                            // Current position.
     std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.
     std::vector<boost::string_ref> olines;    // Undiffed spelling.
     std::vector<boost::string_ref> lines;     // Possibly diffed spelling.
-    std::stack<Node *> toProcess;             // State of tree traversal.
+    std::stack<Entry> toProcess;              // State of tree traversal.
     std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
-    Node *current;                            // Node that's being processed.
+    const Node *current;                      // Node that's being processed.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__

@@ -38,11 +38,11 @@ public:
     }
 
 private:
-    const std::vector<short> & getBigrams();
+    const std::vector<unsigned short> & getBigrams();
 
 private:
     boost::string_ref s;
-    std::vector<short> bigrams;
+    std::vector<unsigned short> bigrams;
 };
 
 inline void

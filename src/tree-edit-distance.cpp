@@ -110,30 +110,30 @@ makeKr(Node &root, std::vector<int> &l)
 }
 
 void
-printTree(const std::string &name, Node &root)
+printTree(const std::string &name, Tree &tree)
 {
     std::cout << name << '\n';
     std::cout << std::setw(name.length())
               << std::setfill('=') << "" << std::setfill(' ') << '\n';
-    print(root);
+    tree.dump();
 
     std::cout << '\n';
 
-    std::vector<Node *> po = postOrder(root);
+    std::vector<Node *> po = postOrder(*tree.getRoot());
     for (Node *node : po) {
         std::cout << "po(" << node->label << ") = " << node->poID + 1 << '\n';
     }
 
     std::cout << '\n';
 
-    std::vector<int> l = lmld(root);
+    std::vector<int> l = lmld(*tree.getRoot());
     for (unsigned int i = 0U; i < l.size(); ++i) {
         std::cout << "l(" << po[i]->label << ") = " << l[i] + 1 << '\n';
     }
 
     std::cout << '\n';
 
-    std::vector<int> kr = makeKr(root, l);
+    std::vector<int> kr = makeKr(*tree.getRoot(), l);
     for (unsigned int i = 0U; i < kr.size(); ++i) {
         std::cout << "k[" << i << "] = " << kr[i] + 1 << '\n';
     }

@@ -31,29 +31,47 @@
 
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
+#include "Language.hpp"
 #include "decoration.hpp"
-#include "stypes.hpp"
 #include "tree.hpp"
 
-static void markTreeWithState(Node *node, State state);
-static const decor::Decoration & getHighlight(const Node &node);
-static bool isDiffable(const Node &node);
+static const decor::Decoration & getHighlight(const Node &node, int moved,
+                                              State state,
+                                              const Language &lang);
+static bool isDiffable(const Node &node, State state, const Language &lang);
 static std::string diffSpelling(const std::string &l, const std::string &r,
                                 const decor::Decoration &dec, bool original);
 static std::vector<boost::string_ref> toWords(const std::string &s);
-static std::string getSpelling(const Node &node, const decor::Decoration &dec,
-                               bool original);
+static std::string getSpelling(const Node &node, State state,
+                               const Language &lang,
+                               const decor::Decoration &dec, bool original);
+
+// Single processing entry.
+struct Highlighter::Entry
+{
+    const Node *node;    // Node to be processed.
+    bool moved;          // Move status override for descendants.
+    State state;         // State override for descendants.
+    bool propagateMoved; // Moved field should be passed to all descendants.
+    bool propagateState; // State field should be passed to all descendants.
+};
 
 class Highlighter::ColorPicker
 {
 public:
-    void setNode(const Node &node)
+    ColorPicker(const Language &lang) : lang(lang)
     {
-        prevNode = (currNode == &node ? nullptr : currNode);
-        currNode = &node;
+    }
+
+public:
+    void setEntry(const Entry &entry)
+    {
+        prevNode = (currNode == entry.node ? nullptr : currNode);
+        currNode = entry.node;
 
         prevHighlight = currHighlight;
-        currHighlight = &::getHighlight(*currNode);
+        currHighlight = &::getHighlight(*currNode, entry.moved, entry.state,
+                                        lang);
     }
 
     void advancedLine()
@@ -84,22 +102,28 @@ public:
     }
 
 private:
+    const Language &lang;
     const decor::Decoration *currHighlight = &decor::none;
     const decor::Decoration *prevHighlight = &decor::none;
     const Node *currNode = nullptr;
     const Node *prevNode = nullptr;
 };
 
-Highlighter::Highlighter(Node &root, bool original)
-    : line(1), col(1), colorPicker(new ColorPicker()), original(original),
-      current(nullptr)
+Highlighter::Highlighter(const Tree &tree, bool original)
+    : Highlighter(*tree.getRoot(), *tree.getLanguage(), original)
 {
-    toProcess.push(&root);
+}
+
+Highlighter::Highlighter(const Node &root, const Language &lang, bool original)
+    : lang(lang), line(1), col(1), colorPicker(new ColorPicker(lang)),
+      original(original), current(nullptr)
+{
+    toProcess.push({ &root, root.moved, root.state, false, false });
 }
 
 Highlighter::~Highlighter()
 {
-    // Emit destructor here with ColorPicker object being complete.
+    // Emit destructor here with ColorPicker and Entry classes being complete.
 }
 
 std::string
@@ -147,13 +171,14 @@ Highlighter::skipUntil(int targetLine)
     }
 
     while (!toProcess.empty()) {
-        Node *const node = getNode();
+        Entry entry = getEntry();
+        const Node *const node = entry.node;
         if (!node->leaf) {
-            advanceNode(node);
+            advance(entry);
             continue;
         }
 
-        colorPicker->setNode(*node);
+        colorPicker->setEntry(entry);
 
         while (node->line > line) {
             if (++line == targetLine) {
@@ -161,7 +186,7 @@ Highlighter::skipUntil(int targetLine)
             }
         }
 
-        advanceNode(node);
+        advance(entry);
 
         split(node->spelling, '\n', olines);
 
@@ -170,7 +195,7 @@ Highlighter::skipUntil(int targetLine)
                 current = node;
                 colorPicker->advancedLine();
                 const decor::Decoration &dec = colorPicker->getHighlight();
-                spelling = getSpelling(*node, dec, original);
+                spelling = getSpelling(*node, entry.state, lang, dec, original);
                 split(spelling, '\n', lines);
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
@@ -194,13 +219,14 @@ Highlighter::print(int n)
     }
 
     while (!toProcess.empty() && n != 0) {
-        Node *const node = getNode();
+        Entry entry = getEntry();
+        const Node *const node = entry.node;
         if (!node->leaf) {
-            advanceNode(node);
+            advance(entry);
             continue;
         }
 
-        colorPicker->setNode(*node);
+        colorPicker->setEntry(entry);
 
         const decor::Decoration &fillHighlight =
             colorPicker->getFillHighlight();
@@ -228,9 +254,10 @@ Highlighter::print(int n)
             oss << decor::def;
         }
 
-        advanceNode(node);
+        advance(entry);
 
-        spelling = getSpelling(*node, colorPicker->getHighlight(), original);
+        spelling = getSpelling(*node, entry.state, lang,
+                               colorPicker->getHighlight(), original);
         split(node->spelling, '\n', olines);
         split(spelling, '\n', lines);
         current = node;
@@ -279,57 +306,61 @@ Highlighter::printSpelling(int &n)
     lines.clear();
 }
 
-Node *
-Highlighter::getNode()
+Highlighter::Entry
+Highlighter::getEntry()
 {
-    Node *node = toProcess.top();
+    Entry entry = toProcess.top();
+    const Node *node = entry.node;
 
-    if (node->next != nullptr) {
-        if (node->state != State::Unchanged) {
-            markTreeWithState(node->next, node->state);
+    if (node->next != nullptr || node->leaf) {
+        if (!entry.propagateState && node->state != State::Unchanged) {
+            entry.propagateState = true;
+            entry.state = node->state;
         }
         if (node->moved) {
-            markTreeAsMoved(node->next);
+            entry.propagateMoved = true;
+            entry.moved = true;
         }
-        node = node->next;
     }
 
-    return node;
+    if (node->next != nullptr) {
+        // Update entry and rerun the checks (state can be changed both on
+        // switching to a different layer and directly after switching to it).
+        entry.node = node->next;
+        toProcess.top() = entry;
+        return getEntry();
+    }
+
+    return entry;
 }
 
 void
-Highlighter::advanceNode(Node *node)
+Highlighter::advance(const Entry &entry)
 {
     toProcess.pop();
-    for (Node *child : boost::adaptors::reverse(node->children)) {
-        toProcess.push(child);
+    for (Node *child : boost::adaptors::reverse(entry.node->children)) {
+        Entry childEntry = entry;
+        childEntry.node = child;
+        if (!childEntry.propagateState) {
+            childEntry.state = child->state;
+        }
+        if (!childEntry.propagateMoved) {
+            childEntry.moved = child->moved;
+        }
+
+        toProcess.push(childEntry);
     }
 }
 
-// Marks one layer of a tree specified by the node with the given state.
-static void
-markTreeWithState(Node *node, State state)
-{
-    node->state = state;
-    for (Node *child : node->children) {
-        markTreeWithState(child, state);
-    }
-}
-
-/**
- * @brief Retrieves decoration for the specified node.
- *
- * @param node Node whose decoration is being queried.
- *
- * @returns The decoration.
- */
+// Retrieves decoration for the specified node considering overrides of its
+// properties.
 static const decor::Decoration &
-getHighlight(const Node &node)
+getHighlight(const Node &node, int moved, State state, const Language &lang)
 {
     static ColorScheme cs;
 
     // Highlighting based on node state has higher priority.
-    switch (node.state) {
+    switch (state) {
         case State::Deleted:
             return cs[ColorGroup::Deleted];
         case State::Inserted:
@@ -339,13 +370,13 @@ getHighlight(const Node &node)
             //       special color?
             //       Or update kinda implies move, since it's obvious that there
             //       was a match between nodes?
-            if (!isDiffable(node)) {
+            if (!isDiffable(node, state, lang)) {
                 return cs[ColorGroup::Updated];
             }
             break;
 
         case State::Unchanged:
-            if (node.moved) {
+            if (moved) {
                 return cs[ColorGroup::Moved];
             }
             break;
@@ -387,19 +418,13 @@ getHighlight(const Node &node)
     return cs[ColorGroup::Other];
 }
 
-/**
- * @brief Checks whether node spelling can be diffed.
- *
- * @param node Node to check.
- *
- * @returns @c true if so, @c false otherwise.
- */
+// Checks whether node spelling can be diffed.
 static bool
-isDiffable(const Node &node)
+isDiffable(const Node &node, State state, const Language &lang)
 {
     return node.relative != nullptr
-        && (node.stype == SType::Comment || node.type == Type::StrConstants)
-        && node.state == State::Updated;
+        && lang.isDiffable(&node)
+        && state == State::Updated;
 }
 
 /**
@@ -516,19 +541,12 @@ toWords(const std::string &s)
     return words;
 }
 
-/**
- * @brief Formats spelling for a node.
- *
- * @param node     Source of the spelling.
- * @param dec      Default decoration.
- * @param original Whether this is original source.
- *
- * @returns Formatted spelling.
- */
+// Formats spelling of a node into a colored string.
 static std::string
-getSpelling(const Node &node, const decor::Decoration &dec, bool original)
+getSpelling(const Node &node, State state, const Language &lang,
+            const decor::Decoration &dec, bool original)
 {
-    if (!isDiffable(node)) {
+    if (!isDiffable(node, state, lang)) {
         return node.spelling;
     }
 

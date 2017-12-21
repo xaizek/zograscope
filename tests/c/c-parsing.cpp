@@ -32,7 +32,7 @@ TEST_CASE("Function specifiers are detected as such", "[comparison][parsing]")
     Tree newTree = parseC("void f();", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 1);
@@ -206,7 +206,7 @@ TEST_CASE("Node type is propagated", "[comparison][parsing]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -228,7 +228,7 @@ TEST_CASE("Coarse nodes are formed correctly", "[comparison][parsing]")
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -261,7 +261,7 @@ TEST_CASE("Compound statement doesn't unite statements",
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) == 0);
@@ -287,7 +287,7 @@ TEST_CASE("Declarations differ by whether they have initializers",
     )", true);
 
     TimeReport tr;
-    compare(oldTree.getRoot(), newTree.getRoot(), tr, true, true);
+    compare(oldTree, newTree, tr, true, true);
 
     CHECK(countLeaves(*oldTree.getRoot(), State::Updated) == 0);
     CHECK(countLeaves(*oldTree.getRoot(), State::Deleted) > 0);

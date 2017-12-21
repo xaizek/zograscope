@@ -28,25 +28,93 @@
 
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
+#include "Language.hpp"
 #include "change-distilling.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
-static void compareChanged(Node *node, TimeReport &tr, bool coarse,
-                           bool skipRefine);
-static bool flatten(Node *x, Node *y, int level);
-static int flatten(Node *n, int level, bool dry);
+namespace {
+
+// Coordinates tree comparison.
+class Comparator
+{
+public:
+    // Records arguments for future use.
+    Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
+               bool skipRefine);
+
+public:
+    // Launches comparison.
+    void compare();
+
+private:
+    // Performs comparison of trees available at this level and if necessary of
+    // trees from the following levels.
+    void compare(Node *T1, Node *T2);
+    // Recursively compares nodes that are marked as changed.
+    void compareChanged(Node *node);
+    // Attempts to flatten subtrees on a specific level.  Returns `true` if
+    // anything was flattened.
+    bool flatten(Node *x, Node *y, int level);
+    // Either attempts to flatten nodes of a subtree on a specific level or
+    // simulates it to see how many nodes would be flattened.  Returns number of
+    // nodes flattened or that would be flattened.
+    int flatten(Node *n, int level, bool dry);
+    // Detects moves within subtree.
+    void detectMoves(Node *x);
+    // Finds first movable parent.  Stops at the root (no parent).  Might return
+    // `nullptr`.
+    const Node * getParent(const Node *x);
+    // Performs single-level move detection for nodes with fixed structure.
+    void detectMovesInFixedStructure(Node *x, Node *y);
+    // Computes position of auxiliary node of a parent with fixed structure
+    // offset by added and removed nodes.
+    int getMovePosOfAux(Node *node);
+    // Marks subtree of this node and its relative accounting for special cases.
+    void markMoved(Node *x);
+    // This is a workaround to compensate the fact that travelling nodes (called
+    // postponed on parser/lexer level) can fall off container when they are in
+    // front of it.
+    bool isTravellingPair(const Node *x, const Node *y);
+
+private:
+    Tree &T1, &T2;       // Two trees being compared.
+    Language &lang;      // Language being used.
+    TimeReport &tr;      // Time keeper.
+    bool coarse;         // Do only fine-grained comparison.
+    bool skipRefine;     // Do not perform fine-grained refining.
+    Distiller distiller; // Implementation of change-distilling algorithm.
+};
+
+template <typename T, typename... Args>
+auto bind(const T &f, Args&&... a)
+    -> decltype(std::bind(f, std::forward<Args>(a)..., std::placeholders::_1))
+{
+    return std::bind(f, std::forward<Args>(a)..., std::placeholders::_1);
+}
+
+}
+
 static void setParentLinks(Node *x, Node *parent);
-static void detectMoves(Node *x);
-static const Node * getParent(const Node *x);
-static void detectMovesInFixedStructure(Node *x, Node *y);
-static int getMovePosOfAux(Node *node);
-static void markMoved(Node *x);
-static bool isTravellingPair(const Node *x, const Node *y);
 static void refine(Node &node);
 
+Comparator::Comparator(Tree &T1, Tree &T2, TimeReport &tr, bool coarse,
+                       bool skipRefine)
+    : T1(T1), T2(T2), lang(*T1.getLanguage()),
+      tr(tr), coarse(coarse), skipRefine(skipRefine), distiller(lang)
+{
+    // XXX: the assumption is that both trees have the same language.
+    //      Might be a good idea to actually check this somewhere.
+}
+
 void
-compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
+Comparator::compare()
+{
+    compare(T1.getRoot(), T2.getRoot());
+}
+
+void
+Comparator::compare(Node *T1, Node *T2)
 {
     struct Match
     {
@@ -64,12 +132,6 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         tr.measure("diffing"), ted(*T1, *T2);
         return;
     }
-
-    auto refine = [skipRefine](Node &root) {
-        if (!skipRefine) {
-            ::refine(root);
-        }
-    };
 
     std::vector<Match> matches;
 
@@ -119,7 +181,7 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
         }
 
         Node *subT1 = match.x, *subT2 = match.y;
-        distill(*subT1, *subT2);
+        distiller.distill(*subT1, *subT2);
     }
 
     int flattenLevel = 0;
@@ -135,20 +197,21 @@ compare(Node *T1, Node *T2, TimeReport &tr, bool coarse, bool skipRefine)
             break;
         }
     }
-    distill(*T1, *T2);
+    distiller.distill(*T1, *T2);
     setParentLinks(T1, nullptr);
     setParentLinks(T2, nullptr);
     detectMoves(T1);
 
     timer.measure("descending");
-    compareChanged(T1, tr, coarse, skipRefine);
+    compareChanged(T1);
 
-    refine(*T1);
+    if (!skipRefine) {
+        refine(*T1);
+    }
 }
 
-// Recursively compares nodes that are marked as changed.
-static void
-compareChanged(Node *node, TimeReport &tr, bool coarse, bool skipRefine)
+void
+Comparator::compareChanged(Node *node)
 {
     for (Node *x : node->children) {
         Node *y = x->relative;
@@ -156,26 +219,26 @@ compareChanged(Node *node, TimeReport &tr, bool coarse, bool skipRefine)
             if (!x->next->last && !x->satellite) {
                 x->state = State::Unchanged;
                 y->state = State::Unchanged;
-                compare(x->next, y->next, tr, coarse, skipRefine);
+                compare(x->next, y->next);
             }
         } else {
-            compareChanged(x, tr, coarse, skipRefine);
+            compareChanged(x);
         }
     }
 }
 
-static bool
-flatten(Node *x, Node *y, int level)
+bool
+Comparator::flatten(Node *x, Node *y, int level)
 {
     const int wouldFlatten = flatten(x, level, true) + flatten(y, level, true);
     if (wouldFlatten < 5) {
         return (flatten(x, level, false) + flatten(y, level, false) > 0);
     }
-    return true;
+    return false;
 }
 
-static int
-flatten(Node *n, int level, bool dry)
+int
+Comparator::flatten(Node *n, int level, bool dry)
 {
     int flattened = 0;
 
@@ -193,7 +256,7 @@ flatten(Node *n, int level, bool dry)
             continue;
         }
 
-        if (c->next != nullptr && canBeFlattened(n, c, level)) {
+        if (c->next != nullptr && lang.canBeFlattened(n, c, level)) {
             if (!dry) {
                 c = c->next;
             }
@@ -213,15 +276,15 @@ setParentLinks(Node *x, Node *parent)
     }
 }
 
-static void
-detectMoves(Node *x)
+void
+Comparator::detectMoves(Node *x)
 {
     Node *const y = x->relative;
     const Node *const px = getParent(x);
     const Node *const py = (y ? getParent(y) : nullptr);
 
     // Mark nodes which switched their parents as moved.
-    if (px && py && px->relative != py && !isUnmovable(x)) {
+    if (px && py && px->relative != py && !lang.isUnmovable(x)) {
         markMoved(x);
     }
 
@@ -233,8 +296,8 @@ detectMoves(Node *x)
         return x->relative == y;
     };
 
-    if (y != nullptr && hasMoveableItems(x)) {
-        if (hasFixedStructure(x)) {
+    if (y != nullptr && lang.hasMoveableItems(x)) {
+        if (lang.hasFixedStructure(x)) {
             detectMovesInFixedStructure(x, y);
             for (Node *child : x->children) {
                 detectMoves(child);
@@ -258,28 +321,28 @@ detectMoves(Node *x)
     }
 }
 
-static const Node *
-getParent(const Node *x)
+const Node *
+Comparator::getParent(const Node *x)
 {
     do {
         x = x->parent;
-    } while (x != nullptr && isUnmovable(x));
+    } while (x != nullptr && lang.isUnmovable(x));
     return x;
 }
 
-// Performs single-level move detection for nodes with fixed structure.
-static void
-detectMovesInFixedStructure(Node *x, Node *y)
+void
+Comparator::detectMovesInFixedStructure(Node *x, Node *y)
 {
     std::vector<Node *> xChildren, yChildren;
 
     // Extract payload of the structure to compare it separately.
+    auto predicate = bind(&Language::isPayloadOfFixed, &lang);
     xChildren.reserve(x->children.size());
     std::copy_if(x->children.cbegin(), x->children.cend(),
-                 std::back_inserter(xChildren), &isPayloadOfFixed);
+                 std::back_inserter(xChildren), predicate );
     yChildren.reserve(y->children.size());
     std::copy_if(y->children.cbegin(), y->children.cend(),
-                 std::back_inserter(yChildren), &isPayloadOfFixed);
+                 std::back_inserter(yChildren), predicate );
 
     assert(xChildren.size() == yChildren.size() && "Must be in sync.");
 
@@ -303,10 +366,8 @@ detectMovesInFixedStructure(Node *x, Node *y)
     }
 }
 
-// Computes position of auxiliary node of a parent with fixed structure offset
-// by added and removed nodes.
-static int
-getMovePosOfAux(Node *node)
+int
+Comparator::getMovePosOfAux(Node *node)
 {
     cpp17::pmr::vector<Node *> &children = node->parent->children;
     int pos = 0;
@@ -314,7 +375,7 @@ getMovePosOfAux(Node *node)
         if (child == node) {
             break;
         }
-        if (child->relative != nullptr && !isPayloadOfFixed(child) &&
+        if (child->relative != nullptr && !lang.isPayloadOfFixed(child) &&
             child->relative->parent == node->relative->parent &&
             !child->moved) {
             ++pos;
@@ -323,24 +384,20 @@ getMovePosOfAux(Node *node)
     return pos;
 }
 
-// Marks subtree of this node and its relative accounting for special cases.
-static void
-markMoved(Node *x)
+void
+Comparator::markMoved(Node *x)
 {
     Node *const y = x->relative;
     if (y != nullptr && !isTravellingPair(x, y) && !isTravellingPair(y, x)) {
-        markTreeAsMoved(x);
-        markTreeAsMoved(y);
+        T1.markTreeAsMoved(x);
+        T2.markTreeAsMoved(y);
     }
 }
 
-// This is a workaround to compensate the fact that travelling nodes (called
-// postponed on parser/lexer level) can fall off container when they are in
-// front of it.
-static bool
-isTravellingPair(const Node *x, const Node *y)
+bool
+Comparator::isTravellingPair(const Node *x, const Node *y)
 {
-    if (!isTravellingNode(x)) {
+    if (!lang.isTravellingNode(x)) {
         return false;
     }
 
@@ -351,7 +408,8 @@ isTravellingPair(const Node *x, const Node *y)
                             x->parent->children.cend(),
                             x);
 
-        while (++it != x->parent->children.cend() && isTravellingNode(*it)) {
+        while (++it != x->parent->children.cend() &&
+               lang.isTravellingNode(*it)) {
             // Skip other traveling nodes.
         }
         if (it != x->parent->children.cend()) {
@@ -396,4 +454,10 @@ refine(Node &node)
     for (Node *child : node.children) {
         refine(*child);
     }
+}
+
+void
+compare(Tree &T1, Tree &T2, TimeReport &tr, bool coarse, bool skipRefine)
+{
+    return Comparator(T1, T2, tr, coarse, skipRefine).compare();
 }
