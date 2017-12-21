@@ -117,14 +117,25 @@ parse(const std::string &fileName, const std::string &str, bool coarse)
 const Node *
 findNode(const Tree &tree, Type type, const std::string &label)
 {
+    return findNode(tree, [&](const Node *node) {
+                        if (node->type == type) {
+                            if (label.empty() || node->label == label) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+}
+
+const Node *
+findNode(const Tree &tree, std::function<bool(const Node *)> pred)
+{
     const Node *needle = nullptr;
 
     std::function<bool(const Node *)> visit = [&](const Node *node) {
-        if (node->type == type) {
-            if (label.empty() || node->label == label) {
-                needle = node;
-                return true;
-            }
+        if (pred(node)) {
+            needle = node;
+            return true;
         }
 
         for (const Node *child : node->children) {

@@ -20,6 +20,7 @@
 
 #include <cstdint>
 
+#include <functional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -85,8 +86,13 @@ Tree parseC(const std::string &str, bool coarse = false);
 // Parses Make source into a tree.
 Tree parseMake(const std::string &str);
 
+// Finds the first node of specified type which has a matching value of its
+// label (or any label if `label` is an empty string).
 const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});
+
+// Finds the first node that matches the predicate.
+const Node * findNode(const Tree &tree, std::function<bool(const Node *)> pred);
 
 int countLeaves(const Node &root, State state);
 

@@ -100,7 +100,11 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
             if (newChild->next != nullptr) {
                 // Make sure we don't splice last layer.
                 if (newChild->next->last) {
-                    n.children.emplace_back(newChild);
+                    // Unless it's empty (has neither children nor value).
+                    if (!newChild->next->children.empty() ||
+                        !newChild->next->label.empty()) {
+                        n.children.emplace_back(newChild);
+                    }
                     continue;
                 }
 
