@@ -36,3 +36,16 @@ TEST_CASE("Condition is a value of conditionals", "[make][comparison]")
         endif
     )");
 }
+
+TEST_CASE("Statements are not mixed up", "[make][comparison]")
+{
+    diffMake(R"(
+        CXXFLAGS += prefix$(CFLAGS)
+        CXXFLAGS += prefix$(CFLAGS)suffix    ## Mixed
+        CXXFLAGS += $(CFLAGS)suffix
+    )", R"(
+        CXXFLAGS += prefix$(CFLAGS)
+        CXXFLAGS += prefix$(CXXFLAGS)suffix  ## Mixed
+        CXXFLAGS += $(CFLAGS)suffix
+    )");
+}

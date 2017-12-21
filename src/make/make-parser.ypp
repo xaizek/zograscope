@@ -326,7 +326,7 @@ if_eq_kw
 
 statement
     : COMMENT        { $$ = tb->addNode($1, @1, +MakeSType::Comment); }
-    | assignment br
+    | assignment br  { $$ = tb->addNode($1, @1, +MakeSType::AssignmentExpr); }
     | function br
     | rule
     | conditionals
@@ -787,7 +787,7 @@ colon
     ;
 
 comment_opt
-    : %empty   { $$ = tb->addNode(); }
+    : %empty   { $$ = tb->addNode({ }, +MakeSType::TemporaryContainer); }
     | COMMENT  { $$ = tb->addNode($1, @1); }
     ;
 
