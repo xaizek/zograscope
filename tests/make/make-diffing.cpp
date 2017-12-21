@@ -49,3 +49,17 @@ TEST_CASE("Statements are not mixed up", "[make][comparison]")
         CXXFLAGS += $(CFLAGS)suffix
     )");
 }
+
+TEST_CASE("Removal export all/unexport statements is detected",
+          "[make][comparison]")
+{
+    // The assignment there is to make Statements node match.
+    diffMake(R"(
+        export    ## Deletions
+        unexport  ## Deletions
+
+        a = b
+    )", R"(
+        a = b
+    )");
+}

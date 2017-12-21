@@ -337,8 +337,12 @@ statement
     ;
 
 export
-    : "export"    { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
-    | "unexport"  { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    : "export"
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator) },
+                       +MakeSType::Directive); }
+    | "unexport"
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator) },
+                       +MakeSType::Directive); }
     | assignment_prefix
     { $$ = tb->addNode($1, @1, +MakeSType::AssignmentExpr); }
     | assignment_prefix WS targets
