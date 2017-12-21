@@ -316,13 +316,13 @@ statements_opt
     ;
 
 if_def_kw
-    : "ifdef"   { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
-    | "ifndef"  { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    : "ifdef"   { $$ = tb->addNode($1, @1, +MakeSType::Punctuation); }
+    | "ifndef"  { $$ = tb->addNode($1, @1, +MakeSType::Punctuation); }
     ;
 
 if_eq_kw
-    : "ifeq"   { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
-    | "ifneq"  { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    : "ifeq"   { $$ = tb->addNode($1, @1, +MakeSType::Punctuation); }
+    | "ifneq"  { $$ = tb->addNode($1, @1, +MakeSType::Punctuation); }
     ;
 
 statement

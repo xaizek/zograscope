@@ -183,6 +183,7 @@ MakeLanguage::toString(SType stype) const
         case MakeSType::ArgumentList:        return "MakeSType::ArgumentList";
         case MakeSType::Argument:            return "MakeSType::Argument";
         case MakeSType::Rule:                return "MakeSType::Rule";
+        case MakeSType::Punctuation:         return "MakeSType::Punctuation";
     }
 
     assert(false && "Unhandled enumeration item");

@@ -63,3 +63,22 @@ TEST_CASE("Removal export all/unexport statements is detected",
         a = b
     )");
 }
+
+TEST_CASE("Inversion of conditional is detected", "[make][comparison]")
+{
+    diffMake(R"(
+        ifneq ($(OS),Windows_NT)  ## Mixed
+        endif
+    )", R"(
+        ifeq ($(OS),Windows_NT)   ## Mixed
+        endif
+    )");
+
+    diffMake(R"(
+        ifdef a                   ## Mixed
+        endif
+    )", R"(
+        ifndef a                  ## Mixed
+        endif
+    )");
+}

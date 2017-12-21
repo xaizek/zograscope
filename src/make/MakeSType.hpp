@@ -45,6 +45,7 @@ enum class MakeSType : std::uint8_t
     ArgumentList,
     Argument,
     Rule,
+    Punctuation,
 };
 
 // "Conversion operator": MakeSType -> SType.
