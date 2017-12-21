@@ -49,6 +49,17 @@ TEST_CASE("Empty Makefile is OK", "[make][parser]")
     CHECK(makeIsParsed("\t\n \t \n"));
 }
 
+TEST_CASE("Root always has Makefile stype", "[make][parser]")
+{
+    Tree tree;
+
+    tree = parseMake("");
+    CHECK(tree.getRoot()->stype == +MakeSType::Makefile);
+
+    tree = parseMake("a = b");
+    CHECK(tree.getRoot()->stype == +MakeSType::Makefile);
+}
+
 TEST_CASE("Useless empty temporary containers are dropped", "[make][parser]")
 {
     auto pred = [](const Node *node) {

@@ -136,9 +136,10 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 makefile
     : statements END
-    { tb->setRoot($1); }
+    { tb->setRoot(tb->addNode($1, @1, +MakeSType::Makefile)); }
     | END
-    { tb->setRoot(tb->addNode({ }, +MakeSType::Makefile)); }
+    { tb->setRoot(tb->addNode({ tb->addNode({ }, +MakeSType::Statements) },
+                              +MakeSType::Makefile)); }
     ;
 
 statements
