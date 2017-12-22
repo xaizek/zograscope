@@ -161,6 +161,10 @@ TEST_CASE("Assignments are parsed in a Makefile", "[make][parser]")
 
 TEST_CASE("Variables are parsed in a Makefile", "[make][parser]")
 {
+    CHECK(makeIsParsed("$($(V))"));
+    CHECK(makeIsParsed("$($(V)suffix)"));
+    CHECK(makeIsParsed("$($(V)?endif)"));
+    CHECK(makeIsParsed("$(bla?endif)"));
     CHECK(makeIsParsed("$(AT_$(V))"));
     CHECK(makeIsParsed("target: )()("));
 
@@ -260,6 +264,7 @@ target: prereq
 	first recipe
 # comment
 	second recipe
+	# comment
     )";
     CHECK(makeIsParsed(withComments));
 
@@ -268,6 +273,12 @@ target: prereq
 	(echo something)
     )";
     CHECK(makeIsParsed(withParens));
+
+    const char *const withFunctions = R"(
+target: prereq
+	$a$b
+    )";
+    CHECK(makeIsParsed(withFunctions));
 
     const char *const assignment = R"(
         $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses
@@ -398,6 +409,12 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
     )";
     CHECK(makeIsParsed(noSuffix));
 
+    const char *const weirdName = R"(
+        define )name
+        endef
+    )";
+    CHECK(makeIsParsed(weirdName));
+
     const char *const withOverride = R"(
         override define pattern ?=
         endef
@@ -488,6 +505,28 @@ TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
         endef
     )";
     CHECK(makeIsParsed(emptyLinesEverywhere));
+
+    const char *const keywordsInName = R"(
+        define keywords
+            (
+            )
+            ,
+            # comment
+            include
+            override
+            export
+            unexport
+            ifdef
+            ifndef
+            ifeq
+            ifneq
+            else
+            endif
+            define
+            undefine
+        endef
+    )";
+    CHECK(makeIsParsed(keywordsInName));
 }
 
 TEST_CASE("Line escaping works in a Makefile", "[make][parser]")
