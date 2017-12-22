@@ -570,8 +570,6 @@ function_name_piece
                        +MakeSType::TemporaryContainer); }
     | function_name_piece CHARS
     { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | function_name_piece keywords
-    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 function_name_function
