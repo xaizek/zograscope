@@ -131,6 +131,7 @@ run(const Args &args, TimeReport &tr)
     if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr, &mr)) {
         treeA = *tree;
     } else {
+        std::cerr << "Failed to parse: " << oldFile << '\n';
         return EXIT_FAILURE;
     }
 
@@ -138,6 +139,7 @@ run(const Args &args, TimeReport &tr)
     if (optional_t<Tree> &&tree = buildTreeFromFile(newFile, args, tr, &mr)) {
         treeB = *tree;
     } else {
+        std::cerr << "Failed to parse: " << newFile << '\n';
         return EXIT_FAILURE;
     }
 

@@ -72,6 +72,7 @@ run(const CommonArgs &args, TimeReport &tr)
     if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
         tree = *t;
     } else {
+        std::cerr << "Failed to parse: " << path << '\n';
         return EXIT_FAILURE;
     }
 
