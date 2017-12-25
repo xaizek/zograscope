@@ -194,7 +194,7 @@ public:
 
     bool hasFailed() const
     {
-        return failed;
+        return (failed || root == nullptr);
     }
 
 private:
