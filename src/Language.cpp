@@ -30,6 +30,7 @@
 
 #include "c/C11Language.hpp"
 #include "make/MakeLanguage.hpp"
+#include "srcml/cxx/SrcmlCxxLanguage.hpp"
 #include "tree.hpp"
 
 static std::string detectLanguage(const std::string &stem,
@@ -50,6 +51,9 @@ Language::create(const std::string &fileName, const std::string &l)
     if (lang == "c") {
         return std::unique_ptr<C11Language>(new C11Language());
     }
+    if (lang == "srcml:cxx") {
+        return std::unique_ptr<SrcmlCxxLanguage>(new SrcmlCxxLanguage());
+    }
     if (lang == "make") {
         return std::unique_ptr<MakeLanguage>(new MakeLanguage());
     }
@@ -62,6 +66,11 @@ detectLanguage(const std::string &stem, const std::string &ext)
 {
     if (ext == ".c" || ext == ".h") {
         return "c";
+    }
+
+    if (ext == ".cpp" || ext == ".cxx" || ext == ".cc" ||
+        ext == ".hpp" || ext == ".hxx" || ext == ".hh") {
+        return "srcml:cxx";
     }
 
     using boost::algorithm::ends_with;
