@@ -111,6 +111,8 @@ GNU Affero General Public License, version 3 or later.
 [pmr implementation][pmr] from C++17 with a small addition is employed for
 custom allocators.
 
+[TinyXML][tinyxml] is used for parsing XML.
+
 [Catch2][catch] is used for tests.
 
 ### References ###
@@ -138,6 +140,7 @@ Kaizhong Zhang and Dennis Shasha.
 
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code
+[tinyxml]: https://sourceforge.net/projects/tinyxml/
 [catch]: https://github.com/catchorg/Catch2
 
 [cd]: http://www.merlin.uzh.ch/publication/show/2531
