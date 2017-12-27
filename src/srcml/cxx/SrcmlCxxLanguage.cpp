@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include "srcml/cxx/SrcmlCxxSType.hpp"
+#include "srcml/SrcmlTransformer.hpp"
 #include "TreeBuilder.hpp"
 #include "tree.hpp"
 #include "types.hpp"
@@ -28,8 +29,9 @@ using namespace srcmlcxx;
 
 SrcmlCxxLanguage::SrcmlCxxLanguage()
 {
-    map["comment"] = +SrcmlCxxSType::Comment;
-    map["unit"]    = +SrcmlCxxSType::Unit;
+    map["comment"]   = +SrcmlCxxSType::Comment;
+    map["separator"] = +SrcmlCxxSType::Separator;
+    map["unit"]      = +SrcmlCxxSType::Unit;
 
     map["cpp:define"]    = +SrcmlCxxSType::CppDefine;
     map["cpp:directive"] = +SrcmlCxxSType::CppDirective;
@@ -136,12 +138,12 @@ SrcmlCxxLanguage::mapToken(int /*token*/) const
 }
 
 TreeBuilder
-SrcmlCxxLanguage::parse(const std::string &/*contents*/,
-                        const std::string &/*fileName*/, bool /*debug*/,
+SrcmlCxxLanguage::parse(const std::string &contents,
+                        const std::string &fileName, bool /*debug*/,
                         cpp17::pmr::monolithic &mr) const
 {
     TreeBuilder tb(mr);
-    // TODO: implement
+    SrcmlTransformer(contents, fileName, tb, "C++", map).transform();
     return tb;
 }
 

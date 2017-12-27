@@ -32,8 +32,10 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace io = boost::iostreams;
 
@@ -280,4 +282,53 @@ getTerminalSize()
     }
 
     return { ws.ws_col, ws.ws_row };
+}
+
+std::string
+readCommandOutput(std::vector<std::string> cmd)
+{
+    int pipePair[2];
+    if (pipe(pipePair) != 0) {
+        throw std::runtime_error("Failed to create a pipe");
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(pipePair[0]);
+        close(pipePair[1]);
+        throw std::runtime_error("Fork has failed");
+    }
+    if (pid == 0) {
+        close(pipePair[0]);
+        if (dup2(pipePair[1], STDOUT_FILENO) == -1) {
+            _Exit(EXIT_FAILURE);
+        }
+        close(pipePair[1]);
+
+        char *argv[cmd.size() + 1U];
+        for (std::size_t i = 0; i < cmd.size(); ++i) {
+            argv[i] = &cmd[i][0];
+        }
+        argv[cmd.size()] = nullptr;
+
+        // XXX: hard-coded invocation of srcml.
+        execvp(argv[0], argv);
+        _Exit(127);
+    }
+
+    close(pipePair[1]);
+
+    io::stream_buffer<io::file_descriptor_source>
+        in(pipePair[0], boost::iostreams::close_handle);
+
+    std::ostringstream iss;
+    iss << &in;
+
+    int wstatus;
+    if (waitpid(pid, &wstatus, 0) == -1 || !WIFEXITED(wstatus) ||
+        WEXITSTATUS(wstatus) != EXIT_SUCCESS) {
+        throw std::runtime_error("Invocation failed for " + cmd[0]);
+    }
+
+    return iss.str();
 }
