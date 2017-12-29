@@ -87,9 +87,11 @@ std::pair<unsigned int, unsigned int> getTerminalSize();
  * @note The parameter is taken by value to avoid casting away constness.
  *
  * @param cmd Program name followed by its arguments.
+ * @param input Input to be sent to program's standard input stream.
  *
  * @throws std::runtime_error On errors (including application returning non-0).
  */
-std::string readCommandOutput(std::vector<std::string> cmd);
+std::string readCommandOutput(std::vector<std::string> cmd,
+                              const std::string &input);
 
 #endif // ZOGRASCOPE__INTEGRATION_HPP__

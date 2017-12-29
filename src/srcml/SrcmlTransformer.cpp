@@ -32,12 +32,10 @@ const int tabWidth = 4;
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
 
-SrcmlTransformer::SrcmlTransformer(const std::string &contents,
-                                   const std::string &fileName, TreeBuilder &tb,
+SrcmlTransformer::SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
                                    const std::string &language,
                               const std::unordered_map<std::string, SType> &map)
-    : contents(contents), fileName(fileName), tb(tb), language(language),
-      map(map)
+    : contents(contents), tb(tb), language(language), map(map)
 {
 }
 
@@ -45,10 +43,10 @@ void
 SrcmlTransformer::transform()
 {
     std::vector<std::string> cmd = {
-        "srcml", "--language=" + language, fileName
+        "srcml", "--language=" + language, "-"
     };
 
-    std::string xml = readCommandOutput(cmd);
+    std::string xml = readCommandOutput(cmd, contents);
 
     TiXmlDocument doc {};
     doc.SetCondenseWhiteSpace(false);

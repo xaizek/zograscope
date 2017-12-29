@@ -139,11 +139,11 @@ SrcmlCxxLanguage::mapToken(int /*token*/) const
 
 TreeBuilder
 SrcmlCxxLanguage::parse(const std::string &contents,
-                        const std::string &fileName, bool /*debug*/,
+                        const std::string &/*fileName*/, bool /*debug*/,
                         cpp17::pmr::monolithic &mr) const
 {
     TreeBuilder tb(mr);
-    SrcmlTransformer(contents, fileName, tb, "C++", map).transform();
+    SrcmlTransformer(contents, tb, "C++", map).transform();
     return tb;
 }
 

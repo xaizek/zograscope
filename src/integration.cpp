@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/scope_exit.hpp>
 
@@ -285,25 +286,39 @@ getTerminalSize()
 }
 
 std::string
-readCommandOutput(std::vector<std::string> cmd)
+readCommandOutput(std::vector<std::string> cmd, const std::string &input)
 {
-    int pipePair[2];
-    if (pipe(pipePair) != 0) {
+    int stdinPipePair[2];
+    if (pipe(stdinPipePair) != 0) {
+        throw std::runtime_error("Failed to create a pipe");
+    }
+
+    int stdoutPipePair[2];
+    if (pipe(stdoutPipePair) != 0) {
+        close(stdinPipePair[0]);
+        close(stdinPipePair[1]);
         throw std::runtime_error("Failed to create a pipe");
     }
 
     pid_t pid = fork();
     if (pid == -1) {
-        close(pipePair[0]);
-        close(pipePair[1]);
+        close(stdinPipePair[0]);
+        close(stdinPipePair[1]);
+        close(stdoutPipePair[0]);
+        close(stdoutPipePair[1]);
         throw std::runtime_error("Fork has failed");
     }
     if (pid == 0) {
-        close(pipePair[0]);
-        if (dup2(pipePair[1], STDOUT_FILENO) == -1) {
+        close(stdinPipePair[1]);
+        close(stdoutPipePair[0]);
+        if (dup2(stdinPipePair[0], STDIN_FILENO) == -1) {
             _Exit(EXIT_FAILURE);
         }
-        close(pipePair[1]);
+        if (dup2(stdoutPipePair[1], STDOUT_FILENO) == -1) {
+            _Exit(EXIT_FAILURE);
+        }
+        close(stdinPipePair[0]);
+        close(stdoutPipePair[1]);
 
         char *argv[cmd.size() + 1U];
         for (std::size_t i = 0; i < cmd.size(); ++i) {
@@ -311,18 +326,23 @@ readCommandOutput(std::vector<std::string> cmd)
         }
         argv[cmd.size()] = nullptr;
 
-        // XXX: hard-coded invocation of srcml.
         execvp(argv[0], argv);
         _Exit(127);
     }
 
-    close(pipePair[1]);
+    close(stdinPipePair[0]);
+    close(stdoutPipePair[1]);
+
+    io::stream<io::file_descriptor_sink>
+        stdinStream(stdinPipePair[1], boost::iostreams::close_handle);
+    stdinStream << input;
+    stdinStream.close();
 
     io::stream_buffer<io::file_descriptor_source>
-        in(pipePair[0], boost::iostreams::close_handle);
+        stdoutStream(stdoutPipePair[0], boost::iostreams::close_handle);
 
     std::ostringstream iss;
-    iss << &in;
+    iss << &stdoutStream;
 
     int wstatus;
     if (waitpid(pid, &wstatus, 0) == -1 || !WIFEXITED(wstatus) ||
