@@ -106,4 +106,8 @@ void diffC(const std::string &left, const std::string &right, bool skipRefine);
 // trailing `## <expectation>` markers.
 void diffMake(const std::string &left, const std::string &right);
 
+// Compares two C++ sources with expectation being embedded in them in form of
+// trailing `/// <expectation>` markers.
+void diffSrcmlCxx(const std::string &left, const std::string &right);
+
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__

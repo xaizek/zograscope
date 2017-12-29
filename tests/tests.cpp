@@ -214,6 +214,12 @@ diffMake(const std::string &left, const std::string &right)
     diffSources(left, right, true, "Makefile.test", "## ");
 }
 
+void
+diffSrcmlCxx(const std::string &left, const std::string &right)
+{
+    diffSources(left, right, true, "test-input.cpp", "/// ");
+}
+
 // Compares two sources with expectation being embedded in them in form of
 // trailing markers.
 static void

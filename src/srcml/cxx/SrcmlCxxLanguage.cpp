@@ -214,6 +214,7 @@ bool
 SrcmlCxxLanguage::isLayerBreak(SType stype) const
 {
     return -stype == SrcmlCxxSType::Call
+        || -stype == SrcmlCxxSType::Function
         || isValueNode(stype);
 }
 
