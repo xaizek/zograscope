@@ -198,9 +198,12 @@ SrcmlCxxLanguage::alwaysMatches(const Node *x) const
 }
 
 bool
-SrcmlCxxLanguage::shouldSplice(SType /*parent*/,
-                               const Node */*childNode*/) const
+SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
 {
+    SrcmlCxxSType child = -childNode->stype;
+    if (-parent == SrcmlCxxSType::Function && child == SrcmlCxxSType::Block) {
+        return true;
+    }
     return false;
 }
 

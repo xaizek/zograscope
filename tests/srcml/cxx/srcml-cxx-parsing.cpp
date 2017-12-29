@@ -37,3 +37,17 @@ TEST_CASE("Functions are moved to a separate layer",
         }
     )");
 }
+
+TEST_CASE("Function body is spliced into function itself",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            float that;  /// Deletions
+        }
+    )", R"(
+        void f() {
+            int var;     /// Additions
+        }
+    )");
+}
