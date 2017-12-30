@@ -51,3 +51,21 @@ TEST_CASE("Function body is spliced into function itself",
         }
     )");
 }
+
+TEST_CASE("Argument list is spliced into the call",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            longAndBoringName(
+                  "old line"    /// Deletions
+            );
+        }
+    )", R"(
+        void f() {
+            longAndBoringName(
+                  "new string"  /// Additions
+            );
+        }
+    )");
+}

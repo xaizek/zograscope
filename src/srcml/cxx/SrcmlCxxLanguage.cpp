@@ -215,6 +215,10 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
     if (-parent == SrcmlCxxSType::Function && child == SrcmlCxxSType::Block) {
         return true;
     }
+    if (-parent == SrcmlCxxSType::Call &&
+        child == SrcmlCxxSType::ArgumentList) {
+        return true;
+    }
     return false;
 }
 
