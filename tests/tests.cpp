@@ -312,7 +312,8 @@ extractExpectations(const std::string &src, const std::string &marker)
         } else if (expectation == "Mixed") {
             changes.push_back(Changes::Mixed);
         } else {
-            REQUIRE_FALSE(true);
+            CAPTURE(expectation);
+            FAIL("Unknown expectation");
         }
     }
 
