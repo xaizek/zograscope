@@ -28,12 +28,12 @@ TEST_CASE("Functions are moved to a separate layer",
         void readFile(const std::string &path);    /// Deletions
         void f(const std::string &path) {
             int anchor;
-            varMap = parseOptions(argv, options);  /// Deletions
+            varMap = parseOptions(argv, options);  /// Mixed
         }
     )", R"(
         void f(const std::string &path) {
             int anchor;
-            varMap = parseOptions(args, options);  /// Additions
+            varMap = parseOptions(args, options);  /// Mixed
         }
     )");
 }

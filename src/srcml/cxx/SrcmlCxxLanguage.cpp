@@ -29,9 +29,20 @@ using namespace srcmlcxx;
 
 SrcmlCxxLanguage::SrcmlCxxLanguage()
 {
-    map["comment"]   = +SrcmlCxxSType::Comment;
     map["separator"] = +SrcmlCxxSType::Separator;
-    map["unit"]      = +SrcmlCxxSType::Unit;
+
+    map["argument"]      = +SrcmlCxxSType::Argument;
+    map["comment"]       = +SrcmlCxxSType::Comment;
+    map["cpp:endif"]     = +SrcmlCxxSType::CppEndif;
+    map["cpp:literal"]   = +SrcmlCxxSType::CppLiteral;
+    map["enum_decl"]     = +SrcmlCxxSType::EnumDecl;
+    map["escape"]        = +SrcmlCxxSType::Escape;
+    map["expr_stmt"]     = +SrcmlCxxSType::ExprStmt;
+    map["incr"]          = +SrcmlCxxSType::Incr;
+    map["macro"]         = +SrcmlCxxSType::Macro;
+    map["macro-list"]    = +SrcmlCxxSType::MacroList;
+    map["ref_qualifier"] = +SrcmlCxxSType::RefQualifier;
+    map["unit"]          = +SrcmlCxxSType::Unit;
 
     map["cpp:define"]    = +SrcmlCxxSType::CppDefine;
     map["cpp:directive"] = +SrcmlCxxSType::CppDirective;
@@ -240,8 +251,18 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::None:      return "SrcmlCxxSType::None";
         case SrcmlCxxSType::Separator: return "SrcmlCxxSType::Separator";
 
-        case SrcmlCxxSType::Comment: return "SrcmlCxxSType::Comment";
-        case SrcmlCxxSType::Unit:    return "SrcmlCxxSType::Unit";
+        case SrcmlCxxSType::Argument:     return "SrcmlCxxSType::Argument";
+        case SrcmlCxxSType::Comment:      return "SrcmlCxxSType::Comment";
+        case SrcmlCxxSType::CppEndif:     return "SrcmlCxxSType::CppEndif";
+        case SrcmlCxxSType::CppLiteral:   return "SrcmlCxxSType::CppLiteral";
+        case SrcmlCxxSType::EnumDecl:     return "SrcmlCxxSType::EnumDecl";
+        case SrcmlCxxSType::Escape:       return "SrcmlCxxSType::Escape";
+        case SrcmlCxxSType::ExprStmt:     return "SrcmlCxxSType::ExprStmt";
+        case SrcmlCxxSType::Incr:         return "SrcmlCxxSType::Incr";
+        case SrcmlCxxSType::Macro:        return "SrcmlCxxSType::Macro";
+        case SrcmlCxxSType::MacroList:    return "SrcmlCxxSType::MacroList";
+        case SrcmlCxxSType::RefQualifier: return "SrcmlCxxSType::RefQualifier";
+        case SrcmlCxxSType::Unit:         return "SrcmlCxxSType::Unit";
 
         case SrcmlCxxSType::CppDefine:    return "SrcmlCxxSType::CppDefine";
         case SrcmlCxxSType::CppDirective: return "SrcmlCxxSType::CppDirective";

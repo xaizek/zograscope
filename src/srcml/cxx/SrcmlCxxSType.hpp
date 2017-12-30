@@ -31,7 +31,17 @@ enum class SrcmlCxxSType : std::uint8_t
     None,
     Separator,
 
+    Argument,
     Comment,
+    CppEndif,
+    CppLiteral,
+    EnumDecl,
+    Escape,
+    ExprStmt,
+    Incr,
+    Macro,
+    MacroList,
+    RefQualifier,
     Unit,
 
     CppDefine,
