@@ -38,6 +38,22 @@ TEST_CASE("Functions are moved to a separate layer",
     )");
 }
 
+TEST_CASE("Statements are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        SrcmlCxxLanguage::SrcmlCxxLanguage() {
+            map["comment"]   = +SrcmlCxxSType::Comment;    /// Moves
+            map["separator"] = +SrcmlCxxSType::Separator;
+        }
+    )", R"(
+        SrcmlCxxLanguage::SrcmlCxxLanguage() {
+            map["separator"] = +SrcmlCxxSType::Separator;
+            map["comment"]   = +SrcmlCxxSType::Comment;    /// Moves
+        }
+    )");
+}
+
 TEST_CASE("Function body is spliced into function itself",
           "[.srcml][srcml-cxx][parsing]")
 {
