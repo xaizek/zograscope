@@ -27,6 +27,12 @@
 
 #include "tests.hpp"
 
+static const auto makePred = [](Type type, std::string label) {
+    return [=](const Node *node) {
+        return (node->type == type && node->label == label);
+    };
+};
+
 TEST_CASE("Position of tokens is computed correctly",
           "[.srcml][srcml-cxx][parser]")
 {
@@ -41,12 +47,6 @@ TEST_CASE("Position of tokens is computed correctly",
 
 TEST_CASE("Literals are marked with types", "[.srcml][srcml-cxx][parser]")
 {
-    auto makePred = [](Type type, std::string label) {
-        return [=](const Node *node) {
-            return (node->type == type && node->label == label);
-        };
-    };
-
     Tree tree = parseCxx(R"(
         auto a = true || false;
         auto b = 'a' + L'a';
@@ -65,4 +65,14 @@ TEST_CASE("Literals are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::IntConstants, "0x1")) != nullptr);
     CHECK(findNode(tree, makePred(Type::IntConstants, "001")) != nullptr);
     CHECK(findNode(tree, makePred(Type::FPConstants, "10i+1")) != nullptr);
+}
+
+TEST_CASE("Operators are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void f() {
+            a += 1;
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Operators, "+=")) != nullptr);
 }

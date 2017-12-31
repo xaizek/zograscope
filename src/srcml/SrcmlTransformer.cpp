@@ -176,6 +176,8 @@ determineType(TiXmlElement *elem)
         } else if (type == "complex") {
             return Type::FPConstants;
         }
+    } else if (elem->ValueStr() == "operator") {
+        return Type::Operators;
     }
     return Type::Other;
 }
