@@ -96,6 +96,12 @@ parseMake(const std::string &str)
     return parse("Makefile", str, true);
 }
 
+Tree
+parseCxx(const std::string &str)
+{
+    return parse("test-input.cpp", str, true);
+}
+
 // Parses source into a tree.
 static Tree
 parse(const std::string &fileName, const std::string &str, bool coarse)

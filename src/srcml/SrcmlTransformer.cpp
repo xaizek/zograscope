@@ -101,6 +101,9 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
                 const auto len = static_cast<std::uint32_t>(val.size());
                 tb.append(pnode, tb.addNode(Text{offset, len, 0, 0, 0},
                                             Location{line, col, 0, 0}, stype));
+
+                updatePosition(left.substr(0U, len), line, col);
+                left.remove_prefix(len);
                 break;
         }
     }
