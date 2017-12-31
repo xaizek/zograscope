@@ -194,6 +194,8 @@ determineType(TiXmlElement *elem, boost::string_ref value,
         return Type::LeftBrackets;
     } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
         return Type::RightBrackets;
+    } else if (keywords.find(value.to_string()) != keywords.cend()) {
+        return Type::Keywords;
     }
     return Type::Other;
 }

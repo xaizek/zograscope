@@ -108,3 +108,16 @@ TEST_CASE("Brackets are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::RightBrackets, "}")) != nullptr);
     CHECK(findNode(tree, makePred(Type::RightBrackets, "]")) != nullptr);
 }
+
+TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void f() {
+            if (0) {
+            } else {
+            }
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "if")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "else")) != nullptr);
+}
