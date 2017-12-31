@@ -193,6 +193,8 @@ determineType(TiXmlElement *elem, boost::string_ref value,
         return Type::Operators;
     } else if (elem->ValueStr() == "specifier") {
         return Type::Specifiers;
+    } else if (elem->ValueStr() == "comment") {
+        return Type::Comments;
     } else if (elem->ValueStr() == "name") {
         const TiXmlNode *parent = elem;
         std::string parentValue;

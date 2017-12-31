@@ -143,3 +143,13 @@ TEST_CASE("Function names are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Functions, "meth")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Functions, "obj")) == nullptr);
 }
+
+TEST_CASE("Comments are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        /* mlcom */
+        // slcom
+    )");
+    CHECK(findNode(tree, makePred(Type::Comments, "/* mlcom */")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Comments, "// slcom")) != nullptr);
+}
