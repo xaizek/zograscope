@@ -76,3 +76,14 @@ TEST_CASE("Operators are marked with types", "[.srcml][srcml-cxx][parser]")
     )");
     CHECK(findNode(tree, makePred(Type::Operators, "+=")) != nullptr);
 }
+
+TEST_CASE("Types are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void f() {
+            User a;
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "void")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::UserTypes, "User")) != nullptr);
+}

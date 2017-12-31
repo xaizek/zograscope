@@ -32,12 +32,15 @@ const int tabWidth = 4;
 
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
-static Type determineType(TiXmlElement *elem);
+static Type determineType(TiXmlElement *elem, const std::string &value,
+                          const std::unordered_set<std::string> &keywords);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
                                    const std::string &language,
-                              const std::unordered_map<std::string, SType> &map)
-    : contents(contents), tb(tb), language(language), map(map)
+                              const std::unordered_map<std::string, SType> &map,
+                                const std::unordered_set<std::string> &keywords)
+    : contents(contents), tb(tb), language(language),
+      map(map), keywords(keywords)
 {
 }
 
@@ -99,7 +102,8 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
                 updatePosition(left.substr(0U, skipped), line, col);
                 left.remove_prefix(skipped);
 
-                type = determineType(node->ToElement());
+                type = determineType(node->ToElement(), child->ValueStr(),
+                                     keywords);
 
                 auto offset =
                     static_cast<std::uint32_t>(&left[0] - &contents[0]);
@@ -159,8 +163,10 @@ updatePosition(boost::string_ref str, int &line, int &col)
 
 // Determines type of a child of the specified element.
 static Type
-determineType(TiXmlElement *elem)
+determineType(TiXmlElement *elem, const std::string &value,
+              const std::unordered_set<std::string> &keywords)
 {
+    const TiXmlNode *const parent = elem->Parent();
     if (elem->ValueStr() == "literal") {
         const std::string type = elem->Attribute("type");
         if (type == "boolean") {
@@ -178,6 +184,10 @@ determineType(TiXmlElement *elem)
         }
     } else if (elem->ValueStr() == "operator") {
         return Type::Operators;
+    } else if (elem->ValueStr() == "name" &&
+               parent != nullptr && parent->ValueStr() == "type") {
+        return (keywords.find(value) != keywords.cend()) ? Type::Keywords
+                                                         : Type::UserTypes;
     }
     return Type::Other;
 }

@@ -20,6 +20,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <boost/utility/string_ref.hpp>
 
@@ -33,22 +34,12 @@ enum class SType : std::uint8_t;
 class SrcmlTransformer
 {
 public:
-    // Remembers parameters to use them later.
+    // Remembers parameters to use them later.  `contents`, `map` and `keywords`
+    // have to be lvalues.
     SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
                      const std::string &language,
-                     const std::unordered_map<std::string, SType> &map);
-
-    // `contents` and `map` have to be lvalues.
-    SrcmlTransformer(std::string &&contents, TreeBuilder &tb,
-                     const std::string &language,
-                     const std::unordered_map<std::string, SType> &map)
-        = delete;
-    SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
-                     const std::string &language,
-                     std::unordered_map<std::string, SType> &&map) = delete;
-    SrcmlTransformer(std::string &&contents, TreeBuilder &tb,
-                     const std::string &language,
-                     std::unordered_map<std::string, SType> &&map) = delete;
+                     const std::unordered_map<std::string, SType> &map,
+                     const std::unordered_set<std::string> &keywords);
 
 public:
     // Does all the work of transforming.
@@ -64,6 +55,7 @@ private:
     TreeBuilder &tb;                                   // Result builder.
     std::string language;                              // Language name.
     const std::unordered_map<std::string, SType> &map; // Tag -> SType map.
+    const std::unordered_set<std::string> &keywords;   // List of keywords.
     int line;                                          // Current line.
     int col;                                           // Current column.
 };

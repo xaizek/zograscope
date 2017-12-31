@@ -19,6 +19,7 @@
 #define ZOGRASCOPE__SRCML__CXX__SRCMLCXXLANGUAGE_HPP__
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Language.hpp"
 
@@ -74,6 +75,7 @@ public:
 
 private:
     std::unordered_map<std::string, SType> map; // Maps srcml nodes to STypes.
+    std::unordered_set<std::string> keywords;   // List of reserved keywords.
 };
 
 #endif // ZOGRASCOPE__SRCML__CXX__SRCMLCXXLANGUAGE_HPP__

@@ -140,6 +140,21 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["union_decl"]       = +SrcmlCxxSType::UnionDecl;
     map["using"]            = +SrcmlCxxSType::Using;
     map["while"]            = +SrcmlCxxSType::While;
+
+    keywords.insert({
+        "alignas", "alignof", "asm", "auto", "bool", "break", "case", "catch",
+        "char", "char16_t", "char32_t", "class", "const", "constexpr",
+        "const_cast", "continue", "decltype", "default", "delete", "do",
+        "double", "dynamic_cast", "else", "enum", "explicit", "export",
+        "extern", "false", "float", "for", "friend", "goto", "if", "inline",
+        "int", "long", "mutable", "namespace", "new", "noexcept", "nullptr",
+        "operator", "private", "protected", "public", "register",
+        "reinterpret_cast", "return", "short", "signed", "sizeof", "static",
+        "static_assert", "static_cast", "struct", "switch", "template", "this",
+        "thread_local", "throw", "true", "try", "typedef", "typeid", "typename",
+        "union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t",
+        "while",
+    });
 }
 
 Type
@@ -154,7 +169,7 @@ SrcmlCxxLanguage::parse(const std::string &contents,
                         cpp17::pmr::monolithic &mr) const
 {
     TreeBuilder tb(mr);
-    SrcmlTransformer(contents, tb, "C++", map).transform();
+    SrcmlTransformer(contents, tb, "C++", map, keywords).transform();
     return tb;
 }
 
