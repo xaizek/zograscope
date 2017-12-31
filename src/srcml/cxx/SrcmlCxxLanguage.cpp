@@ -143,9 +143,9 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
 }
 
 Type
-SrcmlCxxLanguage::mapToken(int /*token*/) const
+SrcmlCxxLanguage::mapToken(int token) const
 {
-    return Type::Other;
+    return static_cast<Type>(token);
 }
 
 TreeBuilder

@@ -25,12 +25,14 @@
 
 #include "TreeBuilder.hpp"
 #include "integration.hpp"
+#include "types.hpp"
 
 // XXX: hard-coded width of a tabulation character.
 const int tabWidth = 4;
 
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
+static Type determineType(TiXmlElement *elem);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
                                    const std::string &language,
@@ -78,6 +80,7 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
          child = child->NextSibling()) {
         boost::string_ref val;
         std::size_t skipped;
+        Type type;
 
         switch (child->Type()) {
             case TiXmlNode::TINYXML_ELEMENT:
@@ -96,11 +99,15 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
                 updatePosition(left.substr(0U, skipped), line, col);
                 left.remove_prefix(skipped);
 
+                type = determineType(node->ToElement());
+
                 auto offset =
                     static_cast<std::uint32_t>(&left[0] - &contents[0]);
                 const auto len = static_cast<std::uint32_t>(val.size());
-                tb.append(pnode, tb.addNode(Text{offset, len, 0, 0, 0},
-                                            Location{line, col, 0, 0}, stype));
+                tb.append(pnode,
+                          tb.addNode(Text{offset, len, 0, 0,
+                                          static_cast<int>(type)},
+                                     Location{line, col, 0, 0}, stype));
 
                 updatePosition(left.substr(0U, len), line, col);
                 left.remove_prefix(len);
@@ -148,4 +155,27 @@ updatePosition(boost::string_ref str, int &line, int &col)
         }
         str.remove_prefix(1);
     }
+}
+
+// Determines type of a child of the specified element.
+static Type
+determineType(TiXmlElement *elem)
+{
+    if (elem->ValueStr() == "literal") {
+        const std::string type = elem->Attribute("type");
+        if (type == "boolean") {
+            return Type::IntConstants;
+        } else if (type == "char") {
+            return Type::CharConstants;
+        } else if (type == "null") {
+            return Type::IntConstants;
+        } else if (type == "number") {
+            return Type::IntConstants;
+        } else if (type == "string") {
+            return Type::StrConstants;
+        } else if (type == "complex") {
+            return Type::FPConstants;
+        }
+    }
+    return Type::Other;
 }

@@ -74,13 +74,13 @@ TEST_CASE("Argument list is spliced into the call",
     diffSrcmlCxx(R"(
         void f() {
             longAndBoringName(
-                  "old line"    /// Deletions
+                  "old line"    /// Updates
             );
         }
     )", R"(
         void f() {
             longAndBoringName(
-                  "new string"  /// Additions
+                  "new string"  /// Updates
             );
         }
     )");

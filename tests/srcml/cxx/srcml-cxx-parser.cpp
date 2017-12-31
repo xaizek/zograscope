@@ -38,3 +38,31 @@ TEST_CASE("Position of tokens is computed correctly",
     std::string output = Highlighter(tree).print();
     CHECK(output == text);
 }
+
+TEST_CASE("Literals are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    auto makePred = [](Type type, std::string label) {
+        return [=](const Node *node) {
+            return (node->type == type && node->label == label);
+        };
+    };
+
+    Tree tree = parseCxx(R"(
+        auto a = true || false;
+        auto b = 'a' + L'a';
+        auto c = "a" L"a";
+        auto d = nullptr;
+        auto e = 10 + 0x1 + 001;
+        auto f = 10i+1;
+    )");
+    CHECK(findNode(tree, makePred(Type::IntConstants, "true")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::IntConstants, "false")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::CharConstants, "'a'")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::StrConstants, R"("a")")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::StrConstants, R"(L"a")")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::IntConstants, "nullptr")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::IntConstants, "10")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::IntConstants, "0x1")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::IntConstants, "001")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::FPConstants, "10i+1")) != nullptr);
+}
