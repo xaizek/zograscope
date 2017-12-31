@@ -97,26 +97,37 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
 void
 SrcmlTransformer::visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf)
 {
-    boost::string_ref val = processValue(leaf->ValueStr());
+    boost::string_ref fullVal = processValue(leaf->ValueStr());
 
     SType stype = {};
     if (leaf != parent->FirstChild() || leaf->NextSibling() != nullptr) {
         stype = map.at("separator");
     }
 
-    const std::size_t skipped = left.find(val);
-    updatePosition(left.substr(0U, skipped), line, col);
-    left.remove_prefix(skipped);
+    std::vector<boost::string_ref> vals = { fullVal };
+    if (fullVal.size() > 1U && fullVal.back() == ';') {
+        vals = {
+            processValue(fullVal.substr(0U, fullVal.size() - 1U)),
+            processValue(fullVal.substr(fullVal.size() - 1U))
+        };
+    }
 
-    const Type type = determineType(parent->ToElement(), val, keywords);
+    for (boost::string_ref val : vals) {
+        const std::size_t skipped = left.find(val);
+        updatePosition(left.substr(0U, skipped), line, col);
+        left.remove_prefix(skipped);
 
-    const auto offset = static_cast<std::uint32_t>(&left[0] - &contents[0]);
-    const auto len = static_cast<std::uint32_t>(val.size());
-    tb.append(pnode, tb.addNode(Text{offset, len, 0, 0, static_cast<int>(type)},
-                                Location{line, col, 0, 0}, stype));
+        const Type type = determineType(parent->ToElement(), val, keywords);
 
-    updatePosition(left.substr(0U, len), line, col);
-    left.remove_prefix(len);
+        const auto offset = static_cast<std::uint32_t>(&left[0] - &contents[0]);
+        const auto len = static_cast<std::uint32_t>(val.size());
+        tb.append(pnode,
+                  tb.addNode(Text{offset, len, 0, 0, static_cast<int>(type)},
+                             Location{line, col, 0, 0}, stype));
+
+        updatePosition(left.substr(0U, len), line, col);
+        left.remove_prefix(len);
+    }
 }
 
 // Trims the value.
