@@ -87,3 +87,9 @@ TEST_CASE("Types are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Keywords, "void")) != nullptr);
     CHECK(findNode(tree, makePred(Type::UserTypes, "User")) != nullptr);
 }
+
+TEST_CASE("Specifiers are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx("const int a;");
+    CHECK(findNode(tree, makePred(Type::Specifiers, "const")) != nullptr);
+}

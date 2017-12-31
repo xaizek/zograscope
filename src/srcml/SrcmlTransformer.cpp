@@ -184,6 +184,8 @@ determineType(TiXmlElement *elem, const std::string &value,
         }
     } else if (elem->ValueStr() == "operator") {
         return Type::Operators;
+    } else if (elem->ValueStr() == "specifier") {
+        return Type::Specifiers;
     } else if (elem->ValueStr() == "name" &&
                parent != nullptr && parent->ValueStr() == "type") {
         return (keywords.find(value) != keywords.cend()) ? Type::Keywords
