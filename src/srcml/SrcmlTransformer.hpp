@@ -48,6 +48,8 @@ public:
 private:
     // Transforms single element into a node.
     PNode * visit(TiXmlNode *node, int level);
+    // Transforms text field.
+    void visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf);
 
 private:
     const std::string &contents;                       // Contents to parse.

@@ -81,44 +81,42 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
     for (TiXmlNode *child = node->FirstChild();
          child != nullptr;
          child = child->NextSibling()) {
-        boost::string_ref val;
-        std::size_t skipped;
-        Type type;
-
         switch (child->Type()) {
             case TiXmlNode::TINYXML_ELEMENT:
                 tb.append(pnode, visit(child->ToElement(), level + 1));
                 break;
             case TiXmlNode::TINYXML_TEXT:
-                stype = {};
-                val = processValue(child->ValueStr());
-
-                if (child != node->FirstChild() ||
-                    child->NextSibling() != nullptr) {
-                    stype = map.at("separator");
-                }
-
-                skipped = left.find(val);
-                updatePosition(left.substr(0U, skipped), line, col);
-                left.remove_prefix(skipped);
-
-                type = determineType(node->ToElement(), val, keywords);
-
-                auto offset =
-                    static_cast<std::uint32_t>(&left[0] - &contents[0]);
-                const auto len = static_cast<std::uint32_t>(val.size());
-                tb.append(pnode,
-                          tb.addNode(Text{offset, len, 0, 0,
-                                          static_cast<int>(type)},
-                                     Location{line, col, 0, 0}, stype));
-
-                updatePosition(left.substr(0U, len), line, col);
-                left.remove_prefix(len);
+                visitLeaf(node, pnode, child);
                 break;
         }
     }
 
     return pnode;
+}
+
+void
+SrcmlTransformer::visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf)
+{
+    boost::string_ref val = processValue(leaf->ValueStr());
+
+    SType stype = {};
+    if (leaf != parent->FirstChild() || leaf->NextSibling() != nullptr) {
+        stype = map.at("separator");
+    }
+
+    const std::size_t skipped = left.find(val);
+    updatePosition(left.substr(0U, skipped), line, col);
+    left.remove_prefix(skipped);
+
+    const Type type = determineType(parent->ToElement(), val, keywords);
+
+    const auto offset = static_cast<std::uint32_t>(&left[0] - &contents[0]);
+    const auto len = static_cast<std::uint32_t>(val.size());
+    tb.append(pnode, tb.addNode(Text{offset, len, 0, 0, static_cast<int>(type)},
+                                Location{line, col, 0, 0}, stype));
+
+    updatePosition(left.substr(0U, len), line, col);
+    left.remove_prefix(len);
 }
 
 // Trims the value.
