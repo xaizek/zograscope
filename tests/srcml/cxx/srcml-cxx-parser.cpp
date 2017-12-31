@@ -123,3 +123,23 @@ TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Keywords, "return")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "else")) != nullptr);
 }
+
+TEST_CASE("Function names are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void func() {
+            call();
+            obj.as<int>();
+        }
+        void Class::method() {
+            obj.meth();
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Functions, "func")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Functions, "call")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Functions, "as")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Functions, "Class")) == nullptr);
+    CHECK(findNode(tree, makePred(Type::Functions, "method")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Functions, "meth")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Functions, "obj")) == nullptr);
+}

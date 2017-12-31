@@ -174,7 +174,6 @@ static Type
 determineType(TiXmlElement *elem, boost::string_ref value,
               const std::unordered_set<std::string> &keywords)
 {
-    const TiXmlNode *const parent = elem->Parent();
     if (elem->ValueStr() == "literal") {
         const std::string type = elem->Attribute("type");
         if (type == "boolean") {
@@ -194,11 +193,28 @@ determineType(TiXmlElement *elem, boost::string_ref value,
         return Type::Operators;
     } else if (elem->ValueStr() == "specifier") {
         return Type::Specifiers;
-    } else if (elem->ValueStr() == "name" &&
-               parent != nullptr && parent->ValueStr() == "type") {
-        return keywords.find(value.to_string()) != keywords.cend()
-             ? Type::Keywords
-             : Type::UserTypes;
+    } else if (elem->ValueStr() == "name") {
+        const TiXmlNode *parent = elem;
+        std::string parentValue;
+        std::string grandParentValue;
+        do {
+            parent = parent->Parent();
+            parentValue = (parent == nullptr ? "" : parent->ValueStr());
+            grandParentValue = (parent->Parent() == nullptr)
+                             ? ""
+                             : parent->Parent()->ValueStr();
+        } while (parentValue == "name" &&
+                 (elem != parent->FirstChild() ||
+                  (grandParentValue != "function" &&
+                   grandParentValue != "call")));
+
+        if (parentValue == "type") {
+            return keywords.find(value.to_string()) != keywords.cend()
+                 ? Type::Keywords
+                 : Type::UserTypes;
+        } else if (parentValue == "function" || parentValue == "call") {
+            return Type::Functions;
+        }
     } else if (value[0] == '(' || value[0] == '{' || value[0] == '[') {
         return Type::LeftBrackets;
     } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
