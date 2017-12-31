@@ -32,7 +32,7 @@ const int tabWidth = 4;
 
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
-static Type determineType(TiXmlElement *elem, const std::string &value,
+static Type determineType(TiXmlElement *elem, boost::string_ref value,
                           const std::unordered_set<std::string> &keywords);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
@@ -102,8 +102,7 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
                 updatePosition(left.substr(0U, skipped), line, col);
                 left.remove_prefix(skipped);
 
-                type = determineType(node->ToElement(), child->ValueStr(),
-                                     keywords);
+                type = determineType(node->ToElement(), val, keywords);
 
                 auto offset =
                     static_cast<std::uint32_t>(&left[0] - &contents[0]);
@@ -163,7 +162,7 @@ updatePosition(boost::string_ref str, int &line, int &col)
 
 // Determines type of a child of the specified element.
 static Type
-determineType(TiXmlElement *elem, const std::string &value,
+determineType(TiXmlElement *elem, boost::string_ref value,
               const std::unordered_set<std::string> &keywords)
 {
     const TiXmlNode *const parent = elem->Parent();
@@ -188,8 +187,13 @@ determineType(TiXmlElement *elem, const std::string &value,
         return Type::Specifiers;
     } else if (elem->ValueStr() == "name" &&
                parent != nullptr && parent->ValueStr() == "type") {
-        return (keywords.find(value) != keywords.cend()) ? Type::Keywords
-                                                         : Type::UserTypes;
+        return keywords.find(value.to_string()) != keywords.cend()
+             ? Type::Keywords
+             : Type::UserTypes;
+    } else if (value[0] == '(' || value[0] == '{' || value[0] == '[') {
+        return Type::LeftBrackets;
+    } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
+        return Type::RightBrackets;
     }
     return Type::Other;
 }

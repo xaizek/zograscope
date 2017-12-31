@@ -93,3 +93,18 @@ TEST_CASE("Specifiers are marked with types", "[.srcml][srcml-cxx][parser]")
     Tree tree = parseCxx("const int a;");
     CHECK(findNode(tree, makePred(Type::Specifiers, "const")) != nullptr);
 }
+
+TEST_CASE("Brackets are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void f(int arg) {
+            int a[arg];
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::LeftBrackets, "(")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::LeftBrackets, "{")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::LeftBrackets, "[")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::RightBrackets, ")")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::RightBrackets, "}")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::RightBrackets, "]")) != nullptr);
+}
