@@ -96,7 +96,9 @@ TEST_CASE("Specifiers are marked with types", "[.srcml][srcml-cxx][parser]")
 
 TEST_CASE("Brackets are marked with types", "[.srcml][srcml-cxx][parser]")
 {
-    Tree tree = parseCxx(R"(
+    Tree tree;
+
+    tree = parseCxx(R"(
         void f(int arg) {
             int a[arg];
         }
@@ -107,6 +109,12 @@ TEST_CASE("Brackets are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::RightBrackets, ")")) != nullptr);
     CHECK(findNode(tree, makePred(Type::RightBrackets, "}")) != nullptr);
     CHECK(findNode(tree, makePred(Type::RightBrackets, "]")) != nullptr);
+
+    tree = parseCxx(R"(
+        int a = (1 + 2);
+    )");
+    CHECK(findNode(tree, makePred(Type::LeftBrackets, "(")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::RightBrackets, ")")) != nullptr);
 }
 
 TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")

@@ -85,3 +85,23 @@ TEST_CASE("Argument list is spliced into the call",
         }
     )");
 }
+
+TEST_CASE("Parenthesis aren't mixed with operators",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            return
+                  (                                     /// Deletions
+                  -x->stype == SrcmlCxxSType::Comment
+                  )                                     /// Deletions
+                  ;
+        }
+    )", R"(
+        void f() {
+            return -x->stype == SrcmlCxxSType::Comment
+                || x->type == Type::StrConstants        /// Additions
+                ;
+        }
+    )");
+}

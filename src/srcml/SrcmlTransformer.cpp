@@ -189,6 +189,10 @@ determineType(TiXmlElement *elem, boost::string_ref value,
         } else if (type == "complex") {
             return Type::FPConstants;
         }
+    } else if (value[0] == '(' || value[0] == '{' || value[0] == '[') {
+        return Type::LeftBrackets;
+    } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
+        return Type::RightBrackets;
     } else if (elem->ValueStr() == "operator") {
         return Type::Operators;
     } else if (elem->ValueStr() == "specifier") {
@@ -217,10 +221,6 @@ determineType(TiXmlElement *elem, boost::string_ref value,
         } else if (parentValue == "function" || parentValue == "call") {
             return Type::Functions;
         }
-    } else if (value[0] == '(' || value[0] == '{' || value[0] == '[') {
-        return Type::LeftBrackets;
-    } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
-        return Type::RightBrackets;
     } else if (keywords.find(value.to_string()) != keywords.cend()) {
         return Type::Keywords;
     }
