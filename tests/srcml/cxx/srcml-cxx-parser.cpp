@@ -125,11 +125,17 @@ TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
                 return  ;
             } else {
             }
+            switch (1) {
+                default:break;
+            }
         }
     )");
     CHECK(findNode(tree, makePred(Type::Keywords, "if")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "return")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "else")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "switch")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "default")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "break")) != nullptr);
 }
 
 TEST_CASE("Function names are marked with types", "[.srcml][srcml-cxx][parser]")

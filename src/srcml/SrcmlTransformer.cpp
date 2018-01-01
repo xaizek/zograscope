@@ -110,7 +110,8 @@ SrcmlTransformer::visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf)
     }
 
     std::vector<boost::string_ref> vals = { fullVal };
-    if (fullVal.size() > 1U && fullVal.back() == ';') {
+    if (fullVal.size() > 1U &&
+        (fullVal.back() == ':' || fullVal.back() == ';')) {
         vals = {
             processValue(fullVal.substr(0U, fullVal.size() - 1U)),
             processValue(fullVal.substr(fullVal.size() - 1U))
