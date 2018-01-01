@@ -161,3 +161,21 @@ TEST_CASE("Comments are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Comments, "/* mlcom */")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Comments, "// slcom")) != nullptr);
 }
+
+TEST_CASE("Directives are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        #include <something>
+        #if 0
+        #include "something"
+        #elif defined(something)
+        #endif // com
+        #define macro(x) (x+x) /* that */ x
+    )");
+    CHECK(findNode(tree, makePred(Type::Directives, "#")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Directives, "include")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Directives, "if")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::IntConstants, "0")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Comments, "// com")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Comments, "/* that */")) != nullptr);
+}

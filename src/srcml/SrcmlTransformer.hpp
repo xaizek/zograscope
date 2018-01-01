@@ -64,6 +64,7 @@ private:
     const std::unordered_set<std::string> &keywords;   // List of keywords.
     int line;                                          // Current line.
     int col;                                           // Current column.
+    int inCppDirective;                                // Level of cpp nesting.
 };
 
 #endif // ZOGRASCOPE__SRCML__SRCMLTRANSFORMER_HPP__

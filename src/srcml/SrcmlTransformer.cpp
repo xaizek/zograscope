@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/utility/string_ref.hpp>
 #include "tinyxml/tinyxml.h"
 
@@ -61,6 +62,7 @@ SrcmlTransformer::transform()
     left = contents;
     line = 1;
     col = 1;
+    inCppDirective = 0;
 
     tb.setRoot(visit(doc.RootElement(), 0));
 }
@@ -73,6 +75,9 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
     if (it != map.end()) {
         stype = it->second;
     }
+
+    bool cppDirective = boost::starts_with(node->Value(), "cpp:");
+    inCppDirective += cppDirective;
 
     PNode *pnode = tb.addNode({}, stype);
 
@@ -88,6 +93,8 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
                 break;
         }
     }
+
+    inCppDirective -= cppDirective;
 
     return pnode;
 }
@@ -185,16 +192,18 @@ SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
         } else if (type == "complex") {
             return Type::FPConstants;
         }
+    } else if (elem->ValueStr() == "specifier") {
+        return Type::Specifiers;
+    } else if (elem->ValueStr() == "comment") {
+        return Type::Comments;
+    } else if (inCppDirective) {
+        return Type::Directives;
     } else if (value[0] == '(' || value[0] == '{' || value[0] == '[') {
         return Type::LeftBrackets;
     } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
         return Type::RightBrackets;
     } else if (elem->ValueStr() == "operator") {
         return Type::Operators;
-    } else if (elem->ValueStr() == "specifier") {
-        return Type::Specifiers;
-    } else if (elem->ValueStr() == "comment") {
-        return Type::Comments;
     } else if (elem->ValueStr() == "name") {
         const TiXmlNode *parent = elem;
         std::string parentValue;
