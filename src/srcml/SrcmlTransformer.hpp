@@ -25,10 +25,12 @@
 #include <boost/utility/string_ref.hpp>
 
 class PNode;
+class TiXmlElement;
 class TiXmlNode;
 class TreeBuilder;
 
 enum class SType : std::uint8_t;
+enum class Type : std::uint8_t;
 
 // Uses srcml to parse a file and transforms the result into PTree.
 class SrcmlTransformer
@@ -50,6 +52,8 @@ private:
     PNode * visit(TiXmlNode *node, int level);
     // Transforms text field.
     void visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf);
+    // Determines type of a child of the specified element.
+    Type determineType(TiXmlElement *elem, boost::string_ref value);
 
 private:
     const std::string &contents;                       // Contents to parse.
