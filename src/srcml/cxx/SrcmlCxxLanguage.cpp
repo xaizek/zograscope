@@ -196,7 +196,9 @@ SrcmlCxxLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
             return false;
         default:
             return -child->stype != SrcmlCxxSType::Call
-                && -child->stype != SrcmlCxxSType::FunctionDecl;
+                && -child->stype != SrcmlCxxSType::FunctionDecl
+                && -child->stype != SrcmlCxxSType::Parameter
+                && -child->stype != SrcmlCxxSType::EnumDecl;
     }
 }
 
@@ -251,6 +253,8 @@ SrcmlCxxLanguage::isLayerBreak(SType stype) const
         || -stype == SrcmlCxxSType::Function
         || -stype == SrcmlCxxSType::FunctionDecl
         || -stype == SrcmlCxxSType::ExprStmt
+        || -stype == SrcmlCxxSType::Parameter
+        || -stype == SrcmlCxxSType::EnumDecl
         || isValueNode(stype);
 }
 

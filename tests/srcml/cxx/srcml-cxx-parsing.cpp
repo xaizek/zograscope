@@ -114,3 +114,35 @@ TEST_CASE("Parenthesis aren't mixed with operators",
         }
     )");
 }
+
+TEST_CASE("Various declaration aren't mixed up", "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        class SrcmlTransformer
+        {
+            SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
+                            const std::string &language                         /// Deletions
+                            ,
+                            const std::unordered_map<std::string, SType> &map   /// Deletions
+                            ,
+                            const std::unordered_set<std::string> &keywords);
+
+        private:
+            const std::unordered_map<std::string, SType> &map; // Tag -> SType
+        };
+    )", R"(
+        enum class Type : std::uint8_t;                                        /// Additions
+
+        class SrcmlTransformer
+        {
+            SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
+                            const std::unordered_set<std::string> &keywords);
+
+            // Determines type of a child of the specified element.            /// Additions
+            Type determineType(TiXmlElement *elem, boost::string_ref value);   /// Additions
+
+        private:
+            const std::unordered_map<std::string, SType> &map; // Tag -> SType
+        };
+    )");
+}
