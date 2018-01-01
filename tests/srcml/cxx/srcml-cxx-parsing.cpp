@@ -21,7 +21,7 @@
 
 #include "tests.hpp"
 
-TEST_CASE("Functions are moved to a separate layer",
+TEST_CASE("Functions and their declarations are moved to a separate layer",
           "[.srcml][srcml-cxx][parsing]")
 {
     diffSrcmlCxx(R"(
@@ -35,6 +35,15 @@ TEST_CASE("Functions are moved to a separate layer",
             int anchor;
             varMap = parseOptions(args, options);  /// Mixed
         }
+    )");
+
+    diffSrcmlCxx(R"(
+        static std::string readFile(const std::string &path);     /// Deletions
+    )", R"(
+        void                                                      /// Additions
+        Environment::setup(const std::vector<std::string> &argv)  /// Additions
+        {                                                         /// Additions
+        }                                                         /// Additions
     )");
 }
 
