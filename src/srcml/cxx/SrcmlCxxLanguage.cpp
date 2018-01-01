@@ -255,6 +255,7 @@ SrcmlCxxLanguage::isLayerBreak(SType stype) const
         || -stype == SrcmlCxxSType::ExprStmt
         || -stype == SrcmlCxxSType::Parameter
         || -stype == SrcmlCxxSType::EnumDecl
+        || -stype == SrcmlCxxSType::Return
         || isValueNode(stype);
 }
 

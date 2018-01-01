@@ -146,3 +146,48 @@ TEST_CASE("Various declaration aren't mixed up", "[.srcml][srcml-cxx][parsing]")
         };
     )");
 }
+
+TEST_CASE("Various statements aren't mixed up", "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            if (elem->ValueStr() == "comment") {
+                return Type::Comments;
+            } else if (elem->ValueStr() == "name") {
+                if (parentValue == "type") {
+                    return bla ? Type::Keywords : Type::UserTypes;
+                } else if (parentValue == "function" || parentValue == "call") {
+                    return Type::Functions;
+                }
+            } else if (keywords.find(value.to_string()) != keywords.cend()) {
+                return Type::Keywords;
+            }
+            return Type::Other;
+        }
+    )", R"(
+        void f() {
+            if (elem->ValueStr() == "comment") {
+                return Type::Comments;
+            }
+            else if (inCppDirective) {                                           /// Additions
+                return Type::Directives;                                         /// Additions
+            } else if (value[0] == '(' || value[0] == '{' || value[0] == '[') {  /// Additions
+                return Type::LeftBrackets;                                       /// Additions
+            } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {  /// Additions
+                return Type::RightBrackets;                                      /// Additions
+            } else if (elem->ValueStr() == "operator") {                         /// Additions
+                return Type::Operators;                                          /// Additions
+            }                                                                    /// Additions
+            else if (elem->ValueStr() == "name") {
+                if (parentValue == "type") {
+                    return bla ? Type::Keywords : Type::UserTypes;
+                } else if (parentValue == "function" || parentValue == "call") {
+                    return Type::Functions;
+                }
+            } else if (keywords.find(value.to_string()) != keywords.cend()) {
+                return Type::Keywords;
+            }
+            return Type::Other;
+        }
+    )");
+}
