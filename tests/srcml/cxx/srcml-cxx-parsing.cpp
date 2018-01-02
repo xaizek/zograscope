@@ -95,6 +95,63 @@ TEST_CASE("Argument list is spliced into the call",
     )");
 }
 
+TEST_CASE("then/else nodes are spliced into if statement",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            int a;            /// Moves
+            if (condition) {
+                int b;        /// Moves
+                int c;        /// Moves
+            }
+        }
+    )", R"(
+        void f() {
+            if (condition) {
+                if (cond) {   /// Additions
+                    int a;    /// Moves
+                    int b;    /// Moves
+                    int c;    /// Moves
+                }             /// Additions
+            }
+        }
+    )");
+
+    diffSrcmlCxx(R"(
+        void f() {
+            if (condition) {
+                something;    /// Deletions
+            } else {
+                int a;        /// Moves
+                int b;        /// Moves
+            }
+        }
+    )", R"(
+        void f() {
+            if (condition) {
+                if (cond) {   /// Additions
+                    int a;    /// Moves
+                    int b;    /// Moves
+                }             /// Additions
+            }
+        }
+    )");
+
+    diffSrcmlCxx(R"(
+        void g() {
+            if (g)
+                int a;
+        }
+    )", R"(
+        void g() {
+            if (g) {
+                int a;
+            }
+        }
+    )");
+}
+
 TEST_CASE("Parenthesis aren't mixed with operators",
           "[.srcml][srcml-cxx][parsing]")
 {
