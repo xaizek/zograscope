@@ -227,6 +227,7 @@ SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
         } else if (parentValue == "function" || parentValue == "call") {
             return Type::Functions;
         }
+        return Type::Identifiers;
     } else if (keywords.find(value.to_string()) != keywords.cend()) {
         return Type::Keywords;
     }

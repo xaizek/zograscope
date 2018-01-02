@@ -187,6 +187,17 @@ TEST_CASE("Directives are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Comments, "/* that */")) != nullptr);
 }
 
+TEST_CASE("Identifiers are marked with types", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void Class::method() {
+            int var;
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Identifiers, "Class")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "var")) != nullptr);
+}
+
 TEST_CASE("Block nodes are spliced into their parents",
           "[.srcml][srcml-cxx][parser]")
 {
