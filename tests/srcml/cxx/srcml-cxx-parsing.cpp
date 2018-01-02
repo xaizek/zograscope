@@ -63,6 +63,22 @@ TEST_CASE("Statements are moved to a separate layer",
     )");
 }
 
+TEST_CASE("Names are on a separate layer", "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            return SrcmlCxxSType::Function;
+        }
+    )", R"(
+        void f() {
+            return
+                  SrcmlCxxSType::Parameter   /// Additions
+                  &&                         /// Additions
+                  SrcmlCxxSType::Function;
+        }
+    )");
+}
+
 TEST_CASE("Function body is spliced into function itself",
           "[.srcml][srcml-cxx][parsing]")
 {
