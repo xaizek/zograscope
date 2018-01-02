@@ -217,7 +217,8 @@ SrcmlCxxLanguage::isContainer(const Node *x) const
 bool
 SrcmlCxxLanguage::isDiffable(const Node *x) const
 {
-    return (-x->stype == SrcmlCxxSType::Comment);
+    return -x->stype == SrcmlCxxSType::Comment
+        || x->type == Type::StrConstants;
 }
 
 bool
