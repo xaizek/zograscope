@@ -5,6 +5,9 @@ CXXFLAGS += -DYYDEBUG -DTIXML_USE_STL
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
 LDFLAGS  += -lboost_system
 
+# a variable that can be overridden to control which tests to run
+TESTS :=
+
 ifneq ($(OS),Windows_NT)
     bin_suffix :=
 else
@@ -144,7 +147,7 @@ $(lib): $(lib_objects)
 	$(AR) cr $@ $^
 
 check: $(target) $(out_dir)/tests/tests reset-coverage
-	@$(out_dir)/tests/tests
+	@$(out_dir)/tests/tests $(TESTS)
 
 $(out_dir)/src/c/c11-lexer.hpp: $(out_dir)/src/c/c11-lexer.gen.cpp
 $(out_dir)/src/c/c11-lexer.gen.cpp: src/c/c11-lexer.flex \
