@@ -230,8 +230,16 @@ bool
 SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
 {
     SrcmlCxxSType child = -childNode->stype;
-    if (-parent == SrcmlCxxSType::Function && child == SrcmlCxxSType::Block) {
-        return true;
+    if (child == SrcmlCxxSType::Block) {
+        if (-parent == SrcmlCxxSType::Function ||
+            -parent == SrcmlCxxSType::Then ||
+            -parent == SrcmlCxxSType::Else ||
+            -parent == SrcmlCxxSType::For ||
+            -parent == SrcmlCxxSType::While ||
+            -parent == SrcmlCxxSType::Do ||
+            -parent == SrcmlCxxSType::Switch) {
+            return true;
+        }
     }
     if (-parent == SrcmlCxxSType::Call &&
         child == SrcmlCxxSType::ArgumentList) {

@@ -21,6 +21,7 @@
 
 #include "Catch/catch.hpp"
 
+#include "srcml/cxx/SrcmlCxxSType.hpp"
 #include "utils/strings.hpp"
 #include "Highlighter.hpp"
 #include "tree.hpp"
@@ -184,4 +185,38 @@ TEST_CASE("Directives are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::IntConstants, "0")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Comments, "// com")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Comments, "/* that */")) != nullptr);
+}
+
+TEST_CASE("Block nodes are spliced into their parents",
+          "[.srcml][srcml-cxx][parser]")
+{
+    using namespace srcmlcxx;
+
+    Tree tree = parseCxx(R"(
+        void f() {
+            int a;
+            if (a) {
+                int b;
+            } else {
+                int c;
+            }
+            for (;;) {
+                int d;
+            }
+            while (true) {
+                int e;
+            }
+            do {
+                int d;
+            } while (true);
+            switch (0) {
+                case 1: break;
+            }
+        }
+    )");
+
+    auto test = [](const Node *node) {
+        return (node->stype == +SrcmlCxxSType::Block);
+    };
+    CHECK(findNode(tree, test) == nullptr);
 }
