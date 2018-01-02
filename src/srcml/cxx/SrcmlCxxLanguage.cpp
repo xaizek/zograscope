@@ -251,6 +251,9 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
         child == SrcmlCxxSType::ArgumentList) {
         return true;
     }
+    if (child == SrcmlCxxSType::ParameterList) {
+        return true;
+    }
     return false;
 }
 

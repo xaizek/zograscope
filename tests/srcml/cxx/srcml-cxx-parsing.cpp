@@ -93,6 +93,24 @@ TEST_CASE("Function body is spliced into function itself",
     )");
 }
 
+TEST_CASE("Parameter list spliced into function",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void func(
+                  int old          /// Deletions
+                  ) {
+            return;
+        }
+    )", R"(
+        void func(
+                  float something  /// Additions
+                  ) {
+            return;
+        }
+    )");
+}
+
 TEST_CASE("Argument list is spliced into the call",
           "[.srcml][srcml-cxx][parsing]")
 {
