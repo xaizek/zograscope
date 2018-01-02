@@ -51,7 +51,7 @@ Language::create(const std::string &fileName, const std::string &l)
     if (lang == "c") {
         return std::unique_ptr<C11Language>(new C11Language());
     }
-    if (lang == "srcml:cxx") {
+    if (lang == "cxx" || lang == "srcml:cxx") {
         return std::unique_ptr<SrcmlCxxLanguage>(new SrcmlCxxLanguage());
     }
     if (lang == "make") {
@@ -70,7 +70,7 @@ detectLanguage(const std::string &stem, const std::string &ext)
 
     if (ext == ".cpp" || ext == ".cxx" || ext == ".cc" ||
         ext == ".hpp" || ext == ".hxx" || ext == ".hh") {
-        return "srcml:cxx";
+        return "cxx";
     }
 
     using boost::algorithm::ends_with;
