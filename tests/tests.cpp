@@ -96,6 +96,12 @@ parseMake(const std::string &str)
     return parse("Makefile", str, true);
 }
 
+Tree
+parseCxx(const std::string &str)
+{
+    return parse("test-input.cpp", str, true);
+}
+
 // Parses source into a tree.
 static Tree
 parse(const std::string &fileName, const std::string &str, bool coarse)
@@ -214,6 +220,12 @@ diffMake(const std::string &left, const std::string &right)
     diffSources(left, right, true, "Makefile.test", "## ");
 }
 
+void
+diffSrcmlCxx(const std::string &left, const std::string &right)
+{
+    diffSources(left, right, true, "test-input.cpp", "/// ");
+}
+
 // Compares two sources with expectation being embedded in them in form of
 // trailing markers.
 static void
@@ -306,7 +318,8 @@ extractExpectations(const std::string &src, const std::string &marker)
         } else if (expectation == "Mixed") {
             changes.push_back(Changes::Mixed);
         } else {
-            REQUIRE_FALSE(true);
+            CAPTURE(expectation);
+            FAIL("Unknown expectation");
         }
     }
 

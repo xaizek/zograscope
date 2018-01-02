@@ -1,4 +1,4 @@
-**zograscope**, _2017_
+**zograscope**, _2017 - 2018_
 
 ![Screenshot](data/example/screenshot.png)
 
@@ -29,6 +29,12 @@ experiment, but this should improve over time.
 
 ### Supported languages ###
 
+| Language  |  Status                                                          |
+|-----------|------------------------------------------------------------------|
+|  C        |  C11 and earlier with common extensions, but without K&R syntax  |
+|  C++      |  C14 and earlier with common extensions                          |
+|  GNU Make |  Most of the syntax                                              |
+
 #### C ####
 
 The exact grammar is that of C11 with extensions implemented in popular
@@ -45,6 +51,19 @@ Note the following:
 
 Other than that code in C89, C99, C11 and GNU-versions of C language should be
 recognized.
+
+#### C++ ####
+
+C++ support relies on external application called [srcml][srcml] and requires it
+to be installed in binary form (not necessary during build).
+
+Reported standard version supported by `srcml` is C++14, so all previous ones
+should work too.  Although their parser doesn't handle all language constructs
+equally well, it's seems to be good enough, especially for a ready to use parser
+that wasn't that hard to integrate.
+
+Note the following:
+ * the tuning of comparison is in progress and will be refined over time
 
 #### GNU Make ####
 
@@ -93,6 +112,7 @@ This will build release version and run tests.  The executables will be named
 * [flex][flex]
 * [GNU Bison][bison]
 * [Boost][boost], tested with 1.59, but older versions might work too
+* (optional, run-time, for C++) [srcml][srcml]
 
 ## Documentation ##
 
@@ -110,6 +130,8 @@ GNU Affero General Public License, version 3 or later.
 
 [pmr implementation][pmr] from C++17 with a small addition is employed for
 custom allocators.
+
+[TinyXML][tinyxml] is used for parsing XML.
 
 [Catch2][catch] is used for tests.
 
@@ -135,9 +157,11 @@ Kaizhong Zhang and Dennis Shasha.
 [flex]: https://github.com/westes/flex
 [bison]: https://www.gnu.org/software/bison/
 [boost]: http://www.boost.org/
+[srcml]: http://www.srcml.org/
 
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code
+[tinyxml]: https://sourceforge.net/projects/tinyxml/
 [catch]: https://github.com/catchorg/Catch2
 
 [cd]: http://www.merlin.uzh.ch/publication/show/2531

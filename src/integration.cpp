@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/scope_exit.hpp>
 
@@ -32,8 +33,10 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace io = boost::iostreams;
 
@@ -280,4 +283,72 @@ getTerminalSize()
     }
 
     return { ws.ws_col, ws.ws_row };
+}
+
+std::string
+readCommandOutput(std::vector<std::string> cmd, const std::string &input)
+{
+    int stdinPipePair[2];
+    if (pipe(stdinPipePair) != 0) {
+        throw std::runtime_error("Failed to create a pipe");
+    }
+
+    int stdoutPipePair[2];
+    if (pipe(stdoutPipePair) != 0) {
+        close(stdinPipePair[0]);
+        close(stdinPipePair[1]);
+        throw std::runtime_error("Failed to create a pipe");
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(stdinPipePair[0]);
+        close(stdinPipePair[1]);
+        close(stdoutPipePair[0]);
+        close(stdoutPipePair[1]);
+        throw std::runtime_error("Fork has failed");
+    }
+    if (pid == 0) {
+        close(stdinPipePair[1]);
+        close(stdoutPipePair[0]);
+        if (dup2(stdinPipePair[0], STDIN_FILENO) == -1) {
+            _Exit(EXIT_FAILURE);
+        }
+        if (dup2(stdoutPipePair[1], STDOUT_FILENO) == -1) {
+            _Exit(EXIT_FAILURE);
+        }
+        close(stdinPipePair[0]);
+        close(stdoutPipePair[1]);
+
+        char *argv[cmd.size() + 1U];
+        for (std::size_t i = 0; i < cmd.size(); ++i) {
+            argv[i] = &cmd[i][0];
+        }
+        argv[cmd.size()] = nullptr;
+
+        execvp(argv[0], argv);
+        _Exit(127);
+    }
+
+    close(stdinPipePair[0]);
+    close(stdoutPipePair[1]);
+
+    io::stream<io::file_descriptor_sink>
+        stdinStream(stdinPipePair[1], boost::iostreams::close_handle);
+    stdinStream << input;
+    stdinStream.close();
+
+    io::stream_buffer<io::file_descriptor_source>
+        stdoutStream(stdoutPipePair[0], boost::iostreams::close_handle);
+
+    std::ostringstream iss;
+    iss << &stdoutStream;
+
+    int wstatus;
+    if (waitpid(pid, &wstatus, 0) == -1 || !WIFEXITED(wstatus) ||
+        WEXITSTATUS(wstatus) != EXIT_SUCCESS) {
+        throw std::runtime_error("Invocation failed for " + cmd[0]);
+    }
+
+    return iss.str();
 }

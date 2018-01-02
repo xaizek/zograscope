@@ -31,6 +31,12 @@ static std::string cFile = R"(
     }
 )";
 
+static std::string cxxFile = R"(
+    Class::Class(temp<int> &ref) {
+        throw new something();
+    }
+)";
+
 static std::string makeFile = R"(
     target1 := something
     .PHONY: all
@@ -81,6 +87,23 @@ TEST_CASE("C is detected", "[language]")
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
     CHECK_FALSE(lang->parse(cFile, "<input>", false, mr).hasFailed());
+}
+
+TEST_CASE("C++ is detected", "[.srcml][language]")
+{
+    auto names = {
+        "Makefile.cpp", "file.hpp",
+        "c.cxx", "main.hpp",
+        "head.cc", "tail.hh",
+    };
+
+    for (const std::string &fileName : names) {
+        INFO("Filename: " << fileName);
+
+        cpp17::pmr::monolithic mr;
+        std::unique_ptr<Language> lang = Language::create(fileName);
+        CHECK_FALSE(lang->parse(cxxFile, "<input>", false, mr).hasFailed());
+    }
 }
 
 TEST_CASE("Make is detected", "[language]")

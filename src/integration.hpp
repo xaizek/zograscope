@@ -19,7 +19,9 @@
 #define ZOGRASCOPE__INTEGRATION_HPP__
 
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 /**
  * @file integration.hpp
@@ -78,5 +80,18 @@ bool isOutputToTerminal();
  *          of the type.
  */
 std::pair<unsigned int, unsigned int> getTerminalSize();
+
+/**
+ * @brief Runs a command and captures its output.
+ *
+ * @note The parameter is taken by value to avoid casting away constness.
+ *
+ * @param cmd Program name followed by its arguments.
+ * @param input Input to be sent to program's standard input stream.
+ *
+ * @throws std::runtime_error On errors (including application returning non-0).
+ */
+std::string readCommandOutput(std::vector<std::string> cmd,
+                              const std::string &input);
 
 #endif // ZOGRASCOPE__INTEGRATION_HPP__

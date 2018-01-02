@@ -86,6 +86,9 @@ Tree parseC(const std::string &str, bool coarse = false);
 // Parses Make source into a tree.
 Tree parseMake(const std::string &str);
 
+// Parses C++ source into a tree.
+Tree parseCxx(const std::string &str);
+
 // Finds the first node of specified type which has a matching value of its
 // label (or any label if `label` is an empty string).
 const Node * findNode(const Tree &tree, Type type,
@@ -105,5 +108,9 @@ void diffC(const std::string &left, const std::string &right, bool skipRefine);
 // Compares two Make sources with expectation being embedded in them in form of
 // trailing `## <expectation>` markers.
 void diffMake(const std::string &left, const std::string &right);
+
+// Compares two C++ sources with expectation being embedded in them in form of
+// trailing `/// <expectation>` markers.
+void diffSrcmlCxx(const std::string &left, const std::string &right);
 
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__
