@@ -121,6 +121,8 @@ Then configure which files it should be used for (`.git/info/attributes`):
 *.[ch]        diff=zs-diff
 *.h.in        diff=zs-diff
 
+*.[ch]pp      diff=zs-diff
+
 Makefile      diff=zs-diff
 Makefile.am   diff=zs-diff
 Makefile.win  diff=zs-diff
