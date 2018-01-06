@@ -53,6 +53,8 @@ private:
     void compare(Node *T1, Node *T2);
     // Recursively compares nodes that are marked as changed.
     void compareChanged(Node *node);
+    // Flattens two trees simultaneously.
+    void flatten(Node *x, Node *y);
     // Attempts to flatten subtrees on a specific level.  Returns `true` if
     // anything was flattened.
     bool flatten(Node *x, Node *y, int level);
@@ -184,19 +186,10 @@ Comparator::compare(Node *T1, Node *T2)
         distiller.distill(*subT1, *subT2);
     }
 
-    int flattenLevel = 0;
-    if (flatten(T1, T2, flattenLevel)) {
-        ++flattenLevel;
-        flatten(T1, T2, flattenLevel);
-    }
-
     // Flatten unmatched trees into parent tree of their roots before doing
     // common distilling.
-    while (++flattenLevel < 4) {
-        if (flatten(T1, T2, flattenLevel)) {
-            break;
-        }
-    }
+    flatten(T1, T2);
+
     distiller.distill(*T1, *T2);
     setParentLinks(T1, nullptr);
     setParentLinks(T2, nullptr);
@@ -223,6 +216,22 @@ Comparator::compareChanged(Node *node)
             }
         } else {
             compareChanged(x);
+        }
+    }
+}
+
+void
+Comparator::flatten(Node *x, Node *y)
+{
+    int flattenLevel = 0;
+    if (flatten(x, y, flattenLevel)) {
+        ++flattenLevel;
+        flatten(x, y, flattenLevel);
+    }
+
+    while (++flattenLevel < 4) {
+        if (flatten(x, y, flattenLevel)) {
+            break;
         }
     }
 }
