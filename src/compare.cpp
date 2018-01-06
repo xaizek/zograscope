@@ -184,6 +184,18 @@ Comparator::compare(Node *T1, Node *T2)
 
         Node *subT1 = match.x, *subT2 = match.y;
         distiller.distill(*subT1, *subT2);
+
+        if (subT1->relative == subT2 && subT1->next && subT2->next &&
+            !subT1->next->last && !subT2->next->last) {
+            // Process next layers of nodes which were identified as updated the
+            // same way compareChanged() does it.
+            compare(subT1->next, subT2->next);
+            subT1->state = State::Unchanged;
+            subT2->state = State::Unchanged;
+            // Mark the trees as satellites to exclude them from distilling.
+            subT1->satellite = true;
+            subT2->satellite = true;
+        }
     }
 
     // Flatten unmatched trees into parent tree of their roots before doing

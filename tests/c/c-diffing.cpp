@@ -1650,3 +1650,45 @@ TEST_CASE("Nested statements with values are matched correctly", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("High-level matching is not ruined by distilling", "[comparison]")
+{
+    diffC(R"(
+        void cleanup_at_exit(void) {                               /// Deletions
+            unlink(pipe_path);                                     /// Deletions
+        }                                                          /// Deletions
+
+        void ipc_check(void) {
+            assert(initialized != 0);                              /// Deletions
+        }
+
+        char **
+        ipc_list(int *len)                                         /// Deletions
+        {
+            list_data_t data = { .ipc_dir = get_ipc_dir(), };
+            qsort(data.lst, data.len, sizeof(*data.lst), &sorter);
+        }
+    )", R"(
+        void ipc_free(ipc_t *ipc) {                                /// Additions
+            fclose(ipc->pipe_file);                                /// Additions
+        }                                                          /// Additions
+
+        void ipc_check(void) {
+            char *const pkg = receive_pkg(ipc);                    /// Additions
+        }
+
+        char ** ipc_list(int *len) {                               /// Additions
+            return list_servers(NULL, len);                        /// Additions
+        }                                                          /// Additions
+
+        char **
+        list_servers(const ipc_t *ipc, int *len)                   /// Additions
+        {
+            list_data_t data = {
+                .ipc_dir = get_ipc_dir(),
+                .ipc = ipc                                         /// Additions
+            };
+            qsort(data.lst, data.len, sizeof(*data.lst), &sorter);
+        }
+    )", true);
+}
