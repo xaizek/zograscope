@@ -444,24 +444,24 @@ multiplicative_expression
 additive_expression
     : multiplicative_expression                         %dprec 2
     | additive_expression '+' multiplicative_expression %dprec 1
-    { if ($1->children.size() <= 1U) {
+    { if ($1->stype == +C11SType::AdditiveExpr) {
+          $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator),
+                                tb->addNode($3, @3) });
+      } else {
           $$ = tb->addNode({ $1,
                              tb->addNode($2, @2, +C11SType::Separator),
                              tb->addNode($3, @3) },
                            +C11SType::AdditiveExpr);
-      } else {
-          $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator),
-                                tb->addNode($3, @3) });
       } }
     | additive_expression '-' multiplicative_expression %dprec 1
-    { if ($1->children.size() <= 1U) {
+    { if ($1->stype == +C11SType::AdditiveExpr) {
+          $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator),
+                                tb->addNode($3, @3) });
+      } else {
           $$ = tb->addNode({ $1,
                              tb->addNode($2, @2, +C11SType::Separator),
                              tb->addNode($3, @3) },
                            +C11SType::AdditiveExpr);
-      } else {
-          $$ = tb->append($1, { tb->addNode($2, @2, +C11SType::Separator),
-                                tb->addNode($3, @3) });
       } }
     ;
 

@@ -1692,3 +1692,31 @@ TEST_CASE("High-level matching is not ruined by distilling", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Additive operators are added/removed", "[comparison]")
+{
+    // Moves can be omitted in the future, but matches with and without sizeof()
+    // must yield similar results.
+
+    diffC(R"(
+        int a =
+              var  /// Moves
+              ;
+    )", R"(
+        int a =
+              var  /// Moves
+              + 1  /// Additions
+              ;
+    )", true);
+
+    diffC(R"(
+        int a =
+              sizeof(var)  /// Moves
+              ;
+    )", R"(
+        int a =
+              sizeof(var)  /// Moves
+              - 1          /// Additions
+              ;
+    )", true);
+}
