@@ -385,10 +385,15 @@ unary_expression
                          tb->addNode($2, @2) },
                        +C11SType::TemporaryContainer); }
     | SIZEOF unary_expression  %dprec 2
-    { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2) },
+                       +C11SType::SizeOf); }
     | SIZEOF '(' type_name ')' %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4) },
+                       +C11SType::SizeOf); }
     | _ALIGNOF '(' type_name ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }

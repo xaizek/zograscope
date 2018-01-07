@@ -847,3 +847,19 @@ TEST_CASE("Call without arguments is decomposed", "[comparison][parsing]")
                                                 );
     )", true);
 }
+
+TEST_CASE("Sizeof of equivalent forms handled appropriately",
+          "[comparison][parsing]")
+{
+    diffC(R"(
+        int a = sizeof
+                     (    /// Deletions
+                     var  /// Moves
+                     )    /// Deletions
+                     ;
+    )", R"(
+        int a = sizeof
+                     var  /// Moves
+                     ;
+    )", true);
+}

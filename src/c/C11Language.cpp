@@ -356,6 +356,7 @@ C11Language::toString(SType stype) const
         case C11SType::AdditiveExpr:        return "C11SType::AdditiveExpr";
         case C11SType::PointerDecl:         return "C11SType::PointerDecl";
         case C11SType::DirectDeclarator:    return "C11SType::DirectDeclarator";
+        case C11SType::SizeOf:              return "C11SType::SizeOf";
         case C11SType::TemporaryContainer:  return "C11SType::TemporaryContainer";
         case C11SType::Bundle:              return "C11SType::Bundle";
         case C11SType::BundleComma:         return "C11SType::BundleComma";

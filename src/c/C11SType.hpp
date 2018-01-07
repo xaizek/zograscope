@@ -78,6 +78,7 @@ enum class C11SType : std::uint8_t
     AdditiveExpr,
     PointerDecl,
     DirectDeclarator,
+    SizeOf,
     TemporaryContainer,
     Bundle,
     BundleComma,
