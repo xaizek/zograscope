@@ -86,10 +86,11 @@ DiffSource::DiffSource(const Node &root)
         int line;
         int col;
 
-        void run(const Node &node, bool moved)
+        void run(const Node &node, bool forceChanged)
         {
             if (node.next != nullptr) {
-                return run(*node.next, moved || node.moved);
+                forceChanged |= (node.moved || node.state != State::Unchanged);
+                return run(*node.next, forceChanged);
             }
 
             if (node.leaf) {
@@ -116,7 +117,9 @@ DiffSource::DiffSource(const Node &root)
                 col += spell.front().size();
                 buffer.append(spell.front().cbegin(), spell.front().cend());
 
-                const bool changed = (node.state != State::Unchanged || moved);
+                const bool changed = forceChanged
+                                  || node.moved
+                                  || node.state != State::Unchanged;
                 modified.back() = (modified.back() || changed);
 
                 for (std::size_t i = 1U; i < spell.size(); ++i) {
@@ -133,7 +136,7 @@ DiffSource::DiffSource(const Node &root)
             }
 
             for (Node *child : node.children) {
-                run(*child, moved);
+                run(*child, forceChanged);
             }
         }
     } visitor { lines, modified, storage, {}, {}, 0, 1 };

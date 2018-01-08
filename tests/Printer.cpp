@@ -191,7 +191,7 @@ R"(void f() {
     REQUIRE(normalizeText(oss.str()) == expected);
 }
 
-TEST_CASE("Lines with changes aren't folded", "[printer]")
+TEST_CASE("Lines with moves aren't folded", "[printer]")
 {
     Tree oldTree = parseC(R"(
         void f() {
@@ -249,6 +249,84 @@ TEST_CASE("Lines with changes aren't folded", "[printer]")
          12                                         |  12
          13          void h() {                     ~  13          {:void:} {:f:}{:(:}{:):} {:{:}
          14          }                              ~  14          {:}:}
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        int array[] = {
+            somethingOldThatWontMatch,
+            somethingOldThatWontMatch,
+            somethingOldThatWontMatch,
+
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+
+            somethingOldThatWontMatch,
+            somethingOldThatWontMatch,
+            somethingOldThatWontMatch,
+        };
+    )", true);
+    Tree newTree = parseC(R"(
+        int array[] = {
+            aNewThingThatHasNothingInCommonWithTheOldOne,
+            aNewThingThatHasNothingInCommonWithTheOldOne,
+            aNewThingThatHasNothingInCommonWithTheOldOne,
+
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+            somethingCommon,
+
+            aNewThingThatHasNothingInCommonWithTheOldOne,
+            aNewThingThatHasNothingInCommonWithTheOldOne,
+            aNewThingThatHasNothingInCommonWithTheOldOne,
+        };
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          1                                                 |   1
+          2          int array[] = {-{-}                    ~   2          int array[] = {+{+}
+          3              {-somethingOldThatWontMatch-}{-,-} <   -
+          4              {-somethingOldThatWontMatch-}{-,-} <   -
+          5              {-somethingOldThatWontMatch-}{-,-} <   -
+          -                                                 >   3              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          -                                                 >   4              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          -                                                 >   5              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          6                                                 |   6
+          7              {-somethingCommon-}{-,-}           ~   7              {+somethingCommon+}{+,+}
+          8              {-somethingCommon-}{-,-}           ~   8              {+somethingCommon+}{+,+}
+          9              {-somethingCommon-}{-,-}           ~   9              {+somethingCommon+}{+,+}
+          10              {-somethingCommon-}{-,-}           ~  10              {+somethingCommon+}{+,+}
+          11              {-somethingCommon-}{-,-}           ~  11              {+somethingCommon+}{+,+}
+          12              {-somethingCommon-}{-,-}           ~  12              {+somethingCommon+}{+,+}
+          13                                                 |  13
+          14              {-somethingOldThatWontMatch-}{-,-} <  --
+          15              {-somethingOldThatWontMatch-}{-,-} <  --
+          16              {-somethingOldThatWontMatch-}{-,-} <  --
+          --                                                 >  14              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          --                                                 >  15              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          --                                                 >  16              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          17          {-}-};                                 ~  17          {+}+};
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
