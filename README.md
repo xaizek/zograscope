@@ -32,7 +32,7 @@ experiment, but this should improve over time.
 | Language  |  Status                                                          |
 |-----------|------------------------------------------------------------------|
 |  C        |  C11 and earlier with common extensions, but without K&R syntax  |
-|  C++      |  C14 and earlier with common extensions                          |
+|  C++      |  C++14 and earlier with common extensions                        |
 |  GNU Make |  Most of the syntax                                              |
 
 #### C ####
