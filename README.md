@@ -96,7 +96,7 @@ A terminal-based syntax-aware diff.
 
 Simple syntax highlighter for xterm-256color palette.
 
-## Building ##
+## Building and installing ##
 
 ```
 make release check
@@ -104,6 +104,16 @@ make release check
 
 This will build release version and run tests.  The executables will be named
 `release/zs-*`.
+
+There is no data, so just making them available in the `$PATH` will work.
+However, it's possible to install conventionally (`/usr` prefix by default):
+
+```
+make install
+```
+
+`DESTDIR` and `PREFIX` can be set to modify destination location.  On invoking
+`make uninstall` same values of these values should be specified.
 
 ### Dependencies ###
 

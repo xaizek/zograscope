@@ -5,6 +5,10 @@ CXXFLAGS += -DYYDEBUG -DTIXML_USE_STL
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
 LDFLAGS  += -lboost_system
 
+INSTALL := install
+DESTDIR :=
+PREFIX  := /usr
+
 # a variable that can be overridden to control which tests to run
 TESTS :=
 
@@ -124,6 +128,7 @@ out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))
 
 .PHONY: all check clean debug release sanitize-basic
 .PHONY: coverage reset-coverage
+.PHONY: install uninstall
 
 all: $(lib)
 
@@ -148,6 +153,13 @@ $(lib): $(lib_objects)
 
 check: $(target) $(out_dir)/tests/tests reset-coverage
 	@$(out_dir)/tests/tests $(TESTS)
+
+install: release
+	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
+	$(INSTALL) $(tools_bins) $(DESTDIR)$(PREFIX)/bin
+
+uninstall:
+	$(RM) $(addprefix $(DESTDIR)$(PREFIX)/bin/,$(notdir $(tools_bins)))
 
 $(out_dir)/src/c/c11-lexer.hpp: $(out_dir)/src/c/c11-lexer.gen.cpp
 $(out_dir)/src/c/c11-lexer.gen.cpp: src/c/c11-lexer.flex \
