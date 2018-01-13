@@ -55,11 +55,16 @@
         if ((t) != WS) { \
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
-        if ((t) == CHARS || (t) == CALL_SUFFIX) { \
-            ++yyextra->contiguousChars; \
-        } else { \
-            yyextra->contiguousChars = 0; \
+        yyextra->contiguousChars = 0; \
+        return (yylval->text.token = (t)); \
+    } while (false)
+
+#define CHAR_LIKE_TOKEN(t) \
+    do { \
+        if ((t) != WS) { \
+            yyextra->tb->markWithPostponed(yylval->text); \
         } \
+        ++yyextra->contiguousChars; \
         return (yylval->text.token = (t)); \
     } while (false)
 
@@ -170,7 +175,7 @@ $.                             TOKEN(VAR);
     }
     --yyextra->callNesting;
     yyextra->lastCharOffset = yyextra->offset;
-    TOKEN(CALL_SUFFIX);
+    CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 "}" {
     if (yyextra->callNesting == 0) {
@@ -180,7 +185,7 @@ $.                             TOKEN(VAR);
     }
     --yyextra->callNesting;
     yyextra->lastCharOffset = yyextra->offset;
-    TOKEN(CALL_SUFFIX);
+    CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 ","                            TOKEN(',');
 ":"                            TOKEN(':');
@@ -193,7 +198,7 @@ $.                             TOKEN(VAR);
         TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
-    TOKEN(CHARS);
+    CHAR_LIKE_TOKEN(CHARS);
 }
 
 %%
