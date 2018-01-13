@@ -168,10 +168,29 @@ NL                      \n|\r|\r\n
     TOKEN(CALL_PREFIX);
 }
 $.                             TOKEN(VAR);
-"("                            TOKEN('(');
+"(" {
+    if (yylval->text.from != yyextra->lastCharOffset &&
+        yyextra->contiguousChars != 0) {
+        yyextra->offset -= yyleng;
+        yyextra->col -= yyleng;
+        yyless(0);
+        TOKEN(WS);
+    }
+    yyextra->lastCharOffset = yyextra->offset;
+    if (!yyextra->nesting.empty()) {
+        yyextra->nesting.push_back(MakeLexerData::ArgumentNesting);
+    }
+    TOKEN('(');
+}
 ")" {
-    if (yyextra->nesting.empty()) {
-        TOKEN(')');
+    if (yyextra->nesting.empty() ||
+        yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
+        if (!yyextra->nesting.empty()) {
+            yyextra->nesting.pop_back();
+            CHAR_LIKE_TOKEN(')');
+        } else {
+            TOKEN(')');
+        }
     }
     yyextra->nesting.pop_back();
     yyextra->lastCharOffset = yyextra->offset;
