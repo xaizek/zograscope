@@ -70,7 +70,7 @@
 
 #define KW(t) \
     do { \
-        if (yyextra->callNesting == 0) { \
+        if (yyextra->nesting.empty()) { \
             TOKEN(t); \
         } else { \
             yyextra->offset -= yyleng; \
@@ -164,26 +164,26 @@ NL                      \n|\r|\r\n
         TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
-    ++yyextra->callNesting;
+    yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
     TOKEN(CALL_PREFIX);
 }
 $.                             TOKEN(VAR);
 "("                            TOKEN('(');
 ")" {
-    if (yyextra->callNesting == 0) {
+    if (yyextra->nesting.empty()) {
         TOKEN(')');
     }
-    --yyextra->callNesting;
+    yyextra->nesting.pop_back();
     yyextra->lastCharOffset = yyextra->offset;
     CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 "}" {
-    if (yyextra->callNesting == 0) {
+    if (yyextra->nesting.empty()) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         REJECT;
     }
-    --yyextra->callNesting;
+    yyextra->nesting.pop_back();
     yyextra->lastCharOffset = yyextra->offset;
     CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }

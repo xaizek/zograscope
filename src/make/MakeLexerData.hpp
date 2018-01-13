@@ -22,12 +22,15 @@
 #include <cstring>
 
 #include <string>
+#include <vector>
 
 #include "make/make-parser.hpp"
 #include "LexerData.hpp"
 
 struct MakeLexerData : LexerData
 {
+    static constexpr bool FunctionNesting = false;
+
     std::size_t offset = 0U;
     std::size_t lineoffset = 0U;
     std::size_t line = 1U;
@@ -38,7 +41,7 @@ struct MakeLexerData : LexerData
 
     std::size_t lastCharOffset = static_cast<std::size_t>(-1);
     int contiguousChars = 0;
-    int callNesting = 0;
+    std::vector<bool> nesting;
 
     MakeParseData *pd;
 
