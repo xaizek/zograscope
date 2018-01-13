@@ -55,17 +55,22 @@
         if ((t) != WS) { \
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
-        if ((t) == CHARS || (t) == CALL_SUFFIX) { \
-            ++yyextra->contiguousChars; \
-        } else { \
-            yyextra->contiguousChars = 0; \
+        yyextra->contiguousChars = 0; \
+        return (yylval->text.token = (t)); \
+    } while (false)
+
+#define CHAR_LIKE_TOKEN(t) \
+    do { \
+        if ((t) != WS) { \
+            yyextra->tb->markWithPostponed(yylval->text); \
         } \
+        ++yyextra->contiguousChars; \
         return (yylval->text.token = (t)); \
     } while (false)
 
 #define KW(t) \
     do { \
-        if (yyextra->callNesting == 0) { \
+        if (yyextra->nesting.empty()) { \
             TOKEN(t); \
         } else { \
             yyextra->offset -= yyleng; \
@@ -159,28 +164,47 @@ NL                      \n|\r|\r\n
         TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
-    ++yyextra->callNesting;
+    yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
     TOKEN(CALL_PREFIX);
 }
 $.                             TOKEN(VAR);
-"("                            TOKEN('(');
-")" {
-    if (yyextra->callNesting == 0) {
-        TOKEN(')');
+"(" {
+    if (yylval->text.from != yyextra->lastCharOffset &&
+        yyextra->contiguousChars != 0) {
+        yyextra->offset -= yyleng;
+        yyextra->col -= yyleng;
+        yyless(0);
+        TOKEN(WS);
     }
-    --yyextra->callNesting;
     yyextra->lastCharOffset = yyextra->offset;
-    TOKEN(CALL_SUFFIX);
+    if (!yyextra->nesting.empty()) {
+        yyextra->nesting.push_back(MakeLexerData::ArgumentNesting);
+    }
+    TOKEN('(');
+}
+")" {
+    if (yyextra->nesting.empty() ||
+        yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
+        if (!yyextra->nesting.empty()) {
+            yyextra->nesting.pop_back();
+            CHAR_LIKE_TOKEN(')');
+        } else {
+            TOKEN(')');
+        }
+    }
+    yyextra->nesting.pop_back();
+    yyextra->lastCharOffset = yyextra->offset;
+    CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 "}" {
-    if (yyextra->callNesting == 0) {
+    if (yyextra->nesting.empty()) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         REJECT;
     }
-    --yyextra->callNesting;
+    yyextra->nesting.pop_back();
     yyextra->lastCharOffset = yyextra->offset;
-    TOKEN(CALL_SUFFIX);
+    CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 ","                            TOKEN(',');
 ":"                            TOKEN(':');
@@ -193,7 +217,7 @@ $.                             TOKEN(VAR);
         TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
-    TOKEN(CHARS);
+    CHAR_LIKE_TOKEN(CHARS);
 }
 
 %%

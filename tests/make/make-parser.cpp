@@ -208,6 +208,11 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(findNode(tree, Type::LeftBrackets, "${") != nullptr);
         CHECK(findNode(tree, Type::RightBrackets, "}") != nullptr);
     }
+    SECTION("Nested parenthesis") {
+        CHECK(makeIsParsed("$(info (b), ( (a) ) (c))"));
+        CHECK(makeIsParsed("$(info (b), ( (a) ) (c), ( $(substr $(a),$(b),$(c)) ) )"));
+        CHECK(makeIsParsed("$(foreach src, $(stmmac-srcs), ifeq ($(shell test $(R) -gt $(REV); echo $$?),0) )"));
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")

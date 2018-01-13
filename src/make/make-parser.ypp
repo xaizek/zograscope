@@ -119,6 +119,9 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> if_def_kw if_eq_kw identifier text char br colon
 %type <node> keywords comment_opt
 
+%type <node> expressions_i expression_i expression_text_i expression_function_i
+%type <node> text_i char_i
+
 %type <node> expressions_a expression_a expression_text_a expression_function_a
 %type <node> text_a char_a
 
@@ -413,6 +416,13 @@ expressions
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
+expressions_i
+    : expression_i
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
+    | expressions_i WS expression_i
+    { $$ = tb->append($1, tb->addNode($3, @3)); }
+    ;
+
 expressions_a
     : expression_a
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
@@ -457,6 +467,11 @@ expression
     | expression_function
     ;
 
+expression_i
+    : expression_text_i
+    | expression_function_i
+    ;
+
 expression_a
     : expression_text_a
     | expression_function_a
@@ -471,6 +486,13 @@ expression_text
     : text
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     | expression_function text
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+expression_text_i
+    : text_i
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
+    | expression_function_i text_i
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -491,9 +513,28 @@ expression_text_v
 expression_function
     : function
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
+    | '(' expressions_i ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3) },
+                       +MakeSType::TemporaryContainer); }
     | expression_text function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | expression_function function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
+expression_function_i
+    : function
+    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
+    | '(' expressions_i ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3) },
+                       +MakeSType::TemporaryContainer); }
+    | expression_function_i function
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    | expression_text_i function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -705,6 +746,14 @@ text
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
+text_i
+    : char_i
+    { $$ = tb->addNode({ tb->addNode($1, @1) },
+                       +MakeSType::TemporaryContainer); }
+    | text_i char_i
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    ;
+
 text_a
     : char_a
     { $$ = tb->addNode({ tb->addNode($1, @1) },
@@ -727,11 +776,15 @@ char
     | ':'        { $$ = tb->addNode($1, @1, 0); }
     ;
 
-char_a
+char_i
     : char
+    | ','        { $$ = tb->addNode($1, @1, 0); }
+    ;
+
+char_a
+    : char_i
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
-    | ','        { $$ = tb->addNode($1, @1, 0); }
     | keywords
     ;
 
