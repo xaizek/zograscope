@@ -204,6 +204,22 @@ TEST_CASE("Block nodes are spliced into their parents",
     using namespace srcmlcxx;
 
     Tree tree = parseCxx(R"(
+        struct Struct {
+            int callNesting = 0;
+        };
+
+        class Class {
+            int callNesting = 0;
+        };
+
+        enum Enum {
+            something
+        };
+
+        enum class EnumClass {
+            something
+        };
+
         void f() {
             int a;
             if (a) {
