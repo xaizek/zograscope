@@ -197,6 +197,7 @@ SrcmlCxxLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
         default:
             return -child->stype != SrcmlCxxSType::Call
                 && -child->stype != SrcmlCxxSType::FunctionDecl
+                && -child->stype != SrcmlCxxSType::DeclStmt
                 && -child->stype != SrcmlCxxSType::Parameter
                 && -child->stype != SrcmlCxxSType::EnumDecl;
     }
@@ -269,6 +270,7 @@ SrcmlCxxLanguage::isLayerBreak(SType stype) const
     return -stype == SrcmlCxxSType::Call
         || -stype == SrcmlCxxSType::Function
         || -stype == SrcmlCxxSType::FunctionDecl
+        || -stype == SrcmlCxxSType::DeclStmt
         || -stype == SrcmlCxxSType::ExprStmt
         || -stype == SrcmlCxxSType::Parameter
         || -stype == SrcmlCxxSType::EnumDecl

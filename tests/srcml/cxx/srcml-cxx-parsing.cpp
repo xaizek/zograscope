@@ -47,6 +47,25 @@ TEST_CASE("Functions and their declarations are moved to a separate layer",
     )");
 }
 
+TEST_CASE("Declarations are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        struct Struct {
+            int contiguousChars = 0;
+            int callNesting = 0;                            /// Deletions
+        };
+    )", R"(
+        struct Struct {
+            static constexpr bool FunctionNesting = false;  /// Additions
+            static constexpr bool ArgumentNesting = true;   /// Additions
+
+            int contiguousChars = 0;
+            std::vector<bool> nesting;                      /// Additions
+        };
+    )");
+}
+
 TEST_CASE("Statements are moved to a separate layer",
           "[.srcml][srcml-cxx][parsing]")
 {
