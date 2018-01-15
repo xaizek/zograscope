@@ -20,6 +20,7 @@
 
 #include <vector>
 
+class DiceString;
 class Language;
 class Node;
 
@@ -54,10 +55,15 @@ private:
     int countAlreadyMatched(const Node *node) const;
     // Counts number of already matched leaves in specified subtree.
     int countAlreadyMatchedLeaves(const Node *node) const;
+    // Matches unmatched internal nodes with similar nodes that have maximum
+    // number of common terminal nodes.
+    void matchPartiallyMatchedInternal(bool excludeValues);
 
 private:
-    Language &lang;               // Language of the nodes.
-    std::vector<Node *> po1, po2; // Nodes in post-order traversal order.
+    Language &lang;                // Language of the nodes.
+    std::vector<Node *> po1, po2;  // Nodes in post-order traversal order.
+    std::vector<DiceString> dice1; // DiceString of corresponding po1[i]->label.
+    std::vector<DiceString> dice2; // DiceString of corresponding po2[i]->label.
 };
 
 #endif // ZOGRASCOPE__CHANGE_DISTILLING_HPP__

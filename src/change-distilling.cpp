@@ -305,13 +305,13 @@ Distiller::distill(Node &T1, Node &T2)
     postOrderAndInit(T1, po1);
     postOrderAndInit(T2, po2);
 
-    std::vector<DiceString> dice1;
+    dice1.clear();
     dice1.reserve(po1.size());
     for (Node *x : po1) {
         dice1.emplace_back(x->label);
     }
 
-    std::vector<DiceString> dice2;
+    dice2.clear();
     dice2.reserve(po2.size());
     for (Node *x : po2) {
         dice2.emplace_back(x->label);
@@ -403,87 +403,6 @@ Distiller::distill(Node &T1, Node &T2)
                     match(x, y, State::Updated);
                 }
                 break;
-            }
-        }
-    };
-
-    auto matchPartiallyMatchedInternal = [&](bool excludeValues) {
-        // Description of a single match candidate.
-        struct Match
-        {
-            Node *x;             // Node of the first tree (T1).
-            Node *y;             // Node of the second tree (T2).
-            int common;          // Number of common terminal nodes, either with
-                                 // or without value nodes.
-            int commonWithValue; // Number of common terminal nodes including
-                                 // children of value nodes.  Used to resolve
-                                 // ties on `common`.
-        };
-
-        std::vector<Match> matches;
-
-        // once we have matched internal nodes properly, do second pass matching
-        // internal nodes that have at least one common leaf
-        for (Node *x : po1) {
-            if (!unmatchedInternal(x)) {
-                continue;
-            }
-
-            for (Node *y : po2) {
-                if (!unmatchedInternal(y) || !canMatch(x, y)) {
-                    continue;
-                }
-
-                NodeRange xChildren(descendants, po1, x);
-                NodeRange yChildren(descendants, po2, y);
-
-                NodeRange xValue, yValue;
-                if (haveValues(x, y)) {
-                    xValue = NodeRange(subtree, po1, x->getValue());
-                    yValue = NodeRange(subtree, po2, y->getValue());
-                }
-
-                int common = 0;
-                int commonWithValue = 0;
-                for (const Node *n : yChildren) {
-                    if (!isTerminal(n)) {
-                        continue;
-                    }
-
-                    if (n->relative == nullptr) {
-                        continue;
-                    }
-
-                    if (xChildren.includes(n->relative)) {
-                        if (!yValue.includes(n) &&
-                            !xValue.includes(n->relative)) {
-                            ++common;
-                        }
-                        ++commonWithValue;
-                    }
-                }
-
-                if (!excludeValues) {
-                    common = commonWithValue;
-                }
-
-                const float similarity = dice1[x->poID].compare(dice2[y->poID]);
-                if (common > 0 && similarity >= 0.5f) {
-                    matches.push_back({ x, y, common, commonWithValue });
-                }
-            }
-        }
-
-        std::stable_sort(matches.begin(), matches.end(),
-                        [&](const Match &a, const Match &b) {
-                            return b.common < a.common
-                                || (b.common == a.common &&
-                                    b.commonWithValue < a.commonWithValue);
-                        });
-
-        for (const Match &m : matches) {
-            if (m.x->relative == nullptr && m.y->relative == nullptr) {
-                match(m.x, m.y, State::Unchanged);
             }
         }
     };
@@ -687,4 +606,87 @@ Distiller::countAlreadyMatchedLeaves(const Node *node) const
         count += countAlreadyMatchedLeaves(child);
     }
     return count;
+}
+
+void
+Distiller::matchPartiallyMatchedInternal(bool excludeValues)
+{
+    // Description of a single match candidate.
+    struct Match
+    {
+        Node *x;             // Node of the first tree (T1).
+        Node *y;             // Node of the second tree (T2).
+        int common;          // Number of common terminal nodes, either with
+                             // or without value nodes.
+        int commonWithValue; // Number of common terminal nodes including
+                             // children of value nodes.  Used to resolve
+                             // ties on `common`.
+    };
+
+    std::vector<Match> matches;
+
+    // Once we have matched internal nodes properly, do second pass matching
+    // internal nodes that have at least one common leaf.
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            NodeRange xChildren(descendants, po1, x);
+            NodeRange yChildren(descendants, po2, y);
+
+            NodeRange xValue, yValue;
+            if (haveValues(x, y)) {
+                xValue = NodeRange(subtree, po1, x->getValue());
+                yValue = NodeRange(subtree, po2, y->getValue());
+            }
+
+            int common = 0;
+            int commonWithValue = 0;
+            for (const Node *n : yChildren) {
+                if (!isTerminal(n)) {
+                    continue;
+                }
+
+                if (n->relative == nullptr) {
+                    continue;
+                }
+
+                if (xChildren.includes(n->relative)) {
+                    if (!yValue.includes(n) &&
+                        !xValue.includes(n->relative)) {
+                        ++common;
+                    }
+                    ++commonWithValue;
+                }
+            }
+
+            if (!excludeValues) {
+                common = commonWithValue;
+            }
+
+            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
+            if (common > 0 && similarity >= 0.5f) {
+                matches.push_back({ x, y, common, commonWithValue });
+            }
+        }
+    }
+
+    std::stable_sort(matches.begin(), matches.end(),
+                    [&](const Match &a, const Match &b) {
+                        return b.common < a.common
+                            || (b.common == a.common &&
+                                b.commonWithValue < a.commonWithValue);
+                    });
+
+    for (const Match &m : matches) {
+        if (m.x->relative == nullptr && m.y->relative == nullptr) {
+            match(m.x, m.y, State::Unchanged);
+        }
+    }
 }
