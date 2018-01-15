@@ -413,6 +413,7 @@ Distiller::distill(Node &T1, Node &T2)
             Node *x;
             Node *y;
             int common;
+            int commonWithValue;
         };
 
         std::vector<Match> matches;
@@ -433,14 +434,15 @@ Distiller::distill(Node &T1, Node &T2)
                 NodeRange yChildren(descendants, po2, y);
 
                 NodeRange xValue, yValue;
-                if (excludeValues && haveValues(x, y)) {
+                if (haveValues(x, y)) {
                     xValue = NodeRange(subtree, po1, x->getValue());
                     yValue = NodeRange(subtree, po2, y->getValue());
                 }
 
                 int common = 0;
+                int commonWithValue = 0;
                 for (const Node *n : yChildren) {
-                    if (!isTerminal(n) || yValue.includes(n)) {
+                    if (!isTerminal(n)) {
                         continue;
                     }
 
@@ -448,22 +450,31 @@ Distiller::distill(Node &T1, Node &T2)
                         continue;
                     }
 
-                    if (xChildren.includes(n->relative) &&
-                        !xValue.includes(n->relative)) {
-                        ++common;
+                    if (xChildren.includes(n->relative)) {
+                        if (!yValue.includes(n) &&
+                            !xValue.includes(n->relative)) {
+                            ++common;
+                        }
+                        ++commonWithValue;
                     }
+                }
+
+                if (!excludeValues) {
+                    common = commonWithValue;
                 }
 
                 const float similarity = dice1[x->poID].compare(dice2[y->poID]);
                 if (common > 0 && similarity >= 0.5f) {
-                    matches.push_back({ x, y, common });
+                    matches.push_back({ x, y, common, commonWithValue });
                 }
             }
         }
 
         std::stable_sort(matches.begin(), matches.end(),
                         [&](const Match &a, const Match &b) {
-                            return b.common < a.common;
+                            return b.common < a.common
+                                || (b.common == a.common &&
+                                    b.commonWithValue < a.commonWithValue);
                         });
 
         for (const Match &m : matches) {
@@ -476,7 +487,7 @@ Distiller::distill(Node &T1, Node &T2)
     distillLeafs();
     distillInternal();
     // First time around we don't want to use values as our guide because they
-    // bind statements too strong, which ruins picking correct value out of
+    // bind statements too strongly, which ruins picking correct value out of
     // several identical candidates.
     matchPartiallyMatchedInternal(true);
     matchFirstLevelMatchedInternal(po1, po2);
