@@ -55,6 +55,8 @@ private:
     int countAlreadyMatched(const Node *node) const;
     // Counts number of already matched leaves in specified subtree.
     int countAlreadyMatchedLeaves(const Node *node) const;
+    // Main pass for matching internal nodes.
+    void distillInternal();
     // Matches unmatched internal nodes with similar nodes that have maximum
     // number of common terminal nodes.
     void matchPartiallyMatchedInternal(bool excludeValues);

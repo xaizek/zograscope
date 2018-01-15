@@ -356,57 +356,6 @@ Distiller::distill(Node &T1, Node &T2)
         }
     };
 
-    auto distillInternal = [&]() {
-        for (Node *x : po1) {
-            if (!unmatchedInternal(x)) {
-                continue;
-            }
-
-            for (Node *y : po2) {
-                if (!unmatchedInternal(y) || !canMatch(x, y)) {
-                    continue;
-                }
-
-                if (lang.alwaysMatches(y)) {
-                    match(x, y, State::Unchanged);
-                    break;
-                }
-
-                const Node *xParent = getParent(x);
-                const Node *yParent = getParent(y);
-
-                // Containers are there to hold elements of their parent nodes
-                // and can be matched only to containers of matched parents.
-                if (lang.isContainer(x) && haveValues(xParent, yParent) &&
-                    xParent->getValue()->relative != nullptr) {
-                    if (xParent->getValue()->relative != yParent->getValue()) {
-                        continue;
-                    }
-                    match(x, y, State::Unchanged);
-                    break;
-                }
-
-                const float childrenSim = childrenSimilarity(x, po1, y, po2);
-                if (childrenSim == 0.0f) {
-                    continue;
-                }
-
-                const float labelSim = dice1[x->poID].compare(dice2[y->poID]);
-                if (labelSim < 0.6f && childrenSim < 0.8f) {
-                    continue;
-                }
-
-                if (labelSim == 1.0f && x->label == y->label &&
-                    childrenSim == 1.0f) {
-                    match(x, y, State::Unchanged);
-                } else {
-                    match(x, y, State::Updated);
-                }
-                break;
-            }
-        }
-    };
-
     distillLeafs();
     distillInternal();
     // First time around we don't want to use values as our guide because they
@@ -606,6 +555,59 @@ Distiller::countAlreadyMatchedLeaves(const Node *node) const
         count += countAlreadyMatchedLeaves(child);
     }
     return count;
+}
+
+void
+Distiller::distillInternal()
+{
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            if (lang.alwaysMatches(y)) {
+                match(x, y, State::Unchanged);
+                break;
+            }
+
+            const Node *xParent = getParent(x);
+            const Node *yParent = getParent(y);
+
+            // Containers are there to hold elements of their parent nodes
+            // and can be matched only to containers of matched parents.
+            if (lang.isContainer(x) && haveValues(xParent, yParent) &&
+                xParent->getValue()->relative != nullptr) {
+                if (xParent->getValue()->relative != yParent->getValue()) {
+                    continue;
+                }
+                match(x, y, State::Unchanged);
+                break;
+            }
+
+            const float childrenSim = childrenSimilarity(x, po1, y, po2);
+            if (childrenSim == 0.0f) {
+                continue;
+            }
+
+            const float labelSim = dice1[x->poID].compare(dice2[y->poID]);
+            if (labelSim < 0.6f && childrenSim < 0.8f) {
+                continue;
+            }
+
+            if (labelSim == 1.0f && x->label == y->label &&
+                childrenSim == 1.0f) {
+                match(x, y, State::Unchanged);
+            } else {
+                match(x, y, State::Updated);
+            }
+            break;
+        }
+    }
 }
 
 void
