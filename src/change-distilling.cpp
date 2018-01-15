@@ -408,12 +408,16 @@ Distiller::distill(Node &T1, Node &T2)
     };
 
     auto matchPartiallyMatchedInternal = [&](bool excludeValues) {
+        // Description of a single match candidate.
         struct Match
         {
-            Node *x;
-            Node *y;
-            int common;
-            int commonWithValue;
+            Node *x;             // Node of the first tree (T1).
+            Node *y;             // Node of the second tree (T2).
+            int common;          // Number of common terminal nodes, either with
+                                 // or without value nodes.
+            int commonWithValue; // Number of common terminal nodes including
+                                 // children of value nodes.  Used to resolve
+                                 // ties on `common`.
         };
 
         std::vector<Match> matches;
