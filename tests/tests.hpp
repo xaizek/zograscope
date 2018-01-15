@@ -101,6 +101,9 @@ int countLeaves(const Node &root, State state);
 
 int countInternal(const Node &root, SType stype, State state);
 
+// Strips whitespace and drops empty lines.
+std::string normalizeText(const std::string &s);
+
 // Compares two C sources with expectation being embedded in them in form of
 // trailing `/// <expectation>` markers.
 void diffC(const std::string &left, const std::string &right, bool skipRefine);

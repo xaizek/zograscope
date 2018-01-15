@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/utility/string_ref.hpp>
 #include "pmr/monolithic.hpp"
 
@@ -206,6 +207,22 @@ countInternal(const Node &root, SType stype, State state)
 
     visit(root);
     return count;
+}
+
+std::string
+normalizeText(const std::string &s)
+{
+    std::string result;
+    for (boost::string_ref sr : split(s, '\n')) {
+        std::string line = sr.to_string();
+        boost::trim_if(line, boost::is_any_of("\r\n \t"));
+
+        if (!line.empty()) {
+            result += line;
+            result += '\n';
+        }
+    }
+    return result;
 }
 
 void
