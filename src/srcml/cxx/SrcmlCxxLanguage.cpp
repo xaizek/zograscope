@@ -197,6 +197,7 @@ SrcmlCxxLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
         default:
             return -child->stype != SrcmlCxxSType::Call
                 && -child->stype != SrcmlCxxSType::FunctionDecl
+                && -child->stype != SrcmlCxxSType::DeclStmt
                 && -child->stype != SrcmlCxxSType::Parameter
                 && -child->stype != SrcmlCxxSType::EnumDecl;
     }
@@ -217,7 +218,7 @@ SrcmlCxxLanguage::isContainer(const Node *x) const
 bool
 SrcmlCxxLanguage::isDiffable(const Node *x) const
 {
-    return -x->stype == SrcmlCxxSType::Comment
+    return x->type == Type::Comments
         || x->type == Type::StrConstants;
 }
 
@@ -233,6 +234,9 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
     SrcmlCxxSType child = -childNode->stype;
     if (child == SrcmlCxxSType::Block) {
         if (-parent == SrcmlCxxSType::Function ||
+            -parent == SrcmlCxxSType::Struct ||
+            -parent == SrcmlCxxSType::Class ||
+            -parent == SrcmlCxxSType::Enum ||
             -parent == SrcmlCxxSType::Then ||
             -parent == SrcmlCxxSType::Else ||
             -parent == SrcmlCxxSType::For ||
@@ -269,6 +273,7 @@ SrcmlCxxLanguage::isLayerBreak(SType stype) const
     return -stype == SrcmlCxxSType::Call
         || -stype == SrcmlCxxSType::Function
         || -stype == SrcmlCxxSType::FunctionDecl
+        || -stype == SrcmlCxxSType::DeclStmt
         || -stype == SrcmlCxxSType::ExprStmt
         || -stype == SrcmlCxxSType::Parameter
         || -stype == SrcmlCxxSType::EnumDecl

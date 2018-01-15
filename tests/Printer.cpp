@@ -21,8 +21,6 @@
 #include <sstream>
 #include <string>
 
-#include <boost/algorithm/string/trim.hpp>
-
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
 #include "Printer.hpp"
@@ -30,8 +28,6 @@
 #include "tree.hpp"
 
 #include "tests.hpp"
-
-static std::string normalizeText(const std::string &s);
 
 TEST_CASE("Width of titles is considered on determining width", "[printer]")
 {
@@ -361,20 +357,4 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
-}
-
-static std::string
-normalizeText(const std::string &s)
-{
-    std::string result;
-    for (boost::string_ref sr : split(s, '\n')) {
-        std::string line = sr.to_string();
-        boost::trim_if(line, boost::is_any_of("\r\n \t"));
-
-        if (!line.empty()) {
-            result += line;
-            result += '\n';
-        }
-    }
-    return result;
 }
