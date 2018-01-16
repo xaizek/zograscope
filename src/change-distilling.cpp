@@ -294,7 +294,7 @@ matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
 void
 Distiller::distill(Node &T1, Node &T2)
 {
-    struct Match
+    struct TerminalMatch
     {
         Node *x;
         Node *y;
@@ -317,7 +317,7 @@ Distiller::distill(Node &T1, Node &T2)
         dice2.emplace_back(x->label);
     }
 
-    std::vector<Match> matches;
+    std::vector<TerminalMatch> matches;
 
     for (Node *x : po1) {
         if (!x->children.empty()) {
@@ -341,12 +341,12 @@ Distiller::distill(Node &T1, Node &T2)
     }
 
     std::stable_sort(matches.begin(), matches.end(),
-                     [&](const Match &a, const Match &b) {
+                     [&](const TerminalMatch &a, const TerminalMatch &b) {
                          return b.similarity < a.similarity;
                      });
 
     auto distillLeafs = [&]() {
-        for (const Match &m : matches) {
+        for (const TerminalMatch &m : matches) {
             if (m.x->relative == nullptr && m.y->relative == nullptr) {
                 match(m.x, m.y, (m.similarity == 1.0f &&
                                  m.y->label == m.x->label)
@@ -365,7 +365,7 @@ Distiller::distill(Node &T1, Node &T2)
     matchFirstLevelMatchedInternal(po1, po2);
 
     std::stable_sort(matches.begin(), matches.end(),
-                     [&](const Match &a, const Match &b) {
+                     [&](const TerminalMatch &a, const TerminalMatch &b) {
                          if (std::fabs(a.similarity - b.similarity) < 0.01f) {
                              return rateMatch(b.x, b.y) < rateMatch(a.x, a.y);
                          }
