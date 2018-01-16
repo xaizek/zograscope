@@ -299,7 +299,6 @@ Distiller::distill(Node &T1, Node &T2)
         Node *x;
         Node *y;
         float similarity;
-        mutable int common;
     };
 
     postOrderAndInit(T1, po1);
@@ -335,7 +334,7 @@ Distiller::distill(Node &T1, Node &T2)
 
             const float similarity = dice1[x->poID].compare(dice2[y->poID]);
             if (similarity >= 0.6f || canForceLeafMatch(x, y)) {
-                matches.push_back({ x, y, similarity, -1 });
+                matches.push_back({ x, y, similarity });
             }
         }
     }
