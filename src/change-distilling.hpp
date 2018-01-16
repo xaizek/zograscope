@@ -27,6 +27,8 @@ class Node;
 // Implements change-distilling algorithm.
 class Distiller
 {
+    struct TerminalMatch;
+
 public:
     // Creates an instance for the specific language.
     Distiller(Language &lang) : lang(lang)
@@ -39,6 +41,8 @@ public:
     void distill(Node &T1, Node &T2);
 
 private:
+    // Composes list of viable matches of terminals.
+    std::vector<TerminalMatch> generateTerminalMatches();
     // Computes children similarity.  Returns the similarity, which is 0.0 if
     // it's too small to consider nodes as matching.
     float childrenSimilarity(const Node *x,

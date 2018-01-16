@@ -107,6 +107,14 @@ private:
 
 }
 
+// Description of a single match candidate for matching terminals.
+struct Distiller::TerminalMatch
+{
+    Node *x;            // Node of the first tree (T1).
+    Node *y;            // Node of the first tree (T2).
+    float similarity;   // How similar labels of two nodes are in [0.0, 1.0].
+};
+
 static bool
 canMatch(const Node *x, const Node *y)
 {
@@ -294,13 +302,6 @@ matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
 void
 Distiller::distill(Node &T1, Node &T2)
 {
-    struct TerminalMatch
-    {
-        Node *x;
-        Node *y;
-        float similarity;
-    };
-
     postOrderAndInit(T1, po1);
     postOrderAndInit(T2, po2);
 
@@ -316,28 +317,7 @@ Distiller::distill(Node &T1, Node &T2)
         dice2.emplace_back(x->label);
     }
 
-    std::vector<TerminalMatch> matches;
-
-    for (Node *x : po1) {
-        if (!x->children.empty()) {
-            continue;
-        }
-
-        for (Node *y : po2) {
-            if (!y->children.empty()) {
-                continue;
-            }
-
-            if (!canMatch(x, y)) {
-                continue;
-            }
-
-            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
-            if (similarity >= 0.6f || canForceLeafMatch(x, y)) {
-                matches.push_back({ x, y, similarity });
-            }
-        }
-    }
+    std::vector<TerminalMatch> matches = generateTerminalMatches();
 
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const TerminalMatch &a, const TerminalMatch &b) {
@@ -419,6 +399,35 @@ postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
     node.poID = v.size();
 
     v.push_back(&node);
+}
+
+std::vector<Distiller::TerminalMatch>
+Distiller::generateTerminalMatches()
+{
+    std::vector<TerminalMatch> matches;
+
+    for (Node *x : po1) {
+        if (!x->children.empty()) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!y->children.empty()) {
+                continue;
+            }
+
+            if (!canMatch(x, y)) {
+                continue;
+            }
+
+            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
+            if (similarity >= 0.6f || canForceLeafMatch(x, y)) {
+                matches.push_back({ x, y, similarity });
+            }
+        }
+    }
+
+    return matches;
 }
 
 float
