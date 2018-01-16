@@ -154,23 +154,6 @@ clear(Node *node)
 }
 
 static void
-unbind(Node *node)
-{
-    if (node->children.empty()) {
-        return;
-    }
-
-    if (Node *relative = node->relative) {
-        node->relative = nullptr;
-        unbind(relative);
-    }
-
-    for (Node *child : node->children) {
-        unbind(child);
-    }
-}
-
-static void
 markNode(Node &node, State state)
 {
     node.state = state;
