@@ -304,14 +304,8 @@ Distiller::distill(Node &T1, Node &T2)
 {
     initialize(T1, T2);
 
-    std::vector<TerminalMatch> matches = generateTerminalMatches();
-
-    std::stable_sort(matches.begin(), matches.end(),
-                     [&](const TerminalMatch &a, const TerminalMatch &b) {
-                         return b.similarity < a.similarity;
-                     });
-
-    auto distillLeafs = [&]() {
+    std::vector<TerminalMatch> matches;
+    auto matchTerminals = [&matches]() {
         for (const TerminalMatch &m : matches) {
             if (m.x->relative == nullptr && m.y->relative == nullptr) {
                 match(m.x, m.y, (m.similarity == 1.0f &&
@@ -322,7 +316,16 @@ Distiller::distill(Node &T1, Node &T2)
         }
     };
 
-    distillLeafs();
+    // First round.
+
+    // First time terminal matching.
+    matches = generateTerminalMatches();
+    std::stable_sort(matches.begin(), matches.end(),
+                     [&](const TerminalMatch &a, const TerminalMatch &b) {
+                         return b.similarity < a.similarity;
+                     });
+    matchTerminals();
+
     distillInternal();
     // First time around we don't want to use values as our guide because they
     // bind statements too strongly, which ruins picking correct value out of
@@ -330,6 +333,9 @@ Distiller::distill(Node &T1, Node &T2)
     matchPartiallyMatchedInternal(true);
     matchFirstLevelMatchedInternal(po1, po2);
 
+    // Second round.
+
+    // Terminal re-matching.
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const TerminalMatch &a, const TerminalMatch &b) {
                          if (std::fabs(a.similarity - b.similarity) < 0.01f) {
@@ -337,15 +343,15 @@ Distiller::distill(Node &T1, Node &T2)
                          }
                          return b.similarity < a.similarity;
                      });
-
     clear(&T1);
     clear(&T2);
+    matchTerminals();
 
-    distillLeafs();
     distillInternal();
     matchPartiallyMatchedInternal(false);
     matchFirstLevelMatchedInternal(po1, po2);
 
+    // Marking remaining unmatched nodes.
     for (Node *x : po1) {
         if (x->relative == nullptr) {
             markNode(*x, State::Deleted);
