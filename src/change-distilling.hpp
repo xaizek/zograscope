@@ -41,6 +41,8 @@ public:
     void distill(Node &T1, Node &T2);
 
 private:
+    // Initializes {po,dice}[12] fields.
+    void initialize(Node &T1, Node &T2);
     // Composes list of viable matches of terminals.
     std::vector<TerminalMatch> generateTerminalMatches();
     // Computes children similarity.  Returns the similarity, which is 0.0 if

@@ -302,20 +302,7 @@ matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
 void
 Distiller::distill(Node &T1, Node &T2)
 {
-    postOrderAndInit(T1, po1);
-    postOrderAndInit(T2, po2);
-
-    dice1.clear();
-    dice1.reserve(po1.size());
-    for (Node *x : po1) {
-        dice1.emplace_back(x->label);
-    }
-
-    dice2.clear();
-    dice2.reserve(po2.size());
-    for (Node *x : po2) {
-        dice2.emplace_back(x->label);
-    }
+    initialize(T1, T2);
 
     std::vector<TerminalMatch> matches = generateTerminalMatches();
 
@@ -399,6 +386,25 @@ postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
     node.poID = v.size();
 
     v.push_back(&node);
+}
+
+void
+Distiller::initialize(Node &T1, Node &T2)
+{
+    postOrderAndInit(T1, po1);
+    postOrderAndInit(T2, po2);
+
+    dice1.clear();
+    dice1.reserve(po1.size());
+    for (Node *x : po1) {
+        dice1.emplace_back(x->label);
+    }
+
+    dice2.clear();
+    dice2.reserve(po2.size());
+    for (Node *x : po2) {
+        dice2.emplace_back(x->label);
+    }
 }
 
 std::vector<Distiller::TerminalMatch>
