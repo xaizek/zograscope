@@ -28,7 +28,15 @@
 
 static void postOrderAndInit(Node &root, std::vector<Node *> &v);
 static void postOrderAndInitImpl(Node &node, std::vector<Node *> &v);
+static void clear(Node *node);
+static bool haveValues(const Node *x, const Node *y);
+static void matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
+                                           const std::vector<Node *> &po2);
+static bool unmatchedInternal(const Node *node);
+static bool canMatch(const Node *x, const Node *y);
 static bool isTerminal(const Node *n);
+static void match(Node *x, Node *y, State state);
+static void markNode(Node &node, State state);
 
 namespace {
 
@@ -107,90 +115,13 @@ private:
 
 }
 
-static bool
-canMatch(const Node *x, const Node *y)
+// Description of a single match candidate for matching terminals.
+struct Distiller::TerminalMatch
 {
-    const Type xType = canonizeType(x->type);
-    const Type yType = canonizeType(y->type);
-
-    if (xType != Type::Virtual && xType == yType && x->label == y->label) {
-        return true;
-    }
-
-    if (xType >= Type::NonInterchangeable ||
-        yType >= Type::NonInterchangeable ||
-        xType != yType) {
-        return false;
-    }
-
-    if (xType == Type::Virtual && x->stype != y->stype) {
-        return false;
-    }
-
-    return true;
-}
-
-static void
-clear(Node *node)
-{
-    if (node->satellite) {
-        return;
-    }
-
-    node->relative = nullptr;
-    node->state = State::Unchanged;
-
-    for (Node *child : node->children) {
-        clear(child);
-    }
-}
-
-static void
-unbind(Node *node)
-{
-    if (node->children.empty()) {
-        return;
-    }
-
-    if (Node *relative = node->relative) {
-        node->relative = nullptr;
-        unbind(relative);
-    }
-
-    for (Node *child : node->children) {
-        unbind(child);
-    }
-}
-
-static void
-markNode(Node &node, State state)
-{
-    node.state = state;
-
-    State leafState = (state == State::Updated ? State::Unchanged : state);
-
-    for (Node *child : node.children) {
-        child->parent = &node;
-        if (child->satellite) {
-            if (child->stype == SType{}) {
-                child->state = leafState;
-            } else if (node.hasValue()) {
-                child->state = leafState;
-            } else if (child->relative == nullptr) {
-                child->state = leafState;
-            }
-        }
-    }
-}
-
-static bool
-haveValues(const Node *x, const Node *y)
-{
-    return x != nullptr
-        && y != nullptr
-        && x->hasValue()
-        && y->hasValue();
-}
+    Node *x;            // Node of the first tree (T1).
+    Node *y;            // Node of the first tree (T2).
+    float similarity;   // How similar labels of two nodes are in [0.0, 1.0].
+};
 
 int
 Distiller::rateMatch(const Node *x, const Node *y) const
@@ -219,134 +150,14 @@ Distiller::rateMatch(const Node *x, const Node *y) const
     return 2;
 }
 
-static void
-match(Node *x, Node *y, State state)
-{
-    markNode(*x, state);
-    markNode(*y, state);
-
-    x->relative = y;
-    y->relative = x;
-}
-
-static bool
-unmatchedInternal(Node *node)
-{
-    return (node->relative == nullptr && !node->children.empty());
-}
-
-// This pass matches nodes, whose direct children (ignoring comments) are
-// already matched with each other.
-static void
-matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
-                               const std::vector<Node *> &po2)
-{
-    for (Node *x : po1) {
-        if (!unmatchedInternal(x)) {
-            continue;
-        }
-
-        for (Node *y : po2) {
-            if (!unmatchedInternal(y) || !canMatch(x, y)) {
-                continue;
-            }
-
-            unsigned int i = 0U, j = 0U;
-            int xChildren = 0, yChildren = 0;
-            int nMatched = 0;
-            while (i < x->children.size() && j < y->children.size()) {
-                const Node *xChild = x->children[i], *yChild = y->children[j];
-                if (xChild->type == Type::Comments) {
-                    ++i;
-                    continue;
-                }
-                if (yChild->type == Type::Comments) {
-                    ++j;
-                    continue;
-                }
-
-                if ((xChild->satellite && yChild->satellite) ||
-                    xChild->relative == yChild) {
-                    ++nMatched;
-                }
-                ++i;
-                ++j;
-                ++xChildren;
-                ++yChildren;
-            }
-            while (i < x->children.size() &&
-                   x->children[i]->type == Type::Comments) {
-                ++i;
-                ++xChildren;
-            }
-            while (j < y->children.size() &&
-                   y->children[j]->type == Type::Comments) {
-                ++j;
-                ++xChildren;
-            }
-            if (nMatched == xChildren && nMatched == yChildren) {
-                match(x, y, State::Unchanged);
-            }
-        }
-    }
-}
-
 void
 Distiller::distill(Node &T1, Node &T2)
 {
-    struct Match
-    {
-        Node *x;
-        Node *y;
-        float similarity;
-        mutable int common;
-    };
+    initialize(T1, T2);
 
-    postOrderAndInit(T1, po1);
-    postOrderAndInit(T2, po2);
-
-    std::vector<DiceString> dice1;
-    dice1.reserve(po1.size());
-    for (Node *x : po1) {
-        dice1.emplace_back(x->label);
-    }
-
-    std::vector<DiceString> dice2;
-    dice2.reserve(po2.size());
-    for (Node *x : po2) {
-        dice2.emplace_back(x->label);
-    }
-
-    std::vector<Match> matches;
-
-    for (Node *x : po1) {
-        if (!x->children.empty()) {
-            continue;
-        }
-
-        for (Node *y : po2) {
-            if (!y->children.empty()) {
-                continue;
-            }
-
-            if (!canMatch(x, y)) {
-                continue;
-            }
-
-            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
-            if (similarity >= 0.6f || canForceLeafMatch(x, y)) {
-                matches.push_back({ x, y, similarity, -1 });
-            }
-        }
-    }
-
-    std::stable_sort(matches.begin(), matches.end(),
-                     [&](const Match &a, const Match &b) {
-                         return b.similarity < a.similarity;
-                     });
-
-    auto distillLeafs = [&]() {
-        for (const Match &m : matches) {
+    std::vector<TerminalMatch> matches;
+    auto matchTerminals = [&matches]() {
+        for (const TerminalMatch &m : matches) {
             if (m.x->relative == nullptr && m.y->relative == nullptr) {
                 match(m.x, m.y, (m.similarity == 1.0f &&
                                  m.y->label == m.x->label)
@@ -356,147 +167,42 @@ Distiller::distill(Node &T1, Node &T2)
         }
     };
 
-    auto distillInternal = [&]() {
-        for (Node *x : po1) {
-            if (!unmatchedInternal(x)) {
-                continue;
-            }
+    // First round.
 
-            for (Node *y : po2) {
-                if (!unmatchedInternal(y) || !canMatch(x, y)) {
-                    continue;
-                }
+    // First time terminal matching.
+    matches = generateTerminalMatches();
+    std::stable_sort(matches.begin(), matches.end(),
+                     [&](const TerminalMatch &a, const TerminalMatch &b) {
+                         return b.similarity < a.similarity;
+                     });
+    matchTerminals();
 
-                if (lang.alwaysMatches(y)) {
-                    match(x, y, State::Unchanged);
-                    break;
-                }
-
-                const Node *xParent = getParent(x);
-                const Node *yParent = getParent(y);
-
-                // Containers are there to hold elements of their parent nodes
-                // and can be matched only to containers of matched parents.
-                if (lang.isContainer(x) && haveValues(xParent, yParent) &&
-                    xParent->getValue()->relative != nullptr) {
-                    if (xParent->getValue()->relative != yParent->getValue()) {
-                        continue;
-                    }
-                    match(x, y, State::Unchanged);
-                    break;
-                }
-
-                const float childrenSim = childrenSimilarity(x, po1, y, po2);
-                if (childrenSim == 0.0f) {
-                    continue;
-                }
-
-                const float labelSim = dice1[x->poID].compare(dice2[y->poID]);
-                if (labelSim < 0.6f && childrenSim < 0.8f) {
-                    continue;
-                }
-
-                if (labelSim == 1.0f && x->label == y->label &&
-                    childrenSim == 1.0f) {
-                    match(x, y, State::Unchanged);
-                } else {
-                    match(x, y, State::Updated);
-                }
-                break;
-            }
-        }
-    };
-
-    auto matchPartiallyMatchedInternal = [&](bool excludeValues) {
-        struct Match
-        {
-            Node *x;
-            Node *y;
-            int common;
-        };
-
-        std::vector<Match> matches;
-
-        // once we have matched internal nodes properly, do second pass matching
-        // internal nodes that have at least one common leaf
-        for (Node *x : po1) {
-            if (!unmatchedInternal(x)) {
-                continue;
-            }
-
-            for (Node *y : po2) {
-                if (!unmatchedInternal(y) || !canMatch(x, y)) {
-                    continue;
-                }
-
-                NodeRange xChildren(descendants, po1, x);
-                NodeRange yChildren(descendants, po2, y);
-
-                NodeRange xValue, yValue;
-                if (excludeValues && haveValues(x, y)) {
-                    xValue = NodeRange(subtree, po1, x->getValue());
-                    yValue = NodeRange(subtree, po2, y->getValue());
-                }
-
-                int common = 0;
-                for (const Node *n : yChildren) {
-                    if (!isTerminal(n) || yValue.includes(n)) {
-                        continue;
-                    }
-
-                    if (n->relative == nullptr) {
-                        continue;
-                    }
-
-                    if (xChildren.includes(n->relative) &&
-                        !xValue.includes(n->relative)) {
-                        ++common;
-                    }
-                }
-
-                const float similarity = dice1[x->poID].compare(dice2[y->poID]);
-                if (common > 0 && similarity >= 0.5f) {
-                    matches.push_back({ x, y, common });
-                }
-            }
-        }
-
-        std::stable_sort(matches.begin(), matches.end(),
-                        [&](const Match &a, const Match &b) {
-                            return b.common < a.common;
-                        });
-
-        for (const Match &m : matches) {
-            if (m.x->relative == nullptr && m.y->relative == nullptr) {
-                match(m.x, m.y, State::Unchanged);
-            }
-        }
-    };
-
-    distillLeafs();
     distillInternal();
     // First time around we don't want to use values as our guide because they
-    // bind statements too strong, which ruins picking correct value out of
+    // bind statements too strongly, which ruins picking correct value out of
     // several identical candidates.
     matchPartiallyMatchedInternal(true);
     matchFirstLevelMatchedInternal(po1, po2);
 
+    // Second round.
+
+    // Terminal re-matching.
     std::stable_sort(matches.begin(), matches.end(),
-                     [&](const Match &a, const Match &b) {
+                     [&](const TerminalMatch &a, const TerminalMatch &b) {
                          if (std::fabs(a.similarity - b.similarity) < 0.01f) {
                              return rateMatch(b.x, b.y) < rateMatch(a.x, a.y);
                          }
                          return b.similarity < a.similarity;
                      });
-
     clear(&T1);
     clear(&T2);
+    matchTerminals();
 
-    distillLeafs();
     distillInternal();
     matchPartiallyMatchedInternal(false);
     matchFirstLevelMatchedInternal(po1, po2);
 
+    // Marking remaining unmatched nodes.
     for (Node *x : po1) {
         if (x->relative == nullptr) {
             markNode(*x, State::Deleted);
@@ -506,6 +212,25 @@ Distiller::distill(Node &T1, Node &T2)
         if (y->relative == nullptr) {
             markNode(*y, State::Inserted);
         }
+    }
+}
+
+void
+Distiller::initialize(Node &T1, Node &T2)
+{
+    postOrderAndInit(T1, po1);
+    postOrderAndInit(T2, po2);
+
+    dice1.clear();
+    dice1.reserve(po1.size());
+    for (Node *x : po1) {
+        dice1.emplace_back(x->label);
+    }
+
+    dice2.clear();
+    dice2.reserve(po2.size());
+    for (Node *x : po2) {
+        dice2.emplace_back(x->label);
     }
 }
 
@@ -537,6 +262,51 @@ postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
     node.poID = v.size();
 
     v.push_back(&node);
+}
+
+// Resets `relative` and `state` fields of non-satellite nodes within a subtree.
+static void
+clear(Node *node)
+{
+    if (node->satellite) {
+        return;
+    }
+
+    node->relative = nullptr;
+    node->state = State::Unchanged;
+
+    for (Node *child : node->children) {
+        clear(child);
+    }
+}
+
+std::vector<Distiller::TerminalMatch>
+Distiller::generateTerminalMatches()
+{
+    std::vector<TerminalMatch> matches;
+
+    for (Node *x : po1) {
+        if (!x->children.empty()) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!y->children.empty()) {
+                continue;
+            }
+
+            if (!canMatch(x, y)) {
+                continue;
+            }
+
+            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
+            if (similarity >= 0.6f || canForceLeafMatch(x, y)) {
+                matches.push_back({ x, y, similarity });
+            }
+        }
+    }
+
+    return matches;
 }
 
 float
@@ -620,14 +390,6 @@ Distiller::childrenSimilarity(const Node *x,
     return 0.0f;
 }
 
-// Checks whether node is leaf that "matters" (i.e., not a comment).
-static bool
-isTerminal(const Node *n)
-{
-    // XXX: should we check for isTravellingNode() instead of just comments?
-    return (n->children.empty() && n->type != Type::Comments);
-}
-
 const Node *
 Distiller::getParent(const Node *n) const
 {
@@ -672,4 +434,281 @@ Distiller::countAlreadyMatchedLeaves(const Node *node) const
         count += countAlreadyMatchedLeaves(child);
     }
     return count;
+}
+
+void
+Distiller::distillInternal()
+{
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            if (lang.alwaysMatches(y)) {
+                match(x, y, State::Unchanged);
+                break;
+            }
+
+            const Node *xParent = getParent(x);
+            const Node *yParent = getParent(y);
+
+            // Containers are there to hold elements of their parent nodes
+            // and can be matched only to containers of matched parents.
+            if (lang.isContainer(x) && haveValues(xParent, yParent) &&
+                xParent->getValue()->relative != nullptr) {
+                if (xParent->getValue()->relative != yParent->getValue()) {
+                    continue;
+                }
+                match(x, y, State::Unchanged);
+                break;
+            }
+
+            const float childrenSim = childrenSimilarity(x, po1, y, po2);
+            if (childrenSim == 0.0f) {
+                continue;
+            }
+
+            const float labelSim = dice1[x->poID].compare(dice2[y->poID]);
+            if (labelSim < 0.6f && childrenSim < 0.8f) {
+                continue;
+            }
+
+            if (labelSim == 1.0f && x->label == y->label &&
+                childrenSim == 1.0f) {
+                match(x, y, State::Unchanged);
+            } else {
+                match(x, y, State::Updated);
+            }
+            break;
+        }
+    }
+}
+
+void
+Distiller::matchPartiallyMatchedInternal(bool excludeValues)
+{
+    // Description of a single match candidate.
+    struct Match
+    {
+        Node *x;             // Node of the first tree (T1).
+        Node *y;             // Node of the second tree (T2).
+        int common;          // Number of common terminal nodes, either with
+                             // or without value nodes.
+        int commonWithValue; // Number of common terminal nodes including
+                             // children of value nodes.  Used to resolve
+                             // ties on `common`.
+    };
+
+    std::vector<Match> matches;
+
+    // Once we have matched internal nodes properly, do second pass matching
+    // internal nodes that have at least one common leaf.
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            NodeRange xChildren(descendants, po1, x);
+            NodeRange yChildren(descendants, po2, y);
+
+            NodeRange xValue, yValue;
+            if (haveValues(x, y)) {
+                xValue = NodeRange(subtree, po1, x->getValue());
+                yValue = NodeRange(subtree, po2, y->getValue());
+            }
+
+            int common = 0;
+            int commonWithValue = 0;
+            for (const Node *n : yChildren) {
+                if (!isTerminal(n)) {
+                    continue;
+                }
+
+                if (n->relative == nullptr) {
+                    continue;
+                }
+
+                if (xChildren.includes(n->relative)) {
+                    if (!yValue.includes(n) &&
+                        !xValue.includes(n->relative)) {
+                        ++common;
+                    }
+                    ++commonWithValue;
+                }
+            }
+
+            if (!excludeValues) {
+                common = commonWithValue;
+            }
+
+            const float similarity = dice1[x->poID].compare(dice2[y->poID]);
+            if (common > 0 && similarity >= 0.5f) {
+                matches.push_back({ x, y, common, commonWithValue });
+            }
+        }
+    }
+
+    std::stable_sort(matches.begin(), matches.end(),
+                    [&](const Match &a, const Match &b) {
+                        return b.common < a.common
+                            || (b.common == a.common &&
+                                b.commonWithValue < a.commonWithValue);
+                    });
+
+    for (const Match &m : matches) {
+        if (m.x->relative == nullptr && m.y->relative == nullptr) {
+            match(m.x, m.y, State::Unchanged);
+        }
+    }
+}
+
+// Checks whether both nodes are non-null and have values (null-nodes obviously
+// can't contain values).
+static bool
+haveValues(const Node *x, const Node *y)
+{
+    return x != nullptr
+        && y != nullptr
+        && x->hasValue()
+        && y->hasValue();
+}
+
+// This pass matches nodes, whose direct children (ignoring comments) are
+// already matched with each other.
+static void
+matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
+                               const std::vector<Node *> &po2)
+{
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            unsigned int i = 0U, j = 0U;
+            int xChildren = 0, yChildren = 0;
+            int nMatched = 0;
+            while (i < x->children.size() && j < y->children.size()) {
+                const Node *xChild = x->children[i], *yChild = y->children[j];
+                if (xChild->type == Type::Comments) {
+                    ++i;
+                    continue;
+                }
+                if (yChild->type == Type::Comments) {
+                    ++j;
+                    continue;
+                }
+
+                if ((xChild->satellite && yChild->satellite) ||
+                    xChild->relative == yChild) {
+                    ++nMatched;
+                }
+                ++i;
+                ++j;
+                ++xChildren;
+                ++yChildren;
+            }
+            while (i < x->children.size() &&
+                   x->children[i]->type == Type::Comments) {
+                ++i;
+                ++xChildren;
+            }
+            while (j < y->children.size() &&
+                   y->children[j]->type == Type::Comments) {
+                ++j;
+                ++xChildren;
+            }
+            if (nMatched == xChildren && nMatched == yChildren) {
+                match(x, y, State::Unchanged);
+            }
+        }
+    }
+}
+
+// Checks whether node was not yet matched and is not a terminal.
+static bool
+unmatchedInternal(const Node *node)
+{
+    // XXX: children here might include satellites, is this OK?
+    return (node->relative == nullptr && !node->children.empty());
+}
+
+// Checks whether two nodes can match each other.
+static bool
+canMatch(const Node *x, const Node *y)
+{
+    const Type xType = canonizeType(x->type);
+    const Type yType = canonizeType(y->type);
+
+    if (xType != Type::Virtual && xType == yType && x->label == y->label) {
+        return true;
+    }
+
+    if (xType >= Type::NonInterchangeable ||
+        yType >= Type::NonInterchangeable ||
+        xType != yType) {
+        return false;
+    }
+
+    if (xType == Type::Virtual && x->stype != y->stype) {
+        return false;
+    }
+
+    return true;
+}
+
+// Checks whether node is leaf that "matters" (i.e., not a comment).
+static bool
+isTerminal(const Node *n)
+{
+    // XXX: children here might include satellites, is this OK?
+    // XXX: should we check for isTravellingNode() instead of just comments?
+    return (n->children.empty() && n->type != Type::Comments);
+}
+
+// Changes state of two nodes and connects them.
+static void
+match(Node *x, Node *y, State state)
+{
+    markNode(*x, state);
+    markNode(*y, state);
+
+    x->relative = y;
+    y->relative = x;
+}
+
+// Marks node and its immediate children with the specified state.
+static void
+markNode(Node &node, State state)
+{
+    node.state = state;
+
+    State leafState = (state == State::Updated ? State::Unchanged : state);
+
+    for (Node *child : node.children) {
+        child->parent = &node;
+        if (child->satellite) {
+            if (child->stype == SType{}) {
+                child->state = leafState;
+            } else if (node.hasValue()) {
+                child->state = leafState;
+            } else if (child->relative == nullptr) {
+                child->state = leafState;
+            }
+        }
+    }
 }

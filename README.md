@@ -24,8 +24,8 @@ complicated setup process.
 
 The project is work in progress, but is useful in its current state.
 
-Code is quite bad and isn't really documented as initial version was more of an
-experiment, but this should improve over time.
+Code isn't perfect and isn't extensively documented as initial version was more
+of an experiment, but this situation gets better.
 
 ### Supported languages ###
 

@@ -20,12 +20,15 @@
 
 #include <vector>
 
+class DiceString;
 class Language;
 class Node;
 
 // Implements change-distilling algorithm.
 class Distiller
 {
+    struct TerminalMatch;
+
 public:
     // Creates an instance for the specific language.
     Distiller(Language &lang) : lang(lang)
@@ -38,6 +41,10 @@ public:
     void distill(Node &T1, Node &T2);
 
 private:
+    // Initializes {po,dice}[12] fields.
+    void initialize(Node &T1, Node &T2);
+    // Composes list of viable matches of terminals.
+    std::vector<TerminalMatch> generateTerminalMatches();
     // Computes children similarity.  Returns the similarity, which is 0.0 if
     // it's too small to consider nodes as matching.
     float childrenSimilarity(const Node *x,
@@ -54,10 +61,17 @@ private:
     int countAlreadyMatched(const Node *node) const;
     // Counts number of already matched leaves in specified subtree.
     int countAlreadyMatchedLeaves(const Node *node) const;
+    // Main pass for matching internal nodes.
+    void distillInternal();
+    // Matches unmatched internal nodes with similar nodes that have maximum
+    // number of common terminal nodes.
+    void matchPartiallyMatchedInternal(bool excludeValues);
 
 private:
-    Language &lang;               // Language of the nodes.
-    std::vector<Node *> po1, po2; // Nodes in post-order traversal order.
+    Language &lang;                // Language of the nodes.
+    std::vector<Node *> po1, po2;  // Nodes in post-order traversal order.
+    std::vector<DiceString> dice1; // DiceString of corresponding po1[i]->label.
+    std::vector<DiceString> dice2; // DiceString of corresponding po2[i]->label.
 };
 
 #endif // ZOGRASCOPE__CHANGE_DISTILLING_HPP__

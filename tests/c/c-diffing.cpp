@@ -1720,3 +1720,27 @@ TEST_CASE("Additive operators are added/removed", "[comparison]")
               ;
     )", true);
 }
+
+TEST_CASE("Node matching tie is resolved in the correct direction",
+          "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            if (curr_stats.original_stdout == NULL) {
+                free_string_array(files, nfiles);
+                return -1;
+            }
+        }
+    )", R"(
+        void f() {
+            if (curr_stats.ipc == NULL) {              /// Additions
+                return -1;                             /// Additions
+            }                                          /// Additions
+
+            if (curr_stats.original_stdout == NULL) {
+                free_string_array(files, nfiles);
+                return -1;
+            }
+        }
+    )", true);
+}
