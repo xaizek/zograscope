@@ -28,7 +28,15 @@
 
 static void postOrderAndInit(Node &root, std::vector<Node *> &v);
 static void postOrderAndInitImpl(Node &node, std::vector<Node *> &v);
+static void clear(Node *node);
+static bool haveValues(const Node *x, const Node *y);
+static void matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
+                                           const std::vector<Node *> &po2);
+static bool unmatchedInternal(const Node *node);
+static bool canMatch(const Node *x, const Node *y);
 static bool isTerminal(const Node *n);
+static void match(Node *x, Node *y, State state);
+static void markNode(Node &node, State state);
 
 namespace {
 
@@ -115,74 +123,6 @@ struct Distiller::TerminalMatch
     float similarity;   // How similar labels of two nodes are in [0.0, 1.0].
 };
 
-static bool
-canMatch(const Node *x, const Node *y)
-{
-    const Type xType = canonizeType(x->type);
-    const Type yType = canonizeType(y->type);
-
-    if (xType != Type::Virtual && xType == yType && x->label == y->label) {
-        return true;
-    }
-
-    if (xType >= Type::NonInterchangeable ||
-        yType >= Type::NonInterchangeable ||
-        xType != yType) {
-        return false;
-    }
-
-    if (xType == Type::Virtual && x->stype != y->stype) {
-        return false;
-    }
-
-    return true;
-}
-
-static void
-clear(Node *node)
-{
-    if (node->satellite) {
-        return;
-    }
-
-    node->relative = nullptr;
-    node->state = State::Unchanged;
-
-    for (Node *child : node->children) {
-        clear(child);
-    }
-}
-
-static void
-markNode(Node &node, State state)
-{
-    node.state = state;
-
-    State leafState = (state == State::Updated ? State::Unchanged : state);
-
-    for (Node *child : node.children) {
-        child->parent = &node;
-        if (child->satellite) {
-            if (child->stype == SType{}) {
-                child->state = leafState;
-            } else if (node.hasValue()) {
-                child->state = leafState;
-            } else if (child->relative == nullptr) {
-                child->state = leafState;
-            }
-        }
-    }
-}
-
-static bool
-haveValues(const Node *x, const Node *y)
-{
-    return x != nullptr
-        && y != nullptr
-        && x->hasValue()
-        && y->hasValue();
-}
-
 int
 Distiller::rateMatch(const Node *x, const Node *y) const
 {
@@ -208,78 +148,6 @@ Distiller::rateMatch(const Node *x, const Node *y) const
     }
 
     return 2;
-}
-
-static void
-match(Node *x, Node *y, State state)
-{
-    markNode(*x, state);
-    markNode(*y, state);
-
-    x->relative = y;
-    y->relative = x;
-}
-
-static bool
-unmatchedInternal(Node *node)
-{
-    return (node->relative == nullptr && !node->children.empty());
-}
-
-// This pass matches nodes, whose direct children (ignoring comments) are
-// already matched with each other.
-static void
-matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
-                               const std::vector<Node *> &po2)
-{
-    for (Node *x : po1) {
-        if (!unmatchedInternal(x)) {
-            continue;
-        }
-
-        for (Node *y : po2) {
-            if (!unmatchedInternal(y) || !canMatch(x, y)) {
-                continue;
-            }
-
-            unsigned int i = 0U, j = 0U;
-            int xChildren = 0, yChildren = 0;
-            int nMatched = 0;
-            while (i < x->children.size() && j < y->children.size()) {
-                const Node *xChild = x->children[i], *yChild = y->children[j];
-                if (xChild->type == Type::Comments) {
-                    ++i;
-                    continue;
-                }
-                if (yChild->type == Type::Comments) {
-                    ++j;
-                    continue;
-                }
-
-                if ((xChild->satellite && yChild->satellite) ||
-                    xChild->relative == yChild) {
-                    ++nMatched;
-                }
-                ++i;
-                ++j;
-                ++xChildren;
-                ++yChildren;
-            }
-            while (i < x->children.size() &&
-                   x->children[i]->type == Type::Comments) {
-                ++i;
-                ++xChildren;
-            }
-            while (j < y->children.size() &&
-                   y->children[j]->type == Type::Comments) {
-                ++j;
-                ++xChildren;
-            }
-            if (nMatched == xChildren && nMatched == yChildren) {
-                match(x, y, State::Unchanged);
-            }
-        }
-    }
 }
 
 void
@@ -347,6 +215,25 @@ Distiller::distill(Node &T1, Node &T2)
     }
 }
 
+void
+Distiller::initialize(Node &T1, Node &T2)
+{
+    postOrderAndInit(T1, po1);
+    postOrderAndInit(T2, po2);
+
+    dice1.clear();
+    dice1.reserve(po1.size());
+    for (Node *x : po1) {
+        dice1.emplace_back(x->label);
+    }
+
+    dice2.clear();
+    dice2.reserve(po2.size());
+    for (Node *x : po2) {
+        dice2.emplace_back(x->label);
+    }
+}
+
 // Initializes nodes state preparing them for comparison and fills `v` with
 // pointers to nodes in post-order.
 static void
@@ -377,22 +264,19 @@ postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
     v.push_back(&node);
 }
 
-void
-Distiller::initialize(Node &T1, Node &T2)
+// Resets `relative` and `state` fields of non-satellite nodes within a subtree.
+static void
+clear(Node *node)
 {
-    postOrderAndInit(T1, po1);
-    postOrderAndInit(T2, po2);
-
-    dice1.clear();
-    dice1.reserve(po1.size());
-    for (Node *x : po1) {
-        dice1.emplace_back(x->label);
+    if (node->satellite) {
+        return;
     }
 
-    dice2.clear();
-    dice2.reserve(po2.size());
-    for (Node *x : po2) {
-        dice2.emplace_back(x->label);
+    node->relative = nullptr;
+    node->state = State::Unchanged;
+
+    for (Node *child : node->children) {
+        clear(child);
     }
 }
 
@@ -504,14 +388,6 @@ Distiller::childrenSimilarity(const Node *x,
     }
 
     return 0.0f;
-}
-
-// Checks whether node is leaf that "matters" (i.e., not a comment).
-static bool
-isTerminal(const Node *n)
-{
-    // XXX: should we check for isTravellingNode() instead of just comments?
-    return (n->children.empty() && n->type != Type::Comments);
 }
 
 const Node *
@@ -692,6 +568,147 @@ Distiller::matchPartiallyMatchedInternal(bool excludeValues)
     for (const Match &m : matches) {
         if (m.x->relative == nullptr && m.y->relative == nullptr) {
             match(m.x, m.y, State::Unchanged);
+        }
+    }
+}
+
+// Checks whether both nodes are non-null and have values (null-nodes obviously
+// can't contain values).
+static bool
+haveValues(const Node *x, const Node *y)
+{
+    return x != nullptr
+        && y != nullptr
+        && x->hasValue()
+        && y->hasValue();
+}
+
+// This pass matches nodes, whose direct children (ignoring comments) are
+// already matched with each other.
+static void
+matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
+                               const std::vector<Node *> &po2)
+{
+    for (Node *x : po1) {
+        if (!unmatchedInternal(x)) {
+            continue;
+        }
+
+        for (Node *y : po2) {
+            if (!unmatchedInternal(y) || !canMatch(x, y)) {
+                continue;
+            }
+
+            unsigned int i = 0U, j = 0U;
+            int xChildren = 0, yChildren = 0;
+            int nMatched = 0;
+            while (i < x->children.size() && j < y->children.size()) {
+                const Node *xChild = x->children[i], *yChild = y->children[j];
+                if (xChild->type == Type::Comments) {
+                    ++i;
+                    continue;
+                }
+                if (yChild->type == Type::Comments) {
+                    ++j;
+                    continue;
+                }
+
+                if ((xChild->satellite && yChild->satellite) ||
+                    xChild->relative == yChild) {
+                    ++nMatched;
+                }
+                ++i;
+                ++j;
+                ++xChildren;
+                ++yChildren;
+            }
+            while (i < x->children.size() &&
+                   x->children[i]->type == Type::Comments) {
+                ++i;
+                ++xChildren;
+            }
+            while (j < y->children.size() &&
+                   y->children[j]->type == Type::Comments) {
+                ++j;
+                ++xChildren;
+            }
+            if (nMatched == xChildren && nMatched == yChildren) {
+                match(x, y, State::Unchanged);
+            }
+        }
+    }
+}
+
+// Checks whether node was not yet matched and is not a terminal.
+static bool
+unmatchedInternal(const Node *node)
+{
+    // XXX: children here might include satellites, is this OK?
+    return (node->relative == nullptr && !node->children.empty());
+}
+
+// Checks whether two nodes can match each other.
+static bool
+canMatch(const Node *x, const Node *y)
+{
+    const Type xType = canonizeType(x->type);
+    const Type yType = canonizeType(y->type);
+
+    if (xType != Type::Virtual && xType == yType && x->label == y->label) {
+        return true;
+    }
+
+    if (xType >= Type::NonInterchangeable ||
+        yType >= Type::NonInterchangeable ||
+        xType != yType) {
+        return false;
+    }
+
+    if (xType == Type::Virtual && x->stype != y->stype) {
+        return false;
+    }
+
+    return true;
+}
+
+// Checks whether node is leaf that "matters" (i.e., not a comment).
+static bool
+isTerminal(const Node *n)
+{
+    // XXX: children here might include satellites, is this OK?
+    // XXX: should we check for isTravellingNode() instead of just comments?
+    return (n->children.empty() && n->type != Type::Comments);
+}
+
+// Changes state of two nodes and connects them.
+static void
+match(Node *x, Node *y, State state)
+{
+    markNode(*x, state);
+    markNode(*y, state);
+
+    x->relative = y;
+    y->relative = x;
+}
+
+// Marks node and its immediate children with the specified state.
+static void
+markNode(Node &node, State state)
+{
+    node.state = state;
+
+    State leafState = (state == State::Updated ? State::Unchanged : state);
+
+    for (Node *child : node.children) {
+        child->parent = &node;
+        if (child->satellite) {
+            if (child->stype == SType{}) {
+                child->state = leafState;
+            } else if (node.hasValue()) {
+                child->state = leafState;
+            } else if (child->relative == nullptr) {
+                child->state = leafState;
+            }
         }
     }
 }
