@@ -98,6 +98,32 @@ TEST_CASE("Names are on a separate layer", "[.srcml][srcml-cxx][parsing]")
     )");
 }
 
+TEST_CASE("Lambdas are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            auto
+                distillLeafs                              /// Deletions
+                = [&]() {
+                for (const TerminalMatch &m : matches) {
+                }
+            };
+        }
+    )", R"(
+        void f() {
+            auto
+                matchTerminals                            /// Additions
+                = [&
+                  matches                                 /// Additions
+                ]() {
+                for (const TerminalMatch &m : matches) {
+                }
+            };
+        }
+    )");
+}
+
 TEST_CASE("Function body is spliced into function itself",
           "[.srcml][srcml-cxx][parsing]")
 {
