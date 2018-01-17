@@ -863,3 +863,32 @@ TEST_CASE("Sizeof of equivalent forms handled appropriately",
                      ;
     )", true);
 }
+
+TEST_CASE("Cast operator is decomposed", "[comparison][parsing]")
+{
+    diffC(R"(
+        void f() {
+            (void)                                                 /// Deletions
+            format_and_send(ipc, from, data, EVAL_ERROR_TYPE)      /// Moves
+            ;                                                      /// Deletions
+        }
+    )", R"(
+        void f() {
+            if (                                                   /// Additions
+                format_and_send(ipc, from, data, EVAL_ERROR_TYPE)  /// Moves
+                ) {                                                /// Additions
+            }                                                      /// Additions
+        }
+    )", true);
+
+    diffC(R"(
+        void f() {
+            fclose(dst, morearg, onemorearg);
+        }
+    )", R"(
+        void f() {
+            (void)                             /// Additions
+            fclose(dst, morearg, onemorearg);
+        }
+    )", true);
+}
