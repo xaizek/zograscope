@@ -234,6 +234,8 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
     SrcmlCxxSType child = -childNode->stype;
     if (child == SrcmlCxxSType::Block) {
         if (-parent == SrcmlCxxSType::Function ||
+            -parent == SrcmlCxxSType::Constructor ||
+            -parent == SrcmlCxxSType::Destructor ||
             -parent == SrcmlCxxSType::Struct ||
             -parent == SrcmlCxxSType::Class ||
             -parent == SrcmlCxxSType::Enum ||

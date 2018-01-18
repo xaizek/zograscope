@@ -220,6 +220,14 @@ TEST_CASE("Block nodes are spliced into their parents",
             something
         };
 
+        SomeClass::SomeClass() {
+            something;
+        }
+
+        SomeClass::~SomeClass() {
+            something;
+        }
+
         void f() {
             int a;
             if (a) {
