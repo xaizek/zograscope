@@ -263,8 +263,12 @@ Comparator::flatten(Node *n, int level, bool dry)
 {
     int flattened = 0;
 
+    if (n->satellite) {
+        return 0;
+    }
+
     for (Node *&c : n->children) {
-        if (c->next != nullptr && c->next->last) {
+        if (c->satellite || (c->next != nullptr && c->next->last)) {
             continue;
         }
 
