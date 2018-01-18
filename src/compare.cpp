@@ -252,7 +252,8 @@ bool
 Comparator::flatten(Node *x, Node *y, int level)
 {
     const int wouldFlatten = flatten(x, level, true) + flatten(y, level, true);
-    if (wouldFlatten < 5) {
+    // XXX: hard-coded threshold
+    if (wouldFlatten > 0 && wouldFlatten < 5) {
         return (flatten(x, level, false) + flatten(y, level, false) > 0);
     }
     return false;
