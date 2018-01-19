@@ -273,6 +273,8 @@ bool
 SrcmlCxxLanguage::isLayerBreak(SType stype) const
 {
     return -stype == SrcmlCxxSType::Call
+        || -stype == SrcmlCxxSType::Constructor
+        || -stype == SrcmlCxxSType::Destructor
         || -stype == SrcmlCxxSType::Function
         || -stype == SrcmlCxxSType::FunctionDecl
         || -stype == SrcmlCxxSType::DeclStmt

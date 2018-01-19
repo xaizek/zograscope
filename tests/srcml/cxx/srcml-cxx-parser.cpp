@@ -28,6 +28,8 @@
 
 #include "tests.hpp"
 
+using namespace srcmlcxx;
+
 static const auto makePred = [](Type type, std::string label) {
     return [=](const Node *node) {
         return (node->type == type && node->label == label);
@@ -201,8 +203,6 @@ TEST_CASE("Identifiers are marked with types", "[.srcml][srcml-cxx][parser]")
 TEST_CASE("Block nodes are spliced into their parents",
           "[.srcml][srcml-cxx][parser]")
 {
-    using namespace srcmlcxx;
-
     Tree tree = parseCxx(R"(
         struct Struct {
             int callNesting = 0;
@@ -254,4 +254,28 @@ TEST_CASE("Block nodes are spliced into their parents",
         return (node->stype == +SrcmlCxxSType::Block);
     };
     CHECK(findNode(tree, test) == nullptr);
+}
+
+TEST_CASE("Constructors and destructors are moved to a separate layer",
+          "[.srcml][srcml-cxx][parser]")
+{
+    Tree ctor = parseCxx(R"(
+        SrcmlCxxLanguage::SrcmlCxxLanguage() {
+            return;
+        }
+    )");
+    Tree dtor = parseCxx(R"(
+        SrcmlCxxLanguage::~SrcmlCxxLanguage() {
+            return;
+        }
+    )");
+
+    auto test = [](const Node *node) {
+        return (node->stype == +SrcmlCxxSType::Constructor ||
+                node->stype == +SrcmlCxxSType::Destructor)
+            && node->children.empty()
+            && node->next != nullptr;
+    };
+    CHECK(findNode(ctor, test) != nullptr);
+    CHECK(findNode(dtor, test) != nullptr);
 }
