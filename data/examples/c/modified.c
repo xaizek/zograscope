@@ -1,9 +1,8 @@
 static void
-complete_highlight_groups()
+complete_highlight_groups(const char str[])
 {
-  int i;
   const size_t len = strlen(str);
-  for(i = 0; i < MAXNUM_COLOR; ++i)
+  for(int i = 0; i < MAXNUM_COLOR; ++i)
   {
     if(strncasecmp(str, GROUPS[i], len) == 0)
     {

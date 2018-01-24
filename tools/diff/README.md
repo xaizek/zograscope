@@ -1,6 +1,6 @@
 **[zograscope][zograscope] :: zs-diff**
 
-![Screenshot](data/example/screenshots/zs-diff.png)
+![Screenshot](../../data/examples/cxx/screenshot.png)
 
 1. [Description](#description)
 2. [Comparison](#comparison)

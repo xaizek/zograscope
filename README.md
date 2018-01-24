@@ -1,6 +1,6 @@
 **zograscope**, _2017 - 2018_
 
-![Screenshot](data/example/screenshot.png)
+![Screenshot](data/examples/c/screenshot.png)
 
 ## Name ##
 

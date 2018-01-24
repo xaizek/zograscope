@@ -1,11 +1,10 @@
 static void
-complete_highlight_groups()
+complete_highlight_groups(const char str[])
 {
-  int i;
   const size_t len = strlen(str);
 
   col_scheme_t *const cs = curr_stats.cs;
-  for(i = 0; i < cs->file_hi_count; ++i)
+  for(int i = 0; i < cs->file_hi_count; ++i)
   {
     const char *const expr =
         ma_get_expr(cs->file_hi[i].matchers);
@@ -17,7 +16,7 @@ complete_highlight_groups()
 
   if(!file_hi_only)
   {
-    for(i = 0; i < MAXNUM_COLOR; ++i)
+    for(int i = 0; i < MAXNUM_COLOR; ++i)
     {
       if(strncasecmp(str, GROUPS[i], len) == 0)
       {
