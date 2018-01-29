@@ -107,6 +107,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["label"]            = +SrcmlCxxSType::Label;
     map["lambda"]           = +SrcmlCxxSType::Lambda;
     map["literal"]          = +SrcmlCxxSType::Literal;
+    map["member_init_list"] = +SrcmlCxxSType::MemberInitList;
     map["member_list"]      = +SrcmlCxxSType::MemberList;
     map["modifier"]         = +SrcmlCxxSType::Modifier;
     map["name"]             = +SrcmlCxxSType::Name;
@@ -382,6 +383,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::Label:           return "SrcmlCxxSType::Label";
         case SrcmlCxxSType::Lambda:          return "SrcmlCxxSType::Lambda";
         case SrcmlCxxSType::Literal:         return "SrcmlCxxSType::Literal";
+        case SrcmlCxxSType::MemberInitList:  return "SrcmlCxxSType::MemberInitList";
         case SrcmlCxxSType::MemberList:      return "SrcmlCxxSType::MemberList";
         case SrcmlCxxSType::Modifier:        return "SrcmlCxxSType::Modifier";
         case SrcmlCxxSType::Name:            return "SrcmlCxxSType::Name";

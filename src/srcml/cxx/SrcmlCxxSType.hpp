@@ -107,6 +107,7 @@ enum class SrcmlCxxSType : std::uint8_t
     Label,
     Lambda,
     Literal,
+    MemberInitList,
     MemberList,
     Modifier,
     Name,

@@ -327,3 +327,17 @@ TEST_CASE("Various statements aren't mixed up", "[.srcml][srcml-cxx][parsing]")
         }
     )");
 }
+
+TEST_CASE("Initializer lists are decomposed", "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        Class::Class() :
+            something(value)
+        {}
+    )", R"(
+        Class::Class() :
+            newVar(value)     /// Additions
+          , something(value)
+        {}
+    )");
+}
