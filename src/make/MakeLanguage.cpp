@@ -112,7 +112,8 @@ MakeLanguage::isContainer(const Node *x) const
 bool
 MakeLanguage::isDiffable(const Node *x) const
 {
-    return (-x->stype == MakeSType::Comment);
+    return -x->stype == MakeSType::Comment
+        || x->type == Type::StrConstants;
 }
 
 bool
