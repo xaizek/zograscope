@@ -264,6 +264,9 @@ condition
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, +MakeSType::Separator) },
                        +MakeSType::IfCond); }
+    | SLIT SLIT
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) },
+                       +MakeSType::IfCond); }
     ;
 
 define

@@ -397,6 +397,17 @@ endif                 # endif-comment
     )";
     CHECK(makeIsParsed(conditionalInRecipesWithComments));
 
+    const char *const alternativeForm = R"(
+        ifneq 'a' 'b'
+        endif
+        ifeq 'a' "b"
+        endif
+        ifneq "a" 'b'
+        endif
+        ifneq "a" "b"
+        endif
+    )";
+    CHECK(makeIsParsed(alternativeForm));
 }
 
 TEST_CASE("Defines are parsed in a Makefile", "[make][parser]")
