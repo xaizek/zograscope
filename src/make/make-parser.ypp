@@ -77,7 +77,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %token END 0 "end of file"
 %token <text> ',' ':' '(' ')'
-%token <text> COMMENT ASSIGN_OP CHARS WS NL VAR
+%token <text> COMMENT ASSIGN_OP CHARS WS NL VAR SLIT
 %token <text> CALL_PREFIX "$("
 %token <text> CALL_SUFFIX ")"
 %token <text> OVERRIDE "override"
@@ -772,6 +772,7 @@ text_v
 
 char
     : CHARS      { $$ = tb->addNode($1, @1); }
+    | SLIT       { $$ = tb->addNode($1, @1); }
     | ASSIGN_OP  { $$ = tb->addNode($1, @1, 0); }
     | ':'        { $$ = tb->addNode($1, @1, 0); }
     ;

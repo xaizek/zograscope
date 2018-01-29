@@ -54,6 +54,8 @@ MakeLanguage::MakeLanguage() : map()
     map[UNDEFINE] = Type::Directives;
 
     map[INCLUDE] = Type::Directives;
+
+    map[SLIT] = Type::StrConstants;
 }
 
 Type

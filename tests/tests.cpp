@@ -311,6 +311,10 @@ extractExpectations(const std::string &src, const std::string &marker)
         std::string src, expectation;
         std::tie(src, expectation) = splitAt(line, marker);
 
+        // Some sources might be sensitive to trailing spaces (when newline is
+        // escaped for example).
+        boost::trim_right_if(src, boost::is_any_of(" \t"));
+
         cleanedSrc += src;
         cleanedSrc += '\n';
 

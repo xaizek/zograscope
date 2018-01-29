@@ -43,3 +43,19 @@ TEST_CASE("Statement list in conditionals is decomposed",
         endif
     )");
 }
+
+TEST_CASE("Comments aren't recognized inside strings",
+          "[make][comparison][parsing]")
+{
+    diffMake(R"(
+target:
+	echo '#define VERSION "0.9"' > $@; \            ## Mixed
+	echo '#define WITH_BUILD_TIMESTAMP 1' >> $@; \
+#	echo '#define HAVE_FILE_PROG' >> $@;
+    )", R"(
+target:
+	echo '#define VERSION "0.9.1-beta"' > $@; \     ## Mixed
+	echo '#define WITH_BUILD_TIMESTAMP 1' >> $@; \
+#	echo '#define HAVE_FILE_PROG' >> $@;
+    )");
+}

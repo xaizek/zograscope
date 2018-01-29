@@ -29,9 +29,11 @@ struct LexerData
     enum { tabWidth = 4 };
 
     TreeBuilder *tb;
+    const char *contents;
 
     LexerData(const std::string &str, TreeBuilder &tb)
-        : tb(&tb), next(str.data()), finish(str.data() + str.size())
+        : tb(&tb), contents(str.data()), next(contents),
+          finish(str.data() + str.size())
     {
         if (str.empty()) {
             // When there is no input, we want to get just EOF.

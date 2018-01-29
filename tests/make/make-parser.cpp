@@ -630,3 +630,21 @@ TEST_CASE("Undefine directive", "[make][parser]")
     CHECK(makeIsParsed("undefine override something"));
     CHECK(makeIsParsed("override undefine something"));
 }
+
+TEST_CASE("Strings are recognized by the parser", "[make][parser]")
+{
+    Tree tree;
+
+    tree = parseMake(R"(
+target:
+	echo \'define VERSION "0.9" > $@;
+    )");
+    CHECK(findNode(tree, Type::StrConstants, "\"0.9\"") != nullptr);
+
+    tree = parseMake(R"(
+target:
+	echo \'define VERSION "0.9.1-beta"' > $@;
+    )");
+    CHECK(findNode(tree, Type::StrConstants,
+                   "'define VERSION \"0.9.1-beta\"'") != nullptr);
+}

@@ -90,7 +90,7 @@ using namespace makestypes;
 
 %}
 
-%X slcomment
+%X slcomment dslit sslit achar
 
 NL                      \n|\r|\r\n
 
@@ -136,6 +136,59 @@ NL                      \n|\r|\r\n
     TOKEN(COMMENT);
 }
 <slcomment>.            ;
+
+\" {
+    yyextra->startTok = *yylval;
+    yyextra->startTok.text.token = SLIT;
+    yyextra->startLoc = *yylloc;
+    BEGIN(dslit);
+}
+<dslit>\" {
+    yyextra->startTok.text.len = yyextra->offset - yyextra->startTok.text.from;
+
+    *yylval = yyextra->startTok;
+    *yylloc = yyextra->startLoc;
+
+    BEGIN(INITIAL);
+    CHAR_LIKE_TOKEN(yylval->text.token);
+}
+
+' {
+    yyextra->startTok = *yylval;
+    yyextra->startTok.text.token = SLIT;
+    yyextra->startLoc = *yylloc;
+    BEGIN(sslit);
+}
+<sslit>' {
+    yyextra->startTok.text.len = yyextra->offset - yyextra->startTok.text.from;
+
+    *yylval = yyextra->startTok;
+    *yylloc = yyextra->startLoc;
+
+    BEGIN(INITIAL);
+    CHAR_LIKE_TOKEN(yylval->text.token);
+}
+
+<dslit,sslit>{NL} {
+    const int length = yyextra->offset - yyextra->startTok.text.from;
+    const char *const base = yyextra->contents + yyextra->startTok.text.from;
+    for (int i = length - 1; i >= 0; --i) {
+        unput(base[i]);
+    }
+
+    yyextra->offset = yyextra->startTok.text.from;
+    yyextra->col = yyextra->startLoc.first_column;
+    yyextra->line = yyextra->startLoc.first_line;
+
+    BEGIN(achar);
+}
+<dslit,sslit>\\{NL}                  { ADVANCE_LINE(); }
+<dslit,sslit>.                       ;
+
+<achar>. {
+    BEGIN(INITIAL);
+    CHAR_LIKE_TOKEN(CHARS);
+}
 
 "override"                     KW(OVERRIDE);
 "export"                       KW(EXPORT);
