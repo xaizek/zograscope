@@ -1766,7 +1766,8 @@ function_header
 macro_invocation
     : ID '(' argument_expression_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+                         tb->addNode($3, @3), tb->addNode($4, @4) },
+                       +C11SType::TemporaryContainer); }
     | ID '(' ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3) }); }

@@ -892,3 +892,17 @@ TEST_CASE("Cast operator is decomposed", "[comparison][parsing]")
         }
     )", true);
 }
+
+TEST_CASE("Parameter list of macro function definition is decomposed",
+          "[comparison][parsing]")
+{
+    diffC(R"(
+        TEST(remote_expr_is_parsed) {
+        }
+    )", R"(
+        TEST(remote_expr_is_parsed
+             , IF(with_remote_cmds)  /// Additions
+             ) {
+        }
+    )", true);
+}
