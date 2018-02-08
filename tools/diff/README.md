@@ -66,7 +66,7 @@ understand.
 
 The granularity of detected changes is coarse, but changes can be identified.
 
-#### [gumtree][gumtree] ####
+#### gumtree ####
 
 ![gumtree](data/example/screenshots/gumtree.png)
 
@@ -141,4 +141,3 @@ called to produce diff so in the worst case a regular diff will be displayed.
 [cdiff]: https://github.com/ymattw/cdiff
 [icdiff]: https://www.jefftk.com/icdiff
 [ydiff]: https://github.com/yinwang1/ydiff
-[gumtree]: https://github.com/GumTreeDiff/gumtree
