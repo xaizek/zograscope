@@ -126,7 +126,19 @@ class TimeReport
         trees::printSetTraits<MeasureTraits>(os, &tr.root,
                      [](std::ostream &os, const Measure *m) {
                          msf duration = m->end - m->start;
-                         os << m->stage << " -- " << duration.count() << "ms\n";
+                         os << m->stage << " -- " << duration.count() << "ms";
+
+                         if (m->children.empty()) {
+                             os << '\n';
+                             return;
+                         }
+
+                         msf accounted = {};
+                         for (const Measure &child : m->children) {
+                             accounted += child.end - child.start;
+                         }
+                         msf unaccounted = duration - accounted;
+                         os << " (-" << unaccounted.count() << "ms)\n";
                      });
 
         return os;
