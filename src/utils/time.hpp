@@ -18,7 +18,10 @@
 #ifndef ZOGRASCOPE__UTILS__TIME_HPP__
 #define ZOGRASCOPE__UTILS__TIME_HPP__
 
+#include <boost/scope_exit.hpp>
+
 #include <chrono>
+#include <iomanip>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -114,6 +117,11 @@ class TimeReport
         };
 
         using msf = std::chrono::duration<float, std::milli>;
+
+        auto osState = os.rdstate();
+        BOOST_SCOPE_EXIT_ALL(&os, &osState) { os.setstate(osState); };
+
+        os << std::fixed << std::setprecision(3);
 
         trees::printSetTraits<MeasureTraits>(os, &tr.root,
                      [](std::ostream &os, const Measure *m) {
