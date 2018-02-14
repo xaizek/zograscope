@@ -39,6 +39,7 @@
 
 static Node * materializeSNode(Tree &tree, const std::string &contents,
                                const SNode *node);
+static void putNodeChild(Node &parent, Node *child, const Language *lang);
 static const PNode * leftmostChild(const PNode *node);
 static std::string stringifyPTree(const std::string &contents,
                                   const PNode *node, const Language *lang);
@@ -95,28 +96,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
     n.children.reserve(node->children.size());
     for (SNode *child : node->children) {
         Node *newChild = materializeSNode(tree, contents, child);
-
-        if (lang->shouldSplice(node->value->stype, newChild)) {
-            if (newChild->next != nullptr) {
-                // Make sure we don't splice last layer.
-                if (newChild->next->last) {
-                    // Unless it's empty (has neither children nor value).
-                    if (!newChild->next->children.empty() ||
-                        !newChild->next->label.empty()) {
-                        n.children.emplace_back(newChild);
-                    }
-                    continue;
-                }
-
-                newChild = newChild->next;
-            }
-
-            n.children.insert(n.children.cend(),
-                              newChild->children.cbegin(),
-                              newChild->children.cend());
-        } else {
-            n.children.emplace_back(newChild);
-        }
+        putNodeChild(n, newChild, lang);
     }
 
     auto valueChild = std::find_if(node->children.begin(), node->children.end(),
@@ -141,6 +121,34 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
     }
 
     return &n;
+}
+
+// Adds child or its children (when child is spliced) to the parent node.
+static void
+putNodeChild(Node &parent, Node *child, const Language *lang)
+{
+    if (!lang->shouldSplice(parent.stype, child)) {
+        parent.children.emplace_back(child);
+        return;
+    }
+
+    if (child->next != nullptr) {
+        // Make sure we don't splice last layer.
+        if (child->next->last) {
+            // Unless it's empty (has neither children nor value).
+            if (!child->next->children.empty() ||
+                !child->next->label.empty()) {
+                parent.children.emplace_back(child);
+            }
+            return;
+        }
+
+        child = child->next;
+    }
+
+    for (auto x : child->children) {
+        putNodeChild(parent, x, lang);
+    }
 }
 
 // Finds the leftmost child of the node.

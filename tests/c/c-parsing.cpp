@@ -906,3 +906,28 @@ TEST_CASE("Parameter list of macro function definition is decomposed",
         }
     )", true);
 }
+
+TEST_CASE("switch case labels don't introduce nested statements nodes",
+          "[comparison][parsing]")
+{
+    diffC(R"(
+        void f() {
+            switch (bla) {
+                case 1:
+                    something();
+                    something_else();
+                case 2:                /// Moves
+                    break;             /// Deletions
+            }
+        }
+    )", R"(
+        void f() {
+            switch (bla) {
+                case 1:
+                case 2:                /// Moves
+                    something();
+                    something_else();
+            }
+        }
+    )", true);
+}
