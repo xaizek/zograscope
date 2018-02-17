@@ -24,11 +24,12 @@
 #include <string>
 #include <utility>
 
-#include <boost/optional.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/optional.hpp>
 #include "pmr/monolithic.hpp"
 
 #include "utils/optional.hpp"
@@ -163,6 +164,10 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
 static std::string
 readFile(const std::string &path)
 {
+    if (!boost::filesystem::is_regular_file(path)) {
+        throw std::runtime_error("Not a regular file: " + path);
+    }
+
     std::ifstream ifile(path);
     if (!ifile) {
         throw std::runtime_error("Can't open file: " + path);
