@@ -44,6 +44,9 @@ public:
     // `std::runtime_error` on incorrect language name.
     static std::unique_ptr<Language> create(const std::string &fileName,
                                             const std::string &lang = {});
+    // Checks whether file matches given language.  When `lang` is an empty
+    // string any of supported languages is considered a match.
+    static bool matches(const std::string &fileName, const std::string &lang);
 
 public:
     // Virtual destructor for a base class.

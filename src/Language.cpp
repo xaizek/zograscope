@@ -33,6 +33,10 @@
 #include "srcml/cxx/SrcmlCxxLanguage.hpp"
 #include "tree.hpp"
 
+namespace fs = boost::filesystem;
+
+using boost::algorithm::to_lower_copy;
+
 static std::string detectLanguage(const std::string &stem,
                                   const std::string &ext);
 
@@ -41,11 +45,15 @@ Language::create(const std::string &fileName, const std::string &l)
 {
     std::string lang = l;
     if (lang.empty()) {
-        boost::filesystem::path path = fileName;
+        fs::path path = fileName;
 
-        using boost::algorithm::to_lower_copy;
         lang = detectLanguage(to_lower_copy(path.stem().string()),
                               to_lower_copy(path.extension().string()));
+
+        if (lang.empty()) {
+            // Assume C by default.
+            lang = "c";
+        }
     }
 
     if (lang == "c") {
@@ -58,6 +66,25 @@ Language::create(const std::string &fileName, const std::string &l)
         return std::unique_ptr<MakeLanguage>(new MakeLanguage());
     }
     throw std::runtime_error("Unknown language: \"" + lang + '"');
+}
+
+bool
+Language::matches(const std::string &fileName, const std::string &lang)
+{
+    fs::path path = fileName;
+
+    std::string ext = to_lower_copy(path.extension().string());
+    std::string detected = detectLanguage(to_lower_copy(path.stem().string()),
+                                          ext);
+
+    if (lang.empty() ? !detected.empty() : detected == lang) {
+        return true;
+    }
+    if ((lang == "cxx" || lang == "srcml:cxx") && ext == ".h") {
+        return true;
+    }
+
+    return false;
 }
 
 // Determines language from normalized stem and extension of a file.
@@ -78,8 +105,7 @@ detectLanguage(const std::string &stem, const std::string &ext)
         return "make";
     }
 
-    // Assume C by default.
-    return "c";
+    return {};
 }
 
 bool
