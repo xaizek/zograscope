@@ -114,8 +114,9 @@ Highlighter::Highlighter(const Tree &tree, bool original)
 {
 }
 
-Highlighter::Highlighter(const Node &root, const Language &lang, bool original)
-    : lang(lang), line(1), col(1), colorPicker(new ColorPicker(lang)),
+Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
+                         int lineOffset)
+    : lang(lang), line(lineOffset), col(1), colorPicker(new ColorPicker(lang)),
       original(original), current(nullptr)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
