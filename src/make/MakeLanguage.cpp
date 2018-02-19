@@ -21,6 +21,7 @@
 
 #include "make/MakeSType.hpp"
 #include "make/make-parser.hpp"
+#include "mtypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"
 
@@ -163,6 +164,22 @@ bool
 MakeLanguage::isSatellite(SType stype) const
 {
     return (-stype == MakeSType::Separator);
+}
+
+MType
+MakeLanguage::classify(SType stype) const
+{
+    switch (-stype) {
+        case MakeSType::Comment:
+            return MType::Comment;
+
+        case MakeSType::Directive:
+        case MakeSType::Include:
+            return MType::Directive;
+
+        default:
+            return MType::Other;
+    }
 }
 
 const char *

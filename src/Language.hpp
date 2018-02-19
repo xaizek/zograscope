@@ -32,6 +32,7 @@ namespace cpp17 {
 class Node;
 class TreeBuilder;
 
+enum class MType : std::uint8_t;
 enum class SType : std::uint8_t;
 enum class Type : std::uint8_t;
 
@@ -91,6 +92,8 @@ public:
     virtual bool shouldDropLeadingWS(SType stype) const = 0;
     // Checks whether nodes of this kind are secondary for comparison.
     virtual bool isSatellite(SType stype) const = 0;
+    // Maps language-specific stype to generic mtype.
+    virtual MType classify(SType stype) const = 0;
     // Stringifies value of SType enumeration.
     virtual const char * toString(SType stype) const = 0;
 

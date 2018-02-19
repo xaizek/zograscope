@@ -70,6 +70,8 @@ public:
     virtual bool shouldDropLeadingWS(SType stype) const override;
     // Checks whether nodes of this kind are secondary for comparison.
     virtual bool isSatellite(SType stype) const override;
+    // Maps language-specific stype to generic mtype.
+    virtual MType classify(SType stype) const override;
     // Stringifies value of SType enumeration.
     virtual const char * toString(SType stype) const override;
 

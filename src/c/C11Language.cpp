@@ -19,6 +19,7 @@
 
 #include "c/C11SType.hpp"
 #include "c/c11-parser.hpp"
+#include "mtypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"
 
@@ -300,6 +301,28 @@ bool
 C11Language::isSatellite(SType stype) const
 {
     return (-stype == C11SType::Separator);
+}
+
+MType
+C11Language::classify(SType stype) const
+{
+    switch (-stype) {
+        case C11SType::Declaration:
+        case C11SType::FunctionDeclaration:
+            return MType::Declaration;
+
+        case C11SType::FunctionDefinition:
+            return MType::Function;
+
+        case C11SType::Comment:
+            return MType::Comment;
+
+        case C11SType::Directive:
+            return MType::Directive;
+
+        default:
+            return MType::Other;
+    }
 }
 
 const char *
