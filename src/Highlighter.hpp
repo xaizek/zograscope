@@ -48,7 +48,8 @@ public:
     // Stores arguments for future reference.  The original flag specifies
     // whether this is an old version of a file (matters only for trees marked
     // with results of comparison).
-    Highlighter(const Node &root, const Language &lang, bool original = true);
+    Highlighter(const Node &root, const Language &lang, bool original = true,
+                int lineOffset = 1);
 
     // No copying.
     Highlighter(const Highlighter&) = delete;

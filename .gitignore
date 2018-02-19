@@ -9,6 +9,7 @@ config.mk
 /tests/tests
 /zs-hi
 /zs-diff
+/zs-find
 /libzograscope.a
 *.o
 *.d

@@ -57,6 +57,10 @@ main(int argc, char *argv[])
 
         args = parseLocalArgs(env);
         if (args.help) {
+            std::cout << "Usage: zs-diff [options...] old-file new-file\n"
+                      << "   or: zs-diff [options...] <7 or 9 args from git>\n"
+                      << "\n"
+                      << "Options:\n";
             env.printOptions();
             return EXIT_SUCCESS;
         }

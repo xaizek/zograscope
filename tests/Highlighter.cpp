@@ -65,3 +65,17 @@ int f() { return 10; }
     CHECK(hi.print(14, 10) == "// line14");
     CHECK(hi.print(20, 10) == "");
 }
+
+TEST_CASE("Printing a subtree", "[highlighter]")
+{
+    Tree tree = parseC(R"(
+        // line1
+        // line2
+    )", true);
+
+    const Node *const node = findNode(tree, Type::Comments, "// line2");
+    REQUIRE(node != nullptr);
+
+    Highlighter hi(*node, *tree.getLanguage(), true, node->line);
+    CHECK(hi.print() == "        // line2");
+}

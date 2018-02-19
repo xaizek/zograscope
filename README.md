@@ -92,6 +92,10 @@ are capable of preserving all information about the source code.
 
 A terminal-based syntax-aware diff.
 
+### [zs-find](tools/find/README.md) ###
+
+Grep-like tool that finds elements of source code structure.
+
 ### [zs-hi](tools/hi/README.md) ###
 
 Simple syntax highlighter for xterm-256color palette.

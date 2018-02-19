@@ -136,3 +136,32 @@ TEST_CASE("Make is detected", "[language]")
     std::unique_ptr<Language> lang = Language::create(fileName);
     CHECK_FALSE(lang->parse(makeFile, "<input>", false, mr).hasFailed());
 }
+
+TEST_CASE("Language matching", "[language]")
+{
+    SECTION("Matching against any supported language")
+    {
+        CHECK(Language::matches("Makefile.win", ""));
+        CHECK(Language::matches("file.c", ""));
+        CHECK(Language::matches("file.h", ""));
+        CHECK(Language::matches("file.cpp", ""));
+    }
+
+    SECTION("Matching against any specific languages")
+    {
+        CHECK(Language::matches("Makefile", "make"));
+        CHECK(Language::matches("file.c", "c"));
+        CHECK(Language::matches("file.cpp", "cxx"));
+
+        CHECK_FALSE(Language::matches("Makefile", "cxx"));
+        CHECK_FALSE(Language::matches("file.c", "make"));
+        CHECK_FALSE(Language::matches("file.cpp", "c"));
+    }
+
+    SECTION("Headers")
+    {
+        CHECK(Language::matches("file.h", "c"));
+        CHECK(Language::matches("file.h", "cxx"));
+        CHECK_FALSE(Language::matches("file.h", "make"));
+    }
+}

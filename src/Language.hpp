@@ -32,6 +32,7 @@ namespace cpp17 {
 class Node;
 class TreeBuilder;
 
+enum class MType : std::uint8_t;
 enum class SType : std::uint8_t;
 enum class Type : std::uint8_t;
 
@@ -44,6 +45,9 @@ public:
     // `std::runtime_error` on incorrect language name.
     static std::unique_ptr<Language> create(const std::string &fileName,
                                             const std::string &lang = {});
+    // Checks whether file matches given language.  When `lang` is an empty
+    // string any of supported languages is considered a match.
+    static bool matches(const std::string &fileName, const std::string &lang);
 
 public:
     // Virtual destructor for a base class.
@@ -88,6 +92,8 @@ public:
     virtual bool shouldDropLeadingWS(SType stype) const = 0;
     // Checks whether nodes of this kind are secondary for comparison.
     virtual bool isSatellite(SType stype) const = 0;
+    // Maps language-specific stype to generic mtype.
+    virtual MType classify(SType stype) const = 0;
     // Stringifies value of SType enumeration.
     virtual const char * toString(SType stype) const = 0;
 

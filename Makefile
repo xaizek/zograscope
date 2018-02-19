@@ -121,7 +121,7 @@ $$($1.bin): $$($1.objects)
 
 endef
 
-tools := $(subst tools/,,$(sort $(wildcard tools/*)))
+tools := $(patsubst tools/%/,%,$(sort $(dir $(wildcard tools/*/*.cpp))))
 $(foreach tool, $(tools), $(eval $(call tool_template,$(tool))))
 
 out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))

@@ -22,6 +22,7 @@
 #include "srcml/cxx/SrcmlCxxSType.hpp"
 #include "srcml/SrcmlTransformer.hpp"
 #include "TreeBuilder.hpp"
+#include "mtypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"
 
@@ -298,6 +299,48 @@ bool
 SrcmlCxxLanguage::isSatellite(SType stype) const
 {
     return (-stype == SrcmlCxxSType::Separator);
+}
+
+MType
+SrcmlCxxLanguage::classify(SType stype) const
+{
+    switch (-stype) {
+        case SrcmlCxxSType::FunctionDecl:
+        case SrcmlCxxSType::DeclStmt:
+        case SrcmlCxxSType::EnumDecl:
+            return MType::Declaration;
+
+        case SrcmlCxxSType::Function:
+        case SrcmlCxxSType::Constructor:
+        case SrcmlCxxSType::Destructor:
+            return MType::Function;
+
+        case SrcmlCxxSType::Comment:
+            return MType::Comment;
+
+        case SrcmlCxxSType::CppDefine:
+        case SrcmlCxxSType::CppDirective:
+        case SrcmlCxxSType::CppElif:
+        case SrcmlCxxSType::CppElse:
+        case SrcmlCxxSType::CppEmpty:
+        case SrcmlCxxSType::CppError:
+        case SrcmlCxxSType::CppFile:
+        case SrcmlCxxSType::CppIf:
+        case SrcmlCxxSType::CppIfdef:
+        case SrcmlCxxSType::CppIfndef:
+        case SrcmlCxxSType::CppInclude:
+        case SrcmlCxxSType::CppLine:
+        case SrcmlCxxSType::CppMacro:
+        case SrcmlCxxSType::CppNumber:
+        case SrcmlCxxSType::CppPragma:
+        case SrcmlCxxSType::CppUndef:
+        case SrcmlCxxSType::CppValue:
+        case SrcmlCxxSType::CppWarning:
+            return MType::Directive;
+
+        default:
+            return MType::Other;
+    }
 }
 
 const char *
