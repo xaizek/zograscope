@@ -27,6 +27,17 @@ static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
 static int run(const Args &args, TimeReport &tr);
 
+const char *const usage =
+R"(Usage: zs-find [options...] file matchers...
+   or: zs-find [options...] directory matchers...
+
+Available matchers:
+   decl  Any sort of declaration
+   func  Functions (their definitions only)
+   comm  Comments of any kind
+   dir   Preprocessor-alike directives
+)";
+
 int
 main(int argc, char *argv[])
 {
@@ -39,6 +50,9 @@ main(int argc, char *argv[])
 
         Args args = parseLocalArgs(env);
         if (args.help) {
+            std::cout << usage
+                      << "\n"
+                      << "Options:\n";
             env.printOptions();
             return EXIT_SUCCESS;
         }

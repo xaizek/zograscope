@@ -41,6 +41,9 @@ main(int argc, char *argv[])
 
         CommonArgs args = env.getCommonArgs();
         if (args.help) {
+            std::cout << "Usage: zs-hi [options...] file\n"
+                      << "\n"
+                      << "Options:\n";
             env.printOptions();
             return EXIT_SUCCESS;
         }
