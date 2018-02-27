@@ -80,6 +80,7 @@ enum class C11SType : std::uint8_t
     DirectDeclarator,
     SizeOf,
     TemporaryContainer,
+    MemberAccess,
     Bundle,
     BundleComma,
 };

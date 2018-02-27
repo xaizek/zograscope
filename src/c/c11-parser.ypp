@@ -305,10 +305,12 @@ postfix_expression
                        +C11SType::CallExpr); }
     | postfix_expression '.' ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+                         tb->addNode($3, @3) },
+                       +C11SType::MemberAccess); }
     | postfix_expression ARR_OP ID
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+                         tb->addNode($3, @3) },
+                       +C11SType::MemberAccess); }
     | postfix_expression INC_OP
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     | postfix_expression DEC_OP

@@ -284,6 +284,7 @@ C11Language::isLayerBreak(SType stype) const
         case C11SType::ReturnValueStmt:
         case C11SType::Parameter:
         case C11SType::ForHead:
+        case C11SType::MemberAccess:
             return true;
 
         default:
@@ -381,6 +382,7 @@ C11Language::toString(SType stype) const
         case C11SType::DirectDeclarator:    return "C11SType::DirectDeclarator";
         case C11SType::SizeOf:              return "C11SType::SizeOf";
         case C11SType::TemporaryContainer:  return "C11SType::TemporaryContainer";
+        case C11SType::MemberAccess:        return "C11SType::MemberAccess";
         case C11SType::Bundle:              return "C11SType::Bundle";
         case C11SType::BundleComma:         return "C11SType::BundleComma";
     }

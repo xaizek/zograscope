@@ -1534,7 +1534,8 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
                == DCACHE_UNKNOWN && !        /// Moves
                view->on_slow_fs              /// Deletions
                ) {                           /// Moves
-                *nitems                      /// Deletions
+                *                            /// Deletions
+                nitems                       /// Updates
                 = entry_calc_nitems(entry);  /// Moves
             }                                /// Moves
         }
@@ -1568,7 +1569,8 @@ TEST_CASE("Expressions aren't mixed with each other", "[comparison]")
                    == DCACHE_UNKNOWN && !                                   /// Moves
                    is_slow_fs                                               /// Additions
                    ) {                                                      /// Moves
-                    nitems_res.value                                        /// Additions
+                    nitems_res                                              /// Updates
+                    .value                                                  /// Additions
                         = entry_calc_nitems(entry);                         /// Moves
                 }                                                           /// Moves
 
@@ -1741,6 +1743,23 @@ TEST_CASE("Node matching tie is resolved in the correct direction",
                 free_string_array(files, nfiles);
                 return -1;
             }
+        }
+    )", true);
+}
+
+TEST_CASE("Member access is decomposed and compared reasonably", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            var_val.string                /// Deletions
+            =
+            curr_stats.chosen_files_out;
+        }
+    )", R"(
+        void f() {
+            result                        /// Additions
+            =
+            curr_stats.chosen_files_out;
         }
     )", true);
 }
