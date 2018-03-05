@@ -80,6 +80,16 @@ struct PNode
         return value.from == 0U && value.len == 0U && stype == SType{};
     }
 
+    // Finds the leftmost child of the subtree defined by this node.
+    PNode * leftmostChild()
+    {
+        PNode *node = this;
+        while (!node->children.empty()) {
+            node = node->children.front();
+        }
+        return node;
+    }
+
     Text value = { 0U, 0U, 0U, 0U, 0 };
     cpp17::pmr::vector<PNode *> children;
     int line = 0, col = 0;

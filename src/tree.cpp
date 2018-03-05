@@ -40,7 +40,6 @@
 static Node * materializeSNode(Tree &tree, const std::string &contents,
                                const SNode *node);
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
-static const PNode * leftmostChild(const PNode *node);
 static std::string stringifyPTree(const std::string &contents,
                                   const PNode *node, const Language *lang);
 static Node * materializePNode(Tree &tree, const std::string &contents,
@@ -81,7 +80,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node)
     n.satellite = tree.getLanguage()->isSatellite(n.stype);
 
     if (node->children.empty()) {
-        const PNode *leftmostLeaf = leftmostChild(node->value);
+        const PNode *leftmostLeaf = node->value->leftmostChild();
 
         n.label = stringifyPTree(contents, node->value, lang);
         n.line = leftmostLeaf->line;
@@ -154,15 +153,6 @@ putNodeChild(Node &parent, Node *child, const Language *lang)
     for (auto x : child->children) {
         putNodeChild(parent, x, lang);
     }
-}
-
-// Finds the leftmost child of the node.
-static const PNode *
-leftmostChild(const PNode *node)
-{
-    return node->children.empty()
-         ? node
-         : leftmostChild(node->children.front());
 }
 
 // Turns PNode-subtree into a string.
