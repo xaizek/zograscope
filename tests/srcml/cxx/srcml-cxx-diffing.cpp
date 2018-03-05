@@ -48,3 +48,30 @@ TEST_CASE("C++ functions are matched",
         }
     )");
 }
+
+TEST_CASE("Function body changes don't cause everything to be moved",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void setEntry(const Entry *entry) {
+            prevNode = (currNode == entry.node ? nullptr : currNode);
+            currNode = entry.node;
+
+            prevHighlight = currHighlight;
+            currHighlight = &getHighlight(*currNode, entry.moved, entry.state,
+                                          lang);
+        }
+    )", R"(
+        void setEntry(const Entry *entry) {
+            prevNode = (currNode == entry.node ? nullptr : currNode);
+            currNode = entry.node;
+
+            prevMoved = currMoved;    /// Additions
+            currMoved = entry.moved;  /// Additions
+
+            prevHighlight = currHighlight;
+            currHighlight = &getHighlight(*currNode, entry.moved, entry.state,
+                                          lang);
+        }
+    )");
+}

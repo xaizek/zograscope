@@ -30,6 +30,7 @@ enum class SrcmlCxxSType : std::uint8_t
 {
     None,
     Separator,
+    Statements,
 
     Argument,
     Comment,

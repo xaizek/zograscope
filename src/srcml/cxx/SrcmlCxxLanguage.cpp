@@ -28,6 +28,9 @@
 
 using namespace srcmlcxx;
 
+static void postProcessTree(PNode *node, TreeBuilder &tb,
+                            const std::string &contents);
+
 SrcmlCxxLanguage::SrcmlCxxLanguage()
 {
     map["separator"] = +SrcmlCxxSType::Separator;
@@ -172,7 +175,38 @@ SrcmlCxxLanguage::parse(const std::string &contents,
 {
     TreeBuilder tb(mr);
     SrcmlTransformer(contents, tb, "C++", map, keywords).transform();
+
+    postProcessTree(tb.getRoot(), tb, contents);
+
     return tb;
+}
+
+// Rewrites tree to be more diff-friendly.
+static void
+postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    if (node->stype == +SrcmlCxxSType::Block && node->children.size() == 1) {
+        PNode *stmts = tb.addNode();
+        stmts->stype = +SrcmlCxxSType::Statements;
+        stmts->children = node->children;
+
+        node->children.assign({ stmts });
+    }
+
+    if (node->stype == +SrcmlCxxSType::Block && node->children.size() > 2) {
+        PNode *stmts = tb.addNode();
+        stmts->stype = +SrcmlCxxSType::Statements;
+        stmts->children.assign(++node->children.cbegin(),
+                               --node->children.cend());
+
+        node->children.erase(++node->children.cbegin(),
+                             --node->children.cend());
+        node->children.insert(++node->children.cbegin(), stmts);
+    }
+
+    for (PNode *child : node->children) {
+        postProcessTree(child, tb, contents);
+    }
 }
 
 bool
@@ -208,13 +242,13 @@ SrcmlCxxLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
 bool
 SrcmlCxxLanguage::isUnmovable(const Node *x) const
 {
-    return (-x->stype == SrcmlCxxSType::Block);
+    return (-x->stype == SrcmlCxxSType::Statements);
 }
 
 bool
 SrcmlCxxLanguage::isContainer(const Node *x) const
 {
-    return (-x->stype == SrcmlCxxSType::Block);
+    return (-x->stype == SrcmlCxxSType::Statements);
 }
 
 bool
@@ -234,6 +268,13 @@ bool
 SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
 {
     SrcmlCxxSType child = -childNode->stype;
+    if (child == SrcmlCxxSType::Statements) {
+        if (-parent == SrcmlCxxSType::Struct ||
+            -parent == SrcmlCxxSType::Class ||
+            -parent == SrcmlCxxSType::Enum) {
+            return true;
+        }
+    }
     if (child == SrcmlCxxSType::Block) {
         if (-parent == SrcmlCxxSType::Function ||
             -parent == SrcmlCxxSType::Constructor ||
@@ -347,8 +388,9 @@ const char *
 SrcmlCxxLanguage::toString(SType stype) const
 {
     switch (-stype) {
-        case SrcmlCxxSType::None:      return "SrcmlCxxSType::None";
-        case SrcmlCxxSType::Separator: return "SrcmlCxxSType::Separator";
+        case SrcmlCxxSType::None:       return "SrcmlCxxSType::None";
+        case SrcmlCxxSType::Separator:  return "SrcmlCxxSType::Separator";
+        case SrcmlCxxSType::Statements: return "SrcmlCxxSType::Statements";
 
         case SrcmlCxxSType::Argument:     return "SrcmlCxxSType::Argument";
         case SrcmlCxxSType::Comment:      return "SrcmlCxxSType::Comment";
