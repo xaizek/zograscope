@@ -285,6 +285,7 @@ C11Language::isLayerBreak(SType stype) const
         case C11SType::Parameter:
         case C11SType::ForHead:
         case C11SType::MemberAccess:
+        case C11SType::Argument:
             return true;
 
         default:

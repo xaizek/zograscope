@@ -1763,3 +1763,23 @@ TEST_CASE("Member access is decomposed and compared reasonably", "[comparison]")
         }
     )", true);
 }
+
+TEST_CASE("Call arguments are on separate layers", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            snprintf(buf, sizeof(buf),
+                     "%s%s"                                  /// Updates
+                     , cfg.trunc_normal_sb_msgs ? "T" : "",
+                     cfg.shorten_title_paths ? "p" : "");
+        }
+    )", R"(
+        void f() {
+            snprintf(buf, sizeof(buf),
+                     "%s%s%s"                                /// Updates
+                     , cfg.short_term_mux_titles ? "M" : ""  /// Additions
+                     , cfg.trunc_normal_sb_msgs ? "T" : "",
+                     cfg.shorten_title_paths ? "p" : "");
+        }
+    )", false);
+}
