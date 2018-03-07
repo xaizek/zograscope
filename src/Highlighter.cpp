@@ -229,13 +229,6 @@ Highlighter::print(int n)
 
         colorPicker->setEntry(entry);
 
-        const decor::Decoration &fillHighlight =
-            colorPicker->getFillHighlight();
-        // Don't do filling across lines.
-        if (node->line == line && &fillHighlight != &decor::none) {
-            oss << fillHighlight;
-        }
-
         while (node->line > line) {
             ++line;
             colorPicker->advancedLine();
@@ -246,13 +239,12 @@ Highlighter::print(int n)
             col = 1;
         }
 
-        while (node->col > col) {
-            oss << ' ';
-            ++col;
-        }
-
-        if (&fillHighlight != &decor::none) {
-            oss << decor::def;
+        if (node->col > col) {
+            auto filler = (colorPicker->getFillHighlight() << ' ');
+            while (node->col > col) {
+                oss << filler;
+                ++col;
+            }
         }
 
         advance(entry);
