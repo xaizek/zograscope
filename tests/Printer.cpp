@@ -392,3 +392,85 @@ TEST_CASE("Highlighting fills background in a meaningful way", "[printer]")
 
     REQUIRE(normalizeText(oss.str()) == expected);
 }
+
+TEST_CASE("Highlighting doesn't fill background where shouldn't 1", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            some_function(argument);
+        }
+    )", true);
+    Tree newTree = parseC(R"(
+        void f() {
+            some_function(argument + 1);
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                           |  1
+         2          void f() {                       |  2          void f() {
+         3              some_function({:argument:}); ~  3              some_function({:argument:} {+++}{+ +}{+1+});
+         4          }                                |  4          }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            if (*p == 'T') {
+                cfg.trunc_normal_sb_msgs = 1;
+            } else if (*p == 'p') {
+                cfg.shorten_title_paths = 1;
+            }
+        }
+    )", true);
+    Tree newTree = parseC(R"(
+        void f() {
+            if (*p == 'M') {
+                cfg.short_term_mux_titles = 1;
+            } else if (*p == 'T') {
+                cfg.trunc_normal_sb_msgs = 1;
+            } else if (*p == 'p') {
+                cfg.shorten_title_paths = 1;
+            }
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                                                                                      |   1
+         2          void f() {                                                                                  |   2          void f() {
+         3              {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        ~   3              {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
+         -                                                                                                      >   4                  {+cfg+}{+.+}{+short_term_mux_titles+}{+ +}{+=+}{+ +}{+1+}{+;+}
+         -                                                                                                      >   5              {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
+         4                  {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}                       ~   6                  {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}
+         5              {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:} ~   7              {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:}
+         6                  {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}                        ~   8                  {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}
+         7              {:}:}                                                                                   ~   9              {:}:}
+         8          }                                                                                           |  10          }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
