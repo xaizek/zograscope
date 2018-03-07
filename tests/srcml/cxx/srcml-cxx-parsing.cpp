@@ -342,3 +342,25 @@ TEST_CASE("Initializer lists are decomposed", "[.srcml][srcml-cxx][parsing]")
         {}
     )");
 }
+
+TEST_CASE("Empty blocks are handled correctly", "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            if (condition) { }
+            else {              /// Deletions
+                int a;          /// Moves
+                int b;          /// Moves
+            }                   /// Deletions
+        }
+    )", R"(
+        void f() {
+            if (condition) {
+                if (cond) {     /// Additions
+                    int a;      /// Moves
+                    int b;      /// Moves
+                }               /// Additions
+            }
+        }
+    )");
+}

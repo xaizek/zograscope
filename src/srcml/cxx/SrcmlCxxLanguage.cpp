@@ -198,7 +198,7 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
 
 // Rewrites block nodes to be more diff-friendly.
 static void
-postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &/*contents*/)
+postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
 {
     // Children: `{` statement* `}`.
     if (node->children.size() > 2) {
@@ -214,13 +214,40 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &/*contents*/)
     }
 
     // Children: statement.
-    if (node->children.size() == 1) {
+    if (node->children.size() == 1 &&
+        contents[node->children[0]->value.from] != '{') {
         PNode *stmts = tb.addNode();
         stmts->stype = +SrcmlCxxSType::Statements;
         stmts->children = node->children;
 
         node->children.assign({ stmts });
+        return;
     }
+
+    // Children: `{}` (with any whitespace in between).
+
+    PNode *child = node->children[0];
+
+    PNode *left = tb.addNode();
+    left->stype = +SrcmlCxxSType::Separator;
+    left->value.from = child->value.from;
+    left->value.len = 1;
+    left->line = child->line;
+    left->col = child->col;
+    left->value.token = static_cast<int>(Type::LeftBrackets);
+
+    PNode *right = tb.addNode();
+    right->stype = +SrcmlCxxSType::Separator;
+    right->value.from = child->value.from + 1;
+    right->value.len = child->value.len - 1;
+    right->line = child->line;
+    right->col = child->col + 1;
+    right->value.token = static_cast<int>(Type::RightBrackets);
+
+    PNode *stmts = tb.addNode();
+    stmts->stype = +SrcmlCxxSType::Statements;
+
+    node->children.assign({ left, stmts, right });
 }
 
 bool
