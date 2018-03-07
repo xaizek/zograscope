@@ -305,10 +305,8 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
             return true;
         }
     }
-    if (-parent == SrcmlCxxSType::If) {
-        if (child == SrcmlCxxSType::Then || child == SrcmlCxxSType::Else) {
-            return true;
-        }
+    if (-parent == SrcmlCxxSType::If && child == SrcmlCxxSType::Then) {
+        return true;
     }
     if (-parent == SrcmlCxxSType::Call &&
         child == SrcmlCxxSType::ArgumentList) {

@@ -174,7 +174,7 @@ TEST_CASE("Argument list is spliced into the call",
     )");
 }
 
-TEST_CASE("then/else nodes are spliced into if statement",
+TEST_CASE("then nodes are spliced into if statement",
           "[.srcml][srcml-cxx][parsing]")
 {
     diffSrcmlCxx(R"(
@@ -201,10 +201,11 @@ TEST_CASE("then/else nodes are spliced into if statement",
         void f() {
             if (condition) {
                 something;    /// Deletions
-            } else {
+            }
+            else {            /// Deletions
                 int a;        /// Moves
                 int b;        /// Moves
-            }
+            }                 /// Deletions
         }
     )", R"(
         void f() {
