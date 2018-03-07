@@ -30,6 +30,8 @@ using namespace srcmlcxx;
 
 static void postProcessTree(PNode *node, TreeBuilder &tb,
                             const std::string &contents);
+static void postProcessBlock(PNode *node, TreeBuilder &tb,
+                             const std::string &contents);
 
 SrcmlCxxLanguage::SrcmlCxxLanguage()
 {
@@ -185,15 +187,21 @@ SrcmlCxxLanguage::parse(const std::string &contents,
 static void
 postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
 {
-    if (node->stype == +SrcmlCxxSType::Block && node->children.size() == 1) {
-        PNode *stmts = tb.addNode();
-        stmts->stype = +SrcmlCxxSType::Statements;
-        stmts->children = node->children;
-
-        node->children.assign({ stmts });
+    if (node->stype == +SrcmlCxxSType::Block) {
+        postProcessBlock(node, tb, contents);
     }
 
-    if (node->stype == +SrcmlCxxSType::Block && node->children.size() > 2) {
+    for (PNode *child : node->children) {
+        postProcessTree(child, tb, contents);
+    }
+}
+
+// Rewrites block nodes to be more diff-friendly.
+static void
+postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &/*contents*/)
+{
+    // Children: `{` statement* `}`.
+    if (node->children.size() > 2) {
         PNode *stmts = tb.addNode();
         stmts->stype = +SrcmlCxxSType::Statements;
         stmts->children.assign(++node->children.cbegin(),
@@ -202,10 +210,16 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
         node->children.erase(++node->children.cbegin(),
                              --node->children.cend());
         node->children.insert(++node->children.cbegin(), stmts);
+        return;
     }
 
-    for (PNode *child : node->children) {
-        postProcessTree(child, tb, contents);
+    // Children: statement.
+    if (node->children.size() == 1) {
+        PNode *stmts = tb.addNode();
+        stmts->stype = +SrcmlCxxSType::Statements;
+        stmts->children = node->children;
+
+        node->children.assign({ stmts });
     }
 }
 
