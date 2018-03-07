@@ -358,3 +358,37 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
 
     REQUIRE(normalizeText(oss.str()) == expected);
 }
+
+TEST_CASE("Highlighting fills background in a meaningful way", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void func_proto(int a);
+        int a;
+        int b;
+    )", true);
+    Tree newTree = parseC(R"(
+        int a;
+        int b;
+        void func_prototype(int a);
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                                                      |  1
+         2          {:void:}{: :}{#func_proto#}{:(:}{:int:}{: :}{:a:}{:):}{:;:} <  -
+         3          int a;                                                      |  2          int a;
+         4          int b;                                                      |  3          int b;
+         -                                                                      >  4          {:void:}{: :}{#func_prototype#}{:(:}{:int:}{: :}{:a:}{:):}{:;:}
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}

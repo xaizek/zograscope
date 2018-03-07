@@ -69,6 +69,9 @@ public:
         prevNode = (currNode == entry.node ? nullptr : currNode);
         currNode = entry.node;
 
+        prevMoved = currMoved;
+        currMoved = entry.moved;
+
         prevHighlight = currHighlight;
         currHighlight = &::getHighlight(*currNode, entry.moved, entry.state,
                                         lang);
@@ -94,8 +97,8 @@ public:
             return *currHighlight;
         }
 
-        if (prevNode->moved || currNode->moved) {
-            return (currNode->moved ? *prevHighlight : *currHighlight);
+        if (prevNode->leaf && prevMoved && currMoved) {
+            return *prevHighlight;
         }
 
         return decor::none;
@@ -107,6 +110,8 @@ private:
     const decor::Decoration *prevHighlight = &decor::none;
     const Node *currNode = nullptr;
     const Node *prevNode = nullptr;
+    bool prevMoved = false;
+    bool currMoved = false;
 };
 
 Highlighter::Highlighter(const Tree &tree, bool original)
