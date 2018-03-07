@@ -30,6 +30,8 @@ using namespace srcmlcxx;
 
 static void postProcessTree(PNode *node, TreeBuilder &tb,
                             const std::string &contents);
+static void postProcessIf(PNode *node, TreeBuilder &tb,
+                          const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
 
@@ -187,12 +189,33 @@ SrcmlCxxLanguage::parse(const std::string &contents,
 static void
 postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
 {
-    if (node->stype == +SrcmlCxxSType::Block) {
+    if (node->stype == +SrcmlCxxSType::If) {
+        postProcessIf(node, tb, contents);
+    } else if (node->stype == +SrcmlCxxSType::Block) {
         postProcessBlock(node, tb, contents);
     }
 
     for (PNode *child : node->children) {
         postProcessTree(child, tb, contents);
+    }
+}
+
+// Rewrites if nodes to be more diff-friendly.
+static void
+postProcessIf(PNode *node, TreeBuilder &/*tb*/, const std::string &/*contents*/)
+{
+    // Move else-if node to respective if-statement.
+    while (node->children.back()->stype == +SrcmlCxxSType::Elseif) {
+        auto n = node->children.size();
+        PNode *child = node->children[n - 1U];
+        PNode *prev = node->children[n - 2U];
+
+        if (prev->stype != +SrcmlCxxSType::Elseif) {
+            break;
+        }
+
+        node->children.pop_back();
+        prev->children[1]->children.push_back(child);
     }
 }
 

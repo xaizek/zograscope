@@ -290,15 +290,16 @@ TEST_CASE("Various statements aren't mixed up", "[.srcml][srcml-cxx][parsing]")
         void f() {
             if (elem->ValueStr() == "comment") {
                 return Type::Comments;
-            } else if (elem->ValueStr() == "name") {
-                if (parentValue == "type") {
-                    return bla ? Type::Keywords : Type::UserTypes;
-                } else if (parentValue == "function" || parentValue == "call") {
-                    return Type::Functions;
-                }
-            } else if (keywords.find(value.to_string()) != keywords.cend()) {
-                return Type::Keywords;
             }
+            else if (elem->ValueStr() == "name") {                               /// Moves
+                if (parentValue == "type") {                                     /// Moves
+                    return bla ? Type::Keywords : Type::UserTypes;               /// Moves
+                } else if (parentValue == "function" || parentValue == "call") { /// Moves
+                    return Type::Functions;                                      /// Moves
+                }                                                                /// Moves
+            } else if (keywords.find(value.to_string()) != keywords.cend()) {    /// Moves
+                return Type::Keywords;                                           /// Moves
+            }                                                                    /// Moves
             return Type::Other;
         }
     )", R"(
@@ -315,15 +316,15 @@ TEST_CASE("Various statements aren't mixed up", "[.srcml][srcml-cxx][parsing]")
             } else if (elem->ValueStr() == "operator") {                         /// Additions
                 return Type::Operators;                                          /// Additions
             }                                                                    /// Additions
-            else if (elem->ValueStr() == "name") {
-                if (parentValue == "type") {
-                    return bla ? Type::Keywords : Type::UserTypes;
-                } else if (parentValue == "function" || parentValue == "call") {
-                    return Type::Functions;
-                }
-            } else if (keywords.find(value.to_string()) != keywords.cend()) {
-                return Type::Keywords;
-            }
+            else if (elem->ValueStr() == "name") {                               /// Moves
+                if (parentValue == "type") {                                     /// Moves
+                    return bla ? Type::Keywords : Type::UserTypes;               /// Moves
+                } else if (parentValue == "function" || parentValue == "call") { /// Moves
+                    return Type::Functions;                                      /// Moves
+                }                                                                /// Moves
+            } else if (keywords.find(value.to_string()) != keywords.cend()) {    /// Moves
+                return Type::Keywords;                                           /// Moves
+            }                                                                    /// Moves
             return Type::Other;
         }
     )");
@@ -361,6 +362,31 @@ TEST_CASE("Empty blocks are handled correctly", "[.srcml][srcml-cxx][parsing]")
                     int b;      /// Moves
                 }               /// Additions
             }
+        }
+    )");
+}
+
+TEST_CASE("Else-if statements are nested recursively",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            if (*p == 'T') {                    /// Moves
+                cfg.trunc_normal_sb_msgs = 1;   /// Moves
+            } else if (*p == 'p') {             /// Moves
+                cfg.shorten_title_paths = 1;    /// Moves
+            }                                   /// Moves
+        }
+    )", R"(
+        void f() {
+            if (*p == 'M') {                    /// Additions
+                cfg.short_term_mux_titles = 1;  /// Additions
+            } else                              /// Additions
+            if (*p == 'T') {                    /// Moves
+                cfg.trunc_normal_sb_msgs = 1;   /// Moves
+            } else if (*p == 'p') {             /// Moves
+                cfg.shorten_title_paths = 1;    /// Moves
+            }                                   /// Moves
         }
     )");
 }
