@@ -160,7 +160,7 @@ run(const Args &args, TimeReport &tr)
                     std::cout);
     if (args.gitDiff) {
         printer.addHeader({ args.pos[3], args.pos[6] });
-        printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });
+        printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[4] });
     } else {
         printer.addHeader({ oldFile, newFile });
     }
