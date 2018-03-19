@@ -18,6 +18,7 @@
 #include "Finder.hpp"
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/optional.hpp>
 
 #include "pmr/monolithic.hpp"
@@ -66,9 +67,33 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
         }
     };
 
+    std::vector<std::string> patterns;
+    enum { PATHS, PATTERNS } stage = PATHS;
+    for (const std::string &arg : args.pos) {
+        switch (stage) {
+            case PATHS:
+                if (arg == ":") {
+                    stage = PATTERNS;
+                } else {
+                    paths.push_back(arg);
+                }
+                break;
+            case PATTERNS:
+                patterns.push_back(arg);
+                break;
+        }
+    }
+
+    if (paths.empty()) {
+        paths.push_back(".");
+    }
+    if (patterns.empty()) {
+        throw std::runtime_error("Expected at least one matcher");
+    }
+
     Matcher *last = nullptr;
-    for (std::size_t i = args.pos.size() - 1U; i > 0U; --i) {
-        matchers.push_front(Matcher(convert(args.pos[i]), last));
+    for (const std::string &pattern : boost::adaptors::reverse(patterns)) {
+        matchers.push_front(Matcher(convert(pattern), last));
         last = &matchers.front();
     }
 }
@@ -76,7 +101,18 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
 Finder::~Finder() = default;
 
 bool
-Finder::find(const fs::path &path)
+Finder::search()
+{
+    bool found = false;
+    for (fs::path path : paths) {
+        found |= search(path);
+    }
+    report();
+    return found;
+}
+
+bool
+Finder::search(const fs::path &path)
 {
     bool found = false;
     auto match = [&](const std::string &file) {
@@ -92,14 +128,12 @@ Finder::find(const fs::path &path)
         for (fs::directory_entry &e :
              boost::make_iterator_range(it(path), it())) {
             if (fs::is_directory(e.path())) {
-                found |= find(e.path());
+                found |= search(e.path());
             } else {
                 match(e.path().string());
             }
         }
     }
-
-    report();
 
     return found;
 }

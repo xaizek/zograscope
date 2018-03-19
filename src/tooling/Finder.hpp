@@ -37,21 +37,24 @@ public:
     ~Finder();
 
 public:
-    // Processes either single file or recursively discovered files in a
-    // directory.
-    bool find(const boost::filesystem::path &path);
+    // Processes all specified paths.
+    bool search();
 
 public:
+    // Processes either single file or recursively discovered files in a
+    // directory.
+    bool search(const boost::filesystem::path &path);
     // Processes single file.
     bool process(const std::string &path);
     // Prints report with statistics about results.
     void report();
 
 private:
-    const CommonArgs &args;       // Arguments of a tool.
-    TimeReport &tr;               // Time reporter.
-    bool countOnly;               // Only print statistics about results.
-    std::deque<Matcher> matchers; // Storage of matchers.
+    const CommonArgs &args;         // Arguments of a tool.
+    TimeReport &tr;                 // Time reporter.
+    bool countOnly;                 // Only print statistics about results.
+    std::vector<std::string> paths; // List of paths to process.
+    std::deque<Matcher> matchers;   // Storage of matchers.
 };
 
 #endif // ZOGRASCOPE__TOOLING__FINDER_HPP__

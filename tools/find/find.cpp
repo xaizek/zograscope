@@ -21,15 +21,15 @@
 #include "Args.hpp"
 #include "common.hpp"
 
-// TODO: allow processing of multiple files specified on the command line?
-
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
 static int run(const Args &args, TimeReport &tr);
 
 const char *const usage =
-R"(Usage: zs-find [options...] file matchers...
-   or: zs-find [options...] directory matchers...
+R"(Usage: zs-find [options...] [paths...] : matchers...
+
+Paths can specify both files and directories.  When no path is specified, "." is
+assumed.
 
 Available matchers:
    decl  Any sort of declaration
@@ -103,8 +103,7 @@ run(const Args &args, TimeReport &tr)
 {
     int foundSomething = false;
     if (!args.dryRun) {
-        Finder finder(args, tr, args.count);
-        foundSomething = finder.find(args.pos[0]);
+        foundSomething = Finder(args, tr, args.count).search();
     }
     return (foundSomething ? EXIT_SUCCESS : EXIT_FAILURE);
 }
