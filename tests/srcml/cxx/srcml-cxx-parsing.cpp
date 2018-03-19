@@ -390,3 +390,33 @@ TEST_CASE("Else-if statements are nested recursively",
         }
     )");
 }
+
+TEST_CASE("Parenthesis aren't part of conditions",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            auto handler = [&](const Node *node) {
+                if (
+                    args.count                      /// Deletions
+                   ) {
+                    return;
+                }
+
+                oneMoreStatement;
+            };
+        }
+    )", R"(
+        void f() {
+            auto handler = [&](const Node *node) {
+                if (
+                    countOnly                       /// Additions
+                   ) {
+                    return;
+                }
+
+                oneMoreStatement;
+            };
+        }
+    )");
+}

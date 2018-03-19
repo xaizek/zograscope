@@ -30,10 +30,13 @@ using namespace srcmlcxx;
 
 static void postProcessTree(PNode *node, TreeBuilder &tb,
                             const std::string &contents);
+static bool isConditional(SType stype);
 static void postProcessIf(PNode *node, TreeBuilder &tb,
                           const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
+static void postProcessConditional(PNode *node, TreeBuilder &tb,
+                                   const std::string &contents);
 
 SrcmlCxxLanguage::SrcmlCxxLanguage()
 {
@@ -191,13 +194,30 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
 {
     if (node->stype == +SrcmlCxxSType::If) {
         postProcessIf(node, tb, contents);
-    } else if (node->stype == +SrcmlCxxSType::Block) {
+    }
+
+    if (node->stype == +SrcmlCxxSType::Block) {
         postProcessBlock(node, tb, contents);
+    }
+
+    if (isConditional(node->stype)) {
+        postProcessConditional(node, tb, contents);
     }
 
     for (PNode *child : node->children) {
         postProcessTree(child, tb, contents);
     }
+}
+
+// Checks whether node corresponds to one of control flow statements that
+// contain conditions.
+static bool
+isConditional(SType stype)
+{
+    return stype == +SrcmlCxxSType::If
+        || stype == +SrcmlCxxSType::Switch
+        || stype == +SrcmlCxxSType::While
+        || stype == +SrcmlCxxSType::Do;
 }
 
 // Rewrites if nodes to be more diff-friendly.
@@ -271,6 +291,28 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     stmts->stype = +SrcmlCxxSType::Statements;
 
     node->children.assign({ left, stmts, right });
+}
+
+// Rewrites control flow statements with conditions to move `(` and `)` one
+// level up.
+static void
+postProcessConditional(PNode *node, TreeBuilder &/*tb*/,
+                       const std::string &/*contents*/)
+{
+    auto pred = [](const PNode *n) {
+        return n->stype == +SrcmlCxxSType::Condition;
+    };
+    auto pos = std::find_if(node->children.begin(), node->children.end(), pred)
+             - node->children.begin();
+    PNode *cond = node->children[pos];
+
+    node->children.insert(node->children.begin() + pos + 1,
+                          cond->children.back());
+    node->children.insert(node->children.begin() + pos,
+                          cond->children.front());
+
+    cond->children.erase(cond->children.begin());
+    cond->children.erase(--cond->children.end());
 }
 
 bool
