@@ -17,8 +17,8 @@
 
 #include <iostream>
 
+#include "tooling/Finder.hpp"
 #include "Args.hpp"
-#include "Finder.hpp"
 #include "common.hpp"
 
 // TODO: allow processing of multiple files specified on the command line?
@@ -103,7 +103,7 @@ run(const Args &args, TimeReport &tr)
 {
     int foundSomething = false;
     if (!args.dryRun) {
-        Finder finder(args, tr);
+        Finder finder(args, tr, args.count);
         foundSomething = finder.find(args.pos[0]);
     }
     return (foundSomething ? EXIT_SUCCESS : EXIT_FAILURE);

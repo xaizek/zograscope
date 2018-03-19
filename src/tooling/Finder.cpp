@@ -26,7 +26,6 @@
 #include <string>
 
 #include "utils/optional.hpp"
-#include "Args.hpp"
 #include "Highlighter.hpp"
 #include "Matcher.hpp"
 #include "common.hpp"
@@ -50,7 +49,8 @@ operator<<(std::ostream &os, const AutoNL &val)
 
 }
 
-Finder::Finder(const Args &args, TimeReport &tr) : args(args), tr(tr)
+Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
+    : args(args), tr(tr), countOnly(countOnly)
 {
     auto convert = [](const std::string &str) {
         if (str == "decl") {
@@ -113,10 +113,10 @@ Finder::process(const std::string &path)
 
         Tree tree = *t;
         Language &lang = *tree.getLanguage();
-        const Args &args = this->args;
+        const bool countOnly = this->countOnly;
 
         auto handler = [&](const Node *node) {
-            if (args.count) {
+            if (countOnly) {
                 return;
             }
 
@@ -136,7 +136,7 @@ Finder::process(const std::string &path)
 void
 Finder::report()
 {
-    if (!args.count) {
+    if (!countOnly) {
         return;
     }
 

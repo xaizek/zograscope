@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__FIND__MATCHER_HPP__
-#define ZOGRASCOPE__TOOLS__FIND__MATCHER_HPP__
+#ifndef ZOGRASCOPE__TOOLING__MATCHER_HPP__
+#define ZOGRASCOPE__TOOLING__MATCHER_HPP__
 
 #include <cstdint>
 
@@ -111,4 +111,4 @@ Matcher::getMatched() const
     return matched;
 }
 
-#endif // ZOGRASCOPE__TOOLS__FIND__MATCHER_HPP__
+#endif // ZOGRASCOPE__TOOLING__MATCHER_HPP__

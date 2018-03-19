@@ -15,15 +15,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__FIND__FINDER_HPP__
-#define ZOGRASCOPE__TOOLS__FIND__FINDER_HPP__
+#ifndef ZOGRASCOPE__TOOLING__FINDER_HPP__
+#define ZOGRASCOPE__TOOLING__FINDER_HPP__
 
 #include <boost/filesystem/path.hpp>
 
 #include <deque>
 #include <string>
 
-class Args;
+class CommonArgs;
 class Matcher;
 class TimeReport;
 
@@ -32,7 +32,7 @@ class Finder
 {
 public:
     // Parses arguments and records for future use.
-    Finder(const Args &args, TimeReport &tr);
+    Finder(const CommonArgs &args, TimeReport &tr, bool countOnly);
     // To destruct `matchers` field with complete type.
     ~Finder();
 
@@ -48,9 +48,10 @@ public:
     void report();
 
 private:
-    const Args &args;             // Arguments of the tool.
+    const CommonArgs &args;       // Arguments of a tool.
     TimeReport &tr;               // Time reporter.
+    bool countOnly;               // Only print statistics about results.
     std::deque<Matcher> matchers; // Storage of matchers.
 };
 
-#endif // ZOGRASCOPE__TOOLS__FIND__FINDER_HPP__
+#endif // ZOGRASCOPE__TOOLING__FINDER_HPP__
