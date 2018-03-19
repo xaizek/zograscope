@@ -18,8 +18,8 @@
 #include <iostream>
 
 #include "tooling/Finder.hpp"
+#include "tooling/common.hpp"
 #include "Args.hpp"
-#include "common.hpp"
 
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);

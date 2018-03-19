@@ -23,8 +23,8 @@
 #include <boost/optional.hpp>
 #include "pmr/monolithic.hpp"
 
+#include "tooling/common.hpp"
 #include "utils/time.hpp"
-#include "common.hpp"
 #include "tree.hpp"
 
 TEST_CASE("Exception is thrown for files that don't exist", "[common]")

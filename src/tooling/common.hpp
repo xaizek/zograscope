@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__COMMON_HPP__
-#define ZOGRASCOPE__COMMON_HPP__
+#ifndef ZOGRASCOPE__TOOLING__COMMON_HPP__
+#define ZOGRASCOPE__TOOLING__COMMON_HPP__
 
 #include <string>
 #include <vector>
@@ -103,4 +103,4 @@ void dumpTree(const CommonArgs &args, Tree &tree);
 
 void dumpTrees(const CommonArgs &args, Tree &treeA, Tree &treeB);
 
-#endif // ZOGRASCOPE__COMMON_HPP__
+#endif // ZOGRASCOPE__TOOLING__COMMON_HPP__
