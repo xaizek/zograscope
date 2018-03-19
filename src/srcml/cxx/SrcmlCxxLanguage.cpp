@@ -302,8 +302,14 @@ postProcessConditional(PNode *node, TreeBuilder &/*tb*/,
     auto pred = [](const PNode *n) {
         return n->stype == +SrcmlCxxSType::Condition;
     };
-    auto pos = std::find_if(node->children.begin(), node->children.end(), pred)
-             - node->children.begin();
+
+    auto it = std::find_if(node->children.begin(), node->children.end(), pred);
+    if (it == node->children.end()) {
+        // The node is incomplete.
+        return;
+    }
+
+    auto pos = it - node->children.begin();
     PNode *cond = node->children[pos];
 
     node->children.insert(node->children.begin() + pos + 1,
