@@ -19,6 +19,7 @@
 
 #include <stdexcept>
 
+#include <boost/filesystem/operations.hpp>
 #include <boost/optional.hpp>
 #include "pmr/monolithic.hpp"
 
@@ -42,4 +43,16 @@ TEST_CASE("Directories aren't parsed", "[common]")
     cpp17::pmr::monolithic mr;
     REQUIRE_THROWS_AS(buildTreeFromFile("tests", args, tr, &mr),
                       std::runtime_error);
+}
+
+TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
+{
+    if (!boost::filesystem::exists("/dev/null")) {
+        return;
+    }
+
+    CommonArgs args = {};
+    TimeReport tr;
+    cpp17::pmr::monolithic mr;
+    REQUIRE_NOTHROW(buildTreeFromFile("/dev/null", args, tr, &mr));
 }

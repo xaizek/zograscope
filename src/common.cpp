@@ -164,7 +164,7 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
 static std::string
 readFile(const std::string &path)
 {
-    if (!boost::filesystem::is_regular_file(path)) {
+    if (boost::filesystem::is_directory(path)) {
         throw std::runtime_error("Not a regular file: " + path);
     }
 
