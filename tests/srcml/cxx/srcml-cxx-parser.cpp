@@ -279,3 +279,16 @@ TEST_CASE("Constructors and destructors are moved to a separate layer",
     CHECK(findNode(ctor, test) != nullptr);
     CHECK(findNode(dtor, test) != nullptr);
 }
+
+TEST_CASE("Braces of empty block are decomposed and stripped",
+          "[.srcml][srcml-cxx][printer]")
+{
+    Tree tree = parseCxx(R"(
+        void f() {
+        }
+    )");
+    std::string expected = "\nvoid f() {\n}";
+
+    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    REQUIRE(hi.print() == expected);
+}
