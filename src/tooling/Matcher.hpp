@@ -39,7 +39,7 @@ public:
 public:
     // Matches children of `node` and invokes `handler` on the last match in the
     // chain.  Returns `true` if at something was matched, `false` otherwise.
-    // `handler` must be callable as if it has `void handler(const Node *node)`
+    // `handler` must be callable as if it has `void handler(Node *node)`
     // signature.
     template <typename F>
     bool match(const Node *node, Language &lang, F &&handler);

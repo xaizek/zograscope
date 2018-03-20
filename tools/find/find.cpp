@@ -27,9 +27,13 @@ static int run(const Args &args, TimeReport &tr);
 
 const char *const usage =
 R"(Usage: zs-find [options...] [paths...] : matchers...
+   or: zs-find [options...] [paths...] : [matchers...] : tokens...
+   or: zs-find [options...] [paths...] :: tokens...
 
 Paths can specify both files and directories.  When no path is specified, "." is
 assumed.
+
+Each of tokens is just a value of a token like `[` or `int`.
 
 Available matchers:
    decl  Any sort of declaration

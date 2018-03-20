@@ -23,6 +23,8 @@
 #include <deque>
 #include <string>
 
+#include "Grepper.hpp"
+
 class CommonArgs;
 class Matcher;
 class TimeReport;
@@ -55,6 +57,7 @@ private:
     bool countOnly;                 // Only print statistics about results.
     std::vector<std::string> paths; // List of paths to process.
     std::deque<Matcher> matchers;   // Storage of matchers.
+    Grepper grepper;                // Finder of consecutive tokens.
 };
 
 #endif // ZOGRASCOPE__TOOLING__FINDER_HPP__

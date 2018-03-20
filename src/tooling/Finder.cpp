@@ -67,19 +67,28 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
         }
     };
 
-    std::vector<std::string> patterns;
-    enum { PATHS, PATTERNS } stage = PATHS;
+    std::vector<std::string> mpatterns, gpatterns;
+    enum { PATHS, MPATTERNS, GPATTERNS } stage = PATHS;
     for (const std::string &arg : args.pos) {
         switch (stage) {
             case PATHS:
                 if (arg == ":") {
-                    stage = PATTERNS;
+                    stage = MPATTERNS;
+                } else if (arg == "::") {
+                    stage = GPATTERNS;
                 } else {
                     paths.push_back(arg);
                 }
                 break;
-            case PATTERNS:
-                patterns.push_back(arg);
+            case MPATTERNS:
+                if (arg == ":") {
+                    stage = GPATTERNS;
+                } else {
+                    mpatterns.push_back(arg);
+                }
+                break;
+            case GPATTERNS:
+                gpatterns.push_back(arg);
                 break;
         }
     }
@@ -87,15 +96,18 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
     if (paths.empty()) {
         paths.push_back(".");
     }
-    if (patterns.empty()) {
-        throw std::runtime_error("Expected at least one matcher");
+    if (mpatterns.empty() && gpatterns.empty()) {
+        throw std::runtime_error("Expected at least one matcher of either "
+                                 "type");
     }
 
     Matcher *last = nullptr;
-    for (const std::string &pattern : boost::adaptors::reverse(patterns)) {
-        matchers.push_front(Matcher(convert(pattern), last));
+    for (const std::string &mpattern : boost::adaptors::reverse(mpatterns)) {
+        matchers.push_front(Matcher(convert(mpattern), last));
         last = &matchers.front();
     }
+
+    grepper = Grepper(gpatterns);
 }
 
 Finder::~Finder() = default;
@@ -148,9 +160,31 @@ Finder::process(const std::string &path)
         Tree tree = *t;
         Language &lang = *tree.getLanguage();
         const bool countOnly = this->countOnly;
+        const bool noMatchers = matchers.empty();
 
-        auto handler = [&](const Node *node) {
-            if (countOnly) {
+        auto grepHandler = [&](const std::vector<Node *> &match) {
+            if (!noMatchers || countOnly) {
+                return;
+            }
+
+            Node fakeRoot;
+            fakeRoot.children.assign(match.cbegin(), match.cend());
+
+            const Node *node = match.front();
+            std::cout << (decor::yellow_fg << path) << ':'
+                      << (decor::cyan_fg << node->line) << ':'
+                      << (decor::cyan_fg << node->col) << ": "
+                      << AutoNL { Highlighter(fakeRoot, lang, true,
+                                              node->line).print() }
+                      << '\n';
+        };
+
+        if (noMatchers) {
+            return grepper.grep(tree.getRoot(), grepHandler);
+        }
+
+        auto matchHandler = [&](Node *node) {
+            if (!grepper.grep(node, grepHandler) || countOnly) {
                 return;
             }
 
@@ -162,7 +196,7 @@ Finder::process(const std::string &path)
                       << '\n';
         };
 
-        return matchers.front().match(tree.getRoot(), lang, handler);
+        return matchers.front().match(tree.getRoot(), lang, matchHandler);
     }
     return false;
 }
@@ -201,5 +235,11 @@ Finder::report()
         lastSeen = matcher.getSeen();
         lastMatched = matcher.getMatched();
         first = false;
+    }
+
+    if (!grepper.empty()) {
+        std::cout << "++> Token match\n";
+        std::cout << "seen    = " << grepper.getSeen() << '\n';
+        std::cout << "matched = " << grepper.getMatched() << '\n';
     }
 }
