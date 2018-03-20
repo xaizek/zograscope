@@ -59,6 +59,11 @@ public:
     // Destructs the highlighter.
     ~Highlighter();
 
+private:
+    // Common implementation of two public constructors.
+    Highlighter(const Node &root, const Language &lang, bool original,
+                int lineOffset, int colOffset);
+
 public:
     // Prints lines in the range [from, from + n) into a string.  Each line can
     // be printed at most once, thus calls to this function need to increase
@@ -84,6 +89,7 @@ private:
     const Language &lang;                     // Language services.
     std::ostringstream oss;                   // Temporary output buffer.
     int line, col;                            // Current position.
+    int colOffset;                            // Horizontal offset;
     std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.
     std::vector<boost::string_ref> olines;    // Undiffed spelling.
     std::vector<boost::string_ref> lines;     // Possibly diffed spelling.

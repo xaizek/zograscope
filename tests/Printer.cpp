@@ -141,10 +141,10 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                        |  1
-         2          format_str({-"...%s"-}, str); ~  2          format_str({+"%s%s"+}{+,+}{+ +}{+ell+}, str);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                |  1
+         2  format_str({-"...%s"-}, str); ~  2  format_str({+"%s%s"+}{+,+}{+ +}{+ell+}, str);
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -229,22 +229,22 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          1                                                 |   1
-          2          {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:} ~   2          void h() {
-          3          {:}:}                                  ~   3          }
-          4                                                 |   4
-          5          {:void:}{: :}{:g:}{:(:}{:):}           ~   5          {:void:}{: :}{:g:}{:(:}{:):}
-          6          {:{:}                                  ~   6          {:{:}
-          7              {:movedStuff:}{:;:}                ~   7              {:movedStuff:}{:;:}
-          8              {:movedStuff:}{:;:}                ~   8              {:movedStuff:}{:;:}
-          9              {:movedStuff:}{:;:}                ~   9              {:movedStuff:}{:;:}
-         10              {:movedStuff:}{:;:}                ~  10              {:movedStuff:}{:;:}
-         11          {:}:}                                  ~  11          {:}:}
-         12                                                 |  12
-         13          void h() {                             ~  13          {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:}
-         14          }                                      ~  14          {:}:}
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          1                                         |   1
+          2  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:} ~   2  void h() {
+          3  {:}:}                                  ~   3  }
+          4                                         |   4
+          5  {:void:}{: :}{:g:}{:(:}{:):}           ~   5  {:void:}{: :}{:g:}{:(:}{:):}
+          6  {:{:}                                  ~   6  {:{:}
+          7      {:movedStuff:}{:;:}                ~   7      {:movedStuff:}{:;:}
+          8      {:movedStuff:}{:;:}                ~   8      {:movedStuff:}{:;:}
+          9      {:movedStuff:}{:;:}                ~   9      {:movedStuff:}{:;:}
+         10      {:movedStuff:}{:;:}                ~  10      {:movedStuff:}{:;:}
+         11  {:}:}                                  ~  11  {:}:}
+         12                                         |  12
+         13  void h() {                             ~  13  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:}
+         14  }                                      ~  14  {:}:}
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -298,31 +298,31 @@ TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          1                                                 |   1
-          2          int array[] = {-{-}                    ~   2          int array[] = {+{+}
-          3              {-somethingOldThatWontMatch-}{-,-} <   -
-          4              {-somethingOldThatWontMatch-}{-,-} <   -
-          5              {-somethingOldThatWontMatch-}{-,-} <   -
-          -                                                 >   3              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          -                                                 >   4              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          -                                                 >   5              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          6                                                 |   6
-          7              {-somethingCommon-}{-,-}           ~   7              {+somethingCommon+}{+,+}
-          8              {-somethingCommon-}{-,-}           ~   8              {+somethingCommon+}{+,+}
-          9              {-somethingCommon-}{-,-}           ~   9              {+somethingCommon+}{+,+}
-          10              {-somethingCommon-}{-,-}           ~  10              {+somethingCommon+}{+,+}
-          11              {-somethingCommon-}{-,-}           ~  11              {+somethingCommon+}{+,+}
-          12              {-somethingCommon-}{-,-}           ~  12              {+somethingCommon+}{+,+}
-          13                                                 |  13
-          14              {-somethingOldThatWontMatch-}{-,-} <  --
-          15              {-somethingOldThatWontMatch-}{-,-} <  --
-          16              {-somethingOldThatWontMatch-}{-,-} <  --
-          --                                                 >  14              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          --                                                 >  15              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          --                                                 >  16              {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          17          {-}-};                                 ~  17          {+}+};
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+           1                                         |   1
+           2  int array[] = {-{-}                    ~   2  int array[] = {+{+}
+           3      {-somethingOldThatWontMatch-}{-,-} <   -
+           4      {-somethingOldThatWontMatch-}{-,-} <   -
+           5      {-somethingOldThatWontMatch-}{-,-} <   -
+           -                                         >   3      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+           -                                         >   4      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+           -                                         >   5      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+           6                                         |   6
+           7      {-somethingCommon-}{-,-}           ~   7      {+somethingCommon+}{+,+}
+           8      {-somethingCommon-}{-,-}           ~   8      {+somethingCommon+}{+,+}
+           9      {-somethingCommon-}{-,-}           ~   9      {+somethingCommon+}{+,+}
+          10      {-somethingCommon-}{-,-}           ~  10      {+somethingCommon+}{+,+}
+          11      {-somethingCommon-}{-,-}           ~  11      {+somethingCommon+}{+,+}
+          12      {-somethingCommon-}{-,-}           ~  12      {+somethingCommon+}{+,+}
+          13                                         |  13
+          14      {-somethingOldThatWontMatch-}{-,-} <  --
+          15      {-somethingOldThatWontMatch-}{-,-} <  --
+          16      {-somethingOldThatWontMatch-}{-,-} <  --
+          --                                         >  14      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          --                                         >  15      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          --                                         >  16      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          17  {-}-};                                 ~  17  {+}+};
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -381,13 +381,13 @@ TEST_CASE("Highlighting fills background in a meaningful way", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                                                      |  1
-         2          {:void:}{: :}{#func_proto#}{:(:}{:int:}{: :}{:a:}{:):}{:;:} <  -
-         3          int a;                                                      |  2          int a;
-         4          int b;                                                      |  3          int b;
-         -                                                                      >  4          {:void:}{: :}{#func_prototype#}{:(:}{:int:}{: :}{:a:}{:):}{:;:}
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                                              |  1
+         2  {:void:}{: :}{#func_proto#}{:(:}{:int:}{: :}{:a:}{:):}{:;:} <  -
+         3  int a;                                                      |  2  int a;
+         4  int b;                                                      |  3  int b;
+         -                                                              >  4  {:void:}{: :}{#func_prototype#}{:(:}{:int:}{: :}{:a:}{:):}{:;:}
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -415,12 +415,12 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 1", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                           |  1
-         2          void f() {                       |  2          void f() {
-         3              some_function({:argument:}); ~  3              some_function({:argument:} {+++}{+ +}{+1+});
-         4          }                                |  4          }
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                   |  1
+         2  void f() {                       |  2  void f() {
+         3      some_function({:argument:}); ~  3      some_function({:argument:} {+++}{+ +}{+1+});
+         4  }                                |  4  }
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -458,18 +458,18 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                                                                                      |   1
-         2          void f() {                                                                                  |   2          void f() {
-         3              {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        ~   3              {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
-         -                                                                                                      >   4                  {+cfg+}{+.+}{+short_term_mux_titles+}{+ +}{+=+}{+ +}{+1+}{+;+}
-         -                                                                                                      >   5              {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
-         4                  {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}                       ~   6                  {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}
-         5              {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:} ~   7              {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:}
-         6                  {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}                        ~   8                  {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}
-         7              {:}:}                                                                                   ~   9              {:}:}
-         8          }                                                                                           |  10          }
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                                                                              |   1
+         2  void f() {                                                                                  |   2  void f() {
+         3      {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        ~   3      {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
+         -                                                                                              >   4          {+cfg+}{+.+}{+short_term_mux_titles+}{+ +}{+=+}{+ +}{+1+}{+;+}
+         -                                                                                              >   5      {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
+         4          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}                       ~   6          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}
+         5      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:} ~   7      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:}
+         6          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}                        ~   8          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}
+         7      {:}:}                                                                                   ~   9      {:}:}
+         8  }                                                                                           |  10  }
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
