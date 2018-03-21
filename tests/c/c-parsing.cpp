@@ -931,3 +931,16 @@ TEST_CASE("switch case labels don't introduce nested statements nodes",
         }
     )", true);
 }
+
+TEST_CASE("extern C is decomposed", "[comparison][parsing]")
+{
+    diffC(R"(
+        extern "C" {
+            int a;     /// Deletions
+        }
+    )", R"(
+        extern "C" {
+            void f();  /// Additions
+        }
+    )", true);
+}

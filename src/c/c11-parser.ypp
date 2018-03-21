@@ -1739,7 +1739,8 @@ external_declaration
     | EXTERN SLIT '{' top_level '}'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+                         tb->addNode($5, @5) },
+                       +C11SType::TemporaryContainer); }
     ;
 
 /* (6.9.1) function-definition: */
