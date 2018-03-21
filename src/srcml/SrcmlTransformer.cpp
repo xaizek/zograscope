@@ -220,11 +220,13 @@ SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
                   (grandParentValue != "function" &&
                    grandParentValue != "call")));
 
+        if (keywords.find(value.to_string()) != keywords.cend()) {
+            return Type::Keywords;
+        }
         if (parentValue == "type") {
-            return keywords.find(value.to_string()) != keywords.cend()
-                 ? Type::Keywords
-                 : Type::UserTypes;
-        } else if (parentValue == "function" || parentValue == "call") {
+            return Type::UserTypes;
+        }
+        if (parentValue == "function" || parentValue == "call") {
             return Type::Functions;
         }
         return Type::Identifiers;

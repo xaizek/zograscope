@@ -141,6 +141,16 @@ TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Keywords, "break")) != nullptr);
 }
 
+TEST_CASE("this is recognized as a keyword", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void Class::f() {
+            this->a = 10;
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "this")) != nullptr);
+}
+
 TEST_CASE("Function names are marked with types", "[.srcml][srcml-cxx][parser]")
 {
     Tree tree = parseCxx(R"(
