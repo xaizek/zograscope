@@ -1058,22 +1058,30 @@ direct_declarator
                          tb->addNode($5, @5) },
                        +C11SType::FunctionDeclaration); }
     | ID '(' meta_parameter_type_list ')' %dprec 1
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, +C11SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, +C11SType::Separator) },
+                       +C11SType::FunctionDeclaration); }
     ;
 
 meta_parameter_type_list
     : meta_parameter_declaration
-    { $$ = tb->addNode($1, @1); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Bundle) },
+                       +C11SType::TemporaryContainer); }
     | meta_parameter_type_list ',' meta_parameter_declaration
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->append($1, tb->addNode({ tb->addNode($2, @2,
+                                                    +C11SType::Separator),
+                                        tb->addNode($3, @3) },
+                                      +C11SType::Bundle)); }
     ;
 
 meta_parameter_declaration
     : '(' parameter_type_list ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3, +C11SType::Separator) },
+                       +C11SType::TemporaryContainer); }
     | ID
     { $$ = tb->addNode({ tb->addNode($1, @1) }); }
     ;
