@@ -1051,9 +1051,12 @@ direct_declarator
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }); }
     | direct_declarator '(' parameter_type_list ')' ID               %dprec 3
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5) }); }
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2, +C11SType::Separator),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4, +C11SType::Separator),
+                         tb->addNode($5, @5) },
+                       +C11SType::FunctionDeclaration); }
     | ID '(' meta_parameter_type_list ')' %dprec 1
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }

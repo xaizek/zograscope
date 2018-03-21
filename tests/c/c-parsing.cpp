@@ -944,3 +944,17 @@ TEST_CASE("extern C is decomposed", "[comparison][parsing]")
         }
     )", true);
 }
+
+TEST_CASE("Function declaration with trailing macro is decomposed",
+          "[comparison][parsing]")
+{
+    diffC(R"(
+        void f(int arg1, int
+                         arg2  /// Updates
+              ) macro;
+    )", R"(
+        void f(int arg1, int
+                         arg3  /// Updates
+              ) macro;
+    )", true);
+}
