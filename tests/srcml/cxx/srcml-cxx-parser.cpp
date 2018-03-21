@@ -311,3 +311,13 @@ TEST_CASE("Work around incorrect parsing of then/else block",
     Highlighter hi(*tree.getRoot(), *tree.getLanguage());
     REQUIRE(hi.print() + '\n' == input);
 }
+
+TEST_CASE("Unicode characters are handled correctly",
+          "[.srcml][srcml-cxx][parser]")
+{
+    std::string input = R"(auto a = "µs";)";
+    Tree tree = parseCxx(input);
+
+    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    REQUIRE(hi.print() == input);
+}
