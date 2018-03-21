@@ -58,6 +58,8 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
             return MType::Declaration;
         } else if (str == "func") {
             return MType::Function;
+        } else if (str == "param") {
+            return MType::Parameter;
         } else if (str == "comm") {
             return MType::Comment;
         } else if (str == "dir") {

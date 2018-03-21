@@ -36,10 +36,11 @@ assumed.
 Each of tokens is just a value of a token like `[` or `int`.
 
 Available matchers:
-   decl  Any sort of declaration
-   func  Functions (their definitions only)
-   comm  Comments of any kind
-   dir   Preprocessor-alike directives
+   decl   Any sort of declaration
+   func   Functions (their definitions only)
+   param  Parameter of a function
+   comm   Comments of any kind
+   dir    Preprocessor-alike directives
 )";
 
 int

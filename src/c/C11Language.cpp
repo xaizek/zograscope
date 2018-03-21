@@ -316,6 +316,9 @@ C11Language::classify(SType stype) const
         case C11SType::FunctionDefinition:
             return MType::Function;
 
+        case C11SType::Parameter:
+            return MType::Parameter;
+
         case C11SType::Comment:
             return MType::Comment;
 

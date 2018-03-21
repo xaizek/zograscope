@@ -28,6 +28,7 @@ operator<<(std::ostream &os, MType mtype)
         case MType::Other:       return (os << "Other");
         case MType::Declaration: return (os << "Declaration");
         case MType::Function:    return (os << "Function");
+        case MType::Parameter:   return (os << "Parameter");
         case MType::Comment:     return (os << "Comment");
         case MType::Directive:   return (os << "Directive");
     }
