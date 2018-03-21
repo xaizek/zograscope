@@ -48,8 +48,8 @@ public:
     int getMatched() const;
 
 private:
-    // Implementation of `grep` that doesn't perform check for emptiness on each
-    // recursion.
+    // Implementation of `grep` that calls itself recursively after `grep` did
+    // necessary preparations.
     template <typename F>
     bool grepImpl(Node *node, F &&handler);
 
@@ -79,6 +79,8 @@ Grepper::grep(Node *node, F &&handler)
     if (empty()) {
         return true;
     }
+
+    match.clear();
     return grepImpl(node, std::forward<F>(handler));
 }
 
