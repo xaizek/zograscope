@@ -257,42 +257,43 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
         return;
     }
 
-    // Children: statement.
+    // Children: `{}` (with any whitespace in between).
     if (node->children.size() == 1 &&
-        contents[node->children[0]->value.from] != '{') {
+        contents[node->children[0]->value.from] == '{' &&
+        contents[node->children[0]->value.from +
+                 node->children[0]->value.len - 1] == '}') {
+        PNode *child = node->children[0];
+
+        PNode *left = tb.addNode();
+        left->stype = +SrcmlCxxSType::Separator;
+        left->value.from = child->value.from;
+        left->value.len = 1;
+        left->line = child->line;
+        left->col = child->col;
+        left->value.token = static_cast<int>(Type::LeftBrackets);
+
+        PNode *right = tb.addNode();
+        right->stype = +SrcmlCxxSType::Separator;
+        right->value.from = child->value.from + 1;
+        right->value.len = child->value.len - 1;
+        right->line = child->line;
+        right->col = child->col + 1;
+        right->value.token = static_cast<int>(Type::RightBrackets);
+        dropLeadingWS(right, contents);
+
         PNode *stmts = tb.addNode();
         stmts->stype = +SrcmlCxxSType::Statements;
-        stmts->children = node->children;
 
-        node->children.assign({ stmts });
+        node->children.assign({ left, stmts, right });
         return;
     }
 
-    // Children: `{}` (with any whitespace in between).
-
-    PNode *child = node->children[0];
-
-    PNode *left = tb.addNode();
-    left->stype = +SrcmlCxxSType::Separator;
-    left->value.from = child->value.from;
-    left->value.len = 1;
-    left->line = child->line;
-    left->col = child->col;
-    left->value.token = static_cast<int>(Type::LeftBrackets);
-
-    PNode *right = tb.addNode();
-    right->stype = +SrcmlCxxSType::Separator;
-    right->value.from = child->value.from + 1;
-    right->value.len = child->value.len - 1;
-    right->line = child->line;
-    right->col = child->col + 1;
-    right->value.token = static_cast<int>(Type::RightBrackets);
-    dropLeadingWS(right, contents);
-
+    // Children: statement (possibly in multiple pieces).
     PNode *stmts = tb.addNode();
     stmts->stype = +SrcmlCxxSType::Statements;
+    stmts->children = node->children;
 
-    node->children.assign({ left, stmts, right });
+    node->children.assign({ stmts });
 }
 
 // Corrects node data to exclude leading whitespace.

@@ -47,14 +47,14 @@ void
 SrcmlTransformer::transform()
 {
     std::vector<std::string> cmd = {
-        "srcml", "--language=" + language, "-"
+        "srcml", "--language=" + language, "--src-encoding=utf8", "-"
     };
 
     std::string xml = readCommandOutput(cmd, contents);
 
     TiXmlDocument doc {};
     doc.SetCondenseWhiteSpace(false);
-    doc.Parse(xml.c_str());
+    doc.Parse(xml.c_str(), nullptr, TIXML_ENCODING_UTF8);
     if (doc.Error()) {
         throw std::runtime_error("Failed to parse");
     }
@@ -220,11 +220,13 @@ SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
                   (grandParentValue != "function" &&
                    grandParentValue != "call")));
 
+        if (keywords.find(value.to_string()) != keywords.cend()) {
+            return Type::Keywords;
+        }
         if (parentValue == "type") {
-            return keywords.find(value.to_string()) != keywords.cend()
-                 ? Type::Keywords
-                 : Type::UserTypes;
-        } else if (parentValue == "function" || parentValue == "call") {
+            return Type::UserTypes;
+        }
+        if (parentValue == "function" || parentValue == "call") {
             return Type::Functions;
         }
         return Type::Identifiers;

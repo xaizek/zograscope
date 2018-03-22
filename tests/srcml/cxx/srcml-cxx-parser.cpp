@@ -141,6 +141,16 @@ TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Keywords, "break")) != nullptr);
 }
 
+TEST_CASE("this is recognized as a keyword", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        void Class::f() {
+            this->a = 10;
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "this")) != nullptr);
+}
+
 TEST_CASE("Function names are marked with types", "[.srcml][srcml-cxx][parser]")
 {
     Tree tree = parseCxx(R"(
@@ -281,7 +291,7 @@ TEST_CASE("Constructors and destructors are moved to a separate layer",
 }
 
 TEST_CASE("Braces of empty block are decomposed and stripped",
-          "[.srcml][srcml-cxx][printer]")
+          "[.srcml][srcml-cxx][parser]")
 {
     Tree tree = parseCxx(R"(
         void f() {
@@ -291,4 +301,33 @@ TEST_CASE("Braces of empty block are decomposed and stripped",
 
     Highlighter hi(*tree.getRoot(), *tree.getLanguage());
     REQUIRE(hi.print() == expected);
+}
+
+TEST_CASE("Work around incorrect parsing of then/else block",
+          "[.srcml][srcml-cxx][parser]")
+{
+    std::string input = normalizeText(R"(
+        class Column {
+            inline friend void f() {
+                if( first )
+                    first = false;
+                else
+                    os << "\n";
+            }
+        };
+    )");
+    Tree tree = parseCxx(input);
+
+    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    REQUIRE(hi.print() + '\n' == input);
+}
+
+TEST_CASE("Unicode characters are handled correctly",
+          "[.srcml][srcml-cxx][parser]")
+{
+    std::string input = R"(auto a = "µs";)";
+    Tree tree = parseCxx(input);
+
+    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    REQUIRE(hi.print() == input);
 }
