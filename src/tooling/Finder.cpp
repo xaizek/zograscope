@@ -18,6 +18,7 @@
 #include "Finder.hpp"
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/optional.hpp>
 
 #include "pmr/monolithic.hpp"
@@ -26,7 +27,6 @@
 #include <string>
 
 #include "utils/optional.hpp"
-#include "Args.hpp"
 #include "Highlighter.hpp"
 #include "Matcher.hpp"
 #include "common.hpp"
@@ -50,13 +50,16 @@ operator<<(std::ostream &os, const AutoNL &val)
 
 }
 
-Finder::Finder(const Args &args, TimeReport &tr) : args(args), tr(tr)
+Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
+    : args(args), tr(tr), countOnly(countOnly)
 {
     auto convert = [](const std::string &str) {
         if (str == "decl") {
             return MType::Declaration;
         } else if (str == "func") {
             return MType::Function;
+        } else if (str == "param") {
+            return MType::Parameter;
         } else if (str == "comm") {
             return MType::Comment;
         } else if (str == "dir") {
@@ -66,17 +69,64 @@ Finder::Finder(const Args &args, TimeReport &tr) : args(args), tr(tr)
         }
     };
 
+    std::vector<std::string> mpatterns, gpatterns;
+    enum { PATHS, MPATTERNS, GPATTERNS } stage = PATHS;
+    for (const std::string &arg : args.pos) {
+        switch (stage) {
+            case PATHS:
+                if (arg == ":") {
+                    stage = MPATTERNS;
+                } else if (arg == "::") {
+                    stage = GPATTERNS;
+                } else {
+                    paths.push_back(arg);
+                }
+                break;
+            case MPATTERNS:
+                if (arg == ":") {
+                    stage = GPATTERNS;
+                } else {
+                    mpatterns.push_back(arg);
+                }
+                break;
+            case GPATTERNS:
+                gpatterns.push_back(arg);
+                break;
+        }
+    }
+
+    if (paths.empty()) {
+        paths.push_back(".");
+    }
+    if (mpatterns.empty() && gpatterns.empty()) {
+        throw std::runtime_error("Expected at least one matcher of either "
+                                 "type");
+    }
+
     Matcher *last = nullptr;
-    for (std::size_t i = args.pos.size() - 1U; i > 0U; --i) {
-        matchers.push_front(Matcher(convert(args.pos[i]), last));
+    for (const std::string &mpattern : boost::adaptors::reverse(mpatterns)) {
+        matchers.push_front(Matcher(convert(mpattern), last));
         last = &matchers.front();
     }
+
+    grepper = Grepper(gpatterns);
 }
 
 Finder::~Finder() = default;
 
 bool
-Finder::find(const fs::path &path)
+Finder::search()
+{
+    bool found = false;
+    for (fs::path path : paths) {
+        found |= search(path);
+    }
+    report();
+    return found;
+}
+
+bool
+Finder::search(const fs::path &path)
 {
     bool found = false;
     auto match = [&](const std::string &file) {
@@ -92,14 +142,12 @@ Finder::find(const fs::path &path)
         for (fs::directory_entry &e :
              boost::make_iterator_range(it(path), it())) {
             if (fs::is_directory(e.path())) {
-                found |= find(e.path());
+                found |= search(e.path());
             } else {
                 match(e.path().string());
             }
         }
     }
-
-    report();
 
     return found;
 }
@@ -113,10 +161,32 @@ Finder::process(const std::string &path)
 
         Tree tree = *t;
         Language &lang = *tree.getLanguage();
-        const Args &args = this->args;
+        const bool countOnly = this->countOnly;
+        const bool noMatchers = matchers.empty();
 
-        auto handler = [&](const Node *node) {
-            if (args.count) {
+        auto grepHandler = [&](const std::vector<Node *> &match) {
+            if (!noMatchers || countOnly) {
+                return;
+            }
+
+            Node fakeRoot;
+            fakeRoot.children.assign(match.cbegin(), match.cend());
+
+            const Node *node = match.front();
+            std::cout << (decor::yellow_fg << path) << ':'
+                      << (decor::cyan_fg << node->line) << ':'
+                      << (decor::cyan_fg << node->col) << ": "
+                      << AutoNL { Highlighter(fakeRoot, lang, true,
+                                              node->line).print() }
+                      << '\n';
+        };
+
+        if (noMatchers) {
+            return grepper.grep(tree.getRoot(), grepHandler);
+        }
+
+        auto matchHandler = [&](Node *node) {
+            if (!grepper.grep(node, grepHandler) || countOnly) {
                 return;
             }
 
@@ -128,7 +198,7 @@ Finder::process(const std::string &path)
                       << '\n';
         };
 
-        return matchers.front().match(tree.getRoot(), lang, handler);
+        return matchers.front().match(tree.getRoot(), lang, matchHandler);
     }
     return false;
 }
@@ -136,7 +206,7 @@ Finder::process(const std::string &path)
 void
 Finder::report()
 {
-    if (!args.count) {
+    if (!countOnly) {
         return;
     }
 
@@ -167,5 +237,11 @@ Finder::report()
         lastSeen = matcher.getSeen();
         lastMatched = matcher.getMatched();
         first = false;
+    }
+
+    if (!grepper.empty()) {
+        std::cout << "++> Token match\n";
+        std::cout << "seen    = " << grepper.getSeen() << '\n';
+        std::cout << "matched = " << grepper.getMatched() << '\n';
     }
 }

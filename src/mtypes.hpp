@@ -28,6 +28,7 @@ enum class MType : std::uint8_t
     Other,       // Everything else.
     Declaration, // Any sort of declaration.
     Function,    // Functions (their definitions only).
+    Parameter,   // Parameter in declaration of a function.
     Comment,     // Comments of any kind.
     Directive,   // Preprocessor-alike directives.
 };

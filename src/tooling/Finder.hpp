@@ -15,15 +15,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__FIND__FINDER_HPP__
-#define ZOGRASCOPE__TOOLS__FIND__FINDER_HPP__
+#ifndef ZOGRASCOPE__TOOLING__FINDER_HPP__
+#define ZOGRASCOPE__TOOLING__FINDER_HPP__
 
 #include <boost/filesystem/path.hpp>
 
 #include <deque>
 #include <string>
 
-class Args;
+#include "Grepper.hpp"
+
+class CommonArgs;
 class Matcher;
 class TimeReport;
 
@@ -32,25 +34,30 @@ class Finder
 {
 public:
     // Parses arguments and records for future use.
-    Finder(const Args &args, TimeReport &tr);
+    Finder(const CommonArgs &args, TimeReport &tr, bool countOnly);
     // To destruct `matchers` field with complete type.
     ~Finder();
 
 public:
-    // Processes either single file or recursively discovered files in a
-    // directory.
-    bool find(const boost::filesystem::path &path);
+    // Processes all specified paths.
+    bool search();
 
 public:
+    // Processes either single file or recursively discovered files in a
+    // directory.
+    bool search(const boost::filesystem::path &path);
     // Processes single file.
     bool process(const std::string &path);
     // Prints report with statistics about results.
     void report();
 
 private:
-    const Args &args;             // Arguments of the tool.
-    TimeReport &tr;               // Time reporter.
-    std::deque<Matcher> matchers; // Storage of matchers.
+    const CommonArgs &args;         // Arguments of a tool.
+    TimeReport &tr;                 // Time reporter.
+    bool countOnly;                 // Only print statistics about results.
+    std::vector<std::string> paths; // List of paths to process.
+    std::deque<Matcher> matchers;   // Storage of matchers.
+    Grepper grepper;                // Finder of consecutive tokens.
 };
 
-#endif // ZOGRASCOPE__TOOLS__FIND__FINDER_HPP__
+#endif // ZOGRASCOPE__TOOLING__FINDER_HPP__

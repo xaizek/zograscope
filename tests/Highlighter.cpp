@@ -77,5 +77,5 @@ TEST_CASE("Printing a subtree", "[highlighter]")
     REQUIRE(node != nullptr);
 
     Highlighter hi(*node, *tree.getLanguage(), true, node->line);
-    CHECK(hi.print() == "        // line2");
+    CHECK(hi.print() == "// line2");
 }

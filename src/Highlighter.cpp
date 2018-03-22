@@ -35,6 +35,7 @@
 #include "decoration.hpp"
 #include "tree.hpp"
 
+static int leftShift(const Node *node);
 static const decor::Decoration & getHighlight(const Node &node, int moved,
                                               State state,
                                               const Language &lang);
@@ -115,14 +116,53 @@ private:
 };
 
 Highlighter::Highlighter(const Tree &tree, bool original)
-    : Highlighter(*tree.getRoot(), *tree.getLanguage(), original)
+    : Highlighter(*tree.getRoot(), *tree.getLanguage(), original, 1, 1)
 {
 }
 
 Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
                          int lineOffset)
-    : lang(lang), line(lineOffset), col(1), colorPicker(new ColorPicker(lang)),
-      original(original), current(nullptr)
+    : Highlighter(root, lang, original, lineOffset, leftShift(&root))
+{
+}
+
+// Computes how far to the right subtree defined by the `node` is shifted.  This
+// is the same amount by which it can be shifted to the left to get rid of
+// unnecessary indentation.
+static int
+leftShift(const Node *node)
+{
+    auto getCol = [](const Node *node) {
+        if (node->spelling.find('\n') != std::string::npos) {
+            // Multiline nodes occupy first column.
+            return 1;
+        }
+        return node->col;
+    };
+
+    if (node->next != nullptr) {
+        return leftShift(node->next);
+    }
+
+    if (node->children.empty() && node->leaf) {
+        return getCol(node);
+    }
+
+    int shift = std::numeric_limits<int>::max();
+    for (Node *child : node->children) {
+        if (!child->leaf || child->next != nullptr) {
+            shift = std::min(shift, leftShift(child));
+        } else {
+            shift = std::min(shift, getCol(child));
+        }
+    }
+    return shift;
+}
+
+Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
+                         int lineOffset, int colOffset)
+    : lang(lang), line(lineOffset), col(1), colOffset(colOffset),
+      colorPicker(new ColorPicker(lang)), original(original), current(nullptr)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
@@ -217,7 +257,7 @@ Highlighter::skipUntil(int targetLine)
 void
 Highlighter::print(int n)
 {
-    col = 1;
+    col = colOffset;
     colorPicker->advancedLine();
 
     if (!lines.empty()) {
@@ -241,7 +281,7 @@ Highlighter::print(int n)
                 return;
             }
             oss << '\n';
-            col = 1;
+            col = colOffset;
         }
 
         if (node->col > col) {

@@ -35,6 +35,7 @@ static void postProcessIf(PNode *node, TreeBuilder &tb,
                           const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
+static void dropLeadingWS(PNode *node, const std::string &contents);
 static void postProcessConditional(PNode *node, TreeBuilder &tb,
                                    const std::string &contents);
 
@@ -286,11 +287,30 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     right->line = child->line;
     right->col = child->col + 1;
     right->value.token = static_cast<int>(Type::RightBrackets);
+    dropLeadingWS(right, contents);
 
     PNode *stmts = tb.addNode();
     stmts->stype = +SrcmlCxxSType::Statements;
 
     node->children.assign({ left, stmts, right });
+}
+
+// Corrects node data to exclude leading whitespace.
+static void
+dropLeadingWS(PNode *node, const std::string &contents)
+{
+    const char *pos = &contents[node->value.from];
+    while (node->value.len > 0 && (*pos == '\n' || *pos == ' ')) {
+        if (*pos == '\n') {
+            ++node->line;
+            node->col = 1;
+        } else {
+            ++node->col;
+        }
+        ++pos;
+        ++node->value.from;
+        --node->value.len;
+    }
 }
 
 // Rewrites control flow statements with conditions to move `(` and `)` one
@@ -465,6 +485,9 @@ SrcmlCxxLanguage::classify(SType stype) const
         case SrcmlCxxSType::Constructor:
         case SrcmlCxxSType::Destructor:
             return MType::Function;
+
+        case SrcmlCxxSType::Parameter:
+            return MType::Parameter;
 
         case SrcmlCxxSType::Comment:
             return MType::Comment;

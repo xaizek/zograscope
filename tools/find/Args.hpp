@@ -18,7 +18,7 @@
 #ifndef ZOGRASCOPE__TOOLS__FIND__ARGS_HPP__
 #define ZOGRASCOPE__TOOLS__FIND__ARGS_HPP__
 
-#include "common.hpp"
+#include "tooling/common.hpp"
 
 // Tool-specific arguments.
 struct Args : CommonArgs

@@ -23,9 +23,9 @@
 
 #include "pmr/monolithic.hpp"
 
+#include "tooling/common.hpp"
 #include "utils/optional.hpp"
 #include "Highlighter.hpp"
-#include "common.hpp"
 #include "tree.hpp"
 
 static int run(const CommonArgs &args, TimeReport &tr);

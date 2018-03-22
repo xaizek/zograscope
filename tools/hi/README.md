@@ -5,10 +5,9 @@
 ## Description ##
 
 `zs-hi` is a primitive code highlighter for terminal.  The main purpose is
-testing and debugging of code parsing for `zs-diff`, but it can also be used on
-its own.
+testing and debugging of code parsing, but it can also be used on its own.
 
-The only hard-coded color scheme is for xterm-256color palette.
+The only hard-coded color scheme at the moment is for xterm-256color palette.
 
 ## Checking if code parses correctly ##
 
