@@ -189,7 +189,9 @@ $(out_dir)/src/make/make-parser.gen.cpp: src/make/make-parser.ypp
 $(lib_objects): | $(lib_autohpp)
 
 # work around parenthesis warning in tests somehow caused by ccache
-$(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses -Itests/
+$(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses
+$(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Itests/
+$(out_dir)/tests/tests: EXTRA_CXXFLAGS += -DCATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH=999
 $(out_dir)/tests/tests: $(tests_objects) tests/. | $(out_dirs)
 	$(CXX) $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@
 
