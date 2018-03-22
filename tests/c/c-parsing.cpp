@@ -931,3 +931,43 @@ TEST_CASE("switch case labels don't introduce nested statements nodes",
         }
     )", true);
 }
+
+TEST_CASE("extern C is decomposed", "[comparison][parsing]")
+{
+    diffC(R"(
+        extern "C" {
+            int a;     /// Deletions
+        }
+    )", R"(
+        extern "C" {
+            void f();  /// Additions
+        }
+    )", true);
+}
+
+TEST_CASE("Function declaration with trailing macro is decomposed",
+          "[comparison][parsing]")
+{
+    diffC(R"(
+        void f(int arg1, int
+                         arg2  /// Updates
+              ) macro;
+    )", R"(
+        void f(int arg1, int
+                         arg3  /// Updates
+              ) macro;
+    )", true);
+}
+
+TEST_CASE("Meta function declaration is decomposed", "[comparison][parsing]")
+{
+    diffC(R"(
+        int macro(funcname, (int arg1, int
+                             arg2           /// Updates
+                            ));
+    )", R"(
+        int macro(funcname, (int arg1, int
+                             arg3           /// Updates
+                             ));
+    )", true);
+}
