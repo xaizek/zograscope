@@ -126,8 +126,9 @@ static int
 run(const Args &args, TimeReport &tr)
 {
     if (args.gitRenameOnly) {
-        std::cout << (decor::bold << "{ old name } " << args.pos[0]) << '\n'
-                  << (decor::bold << "{ new name } " << args.pos[7]) << '\n';
+        std::cout << (decor::bold << "{ renamed without changes }\n")
+                  << (decor::bold << "  old name: " << args.pos[0]) << '\n'
+                  << (decor::bold << "  new name: " << args.pos[7]) << '\n';
         return EXIT_SUCCESS;
     }
 
