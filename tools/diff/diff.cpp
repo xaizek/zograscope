@@ -34,12 +34,13 @@
 #include "decoration.hpp"
 #include "tree.hpp"
 
+// Tool-specific type for holding arguments.
 struct Args : CommonArgs
 {
-    bool noRefine;
-    bool gitDiff;
-    bool gitRename;
-    bool gitRenameOnly;
+    bool noRefine;      // Don't run TED on updated nodes.
+    bool gitDiff;       // Invoked by git and file was changed.
+    bool gitRename;     // File was renamed and possibly changed too.
+    bool gitRenameOnly; // File was renamed without changing it.
 };
 
 static boost::program_options::options_description getLocalOpts();
