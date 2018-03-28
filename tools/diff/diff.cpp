@@ -39,6 +39,7 @@ struct Args : CommonArgs
     bool noRefine;
     bool gitDiff;
     bool gitRename;
+    bool gitRenameOnly;
 };
 
 static boost::program_options::options_description getLocalOpts();
@@ -114,7 +115,8 @@ parseLocalArgs(const Environment &env)
     args.noRefine = varMap.count("no-refine");
     args.gitDiff = args.pos.size() == 7U
                 || (args.pos.size() == 9U && args.pos[2] != args.pos[5]);
-    args.gitRename = (args.pos.size() == 9U && args.pos[2] == args.pos[5]);
+    args.gitRename = (args.pos.size() == 9U);
+    args.gitRenameOnly = (args.gitRename && args.pos[2] == args.pos[5]);
 
     return args;
 }
@@ -122,7 +124,7 @@ parseLocalArgs(const Environment &env)
 static int
 run(const Args &args, TimeReport &tr)
 {
-    if (args.gitRename) {
+    if (args.gitRenameOnly) {
         std::cout << (decor::bold << "{ old name } " << args.pos[0]) << '\n'
                   << (decor::bold << "{ new name } " << args.pos[7]) << '\n';
         return EXIT_SUCCESS;
@@ -160,7 +162,8 @@ run(const Args &args, TimeReport &tr)
                     std::cout);
     if (args.gitDiff) {
         printer.addHeader({ args.pos[3], args.pos[6] });
-        printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[4] });
+        const int newNameIdx = (args.gitRename ? 7 : 0);
+        printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[newNameIdx] });
     } else {
         printer.addHeader({ oldFile, newFile });
     }
