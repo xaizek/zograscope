@@ -67,9 +67,9 @@ TEST_CASE("Non-UNIX EOLs are allowed", "[parser]")
 
 TEST_CASE("Error message counts tabulation as single character", "[parser]")
 {
-    StreamCapture coutCapture(std::cout);
+    StreamCapture cerrCapture(std::cerr);
     CHECK_FALSE(cIsParsed("\t\x01;"));
-    REQUIRE(boost::starts_with(coutCapture.get(), "<input>:1:2:"));
+    REQUIRE(boost::starts_with(cerrCapture.get(), "<input>:1:2:"));
 }
 
 TEST_CASE("Top-level macros are parsed successfully", "[parser][extensions]")

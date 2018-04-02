@@ -36,9 +36,9 @@ using namespace makestypes;
 
 TEST_CASE("Error is printed on incorrect Makefile syntax", "[make][parser]")
 {
-    StreamCapture coutCapture(std::cout);
+    StreamCapture cerrCapture(std::cerr);
     CHECK_FALSE(makeIsParsed(":"));
-    REQUIRE(boost::starts_with(coutCapture.get(), "<input>:1:1:"));
+    REQUIRE(boost::starts_with(cerrCapture.get(), "<input>:1:1:"));
 }
 
 TEST_CASE("Empty Makefile is OK", "[make][parser]")

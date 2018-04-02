@@ -880,7 +880,7 @@ void
 make_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
            MakeParseData *pd, const char s[])
 {
-    std::cout << pd->fileName << ':'
+    std::cerr << pd->fileName << ':'
               << loc->first_line << ':' << loc->first_column
               << ": parse error: " << s << std::endl;
     pd->hitError = true;
