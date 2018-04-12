@@ -428,6 +428,24 @@ TEST_CASE("Multiple type specifiers inside structures", "[parser]")
     CHECK(findNode(tree, Type::Virtual, "unsignedintfield;") != nullptr);
 }
 
+TEST_CASE("Declaration in for loop with typedef is not ambiguous",
+          "[parser][conflicts]")
+{
+    Tree tree;
+
+    tree = parseC("void f() { for (size_t i = 0; ;) { } }");
+    CHECK(findNode(tree, Type::UserTypes, "size_t") != nullptr);
+
+    tree = parseC("void f() { for (size_t i = 0; i < 10;) { } }");
+    CHECK(findNode(tree, Type::UserTypes, "size_t") != nullptr);
+
+    tree = parseC("void f() { for (size_t i = 0; ; ++i) { } }");
+    CHECK(findNode(tree, Type::UserTypes, "size_t") != nullptr);
+
+    tree = parseC("void f() { for (size_t i = 0; i < 10; ++i) { } }");
+    CHECK(findNode(tree, Type::UserTypes, "size_t") != nullptr);
+}
+
 static int
 countNodes(const Node &root)
 {

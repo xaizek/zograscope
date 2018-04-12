@@ -1549,6 +1549,7 @@ iteration_statement
                          tb->addNode($7, @7, +C11SType::Separator) },
                        +C11SType::DoWhileStmt); }
     | FOR '(' expression ';' expression ';' expression ')' ext_statement
+      %dprec 1
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1559,7 +1560,7 @@ iteration_statement
                                    tb->addNode($8, @8, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($9, @9) }, +C11SType::ForStmt); }
-    | FOR '(' expression ';' expression ';' ')' ext_statement
+    | FOR '(' expression ';' expression ';' ')' ext_statement  %dprec 1
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1570,7 +1571,7 @@ iteration_statement
                                    tb->addNode($7, @7, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, +C11SType::ForStmt); }
-    | FOR '(' expression ';' ';' expression ')' ext_statement
+    | FOR '(' expression ';' ';' expression ')' ext_statement  %dprec 1
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1603,7 +1604,7 @@ iteration_statement
                                    tb->addNode($6, @6, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
-    | FOR '(' expression ';' ';' ')' ext_statement
+    | FOR '(' expression ';' ';' ')' ext_statement  %dprec 1
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1636,7 +1637,7 @@ iteration_statement
                                    tb->addNode($5, @5, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($6, @6) }, +C11SType::ForStmt); }
-    | FOR '(' declaration expression ';' expression ')' ext_statement
+    | FOR '(' declaration expression ';' expression ')' ext_statement  %dprec 2
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1646,7 +1647,7 @@ iteration_statement
                                    tb->addNode($7, @7, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($8, @8) }, +C11SType::ForStmt); }
-    | FOR '(' declaration expression ';' ')' ext_statement
+    | FOR '(' declaration expression ';' ')' ext_statement  %dprec 2
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1656,7 +1657,7 @@ iteration_statement
                                    tb->addNode($6, @6, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
-    | FOR '(' declaration ';' expression ')' ext_statement
+    | FOR '(' declaration ';' expression ')' ext_statement  %dprec 2
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
@@ -1666,7 +1667,7 @@ iteration_statement
                                    tb->addNode($6, @6, +C11SType::Separator) },
                                  +C11SType::ForHead);
       $$ = tb->addNode({ forHead, tb->addNode($7, @7) }, +C11SType::ForStmt); }
-    | FOR '(' declaration ';' ')' ext_statement
+    | FOR '(' declaration ';' ')' ext_statement  %dprec 2
     { auto forHead = tb->addNode({ tb->addNode($1, @1, +C11SType::Separator),
                                    tb->addNode($2, @2, +C11SType::Separator),
                                    $3,
