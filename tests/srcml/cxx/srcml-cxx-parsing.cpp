@@ -420,3 +420,34 @@ TEST_CASE("Parenthesis aren't part of conditions",
         }
     )");
 }
+
+TEST_CASE("Parenthesis of empty parameter list are decomposed and stripped",
+          "[.srcml][srcml-cxx][parser]")
+{
+    diffSrcmlCxx(R"(
+        Class::Class() {
+        }
+    )", R"(
+        Class::Class(
+                     int arg  /// Additions
+                     ) {
+        }
+    )");
+
+    diffSrcmlCxx(R"(
+        class Blass {
+            explicit
+            Blass();
+        }
+    )", R"(
+        class Class {                                     /// Additions
+            Class();                                      /// Additions
+        };                                                /// Additions
+
+        class Blass {
+            explicit Blass(
+                           KeyboardEventHandler &handler  /// Additions
+                           );
+        }
+    )");
+}

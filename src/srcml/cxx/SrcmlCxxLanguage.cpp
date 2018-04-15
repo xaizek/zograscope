@@ -35,6 +35,10 @@ static void postProcessIf(PNode *node, TreeBuilder &tb,
                           const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
+static void postProcessParameterList(PNode *node, TreeBuilder &tb,
+                                     const std::string &contents);
+static bool breakLeaf(PNode *node, TreeBuilder &tb,
+                      const std::string &contents, char left, char right);
 static void dropLeadingWS(PNode *node, const std::string &contents);
 static void postProcessConditional(PNode *node, TreeBuilder &tb,
                                    const std::string &contents);
@@ -201,6 +205,10 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
         postProcessBlock(node, tb, contents);
     }
 
+    if (node->stype == +SrcmlCxxSType::ParameterList) {
+        postProcessParameterList(node, tb, contents);
+    }
+
     if (isConditional(node->stype)) {
         postProcessConditional(node, tb, contents);
     }
@@ -258,10 +266,40 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     }
 
     // Children: `{}` (with any whitespace in between).
+    if (breakLeaf(node, tb, contents, '{', '}')) {
+        return;
+    }
+
+    // Children: statement (possibly in multiple pieces).
+    PNode *stmts = tb.addNode();
+    stmts->stype = +SrcmlCxxSType::Statements;
+    stmts->children = node->children;
+
+    node->children.assign({ stmts });
+}
+
+// Rewrites parameter list nodes to be more diff-friendly.
+static void
+postProcessParameterList(PNode *node, TreeBuilder &tb,
+                         const std::string &contents)
+{
+    // Children: `()` (with any whitespace in between).
+    if (breakLeaf(node, tb, contents, '(', ')')) {
+        return;
+    }
+}
+
+// Breaks pairs of glued single character tokens.  Returns `true` if node was
+// rewritten.
+static bool
+breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
+          char left, char right)
+{
+    // Children: `<left><right>` (with any whitespace in between).
     if (node->children.size() == 1 &&
-        contents[node->children[0]->value.from] == '{' &&
+        contents[node->children[0]->value.from] == left &&
         contents[node->children[0]->value.from +
-                 node->children[0]->value.len - 1] == '}') {
+                 node->children[0]->value.len - 1] == right) {
         PNode *child = node->children[0];
 
         PNode *left = tb.addNode();
@@ -285,15 +323,9 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
         stmts->stype = +SrcmlCxxSType::Statements;
 
         node->children.assign({ left, stmts, right });
-        return;
+        return true;
     }
-
-    // Children: statement (possibly in multiple pieces).
-    PNode *stmts = tb.addNode();
-    stmts->stype = +SrcmlCxxSType::Statements;
-    stmts->children = node->children;
-
-    node->children.assign({ stmts });
+    return false;
 }
 
 // Corrects node data to exclude leading whitespace.
