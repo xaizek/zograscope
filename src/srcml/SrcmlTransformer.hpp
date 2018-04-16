@@ -24,9 +24,12 @@
 
 #include <boost/utility/string_ref.hpp>
 
+namespace tinyxml2 {
+    class XMLElement;
+    class XMLNode;
+}
+
 class PNode;
-class TiXmlElement;
-class TiXmlNode;
 class TreeBuilder;
 
 enum class SType : std::uint8_t;
@@ -49,11 +52,12 @@ public:
 
 private:
     // Transforms single element into a node.
-    PNode * visit(TiXmlNode *node, int level);
+    PNode * visit(tinyxml2::XMLNode *node, int level);
     // Transforms text field.
-    void visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf);
+    void visitLeaf(tinyxml2::XMLNode *parent, PNode *pnode,
+                   tinyxml2::XMLNode *leaf);
     // Determines type of a child of the specified element.
-    Type determineType(TiXmlElement *elem, boost::string_ref value);
+    Type determineType(tinyxml2::XMLElement *elem, boost::string_ref value);
 
 private:
     const std::string &contents;                       // Contents to parse.

@@ -23,11 +23,13 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/utility/string_ref.hpp>
-#include "tinyxml/tinyxml.h"
+#include "tinyxml2/tinyxml2.h"
 
 #include "TreeBuilder.hpp"
 #include "integration.hpp"
 #include "types.hpp"
+
+namespace ti = tinyxml2;
 
 // XXX: hard-coded width of a tabulation character.
 const int tabWidth = 4;
@@ -55,11 +57,11 @@ SrcmlTransformer::transform()
 
     std::string xml = readCommandOutput(cmd, contents);
 
-    TiXmlDocument doc {};
-    doc.SetCondenseWhiteSpace(false);
-    doc.Parse(xml.c_str(), nullptr, TIXML_ENCODING_UTF8);
+    ti::XMLDocument doc;
+    doc.Parse(xml.data(), xml.size());
     if (doc.Error()) {
-        throw std::runtime_error("Failed to parse");
+        throw std::runtime_error("Failed to parse: " +
+                                 std::string(doc.ErrorStr()));
     }
 
     left = contents;
@@ -71,7 +73,7 @@ SrcmlTransformer::transform()
 }
 
 PNode *
-SrcmlTransformer::visit(TiXmlNode *node, int level)
+SrcmlTransformer::visit(ti::XMLNode *node, int level)
 {
     SType stype = {};
     auto it = map.find(node->Value());
@@ -84,16 +86,13 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
 
     PNode *pnode = tb.addNode({}, stype);
 
-    for (TiXmlNode *child = node->FirstChild();
+    for (ti::XMLNode *child = node->FirstChild();
          child != nullptr;
          child = child->NextSibling()) {
-        switch (child->Type()) {
-            case TiXmlNode::TINYXML_ELEMENT:
-                tb.append(pnode, visit(child->ToElement(), level + 1));
-                break;
-            case TiXmlNode::TINYXML_TEXT:
-                visitLeaf(node, pnode, child);
-                break;
+        if (ti::XMLElement *e = child->ToElement()) {
+            tb.append(pnode, visit(e, level + 1));
+        } else if (child->ToText() != nullptr) {
+            visitLeaf(node, pnode, child);
         }
     }
 
@@ -103,9 +102,10 @@ SrcmlTransformer::visit(TiXmlNode *node, int level)
 }
 
 void
-SrcmlTransformer::visitLeaf(TiXmlNode *parent, PNode *pnode, TiXmlNode *leaf)
+SrcmlTransformer::visitLeaf(ti::XMLNode *parent, PNode *pnode,
+                            ti::XMLNode *leaf)
 {
-    boost::string_ref fullVal = processValue(leaf->ValueStr());
+    boost::string_ref fullVal = processValue(leaf->Value());
 
     SType stype = {};
     if (leaf != parent->FirstChild() || leaf->NextSibling() != nullptr) {
@@ -179,9 +179,10 @@ updatePosition(boost::string_ref str, int &line, int &col)
 }
 
 Type
-SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
+SrcmlTransformer::determineType(ti::XMLElement *elem, boost::string_ref value)
 {
-    if (elem->ValueStr() == "literal") {
+    boost::string_ref elemValue = elem->Value();
+    if (elemValue == "literal") {
         const std::string type = elem->Attribute("type");
         if (type == "boolean") {
             return Type::IntConstants;
@@ -196,9 +197,9 @@ SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
         } else if (type == "complex") {
             return Type::FPConstants;
         }
-    } else if (elem->ValueStr() == "specifier") {
+    } else if (elemValue == "specifier") {
         return Type::Specifiers;
-    } else if (elem->ValueStr() == "comment") {
+    } else if (elemValue == "comment") {
         return Type::Comments;
     } else if (inCppDirective) {
         return Type::Directives;
@@ -206,18 +207,18 @@ SrcmlTransformer::determineType(TiXmlElement *elem, boost::string_ref value)
         return Type::LeftBrackets;
     } else if (value[0] == ')' || value[0] == '}' || value[0] == ']') {
         return Type::RightBrackets;
-    } else if (elem->ValueStr() == "operator") {
+    } else if (elemValue == "operator") {
         return Type::Operators;
-    } else if (elem->ValueStr() == "name") {
-        const TiXmlNode *parent = elem;
+    } else if (elemValue == "name") {
+        const ti::XMLNode *parent = elem;
         std::string parentValue;
         std::string grandParentValue;
         do {
             parent = parent->Parent();
-            parentValue = (parent == nullptr ? "" : parent->ValueStr());
+            parentValue = (parent == nullptr ? "" : parent->Value());
             grandParentValue = (parent->Parent() == nullptr)
                              ? ""
-                             : parent->Parent()->ValueStr();
+                             : parent->Parent()->Value();
         } while (parentValue == "name" &&
                  (elem != parent->FirstChild() ||
                   (grandParentValue != "function" &&
