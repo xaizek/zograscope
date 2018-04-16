@@ -38,8 +38,8 @@ class SrcmlTransformer
 public:
     // Remembers parameters to use them later.  `contents`, `map` and `keywords`
     // have to be lvalues.
-    SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
-                     const std::string &language,
+    SrcmlTransformer(const std::string &contents, const std::string &path,
+                     TreeBuilder &tb, const std::string &language,
                      const std::unordered_map<std::string, SType> &map,
                      const std::unordered_set<std::string> &keywords);
 
@@ -57,6 +57,7 @@ private:
 
 private:
     const std::string &contents;                       // Contents to parse.
+    const std::string &path;                           // Path to the file.
     boost::string_ref left;                            // Unparsed part.
     TreeBuilder &tb;                                   // Result builder.
     std::string language;                              // Language name.

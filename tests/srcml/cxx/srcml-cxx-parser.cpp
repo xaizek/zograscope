@@ -21,10 +21,16 @@
 
 #include "Catch/catch.hpp"
 
+#include <fstream>
+#include <memory>
+
 #include "srcml/cxx/SrcmlCxxSType.hpp"
 #include "utils/strings.hpp"
 #include "Highlighter.hpp"
+#include "TreeBuilder.hpp"
 #include "tree.hpp"
+
+#include "pmr/monolithic.hpp"
 
 #include "tests.hpp"
 
@@ -330,4 +336,31 @@ TEST_CASE("Unicode characters are handled correctly",
 
     Highlighter hi(*tree.getRoot(), *tree.getLanguage());
     REQUIRE(hi.print() == input);
+}
+
+TEST_CASE("Working around srcml bug of handling stdin input",
+          "[.srcml][srcml-cxx][srcml-bug][parser]")
+{
+    {
+        TempFile tmpFile("zograscope-test");
+        std::ofstream ofs(tmpFile);
+        ofs << "C::C(){}";
+        ofs.close();
+
+        cpp17::pmr::monolithic mr;
+        std::unique_ptr<Language> lang = Language::create("test-file.cpp");
+        CHECK_FALSE(lang->parse("C::C(){}\n", tmpFile, false, mr).hasFailed());
+    }
+
+    {
+        TempFile tmpFile("zograscope-test");
+        std::ofstream ofs(tmpFile);
+        ofs << "void\na::b()\n{\n}";
+        ofs.close();
+
+        cpp17::pmr::monolithic mr;
+        std::unique_ptr<Language> lang = Language::create("test-file.cpp");
+        CHECK_FALSE(lang->parse("void\na::b()\n{\n}", tmpFile, false,
+                                mr).hasFailed());
+    }
 }

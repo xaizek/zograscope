@@ -21,6 +21,7 @@
 #include <string>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/utility/string_ref.hpp>
 #include "tinyxml/tinyxml.h"
 
@@ -34,11 +35,12 @@ const int tabWidth = 4;
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
 
-SrcmlTransformer::SrcmlTransformer(const std::string &contents, TreeBuilder &tb,
+SrcmlTransformer::SrcmlTransformer(const std::string &contents,
+                                   const std::string &path, TreeBuilder &tb,
                                    const std::string &language,
                               const std::unordered_map<std::string, SType> &map,
                                 const std::unordered_set<std::string> &keywords)
-    : contents(contents), tb(tb), language(language),
+    : contents(contents), path(path), tb(tb), language(language),
       map(map), keywords(keywords)
 {
 }
@@ -47,7 +49,8 @@ void
 SrcmlTransformer::transform()
 {
     std::vector<std::string> cmd = {
-        "srcml", "--language=" + language, "--src-encoding=utf8", "-"
+        "srcml", "--language=" + language, "--src-encoding=utf8",
+        (boost::filesystem::exists(path) ? path : "-")
     };
 
     std::string xml = readCommandOutput(cmd, contents);
