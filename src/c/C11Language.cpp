@@ -241,11 +241,9 @@ C11Language::shouldSplice(SType parent, const Node *childNode) const
         return true;
     }
 
-    // Work around situation when addition of compound block to a statement
-    // leads to the only statement that was there being marked as moved.
     if (-parent == C11SType::IfThen || -parent == C11SType::IfElse ||
         -parent == C11SType::SwitchStmt || -parent == C11SType::WhileStmt ||
-        -parent == C11SType::DoWhileStmt) {
+        -parent == C11SType::DoWhileStmt || -parent == C11SType::ForStmt) {
         if (child == C11SType::CompoundStatement) {
             return true;
         }

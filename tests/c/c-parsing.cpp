@@ -971,3 +971,21 @@ TEST_CASE("Meta function declaration is decomposed", "[comparison][parsing]")
                              ));
     )", true);
 }
+
+TEST_CASE("Blocks are spliced into for statements", "[comparison][parsing]")
+{
+    diffC(R"(
+        void f() {
+            for (i = 0; i < put_confirm.put.nitems; ++i) {
+                pos = fpos_find_by_name(put_confirm.view);  /// Deletions
+            }
+        }
+    )", R"(
+        void f() {
+            for (i = 0; i < put_confirm.put.nitems; ++i) {
+                fpos_set_pos(put_confirm.view,              /// Additions
+                             entry_to_pos(view, entry));    /// Additions
+            }
+        }
+    )", true);
+}
