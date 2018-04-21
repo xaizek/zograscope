@@ -26,14 +26,14 @@ class Language;
 class Node;
 class TimeReport;
 
+struct Header
+{
+    std::string left;
+    std::string right;
+};
+
 class Printer
 {
-    struct Header
-    {
-        std::string left;
-        std::string right;
-    };
-
 public:
     Printer(Node &left, Node &right, const Language &lang, std::ostream &os);
 

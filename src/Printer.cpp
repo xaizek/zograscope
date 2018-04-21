@@ -34,6 +34,8 @@
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
 
+namespace {
+
 enum class Diff
 {
     Left,
@@ -67,12 +69,7 @@ private:
     std::deque<std::string> storage; // Storage that backs the lines.
 };
 
-static std::string noLineMarker(int at);
 static int countWidth(int n);
-static std::vector<DiffLine> makeDiff(DiffSource &&l, DiffSource &&r);
-static unsigned int measureWidth(boost::string_ref s);
-
-static std::string empty;
 
 DiffSource::DiffSource(const Node &root)
 {
@@ -148,6 +145,400 @@ DiffSource::DiffSource(const Node &root)
     }
 }
 
+class LayoutBuilder;
+
+// Provides parameters of layout.
+class Layout
+{
+    friend class LayoutBuilder;
+
+private:
+    // Reference to the builder is saved, so it should outlive layout.
+    explicit Layout(const LayoutBuilder &builder,
+                    std::vector<int> &&leftWidths);
+
+public:
+    // Retrieves width of a marker used in left part of header line.
+    int getLeftMarkerWidth() const { return leftNumWidth; }
+    // Retrieves width of a marker used in right part of header line.
+    int getRightMarkerWidth() const { return rightNumWidth; }
+
+    // Retrieves width of left part of header line excluding middle separator.
+    int getLeftHeaderWidth() const { return leftHeaderWidth; }
+    // Retrieves width of right part of header line excluding middle separator.
+    int getRightHeaderWidth() const { return (usefulWidth - leftHeaderWidth); }
+
+    // Retrieves width of number for the left part including left padding.
+    int getLeftNumWidth() const { return 1 + leftNumWidth; }
+    // Retrieves width of number for the right part including left padding.
+    int getRightNumWidth() const { return 1 + rightNumWidth; }
+
+    // Whether left part should be printed.
+    bool isLeftVisible() const { return leftVisible; }
+    // Whether right part should be printed.
+    bool isRightVisible() const { return rightVisible; }
+
+    // Retrieves maximum width of line on the left part.
+    int getMaxLeftWidth() const { return maxLeftWidth; }
+    // Retrieves maximum width of line on the right part.
+    int getMaxRightWidth() const { return maxRightWidth; }
+
+    // Retrieves width for string on the left.
+    int getLeftWidth(boost::string_ref ll, int idx) const
+    {
+        const int extraWidth = ll.size() - leftWidths[idx];
+        if (rightVisible) {
+            return maxLeftWidth + extraWidth;
+        }
+        return wholeWidth              // Total width being used.
+             - 1 - 1 - 1               // Marker and left&right padding.
+             - (getLeftNumWidth() + 1) // Width of line number column.
+             + extraWidth;             // Account for escape sequences.
+    }
+
+    // Computes message centering parameters.
+    void centerMsg(const std::string &msg, int &leftFill, int &rightFill) const
+    {
+        const int msgLen = msg.size();
+        leftFill = ((leftVisible && rightVisible) ? leftWidth : wholeWidth/2)
+                 + 2 - msgLen/2;
+        rightFill = wholeWidth - (leftFill + msgLen);
+    }
+
+private:
+    // Computes whole width of a result.
+    int computeWholeWidth() const
+    {
+        if (leftVisible && rightVisible) {
+            return leftPart + 1 + 1 + rightWidth + 1;
+        }
+
+        int left = 1 + getLeftMarkerWidth() + 2 + maxLeftHeaderWidth;
+        int right = 1 + getRightMarkerWidth() + 2 + maxRightHeaderWidth;
+
+        int headerWidth = left + 3 + right;
+        return std::max({ leftPart + 2, rightWidth + 2, headerWidth });
+    }
+
+    // Computes width of left header.
+    int computeLeftHeaderWidth() const
+    {
+        if (leftVisible && rightVisible) {
+            return leftWidth;
+        }
+
+        const int left = 1 + getLeftMarkerWidth() + 2 + maxLeftHeaderWidth;
+        const int right = 1 + getRightMarkerWidth() + 2 + maxRightHeaderWidth;
+
+        int width = std::max(left, usefulWidth/2 - 1);
+        if (width < right) {
+            width = usefulWidth - right;
+        }
+        return width;
+    }
+
+private:
+    bool leftVisible, rightVisible;
+    int maxLeftWidth, maxRightWidth;
+    int leftNumWidth, rightNumWidth;
+
+    int maxLeftHeaderWidth, maxRightHeaderWidth;
+
+    int leftHeaderWidth;
+    int leftPart;
+
+    int wholeWidth, usefulWidth;
+    int leftWidth, rightWidth;
+
+    std::vector<int> leftWidths;
+};
+
+// Collects information needed to compute layout.
+class LayoutBuilder
+{
+    friend class Layout;
+
+public:
+    // Starts computing layout by analyzing headers and contents of parts.
+    LayoutBuilder(const DiffSource &lsrc, const DiffSource &rsrc,
+                  const std::vector<Header> &headers)
+    {
+        leftVisible = std::find(lsrc.modified.cbegin(), lsrc.modified.cend(),
+                                true) != lsrc.modified.cend();
+        rightVisible = std::find(rsrc.modified.cbegin(), rsrc.modified.cend(),
+                                 true) != rsrc.modified.cend();
+
+        if (!leftVisible && !rightVisible) {
+            leftVisible = true;
+            rightVisible = true;
+        }
+
+        for (const Header &hdr : headers) {
+            maxLeftHeaderWidth = std::max<int>(hdr.left.size(),
+                                               maxLeftHeaderWidth);
+            maxRightHeaderWidth = std::max<int>(hdr.right.size(),
+                                                maxRightHeaderWidth);
+        }
+    }
+
+public:
+    // Whether left part should be printed.
+    bool isLeftVisible() const { return leftVisible; }
+    // Whether right part should be printed.
+    bool isRightVisible() const { return rightVisible; }
+
+    // Records maximum line numbers at both sides.
+    void setMaxLineNums(int l, int r)
+    {
+        maxLeftNum = l;
+        maxRightNum = r;
+    }
+
+    // Records width of a line on the left part.
+    void measureLeft(const std::string &line)
+    {
+        if (!leftVisible) {
+            leftWidths.push_back(0);
+            return;
+        }
+
+        const int width = measureWidth(line);
+        leftWidths.push_back(width);
+        maxLeftWidth = std::max(width, maxLeftWidth);
+    }
+
+    // Records width of a line on the right part.
+    void measureRight(const std::string &line)
+    {
+        if (rightVisible) {
+            const int width = measureWidth(line);
+            maxRightWidth = std::max(width, maxRightWidth);
+        }
+    }
+
+    // Produces layout containing all necessary data.
+    Layout compute()
+    {
+        maxLeftWidth = std::max(maxLeftWidth, maxLeftHeaderWidth);
+        maxRightWidth = std::max(maxRightWidth, maxRightHeaderWidth);
+        return Layout(*this, std::move(leftWidths));
+    }
+
+private:
+    // Calculates width of a string ignoring embedded escape sequences.
+    static unsigned int measureWidth(boost::string_ref s)
+    {
+        // XXX: we actually print lines without formatting and should be able to
+        //      avoid using this function.
+        unsigned int valWidth = 0U;
+        while (!s.empty()) {
+            if (s.front() != '\033') {
+                ++valWidth;
+                s.remove_prefix(1);
+                continue;
+            }
+
+            const auto width = s.find('m');
+            if (width == std::string::npos) {
+                break;
+            }
+            s.remove_prefix(width + 1U);
+        }
+        return valWidth;
+    }
+
+private:
+    bool leftVisible, rightVisible;
+
+    int maxLeftHeaderWidth = 0, maxRightHeaderWidth = 0;
+    int maxLeftWidth = 0, maxRightWidth = 0;
+    int maxLeftNum = 0, maxRightNum = 0;
+
+    std::vector<int> leftWidths;
+};
+
+Layout::Layout(const LayoutBuilder &builder, std::vector<int> &&leftWidths)
+    : leftWidths(std::move(leftWidths))
+{
+    leftVisible = builder.leftVisible;
+    rightVisible = builder.rightVisible;
+
+    maxLeftHeaderWidth = builder.maxLeftHeaderWidth;
+    maxRightHeaderWidth = builder.maxRightHeaderWidth;
+
+    maxLeftWidth = builder.maxLeftWidth;
+    maxRightWidth = builder.maxRightWidth;
+
+    leftNumWidth = countWidth(builder.maxLeftNum);
+    rightNumWidth = countWidth(builder.maxRightNum);
+
+    leftPart = leftVisible ? (leftNumWidth + 1) + 1 + 1 + maxLeftWidth : 0;
+    rightWidth = rightVisible ? (rightNumWidth + 1) + 1 + 1 + maxRightWidth : 0;
+    wholeWidth = computeWholeWidth();
+    usefulWidth = wholeWidth - 3;
+    leftWidth = rightVisible ? leftPart : wholeWidth - 2;
+
+    leftHeaderWidth = computeLeftHeaderWidth();
+}
+
+// This class is responsible for formatting output while printing it to a
+// stream.
+class Outliner
+{
+public:
+    // Reference to layout is saved, so it should outlive outliner.
+    Outliner(std::ostream &os, const Layout &layout) : os(os), layout(layout)
+    {
+        leftMarker = ' '
+                   + std::string(layout.getLeftMarkerWidth(), '-')
+                   + "  ";
+        rightMarker = ' '
+                    + std::string(layout.getRightMarkerWidth(), '+')
+                    + "  ";
+    }
+
+public:
+    // Prints horizontal separator.
+    void printSeparator()
+    {
+        using namespace decor::literals;
+
+        os << std::setfill('~')
+           << std::setw(layout.getLeftHeaderWidth() + 1) << (231_fg << "")
+           << (decor::bold << '!')
+           << std::setw(layout.getRightHeaderWidth() + 1) << (231_fg << "")
+           << std::setfill(' ')
+           << '\n';
+    }
+
+    // Prints single header.
+    void printHeader(const Header &hdr)
+    {
+        using namespace decor::literals;
+
+        auto title = 231_fg + decor::bold;
+        os << (title << std::left
+                     << std::setw(layout.getLeftHeaderWidth())
+                     << leftMarker + hdr.left
+                     << " ! "
+                     << std::setw(layout.getRightHeaderWidth())
+                     << rightMarker + hdr.right)
+           << '\n';
+    }
+
+    // Prints a horizontally centered message.
+    void printMsg(const std::string &msg)
+    {
+        using namespace decor::literals;
+
+        int leftFill, rightFill;
+        layout.centerMsg(msg, leftFill, rightFill);
+
+        os << std::right << std::setfill('.')
+           << (251_fg << std::setw(leftFill) << "")
+           << msg
+           << (251_fg << std::setw(rightFill) << "")
+           << '\n' << std::setfill(' ');
+    }
+
+    // Prints line of the left part.
+    void printLeftLine(int lineNum, boost::string_ref str)
+    {
+        const int width = layout.getLeftWidth(str, leftWidthIndex++);
+        printLine(lineNum, str, layout.getLeftNumWidth(), width);
+    }
+
+    // Prints line of the right part.
+    void printRightLine(int lineNum, boost::string_ref str)
+    {
+        printLine(lineNum, str, layout.getRightNumWidth(), 0);
+    }
+
+    // Prints blank line of the left part.
+    void printLeftBlank(int lineNum)
+    {
+        printBlank(lineNum, layout.getLeftNumWidth(), layout.getMaxLeftWidth());
+    }
+
+    // Prints blank line of the right part.
+    void printRightBlank(int lineNum)
+    {
+        printBlank(lineNum, layout.getRightNumWidth(),
+                   layout.getMaxRightWidth());
+    }
+
+    // Prints marker between two parts.
+    void printMarker(char marker)
+    {
+        if (layout.isLeftVisible()) {
+            os << ' ';
+        }
+        os << marker;
+        if (layout.isRightVisible()) {
+            os << ' ';
+        }
+    }
+
+    // Advances to next line of parts.
+    void nextLine()
+    {
+        os << '\n';
+    }
+
+private:
+    // Formats and prints single line with its line number.
+    void printLine(int lineNum, boost::string_ref str,
+                   int numColWidth, int width)
+    {
+        os << (lineNo << std::right << std::setw(numColWidth) << lineNum << ' ')
+           << ' ' << std::left << std::setw(width) << str;
+    }
+
+    // Formats and prints single blank line with its line number.
+    void printBlank(int lineNum, int numColWidth, int width)
+    {
+        using namespace decor::literals;
+
+        os << (lineNo << std::right << std::setw(numColWidth + 1)
+                      << (noLineMarker(lineNum) + ' '))
+           << ' ' << std::left << std::setw(width)
+           << (235_bg << "");
+    }
+
+    // Generates string that should be used instead of line number.  Takes line
+    // number of the last displayed line (0 if none was printed) as argument.
+    static std::string noLineMarker(int at)
+    {
+        return std::string(countWidth(at), '-');
+    }
+
+private:
+    std::ostream &os;        // Output stream.
+    const Layout &layout;    // Computed layout.
+    std::string leftMarker;  // Left marker for headers.
+    std::string rightMarker; // Right marker for headers.
+
+    // Line number style.
+    decor::Decoration lineNo = decor::white_bg + decor::black_fg;
+    // Next line index of the left part (needed to correct maximum width).
+    int leftWidthIndex = 0;
+};
+
+static int
+countWidth(int n)
+{
+    int width = 0;
+    while (n > 0) {
+        n /= 10;
+        ++width;
+    }
+    return (width == 0) ? 1 : width;
+}
+
+}
+
+static std::vector<DiffLine> makeDiff(DiffSource &&l, DiffSource &&r);
+
 Printer::Printer(Node &left, Node &right, const Language &lang,
                  std::ostream &os)
     : left(left), right(right), lang(lang), os(os)
@@ -163,8 +554,6 @@ Printer::addHeader(Header header)
 void
 Printer::print(TimeReport &tr)
 {
-    using namespace decor::literals;
-
     auto diffingTimer = tr.measure("printing");
 
     // Do comparison without highlighting as it skews alignment results.
@@ -180,192 +569,89 @@ Printer::print(TimeReport &tr)
     std::vector<std::string> l(lsrc.lines.size());
     std::vector<std::string> r(rsrc.lines.size());
 
-    unsigned int maxLeftWidth = 0U;
-    unsigned int maxRightWidth = 0U;
-    std::vector<unsigned int> leftWidths;
-
-    for (const Header &hdr : headers) {
-        maxLeftWidth = std::max<unsigned int>(hdr.left.size(), maxLeftWidth);
-        maxRightWidth = std::max<unsigned int>(hdr.right.size(), maxRightWidth);
-    }
-
-    unsigned int maxLeftNum = 0U, maxRightNum = 0U;
+    LayoutBuilder layoutBuilder(lsrc, rsrc, headers);
 
     unsigned int i = 0U, j = 0U;
     for (DiffLine d : diff) {
-        switch (d.type) {
-            unsigned int width;
+        if (d.type == Diff::Fold) {
+            i += d.data;
+            j += d.data;
+            continue;
+        }
 
-            case Diff::Left:
+        if (d.type != Diff::Right) {
+            if (layoutBuilder.isLeftVisible()) {
                 l[i] = lh.print(i + 1, 1);
-                width = measureWidth(l[i++]);
-                leftWidths.push_back(width);
-                maxLeftWidth = std::max(width, maxLeftWidth);
-                break;
-            case Diff::Right:
+            }
+            layoutBuilder.measureLeft(l[i++]);
+        }
+        if (d.type != Diff::Left) {
+            if (layoutBuilder.isRightVisible()) {
                 r[j] = rh.print(j + 1, 1);
-                width = measureWidth(r[j++]);
-                maxRightWidth = std::max(width, maxRightWidth);
-                break;
-            case Diff::Identical:
-            case Diff::Different:
-                l[i] = lh.print(i + 1, 1);
-                width = measureWidth(l[i++]);
-                leftWidths.push_back(width);
-                maxLeftWidth = std::max(width, maxLeftWidth);
-
-                r[j] = rh.print(j + 1, 1);
-                width = measureWidth(r[j++]);
-                maxRightWidth = std::max(width, maxRightWidth);
-                break;
-            case Diff::Fold:
-                i += d.data;
-                j += d.data;
-                continue;
+            }
+            layoutBuilder.measureRight(r[j++]);
         }
 
         // Record last non-folded indices.
-        maxLeftNum = i;
-        maxRightNum = j;
+        layoutBuilder.setMaxLineNums(i, j);
     }
 
-    const int lWidth = countWidth(maxLeftNum) + 1;
-    const int rWidth = countWidth(maxRightNum) + 1;
+    Layout layout = layoutBuilder.compute();
+    Outliner outliner(os, layout);
 
-    const int wholeWidth = lWidth + 1 + 1 + maxLeftWidth
-                         + 3
-                         + rWidth + 1 + 1 + maxRightWidth;
-
-    auto title = 231_fg + decor::bold;
-
-    auto separator = [&]() {
-        os << std::setfill('~')
-           << std::setw(lWidth + 1 + 1 + maxLeftWidth + 1)
-           << (231_fg << "")
-           << (decor::bold << '!')
-           << std::setw(rWidth + 1 + 1 + maxRightWidth + 1)
-           << (231_fg << "")
-           << std::setfill(' ')
-           << '\n';
-    };
-
-    separator();
-
-    std::string leftMarker = ' ' + std::string(lWidth - 1, '-') + "  ";
-    std::string rightMarker = ' ' + std::string(rWidth - 1, '+') + "  ";
+    outliner.printSeparator();
     for (const Header &hdr : headers) {
-        const std::string left = leftMarker + hdr.left;
-        os << (title << std::left
-                     << std::setw(lWidth + 1 + 1 + maxLeftWidth)
-                     << left
-                     << " ! "
-                     << std::setw(rWidth + 1 + 1 + maxRightWidth)
-                     << rightMarker + hdr.right)
-           << '\n';
+        outliner.printHeader(hdr);
     }
-
-    decor::Decoration lineNo = decor::white_bg + decor::black_fg;
-
-    separator();
+    outliner.printSeparator();
 
     i = 0U;
     j = 0U;
-    unsigned int ii = 0U;
     for (DiffLine d : diff) {
-        boost::string_ref ll = empty;
-        boost::string_ref rl = empty;
+        boost::string_ref ll, rl;
+        char marker = '?';
 
-        const char *marker = nullptr;
         switch (d.type) {
-            case Diff::Left:
-                ll = l[i++];
-                marker = " < ";
-                break;
-            case Diff::Right:
-                rl = r[j++];
-                marker = " > ";
-                break;
-            case Diff::Identical:
-                ll = l[i++];
-                rl = r[j++];
-                marker = " | ";
-                break;
-            case Diff::Different:
-                ll = l[i++];
-                rl = r[j++];
-                marker = " ~ ";
-                break;
+            case Diff::Left:      ll = l[i++];              marker = '<'; break;
+            case Diff::Right:                  rl = r[j++]; marker = '>'; break;
+            case Diff::Identical: ll = l[i++]; rl = r[j++]; marker = '|'; break;
+            case Diff::Different: ll = l[i++]; rl = r[j++]; marker = '~'; break;
+
             case Diff::Fold:
                 i += d.data;
                 j += d.data;
-                {
-                    std::string msg = " @@ folded " + std::to_string(d.data)
-                                    + " identical lines @@ ";
-
-                    int leftFill = lWidth + 1 + 1 + maxLeftWidth + 2
-                                 - msg.size()/2;
-                    int rightFill = wholeWidth - (leftFill + msg.size());
-
-                    os << std::right << std::setfill('.')
-                       << (251_fg << std::setw(leftFill) << "")
-                       << msg
-                       << (251_fg << std::setw(rightFill) << "")
-                       << '\n' << std::setfill(' ');
-                }
+                outliner.printMsg(" @@ folded " + std::to_string(d.data) +
+                                  " identical lines @@ ");
                 continue;
         }
 
-        unsigned int width = (d.type == Diff::Right ? 0U : leftWidths[ii++]);
-        width = maxLeftWidth + (ll.size() - width);
-
-        if (d.type != Diff::Right) {
-            os << (lineNo << std::right << std::setw(lWidth) << i << ' ')
-               << ' ' << std::left << std::setw(width) << ll;
-        } else {
-            os << (lineNo << std::right << std::setw(lWidth + 1)
-                          << (noLineMarker(i) + ' '))
-               << ' ' << std::left << std::setw(width)
-               << (235_bg << ll);
+        if ((!layout.isLeftVisible() && d.type == Diff::Left) ||
+            (!layout.isRightVisible() && d.type == Diff::Right))
+        {
+            // Skip blank lines if only one version is displayed.
+            continue;
         }
 
-        os << marker;
-
-        if (d.type != Diff::Left) {
-            os << (lineNo << std::right << std::setw(rWidth) << j << ' ')
-               << ' ' << rl;
-        } else {
-            os << (lineNo << std::right << std::setw(rWidth + 1)
-                          << (noLineMarker(j) + ' '))
-               << ' ' << std::left << std::setw(maxRightWidth)
-               << (235_bg << rl);
+        if (layout.isLeftVisible()) {
+            if (d.type == Diff::Right) {
+                outliner.printLeftBlank(i);
+            } else {
+                outliner.printLeftLine(i, ll);
+            }
         }
 
-        os << '\n';
-    }
-}
+        outliner.printMarker(marker);
 
-/**
- * @brief Generates string that should be used instead of line number.
- *
- * @param at Line number of the last displayed line (0 if none was printed).
- *
- * @returns The marker.
- */
-static std::string
-noLineMarker(int at)
-{
-    return std::string(countWidth(at), '-');
-}
+        if (layout.isRightVisible()) {
+            if (d.type == Diff::Left) {
+                outliner.printRightBlank(j);
+            } else {
+                outliner.printRightLine(j, rl);
+            }
+        }
 
-static int
-countWidth(int n)
-{
-    int width = 0;
-    while (n > 0) {
-        n /= 10;
-        ++width;
+        outliner.nextLine();
     }
-    return (width == 0) ? 1 : width;
 }
 
 // Generates alignment information describing two sequences.
@@ -435,33 +721,4 @@ makeDiff(DiffSource &&l, DiffSource &&r)
     foldIdentical(true);
 
     return diffSeq;
-}
-
-/**
- * @brief Calculates width of a string ignoring embedded escape sequences.
- *
- * @param s String to measure.
- *
- * @returns The width.
- */
-static unsigned int
-measureWidth(boost::string_ref s)
-{
-    // XXX: we actually print lines without formatting and should be able to
-    //      avoid using this function.
-    unsigned int valWidth = 0U;
-    while (!s.empty()) {
-        if (s.front() != '\033') {
-            ++valWidth;
-            s.remove_prefix(1);
-            continue;
-        }
-
-        const auto width = s.find('m');
-        if (width == std::string::npos) {
-            break;
-        }
-        s.remove_prefix(width + 1U);
-    }
-    return valWidth;
 }

@@ -347,13 +347,13 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         -   >  1
-         -   >  2          {+/* This+}
-         -   >  3           {+* is+}
-         -   >  4           {+* a+}
-         -   >  5           {+* comment */+}
+        ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
+        >  1
+        >  2          {+/* This+}
+        >  3           {+* is+}
+        >  4           {+* a+}
+        >  5           {+* comment */+}
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -473,6 +473,130 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Widths is adjusted correctly on long headers", "[printer]")
+{
+    Tree oldTree = parseC("");
+    Tree newTree = parseC("int a;");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+
+    std::string expected;
+
+    oss.str({});
+    printer.addHeader({ "left", "right" });
+    printer.print(tr);
+    expected = normalizeText(R"(
+        ~~~~~~~~~~~~!~~~~~~~~~~~~~~~
+         -  left    !  +  right
+        ~~~~~~~~~~~~!~~~~~~~~~~~~~~~
+        >  1  {+int+}{+ +}{+a+}{+;+}
+    )");
+    CHECK(normalizeText(oss.str()) == expected);
+
+    oss.str({});
+    printer.addHeader({ "longleft", "right" });
+    printer.print(tr);
+    expected = normalizeText(R"(
+        ~~~~~~~~~~~~~!~~~~~~~~~~~~~~
+         -  left     !  +  right
+         -  longleft !  +  right
+        ~~~~~~~~~~~~~!~~~~~~~~~~~~~~
+        >  1  {+int+}{+ +}{+a+}{+;+}
+    )");
+    CHECK(normalizeText(oss.str()) == expected);
+
+    oss.str({});
+    printer.addHeader({ "left", "verylongright" });
+    printer.print(tr);
+    expected = normalizeText(R"(
+        ~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~
+         -  left     !  +  right
+         -  longleft !  +  right
+         -  left     !  +  verylongright
+        ~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~
+        >  1  {+int+}{+ +}{+a+}{+;+}
+    )");
+    CHECK(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Deletions only leave only one side", "[printer]")
+{
+    Tree emptyTree = parseC("");
+    Tree tree = parseC(R"(
+        /* This
+         * is
+         * a
+         * comment */
+    )");
+
+    TimeReport tr;
+    compare(tree, emptyTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*tree.getRoot(), *emptyTree.getRoot(),
+                    *tree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
+         1                            <
+         2          {-/* This-}       <
+         3           {-* is-}         <
+         4           {-* a-}          <
+         5           {-* comment */-} <
+    )");
+
+    CHECK(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Single side view doesn't contain blanks", "[printer]")
+{
+    Tree treeA = parseC(R"(
+        struct Args {
+            bool noRefine;
+            bool gitDiff;
+            bool gitRename;
+            bool gitRenameOnly;
+        };
+    )");
+    Tree treeB = parseC(R"(
+        struct Args {
+            bool noRefine;      // Don't run TED on updated nodes.
+            bool gitDiff;       // Invoked by git and file was changed.
+            bool gitRename;     // File was renamed and possibly changed too.
+            bool gitRenameOnly; // File was renamed without changing it.
+        };
+    )");
+
+    TimeReport tr;
+    compare(treeA, treeB, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*treeA.getRoot(), *treeB.getRoot(),
+                    *treeA.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        |  1
+        |  2  struct Args {
+        >  3      bool noRefine;      {+// Don't run TED on updated nodes.+}
+        >  4      bool gitDiff;       {+// Invoked by git and file was changed.+}
+        >  5      bool gitRename;     {+// File was renamed and possibly changed too.+}
+        >  6      bool gitRenameOnly; {+// File was renamed without changing it.+}
+        |  7  };
+    )");
+
+    CHECK(normalizeText(oss.str()) == expected);
 }
 
 TEST_CASE("Adjacent updates aren't merged with background", "[printer]")
