@@ -1,7 +1,6 @@
 NAME := zograscope
 
-CXXFLAGS += -std=c++11 -Wall -Wextra -MMD -Isrc/ -Ithird-party/
-CXXFLAGS += -DYYDEBUG -DTIXML_USE_STL
+CXXFLAGS += -std=c++11 -Wall -Wextra -MMD -Isrc/ -Ithird-party/ -DYYDEBUG
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
 LDFLAGS  += -lboost_system
 
