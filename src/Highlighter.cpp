@@ -94,7 +94,10 @@ public:
             return decor::none;
         }
 
-        if (prevHighlight == currHighlight) {
+        // Updates are individual (one to one) and look better separated with
+        // background.
+        if (prevHighlight == currHighlight &&
+            currNode->state != State::Updated) {
             return *currHighlight;
         }
 

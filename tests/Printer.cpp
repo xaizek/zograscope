@@ -474,3 +474,39 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
 
     REQUIRE(normalizeText(oss.str()) == expected);
 }
+
+TEST_CASE("Adjacent updates aren't merged with background", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            if (someLongVariableName == 0) {
+            }
+        }
+    )");
+    Tree newTree = parseC(R"(
+        void f() {
+            if (someLongVariableName != 1) {
+            }
+        }
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                               |  1
+         2  void f() {                                   |  2  void f() {
+         3      if (someLongVariableName {#==#} {#0#}) { ~  3      if (someLongVariableName {#!=#} {#1#}) {
+         4      }                                        |  4      }
+         5  }                                            |  5  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
