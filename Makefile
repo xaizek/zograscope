@@ -116,7 +116,7 @@ all: $$($1.bin)
 $$($1.bin): | $(out_dirs)
 
 $$($1.bin): $$($1.objects)
-	$(CXX) $(LDFLAGS) $(EXTRA_LDFLAGS) $$^ -o $$@
+	$(CXX) $(EXTRA_LDFLAGS) $$^ $(LDFLAGS) -o $$@
 
 endef
 
