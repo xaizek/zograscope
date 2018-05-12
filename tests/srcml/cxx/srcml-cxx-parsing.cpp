@@ -451,3 +451,27 @@ TEST_CASE("Parenthesis of empty parameter list are decomposed and stripped",
         }
     )");
 }
+
+TEST_CASE("Case labels are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            switch (state.state) {
+                case State::Normal:
+                    break;
+            }
+        }
+    )", R"(
+        void f() {
+            if (c == '[') {                   /// Additions
+                state.state = State::Normal;  /// Additions
+            }                                 /// Additions
+
+            switch (state.state) {
+                case State::Normal:
+                    break;
+            }
+        }
+    )");
+}

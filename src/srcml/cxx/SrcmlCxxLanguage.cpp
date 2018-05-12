@@ -490,6 +490,7 @@ SrcmlCxxLanguage::isLayerBreak(SType stype) const
         || -stype == SrcmlCxxSType::Return
         || -stype == SrcmlCxxSType::Name
         || -stype == SrcmlCxxSType::Lambda
+        || -stype == SrcmlCxxSType::Case
         || isValueNode(stype);
 }
 
