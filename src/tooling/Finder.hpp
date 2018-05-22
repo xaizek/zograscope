@@ -42,7 +42,7 @@ public:
     // Processes all specified paths.
     bool search();
 
-public:
+private:
     // Processes either single file or recursively discovered files in a
     // directory.
     bool search(const boost::filesystem::path &path);
