@@ -30,6 +30,11 @@ enum class ColorGroup
 
     // MissingLine,
 
+    // Parts of location entry: <path>:<line>:<col>.
+    Path,
+    LineNoPart,
+    ColNoPart,
+
     Deleted,
     Inserted,
     Updated,
