@@ -50,12 +50,14 @@ SrcmlTransformer::SrcmlTransformer(const std::string &contents,
 void
 SrcmlTransformer::transform()
 {
+    bool passOnStdin = !boost::filesystem::exists(path);
+
     std::vector<std::string> cmd = {
         "srcml", "--language=" + language, "--src-encoding=utf8",
-        (boost::filesystem::exists(path) ? path : "-")
+        (passOnStdin ? "-" : path)
     };
 
-    std::string xml = readCommandOutput(cmd, contents);
+    std::string xml = readCommandOutput(cmd, passOnStdin ? contents : "");
 
     ti::XMLDocument doc;
     doc.Parse(xml.data(), xml.size());
