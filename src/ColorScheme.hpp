@@ -26,7 +26,7 @@ enum class ColorGroup
 {
     // Title,
 
-    // LineNo,
+    LineNo,
 
     // MissingLine,
 

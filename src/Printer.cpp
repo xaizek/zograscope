@@ -30,6 +30,7 @@
 #include "utils/nums.hpp"
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
+#include "ColorScheme.hpp"
 #include "Highlighter.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
@@ -518,7 +519,7 @@ private:
     std::string rightMarker; // Right marker for headers.
 
     // Line number style.
-    decor::Decoration lineNo = decor::white_bg + decor::black_fg;
+    decor::Decoration lineNo = ColorScheme()[ColorGroup::LineNo];
     // Next line index of the left part (needed to correct maximum width).
     int leftWidthIndex = 0;
 };
