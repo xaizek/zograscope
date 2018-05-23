@@ -118,6 +118,12 @@ MakeLanguage::isDiffable(const Node *x) const
 }
 
 bool
+MakeLanguage::isEolContinuation(const Node *x) const
+{
+    return (-x->stype == MakeSType::LineGlue);
+}
+
+bool
 MakeLanguage::alwaysMatches(const Node *x) const
 {
     return (-x->stype == MakeSType::Makefile);

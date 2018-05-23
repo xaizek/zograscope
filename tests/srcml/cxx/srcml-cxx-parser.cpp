@@ -364,3 +364,17 @@ TEST_CASE("Working around srcml bug of handling stdin input",
                                 mr).hasFailed());
     }
 }
+
+TEST_CASE("EOL continuation is identified in C++",
+          "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        int a \
+          ;
+    )");
+    const Node *node = findNode(tree, [](const Node *node) {
+                                    return node->label == "\\";
+                                });
+    REQUIRE(node != nullptr);
+    CHECK(tree.getLanguage()->isEolContinuation(node));
+}

@@ -217,6 +217,12 @@ C11Language::isDiffable(const Node *x) const
 }
 
 bool
+C11Language::isEolContinuation(const Node *x) const
+{
+    return (-x->stype == C11SType::LineGlue);
+}
+
+bool
 C11Language::alwaysMatches(const Node *x) const
 {
     return (-x->stype == C11SType::TranslationUnit);

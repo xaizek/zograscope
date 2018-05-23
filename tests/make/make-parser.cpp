@@ -659,3 +659,16 @@ target:
     CHECK(findNode(tree, Type::StrConstants,
                    "'define VERSION \"0.9.1-beta\"'") != nullptr);
 }
+
+TEST_CASE("EOL continuation is identified in GNU Make", "[make][parser]")
+{
+    Tree tree = parseMake(R"(
+        a = \
+          b
+    )");
+    const Node *node = findNode(tree, [](const Node *node) {
+                                    return node->label == "\\";
+                                });
+    REQUIRE(node != nullptr);
+    CHECK(tree.getLanguage()->isEolContinuation(node));
+}

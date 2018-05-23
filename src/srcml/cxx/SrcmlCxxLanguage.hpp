@@ -54,6 +54,9 @@ public:
     virtual bool isContainer(const Node *x) const override;
     // Checks whether spelling of a node can be diffed.
     virtual bool isDiffable(const Node *x) const override;
+    // Checks whether a node represents a token used to declare line
+    // continuation.
+    virtual bool isEolContinuation(const Node *x) const override;
     // Checks whether a node always matches another node with the same stype.
     virtual bool alwaysMatches(const Node *x) const override;
     // Checks whether child node needs to be replaced in its parent with its
