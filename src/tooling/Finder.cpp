@@ -29,6 +29,7 @@
 #include "utils/optional.hpp"
 #include "Highlighter.hpp"
 #include "Matcher.hpp"
+#include "Traverser.hpp"
 #include "common.hpp"
 #include "decoration.hpp"
 #include "mtypes.hpp"
@@ -117,38 +118,10 @@ Finder::~Finder() = default;
 bool
 Finder::search()
 {
-    bool found = false;
-    for (fs::path path : paths) {
-        found |= search(path);
-    }
+    bool found = Traverser(paths, args.lang, [this](const std::string &path) {
+                               return process(path);
+                           }).search();
     report();
-    return found;
-}
-
-bool
-Finder::search(const fs::path &path)
-{
-    bool found = false;
-    auto match = [&](const std::string &file) {
-        if (Language::matches(file, args.lang)) {
-            found |= process(file);
-        }
-    };
-
-    if (!fs::is_directory(path)) {
-        match(path.string());
-    } else {
-        using it = fs::directory_iterator;
-        for (fs::directory_entry &e :
-             boost::make_iterator_range(it(path), it())) {
-            if (fs::is_directory(e.path())) {
-                found |= search(e.path());
-            } else {
-                match(e.path().string());
-            }
-        }
-    }
-
     return found;
 }
 

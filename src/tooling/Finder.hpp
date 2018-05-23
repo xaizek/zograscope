@@ -43,9 +43,6 @@ public:
     bool search();
 
 private:
-    // Processes either single file or recursively discovered files in a
-    // directory.
-    bool search(const boost::filesystem::path &path);
     // Processes single file.
     bool process(const std::string &path);
     // Prints report with statistics about results.
