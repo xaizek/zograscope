@@ -102,7 +102,8 @@ tests_objects += $(lib)
 define tool_template
 
 $1.bin := $(out_dir)/zs-$1$(bin_suffix)
-$1.sources := $$(call rwildcard, tools/$1/, *.cpp)
+$1.sources := $$(filter-out tools/$1/data/%, \
+                            $$(call rwildcard, tools/$1/, *.cpp))
 $1.objects := $$(sort $$($1.sources:%.cpp=$$(out_dir)/%.o))
 $1.depends := $$($1.objects:.o=.d)
 $1.objects += $(lib)
