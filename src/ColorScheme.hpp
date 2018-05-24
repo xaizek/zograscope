@@ -26,9 +26,14 @@ enum class ColorGroup
 {
     // Title,
 
-    // LineNo,
+    LineNo,
 
     // MissingLine,
+
+    // Parts of location entry: <path>:<line>:<col>.
+    Path,
+    LineNoPart,
+    ColNoPart,
 
     Deleted,
     Inserted,

@@ -424,6 +424,12 @@ SrcmlCxxLanguage::isDiffable(const Node *x) const
 }
 
 bool
+SrcmlCxxLanguage::isEolContinuation(const Node *x) const
+{
+    return (x->label == "\\");
+}
+
+bool
 SrcmlCxxLanguage::alwaysMatches(const Node *x) const
 {
     return (-x->stype == SrcmlCxxSType::Unit);

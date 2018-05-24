@@ -446,6 +446,19 @@ TEST_CASE("Declaration in for loop with typedef is not ambiguous",
     CHECK(findNode(tree, Type::UserTypes, "size_t") != nullptr);
 }
 
+TEST_CASE("EOL continuation is identified in C", "[parser]")
+{
+    Tree tree = parseC(R"(
+        int a \
+        ;
+    )");
+    const Node *node = findNode(tree, [](const Node *node) {
+                                    return node->label == "\\";
+                                });
+    REQUIRE(node != nullptr);
+    CHECK(tree.getLanguage()->isEolContinuation(node));
+}
+
 static int
 countNodes(const Node &root)
 {

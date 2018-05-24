@@ -27,8 +27,10 @@
 #include <boost/utility/string_ref.hpp>
 #include "dtl/dtl.hpp"
 
+#include "utils/nums.hpp"
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
+#include "ColorScheme.hpp"
 #include "Highlighter.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
@@ -68,8 +70,6 @@ struct DiffSource
 private:
     std::deque<std::string> storage; // Storage that backs the lines.
 };
-
-static int countWidth(int n);
 
 DiffSource::DiffSource(const Node &root)
 {
@@ -519,21 +519,10 @@ private:
     std::string rightMarker; // Right marker for headers.
 
     // Line number style.
-    decor::Decoration lineNo = decor::white_bg + decor::black_fg;
+    decor::Decoration lineNo = ColorScheme()[ColorGroup::LineNo];
     // Next line index of the left part (needed to correct maximum width).
     int leftWidthIndex = 0;
 };
-
-static int
-countWidth(int n)
-{
-    int width = 0;
-    while (n > 0) {
-        n /= 10;
-        ++width;
-    }
-    return (width == 0) ? 1 : width;
-}
 
 }
 

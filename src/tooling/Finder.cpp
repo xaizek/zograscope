@@ -27,10 +27,11 @@
 #include <string>
 
 #include "utils/optional.hpp"
+#include "ColorScheme.hpp"
 #include "Highlighter.hpp"
 #include "Matcher.hpp"
+#include "Traverser.hpp"
 #include "common.hpp"
-#include "decoration.hpp"
 #include "mtypes.hpp"
 
 namespace fs = boost::filesystem;
@@ -117,44 +118,18 @@ Finder::~Finder() = default;
 bool
 Finder::search()
 {
-    bool found = false;
-    for (fs::path path : paths) {
-        found |= search(path);
-    }
+    bool found = Traverser(paths, args.lang, [this](const std::string &path) {
+                               return process(path);
+                           }).search();
     report();
-    return found;
-}
-
-bool
-Finder::search(const fs::path &path)
-{
-    bool found = false;
-    auto match = [&](const std::string &file) {
-        if (Language::matches(file, args.lang)) {
-            found |= process(file);
-        }
-    };
-
-    if (!fs::is_directory(path)) {
-        match(path.string());
-    } else {
-        using it = fs::directory_iterator;
-        for (fs::directory_entry &e :
-             boost::make_iterator_range(it(path), it())) {
-            if (fs::is_directory(e.path())) {
-                found |= search(e.path());
-            } else {
-                match(e.path().string());
-            }
-        }
-    }
-
     return found;
 }
 
 bool
 Finder::process(const std::string &path)
 {
+    static ColorScheme cs;
+
     cpp17::pmr::monolithic mr;
     if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
         auto timer = tr.measure("looking: " + path);
@@ -173,9 +148,9 @@ Finder::process(const std::string &path)
             fakeRoot.children.assign(match.cbegin(), match.cend());
 
             const Node *node = match.front();
-            std::cout << (decor::yellow_fg << path) << ':'
-                      << (decor::cyan_fg << node->line) << ':'
-                      << (decor::cyan_fg << node->col) << ": "
+            std::cout << (cs[ColorGroup::Path] << path) << ':'
+                      << (cs[ColorGroup::LineNoPart] << node->line) << ':'
+                      << (cs[ColorGroup::ColNoPart] << node->col) << ": "
                       << AutoNL { Highlighter(fakeRoot, lang, true,
                                               node->line).print() }
                       << '\n';
@@ -190,9 +165,9 @@ Finder::process(const std::string &path)
                 return;
             }
 
-            std::cout << (decor::yellow_fg << path) << ':'
-                      << (decor::cyan_fg << node->line) << ':'
-                      << (decor::cyan_fg << node->col) << ": "
+            std::cout << (cs[ColorGroup::Path] << path) << ':'
+                      << (cs[ColorGroup::LineNoPart] << node->line) << ':'
+                      << (cs[ColorGroup::ColNoPart] << node->col) << ": "
                       << AutoNL { Highlighter(*node, lang, true,
                                               node->line).print() }
                       << '\n';
