@@ -100,6 +100,10 @@ Grep-like tool that finds elements of source code structure.
 
 Simple syntax highlighter for xterm-256color palette.
 
+### [zs-stats](tools/stats/README.md) ###
+
+Counter of lines of code.
+
 ## Building and installing ##
 
 ```
