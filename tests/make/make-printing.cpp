@@ -40,7 +40,7 @@ TEST_CASE("Content of string literals is compared in Make", "[make][printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1  a = '#define VERSION {-0.9'-} ~  1  a = '#define VERSION {+0.10'+}
+         1  a = '#define VERSION 0.{-9-}' ~  1  a = '#define VERSION 0.{+10+}'
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);

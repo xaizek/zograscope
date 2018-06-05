@@ -564,19 +564,29 @@ toWords(const std::string &s)
     std::vector<boost::string_ref> words;
     boost::string_ref sr(s);
 
-    bool inWord = false;
+    enum State { Start, WhiteSpace, Word, Punctuation, End };
+
+    auto classify = [](char c) {
+        if (c == '\0')                      return End;
+        if (std::ispunct(c, std::locale())) return Punctuation;
+        if (std::isspace(c, std::locale())) return WhiteSpace;
+        return Word;
+    };
+
+    State currentState = Start;
     std::size_t wordStart = 0U;
     for (std::size_t i = 0U; i <= s.size(); ++i) {
-        const bool isWordChar = s[i] != '\0'
-                             && !std::isspace(s[i], std::locale());
-        if (isWordChar != inWord) {
-            if (isWordChar) {
-                wordStart = i;
-            } else {
+        const State newState = classify(s[i]);
+        // Each punctuation character is treated as a separate "word".
+        if (currentState != newState || currentState == Punctuation) {
+            if (currentState == Punctuation || currentState == Word) {
                 words.emplace_back(sr.substr(wordStart, i - wordStart));
             }
+            if (newState == Punctuation || newState == Word) {
+                wordStart = i;
+            }
         }
-        inWord = isWordChar;
+        currentState = newState;
     }
 
     return words;

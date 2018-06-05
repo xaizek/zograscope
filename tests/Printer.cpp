@@ -141,10 +141,10 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                |  1
-         2  format_str({-"...%s"-}, str); ~  2  format_str({+"%s%s"+}{+,+}{+ +}{+ell+}, str);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                        |  1
+         2  format_str("{-.-}{-.-}{-.-}%s", str); ~  2  format_str("%s{+%+}{+s+}"{+,+}{+ +}{+ell+}, str);
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -630,6 +630,39 @@ TEST_CASE("Adjacent updates aren't merged with background", "[printer]")
          3      if (someLongVariableName {#==#} {#0#}) { ~  3      if (someLongVariableName {#!=#} {#1#}) {
          4      }                                        |  4      }
          5  }                                            |  5  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Separators in diffable tokens are handled separately", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            something("Destination doesn't exist");
+        }
+    )");
+    Tree newTree = parseC(R"(
+        void f() {
+            something("Destination doesn't exist or not a directory");
+        }
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                              |  1
+         2  void f() {                                  |  2  void f() {
+         3      something("Destination doesn't exist"); ~  3      something("Destination doesn't exist {+or+} {+not+} {+a+} {+directory+}");
+         4  }                                           |  4  }
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
