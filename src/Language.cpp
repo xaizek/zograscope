@@ -109,6 +109,16 @@ detectLanguage(const std::string &stem, const std::string &ext)
 }
 
 bool
+Language::isDiffable(const Node *x) const
+{
+    return x->type == Type::Comments
+        || x->type == Type::StrConstants
+        || x->type == Type::Functions
+        || x->type == Type::Identifiers
+        || x->type == Type::UserTypes;
+}
+
+bool
 Language::isPayloadOfFixed(const Node *x) const
 {
     return !isSatellite(x->stype)

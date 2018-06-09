@@ -114,7 +114,7 @@ bool
 MakeLanguage::isDiffable(const Node *x) const
 {
     return -x->stype == MakeSType::Comment
-        || x->type == Type::StrConstants;
+        || Language::isDiffable(x);
 }
 
 bool

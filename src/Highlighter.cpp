@@ -40,9 +40,10 @@ static const decor::Decoration & getHighlight(const Node &node, int moved,
                                               State state,
                                               const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
-static std::string diffSpelling(const std::string &l, const std::string &r,
-                                const decor::Decoration &dec, bool original);
+static std::string diffSpelling(const Node &node, const decor::Decoration &dec,
+                                bool original);
 static std::vector<boost::string_ref> toWords(const std::string &s);
+static std::vector<boost::string_ref> toChars(const std::string &s);
 static std::string getSpelling(const Node &node, State state,
                                const Language &lang,
                                const decor::Decoration &dec, bool original);
@@ -479,16 +480,27 @@ isDiffable(const Node &node, State state, const Language &lang)
  * @returns Differed label.
  */
 static std::string
-diffSpelling(const std::string &l, const std::string &r,
-             const decor::Decoration &dec, bool original)
+diffSpelling(const Node &node, const decor::Decoration &dec, bool original)
 {
     // XXX: some kind of caching would be nice.
 
     using namespace decor;
     using namespace decor::literals;
 
+    const std::string &l = (original ? node.spelling : node.relative->spelling);
+    const std::string &r = (original ? node.relative->spelling : node.spelling);
+
     std::vector<boost::string_ref> lWords = toWords(l);
     std::vector<boost::string_ref> rWords = toWords(r);
+
+    const bool surround = node.type == Type::Functions
+                       || node.type == Type::Identifiers
+                       || node.type == Type::UserTypes;
+
+    if (surround && lWords.size() == 1U && rWords.size() == 1U) {
+        lWords = toChars(l);
+        rWords = toChars(r);
+    }
 
     auto cmp = [](const boost::string_ref &a, const boost::string_ref &b) {
         return (a == b);
@@ -498,14 +510,18 @@ diffSpelling(const std::string &l, const std::string &r,
               decltype(cmp)> diff(lWords, rWords, cmp);
     diff.compose();
 
-    std::ostringstream oss;
-
     Decoration deleted = (210_fg + inv + black_bg + bold)
                          .prefix("{-"_lit)
                          .suffix("-}"_lit);
     Decoration inserted = (85_fg + inv + black_bg + bold)
                           .prefix("{+"_lit)
                           .suffix("+}"_lit);
+    Decoration updated = 226_fg + inv + black_bg + bold;
+
+    std::ostringstream oss;
+    if (surround) {
+        oss << (updated << '[');
+    }
 
     const char *lastL = l.data(), *lastR = r.data();
 
@@ -547,6 +563,9 @@ diffSpelling(const std::string &l, const std::string &r,
     }
 
     oss << (dec << (original ? lastL : lastR));
+    if (surround) {
+        oss << (updated << ']');
+    }
 
     return oss.str();
 }
@@ -592,6 +611,19 @@ toWords(const std::string &s)
     return words;
 }
 
+static std::vector<boost::string_ref>
+toChars(const std::string &s)
+{
+    std::vector<boost::string_ref> chars;
+    boost::string_ref sr(s);
+
+    for (std::size_t i = 0U; i < s.size(); ++i) {
+        chars.emplace_back(sr.substr(i, 1));
+    }
+
+    return chars;
+}
+
 // Formats spelling of a node into a colored string.
 static std::string
 getSpelling(const Node &node, State state, const Language &lang,
@@ -601,7 +633,5 @@ getSpelling(const Node &node, State state, const Language &lang,
         return node.spelling;
     }
 
-    return original
-         ? diffSpelling(node.spelling, node.relative->spelling, dec, original)
-         : diffSpelling(node.relative->spelling, node.spelling, dec, original);
+    return diffSpelling(node, dec, original);
 }
