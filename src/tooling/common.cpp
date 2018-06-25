@@ -151,7 +151,7 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
     Tree t(mr);
 
     if (args.fine) {
-        t = Tree(std::move(lang), contents, tb.getRoot(), &localMR);
+        t = Tree(std::move(lang), contents, tb.getRoot(), mr);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
                     *lang, localMR);
