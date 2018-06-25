@@ -213,7 +213,9 @@ C11Language::isContainer(const Node *x) const
 bool
 C11Language::isDiffable(const Node *x) const
 {
-    return (-x->stype == C11SType::Comment || x->type == Type::StrConstants);
+    return -x->stype == C11SType::Comment
+        || -x->stype == C11SType::Directive
+        || x->type == Type::StrConstants;
 }
 
 bool

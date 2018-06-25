@@ -44,8 +44,8 @@ macros.
 Note the following:
  * old K&R style of function declarations isn't parsed (there might be a
    workaround for it, but this syntax is deprecated either way)
- * preprocessor directives aren't tokenized yet (treated as a single entity),
-   which doesn't seem to be a problem in practice
+ * preprocessor directives aren't tokenized according to language rules yet,
+   but their contents is diffed
  * extensive use of macros in unusual places might not be parsed (this probably
    won't change)
 
