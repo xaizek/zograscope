@@ -372,6 +372,8 @@ splitAt(const boost::string_ref &s, const std::string &delim)
 static std::vector<Changes>
 makeChangeMap(Tree &tree)
 {
+    tree.propagateStates();
+
     std::vector<Changes> map;
 
     auto updateMap = [&](int line, const Node &node) {
@@ -396,22 +398,9 @@ makeChangeMap(Tree &tree)
         }
     };
 
-    std::function<void(Node &, State)> mark = [&](Node &node, State state) {
-        node.state = state;
-        for (Node *child : node.children) {
-            mark(*child, state);
-        }
-    };
-
     int line;
-    std::function<void(Node &)> visit = [&](Node &node) {
+    std::function<void(const Node &)> visit = [&](const Node &node) {
         if (node.next != nullptr) {
-            if (node.state != State::Unchanged) {
-                mark(*node.next, node.state);
-            }
-            if (node.moved) {
-                tree.markTreeAsMoved(node.next);
-            }
             return visit(*node.next);
         }
 
@@ -424,7 +413,7 @@ makeChangeMap(Tree &tree)
             }
         }
 
-        for (Node *child : node.children) {
+        for (const Node *child : node.children) {
             visit(*child);
         }
     };
