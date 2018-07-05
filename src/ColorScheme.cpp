@@ -37,15 +37,24 @@ ColorScheme::ColorScheme()
     groups[+ColorGroup::LineNoPart] = decor::cyan_fg;
     groups[+ColorGroup::ColNoPart] = decor::cyan_fg;
 
+    groups[+ColorGroup::PieceDeleted] = (203_fg + inv + black_bg + bold)
+                                        .prefix("{-"_lit)
+                                        .suffix("-}"_lit);
+    groups[+ColorGroup::PieceInserted] = (83_fg + inv + black_bg + bold)
+                                         .prefix("{+"_lit)
+                                         .suffix("+}"_lit);
+    groups[+ColorGroup::UpdatedSurroundings] = (228_fg + inv + black_bg + bold);
+
+    groups[+ColorGroup::Deleted] = groups[+ColorGroup::PieceDeleted];
+    groups[+ColorGroup::Inserted] = groups[+ColorGroup::PieceInserted];
     groups[+ColorGroup::Deleted] = (210_fg + inv + black_bg + bold)
                                    .prefix("{-"_lit)
                                    .suffix("-}"_lit);
     groups[+ColorGroup::Inserted] = (85_fg + inv + black_bg + bold)
                                     .prefix("{+"_lit)
                                     .suffix("+}"_lit);
-    groups[+ColorGroup::Updated] = (228_fg + inv + black_bg + bold)
-                                   .prefix("{#"_lit)
-                                   .suffix("#}"_lit);
+    groups[+ColorGroup::Updated] = groups[+ColorGroup::UpdatedSurroundings];
+    groups[+ColorGroup::Updated].prefix("{#"_lit).suffix("#}"_lit);
     groups[+ColorGroup::Moved] = (81_fg + inv + bold)
                                  .prefix("{:"_lit)
                                  .suffix(":}"_lit);

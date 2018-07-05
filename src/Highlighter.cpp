@@ -488,7 +488,6 @@ Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
     // XXX: some kind of caching would be nice.
 
     using namespace decor;
-    using namespace decor::literals;
 
     const std::string &l = (original ? node.spelling : node.relative->spelling);
     const std::string &r = (original ? node.relative->spelling : node.spelling);
@@ -513,17 +512,9 @@ Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
               decltype(cmp)> diff(lWords, rWords, cmp);
     diff.compose();
 
-    Decoration deleted = (210_fg + inv + black_bg + bold)
-                         .prefix("{-"_lit)
-                         .suffix("-}"_lit);
-    Decoration inserted = (85_fg + inv + black_bg + bold)
-                          .prefix("{+"_lit)
-                          .suffix("+}"_lit);
-    Decoration updated = 226_fg + inv + black_bg + bold;
-
     std::ostringstream oss;
     if (surround) {
-        oss << (updated << '[');
+        oss << (cs[ColorGroup::UpdatedSurroundings] << '[');
     }
 
     const char *lastL = l.data(), *lastR = r.data();
@@ -547,12 +538,12 @@ Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
         switch (x.second.type) {
             case dtl::SES_DELETE:
                 if (original) {
-                    printLeft(x.second, deleted);
+                    printLeft(x.second, cs[ColorGroup::PieceDeleted]);
                 }
                 break;
             case dtl::SES_ADD:
                 if (!original) {
-                    printRight(x.second, inserted);
+                    printRight(x.second, cs[ColorGroup::PieceInserted]);
                 }
                 break;
             case dtl::SES_COMMON:
@@ -567,7 +558,7 @@ Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
 
     oss << (dec << (original ? lastL : lastR));
     if (surround) {
-        oss << (updated << ']');
+        oss << (cs[ColorGroup::UpdatedSurroundings] << ']');
     }
 
     return oss.str();

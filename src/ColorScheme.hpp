@@ -42,6 +42,12 @@ enum class ColorGroup
     Updated,
     Moved,
 
+    // Parts of updated diffables.
+    PieceDeleted,
+    PieceInserted,
+    PieceUpdated,
+    UpdatedSurroundings,
+
     Specifiers,
     UserTypes,
     Types,
@@ -67,7 +73,8 @@ public:
     const decor::Decoration & operator[](ColorGroup colorGroup) const;
 
 private:
-    std::array<decor::Decoration, (int)ColorGroup::ColorGroupCount> groups;
+    std::array<decor::Decoration,
+               static_cast<std::size_t>(ColorGroup::ColorGroupCount)> groups;
 };
 
 #endif // ZOGRASCOPE__COLORSCHEME_HPP__
