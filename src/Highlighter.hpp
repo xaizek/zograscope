@@ -18,6 +18,8 @@
 #ifndef ZOGRASCOPE__HIGHLIGHTER_HPP__
 #define ZOGRASCOPE__HIGHLIGHTER_HPP__
 
+#include <cstdint>
+
 #include <memory>
 #include <sstream>
 #include <stack>
@@ -26,9 +28,15 @@
 
 #include <boost/utility/string_ref.hpp>
 
+enum class State : std::uint8_t;
+
 class Language;
 class Node;
 class Tree;
+
+namespace decor {
+    class Decoration;
+}
 
 // Tree highlighter.  Highlights either all at once or by line ranges.
 class Highlighter
@@ -84,6 +92,12 @@ private:
     // Advances processing to the next node.  The entry here is the one that was
     // returned by `getEntry()` earlier.
     void advance(const Entry &entry);
+    // Formats spelling of a node into a colored string.
+    std::string getSpelling(const Node &node, State state,
+                            const decor::Decoration &dec);
+    // Diffs labels of two nodes (specified one and its relative).  Unchanged
+    // parts are highlighted using `dec`.
+    std::string diffSpelling(const Node &node, const decor::Decoration &dec);
 
 private:
     const Language &lang;                     // Language services.

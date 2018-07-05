@@ -40,13 +40,8 @@ static const decor::Decoration & getHighlight(const Node &node, int moved,
                                               State state,
                                               const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
-static std::string diffSpelling(const Node &node, const decor::Decoration &dec,
-                                bool original);
 static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::vector<boost::string_ref> toChars(const std::string &s);
-static std::string getSpelling(const Node &node, State state,
-                               const Language &lang,
-                               const decor::Decoration &dec, bool original);
 
 // Single processing entry.
 struct Highlighter::Entry
@@ -245,7 +240,7 @@ Highlighter::skipUntil(int targetLine)
                 current = node;
                 colorPicker->advancedLine();
                 const decor::Decoration &dec = colorPicker->getHighlight();
-                spelling = getSpelling(*node, entry.state, lang, dec, original);
+                spelling = getSpelling(*node, entry.state, dec);
                 split(spelling, '\n', lines);
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
@@ -298,8 +293,7 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        spelling = getSpelling(*node, entry.state, lang,
-                               colorPicker->getHighlight(), original);
+        spelling = getSpelling(*node, entry.state, colorPicker->getHighlight());
         split(node->spelling, '\n', olines);
         split(spelling, '\n', lines);
         current = node;
@@ -460,6 +454,17 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
     return cs[ColorGroup::Other];
 }
 
+std::string
+Highlighter::getSpelling(const Node &node, State state,
+                         const decor::Decoration &dec)
+{
+    if (!isDiffable(node, state, lang)) {
+        return node.spelling;
+    }
+
+    return diffSpelling(node, dec);
+}
+
 // Checks whether node spelling can be diffed.
 static bool
 isDiffable(const Node &node, State state, const Language &lang)
@@ -469,18 +474,8 @@ isDiffable(const Node &node, State state, const Language &lang)
         && state == State::Updated;
 }
 
-/**
- * @brief Diffs two labels.
- *
- * @param l        Original label.
- * @param r        Updated label.
- * @param dec      Default decoration.
- * @param original Whether this is original source.
- *
- * @returns Differed label.
- */
-static std::string
-diffSpelling(const Node &node, const decor::Decoration &dec, bool original)
+std::string
+Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
 {
     // XXX: some kind of caching would be nice.
 
@@ -622,16 +617,4 @@ toChars(const std::string &s)
     }
 
     return chars;
-}
-
-// Formats spelling of a node into a colored string.
-static std::string
-getSpelling(const Node &node, State state, const Language &lang,
-            const decor::Decoration &dec, bool original)
-{
-    if (!isDiffable(node, state, lang)) {
-        return node.spelling;
-    }
-
-    return diffSpelling(node, dec, original);
 }
