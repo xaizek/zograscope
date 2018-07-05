@@ -36,10 +36,6 @@ class Language;
 class Node;
 class Tree;
 
-namespace decor {
-    class Decoration;
-}
-
 // Tree highlighter.  Highlights either all at once or by line ranges.
 class Highlighter
 {
@@ -95,11 +91,10 @@ private:
     // returned by `getEntry()` earlier.
     void advance(const Entry &entry);
     // Formats spelling of a node into a colored string.
-    std::string getSpelling(const Node &node, State state,
-                            const decor::Decoration &dec);
+    std::string getSpelling(const Node &node, State state, ColorGroup def);
     // Diffs labels of two nodes (specified one and its relative).  Unchanged
     // parts are highlighted using `dec`.
-    std::string diffSpelling(const Node &node, const decor::Decoration &dec);
+    std::string diffSpelling(const Node &node, ColorGroup def);
 
 private:
     const Language &lang;                     // Language services.

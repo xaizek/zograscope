@@ -248,8 +248,8 @@ Highlighter::skipUntil(int targetLine)
             if (++line == targetLine) {
                 current = node;
                 colorPicker->advancedLine();
-                const decor::Decoration &dec = cs[colorPicker->getHighlight()];
-                spelling = getSpelling(*node, entry.state, dec);
+                ColorGroup def = colorPicker->getHighlight();
+                spelling = getSpelling(*node, entry.state, def);
                 split(spelling, '\n', lines);
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
@@ -302,8 +302,7 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        spelling = getSpelling(*node, entry.state,
-                               cs[colorPicker->getHighlight()]);
+        spelling = getSpelling(*node, entry.state, colorPicker->getHighlight());
         split(node->spelling, '\n', olines);
         split(spelling, '\n', lines);
         current = node;
@@ -463,14 +462,13 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
 }
 
 std::string
-Highlighter::getSpelling(const Node &node, State state,
-                         const decor::Decoration &dec)
+Highlighter::getSpelling(const Node &node, State state, ColorGroup def)
 {
     if (!isDiffable(node, state, lang)) {
         return node.spelling;
     }
 
-    return diffSpelling(node, dec);
+    return diffSpelling(node, def);
 }
 
 // Checks whether node spelling can be diffed.
@@ -483,7 +481,7 @@ isDiffable(const Node &node, State state, const Language &lang)
 }
 
 std::string
-Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
+Highlighter::diffSpelling(const Node &node, ColorGroup def)
 {
     // XXX: some kind of caching would be nice.
 
@@ -521,42 +519,42 @@ Highlighter::diffSpelling(const Node &node, const decor::Decoration &dec)
 
     // FIXME: could do a better job than colorizing each character.
 
-    auto printLeft = [&](const dtl::elemInfo &info, const Decoration &dec) {
+    auto printLeft = [&](const dtl::elemInfo &info, ColorGroup hi) {
         const boost::string_ref sr = lWords[info.beforeIdx - 1];
         oss << boost::string_ref(lastL, sr.data() - lastL);
         lastL = sr.data() + sr.size();
-        oss << (dec << sr);
+        oss << (cs[hi] << sr);
     };
-    auto printRight = [&](const dtl::elemInfo &info, const Decoration &dec) {
+    auto printRight = [&](const dtl::elemInfo &info, ColorGroup hi) {
         const boost::string_ref sr = rWords[info.afterIdx - 1];
         oss << boost::string_ref(lastR, sr.data() - lastR);
         lastR = sr.data() + sr.size();
-        oss << (dec << sr);
+        oss << (cs[hi] << sr);
     };
 
     for (const auto &x : diff.getSes().getSequence()) {
         switch (x.second.type) {
             case dtl::SES_DELETE:
                 if (original) {
-                    printLeft(x.second, cs[ColorGroup::PieceDeleted]);
+                    printLeft(x.second, ColorGroup::PieceDeleted);
                 }
                 break;
             case dtl::SES_ADD:
                 if (!original) {
-                    printRight(x.second, cs[ColorGroup::PieceInserted]);
+                    printRight(x.second, ColorGroup::PieceInserted);
                 }
                 break;
             case dtl::SES_COMMON:
                 if (original) {
-                    printLeft(x.second, dec);
+                    printLeft(x.second, def);
                 } else {
-                    printRight(x.second, dec);
+                    printRight(x.second, def);
                 }
                 break;
         }
     }
 
-    oss << (dec << (original ? lastL : lastR));
+    oss << (cs[def] << (original ? lastL : lastR));
     if (surround) {
         oss << (cs[ColorGroup::UpdatedSurroundings] << ']');
     }
