@@ -30,9 +30,8 @@
 #include "dtl/dtl.hpp"
 
 #include "utils/strings.hpp"
-#include "ColorScheme.hpp"
+#include "ColorCane.hpp"
 #include "Language.hpp"
-#include "decoration.hpp"
 #include "tree.hpp"
 
 static int leftShift(const Node *node);
@@ -175,10 +174,7 @@ Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
 
-Highlighter::~Highlighter()
-{
-    // Emit destructor here with ColorPicker and Entry classes being complete.
-}
+Highlighter::~Highlighter() = default;
 
 std::string
 Highlighter::print(int from, int n)
@@ -190,9 +186,12 @@ Highlighter::print(int from, int n)
     skipUntil(from);
     print(n);
 
-    std::string result = oss.str();
-    oss.str(std::string());
-    return result;
+    std::ostringstream oss;
+    for (const ColorCanePiece &piece : colorCane) {
+        oss << (cs[piece.hi] << piece.text);
+    }
+    colorCane = ColorCane();
+    return oss.str();
 }
 
 std::string
@@ -200,9 +199,12 @@ Highlighter::print()
 {
     print(std::numeric_limits<int>::max());
 
-    std::string result = oss.str();
-    oss.str(std::string());
-    return result;
+    std::ostringstream oss;
+    for (const ColorCanePiece &piece : colorCane) {
+        oss << (cs[piece.hi] << piece.text);
+    }
+    colorCane = ColorCane();
+    return oss.str();
 }
 
 void
@@ -249,8 +251,7 @@ Highlighter::skipUntil(int targetLine)
                 current = node;
                 colorPicker->advancedLine();
                 ColorGroup def = colorPicker->getHighlight();
-                spelling = getSpelling(*node, entry.state, def);
-                split(spelling, '\n', lines);
+                lines = getSpelling(*node, entry.state, def).splitIntoLines();
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
                 return;
@@ -288,23 +289,21 @@ Highlighter::print(int n)
             if (--n == 0) {
                 return;
             }
-            oss << '\n';
+            colorCane.append('\n');
             col = colOffset;
         }
 
         if (node->col > col) {
-            auto filler = (cs[colorPicker->getFillHighlight()] << ' ');
-            while (node->col > col) {
-                oss << filler;
-                ++col;
-            }
+            ColorGroup fillHi = colorPicker->getFillHighlight();
+            colorCane.append(' ', node->col - col, fillHi);
+            col = node->col;
         }
 
         advance(entry);
 
-        spelling = getSpelling(*node, entry.state, colorPicker->getHighlight());
+        ColorGroup def = colorPicker->getHighlight();
+        lines = getSpelling(*node, entry.state, def).splitIntoLines();
         split(node->spelling, '\n', olines);
-        split(spelling, '\n', lines);
         current = node;
 
         printSpelling(n);
@@ -314,20 +313,18 @@ Highlighter::print(int n)
 void
 Highlighter::printSpelling(int &n)
 {
-    const decor::Decoration &dec = cs[colorPicker->getHighlight()];
+    ColorGroup hi = colorPicker->getHighlight();
 
-    auto printLine = [&](boost::string_ref line) {
-        if (current->line == this->line) {
-            oss << (dec << lines.front());
-            return;
-        }
+    auto printLine = [&](ColorCane &cc) {
+        std::vector<ColorCane> ccs = std::move(cc).breakAt(" \t");
 
-        std::size_t whitespaceLength = line.find_first_not_of(" \t");
-        if (whitespaceLength == std::string::npos) {
-            whitespaceLength = line.size();
+        for (auto &piece : ccs[0]) {
+            colorCane.append(piece.text, piece.node, piece.hi);
         }
-        oss << line.substr(0, whitespaceLength)
-            << (dec << line.substr(whitespaceLength));
+        for (auto &piece : ccs[1]) {
+            ColorGroup cg = (piece.hi == ColorGroup::None ? hi : piece.hi);
+            colorCane.append(piece.text, piece.node, cg);
+        }
     };
 
     printLine(lines.front());
@@ -342,7 +339,7 @@ Highlighter::printSpelling(int &n)
             return;
         }
 
-        oss << '\n';
+        colorCane.append('\n');
         printLine(lines[i]);
         col = 1 + olines[i].size();
     }
@@ -461,11 +458,13 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
     return ColorGroup::Other;
 }
 
-std::string
+ColorCane
 Highlighter::getSpelling(const Node &node, State state, ColorGroup def)
 {
     if (!isDiffable(node, state, lang)) {
-        return node.spelling;
+        ColorCane cc;
+        cc.append(node.spelling, &node);
+        return cc;
     }
 
     return diffSpelling(node, def);
@@ -480,12 +479,11 @@ isDiffable(const Node &node, State state, const Language &lang)
         && state == State::Updated;
 }
 
-std::string
+ColorCane
 Highlighter::diffSpelling(const Node &node, ColorGroup def)
 {
-    // XXX: some kind of caching would be nice.
-
-    using namespace decor;
+    // XXX: some kind of caching would be nice since we're doing the same thing
+    //      for both original and updated nodes.
 
     const std::string &l = (original ? node.spelling : node.relative->spelling);
     const std::string &r = (original ? node.relative->spelling : node.spelling);
@@ -510,26 +508,25 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
               decltype(cmp)> diff(lWords, rWords, cmp);
     diff.compose();
 
-    std::ostringstream oss;
+    ColorCane cc;
+
     if (surround) {
-        oss << (cs[ColorGroup::UpdatedSurroundings] << '[');
+        cc.append('[', ColorGroup::UpdatedSurroundings);
     }
 
     const char *lastL = l.data(), *lastR = r.data();
 
-    // FIXME: could do a better job than colorizing each character.
-
     auto printLeft = [&](const dtl::elemInfo &info, ColorGroup hi) {
         const boost::string_ref sr = lWords[info.beforeIdx - 1];
-        oss << boost::string_ref(lastL, sr.data() - lastL);
+        cc.append(boost::string_ref(lastL, sr.data() - lastL), &node);
+        cc.append(sr, &node, hi);
         lastL = sr.data() + sr.size();
-        oss << (cs[hi] << sr);
     };
     auto printRight = [&](const dtl::elemInfo &info, ColorGroup hi) {
         const boost::string_ref sr = rWords[info.afterIdx - 1];
-        oss << boost::string_ref(lastR, sr.data() - lastR);
+        cc.append(boost::string_ref(lastR, sr.data() - lastR), &node);
+        cc.append(sr, &node, hi);
         lastR = sr.data() + sr.size();
-        oss << (cs[hi] << sr);
     };
 
     for (const auto &x : diff.getSes().getSequence()) {
@@ -554,12 +551,12 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
         }
     }
 
-    oss << (cs[def] << (original ? lastL : lastR));
+    cc.append(original ? lastL : lastR, &node, def);
     if (surround) {
-        oss << (cs[ColorGroup::UpdatedSurroundings] << ']');
+        cc.append(']', ColorGroup::UpdatedSurroundings);
     }
 
-    return oss.str();
+    return cc;
 }
 
 /**

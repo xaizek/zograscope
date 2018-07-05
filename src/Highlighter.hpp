@@ -21,13 +21,13 @@
 #include <cstdint>
 
 #include <memory>
-#include <sstream>
 #include <stack>
 #include <string>
 #include <vector>
 
 #include <boost/utility/string_ref.hpp>
 
+#include "ColorCane.hpp"
 #include "ColorScheme.hpp"
 
 enum class State : std::uint8_t;
@@ -91,21 +91,20 @@ private:
     // returned by `getEntry()` earlier.
     void advance(const Entry &entry);
     // Formats spelling of a node into a colored string.
-    std::string getSpelling(const Node &node, State state, ColorGroup def);
+    ColorCane getSpelling(const Node &node, State state, ColorGroup def);
     // Diffs labels of two nodes (specified one and its relative).  Unchanged
     // parts are highlighted using `dec`.
-    std::string diffSpelling(const Node &node, ColorGroup def);
+    ColorCane diffSpelling(const Node &node, ColorGroup def);
 
 private:
     const Language &lang;                     // Language services.
-    std::ostringstream oss;                   // Temporary output buffer.
+    ColorCane colorCane;                      // Temporary output buffer.
     int line, col;                            // Current position.
-    int colOffset;                            // Horizontal offset;
+    int colOffset;                            // Horizontal offset.
     std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.
     std::vector<boost::string_ref> olines;    // Undiffed spelling.
-    std::vector<boost::string_ref> lines;     // Possibly diffed spelling.
+    std::vector<ColorCane> lines;             // Possibly diffed spelling.
     std::stack<Entry> toProcess;              // State of tree traversal.
-    std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
     const Node *current;                      // Node that's being processed.
     ColorScheme cs;                           // Terminal color scheme.
