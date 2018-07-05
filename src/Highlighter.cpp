@@ -170,7 +170,7 @@ Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
                          int lineOffset, int colOffset)
     : lang(lang), line(lineOffset), col(1), colOffset(colOffset),
       colorPicker(new ColorPicker(lang)), original(original), current(nullptr),
-      printBrackets(true)
+      printBrackets(true), transparentDiffables(true)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
@@ -181,6 +181,12 @@ void
 Highlighter::setPrintBrackets(bool print)
 {
     printBrackets = print;
+}
+
+void
+Highlighter::setTransparentDiffables(bool transparent)
+{
+    transparentDiffables = transparent;
 }
 
 std::string
@@ -257,7 +263,9 @@ Highlighter::skipUntil(int targetLine)
             if (++line == targetLine) {
                 current = node;
                 colorPicker->advancedLine();
-                ColorGroup def = colorPicker->getHighlight();
+                ColorGroup def = transparentDiffables
+                               ? ColorGroup::None
+                               : ColorGroup::PieceUpdated;
                 lines = getSpelling(*node, entry.state, def).splitIntoLines();
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
@@ -308,7 +316,8 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        ColorGroup def = colorPicker->getHighlight();
+        ColorGroup def = transparentDiffables ? ColorGroup::None
+                                              : ColorGroup::PieceUpdated;
         lines = getSpelling(*node, entry.state, def).splitIntoLines();
         split(node->spelling, '\n', olines);
         current = node;

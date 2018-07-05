@@ -74,6 +74,9 @@ public:
     // Specifies whether diffed updated identifiers should be enclosed in
     // brackets.  On by default.
     void setPrintBrackets(bool print);
+    // Specifies whether unchanged parts diffables should have their original
+    // color.  If not, they are colored as `PieceUpdated`.  On by default.
+    void setTransparentDiffables(bool transparent);
 
     // Prints lines in the range [from, from + n) into a string.  Each line can
     // be printed at most once, thus calls to this function need to increase
@@ -113,6 +116,8 @@ private:
     const Node *current;                      // Node that's being processed.
     ColorScheme cs;                           // Terminal color scheme.
     bool printBrackets;                       // Bracket diffed identifiers.
+    bool transparentDiffables;                // Leave unchanged parts of
+                                              // diffables with original color.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__
