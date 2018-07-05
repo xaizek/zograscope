@@ -169,12 +169,19 @@ leftShift(const Node *node)
 Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
                          int lineOffset, int colOffset)
     : lang(lang), line(lineOffset), col(1), colOffset(colOffset),
-      colorPicker(new ColorPicker(lang)), original(original), current(nullptr)
+      colorPicker(new ColorPicker(lang)), original(original), current(nullptr),
+      printBrackets(true)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
 
 Highlighter::~Highlighter() = default;
+
+void
+Highlighter::setPrintBrackets(bool print)
+{
+    printBrackets = print;
+}
 
 std::string
 Highlighter::print(int from, int n)
@@ -491,9 +498,10 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
     std::vector<boost::string_ref> lWords = toWords(l);
     std::vector<boost::string_ref> rWords = toWords(r);
 
-    const bool surround = node.type == Type::Functions
-                       || node.type == Type::Identifiers
-                       || node.type == Type::UserTypes;
+    bool surround = node.type == Type::Functions
+                 || node.type == Type::Identifiers
+                 || node.type == Type::UserTypes;
+    surround &= printBrackets;
 
     if (surround && lWords.size() == 1U && rWords.size() == 1U) {
         lWords = toChars(l);

@@ -71,6 +71,10 @@ private:
                 int lineOffset, int colOffset);
 
 public:
+    // Specifies whether diffed updated identifiers should be enclosed in
+    // brackets.  On by default.
+    void setPrintBrackets(bool print);
+
     // Prints lines in the range [from, from + n) into a string.  Each line can
     // be printed at most once, thus calls to this function need to increase
     // from argument.  Returns the string.
@@ -108,6 +112,7 @@ private:
     bool original;                            // Whether this is an old version.
     const Node *current;                      // Node that's being processed.
     ColorScheme cs;                           // Terminal color scheme.
+    bool printBrackets;                       // Bracket diffed identifiers.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__
