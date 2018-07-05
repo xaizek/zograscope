@@ -170,12 +170,18 @@ Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
                          int lineOffset, int colOffset)
     : lang(lang), line(lineOffset), col(1), colOffset(colOffset),
       colorPicker(new ColorPicker(lang)), original(original), current(nullptr),
-      printBrackets(true), transparentDiffables(true)
+      printReferences(false), printBrackets(true), transparentDiffables(true)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
 
 Highlighter::~Highlighter() = default;
+
+void
+Highlighter::setPrintReferences(bool print)
+{
+    printReferences = print;
+}
 
 void
 Highlighter::setPrintBrackets(bool print)
@@ -477,13 +483,29 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
 ColorCane
 Highlighter::getSpelling(const Node &node, State state, ColorGroup def)
 {
-    if (!isDiffable(node, state, lang)) {
+    const bool diffable = isDiffable(node, state, lang);
+    if (!diffable && state != State::Updated) {
         ColorCane cc;
         cc.append(node.spelling, &node);
         return cc;
     }
 
-    return diffSpelling(node, def);
+    ColorCane cc;
+    if (diffable) {
+        cc = diffSpelling(node, def);
+    } else {
+        cc.append(node.spelling, &node, ColorGroup::Updated);
+    }
+
+    int &id = updates[original ? &node : node.relative];
+    id = updates.size();
+    if (printReferences) {
+        cc.append('{', ColorGroup::UpdatedSurroundings);
+        cc.append(std::to_string(id), nullptr, ColorGroup::UpdatedSurroundings);
+        cc.append('}', ColorGroup::UpdatedSurroundings);
+    }
+
+    return cc;
 }
 
 // Checks whether node spelling can be diffed.

@@ -23,6 +23,7 @@
 #include <memory>
 #include <stack>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <boost/utility/string_ref.hpp>
@@ -71,6 +72,9 @@ private:
                 int lineOffset, int colOffset);
 
 public:
+    // Specifies whether nodes should be labeled with references to identify
+    // matching pairs in both trees.  Off by default.
+    void setPrintReferences(bool print);
     // Specifies whether diffed updated identifiers should be enclosed in
     // brackets.  On by default.
     void setPrintBrackets(bool print);
@@ -100,7 +104,7 @@ private:
     // Formats spelling of a node into a colored string.
     ColorCane getSpelling(const Node &node, State state, ColorGroup def);
     // Diffs labels of two nodes (specified one and its relative).  Unchanged
-    // parts are highlighted using `dec`.
+    // parts are highlighted using `def`.
     ColorCane diffSpelling(const Node &node, ColorGroup def);
 
 private:
@@ -114,7 +118,10 @@ private:
     std::stack<Entry> toProcess;              // State of tree traversal.
     bool original;                            // Whether this is an old version.
     const Node *current;                      // Node that's being processed.
+    std::unordered_map<const Node *,          // Maps original updated node to
+                       int> updates;          // its id among all updated nodes.
     ColorScheme cs;                           // Terminal color scheme.
+    bool printReferences;                     // Label nodes with pair ids.
     bool printBrackets;                       // Bracket diffed identifiers.
     bool transparentDiffables;                // Leave unchanged parts of
                                               // diffables with original color.
