@@ -28,6 +28,8 @@
 
 #include <boost/utility/string_ref.hpp>
 
+#include "ColorScheme.hpp"
+
 enum class State : std::uint8_t;
 
 class Language;
@@ -111,6 +113,7 @@ private:
     std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
     const Node *current;                      // Node that's being processed.
+    ColorScheme cs;                           // Terminal color scheme.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__

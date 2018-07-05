@@ -36,9 +36,8 @@
 #include "tree.hpp"
 
 static int leftShift(const Node *node);
-static const decor::Decoration & getHighlight(const Node &node, int moved,
-                                              State state,
-                                              const Language &lang);
+static ColorGroup getHighlight(const Node &node, int moved, State state,
+                               const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
 static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::vector<boost::string_ref> toChars(const std::string &s);
@@ -56,63 +55,73 @@ struct Highlighter::Entry
 class Highlighter::ColorPicker
 {
 public:
-    ColorPicker(const Language &lang) : lang(lang)
-    {
-    }
+    ColorPicker(const Language &lang);
 
 public:
-    void setEntry(const Entry &entry)
-    {
-        prevNode = (currNode == entry.node ? nullptr : currNode);
-        currNode = entry.node;
+    void setEntry(const Node *node, bool moved, State state);
 
-        prevMoved = currMoved;
-        currMoved = entry.moved;
+    void advancedLine();
 
-        prevHighlight = currHighlight;
-        currHighlight = &::getHighlight(*currNode, entry.moved, entry.state,
-                                        lang);
-    }
-
-    void advancedLine()
-    {
-        prevNode = nullptr;
-    }
-
-    const decor::Decoration & getHighlight() const
-    {
-        return *currHighlight;
-    }
-
-    const decor::Decoration & getFillHighlight() const
-    {
-        if (prevNode == nullptr) {
-            return decor::none;
-        }
-
-        // Updates are individual (one to one) and look better separated with
-        // background.
-        if (prevHighlight == currHighlight &&
-            currNode->state != State::Updated) {
-            return *currHighlight;
-        }
-
-        if (prevNode->leaf && prevMoved && currMoved) {
-            return *prevHighlight;
-        }
-
-        return decor::none;
-    }
+    ColorGroup getHighlight() const;
+    ColorGroup getFillHighlight() const;
 
 private:
     const Language &lang;
-    const decor::Decoration *currHighlight = &decor::none;
-    const decor::Decoration *prevHighlight = &decor::none;
+    ColorGroup currHighlight = ColorGroup::None;
+    ColorGroup prevHighlight = ColorGroup::None;
     const Node *currNode = nullptr;
     const Node *prevNode = nullptr;
     bool prevMoved = false;
     bool currMoved = false;
 };
+
+Highlighter::ColorPicker::ColorPicker(const Language &lang) : lang(lang) { }
+
+void
+Highlighter::ColorPicker::setEntry(const Node *node, bool moved, State state)
+{
+    prevNode = (currNode == node ? nullptr : currNode);
+    currNode = node;
+
+    prevMoved = currMoved;
+    currMoved = moved;
+
+    prevHighlight = currHighlight;
+    currHighlight = ::getHighlight(*currNode, moved, state, lang);
+}
+
+void
+Highlighter::ColorPicker::advancedLine()
+{
+    prevNode = nullptr;
+}
+
+ColorGroup
+Highlighter::ColorPicker::getHighlight() const
+{
+    return currHighlight;
+}
+
+ColorGroup
+Highlighter::ColorPicker::getFillHighlight() const
+{
+    if (prevNode == nullptr) {
+        return ColorGroup::None;
+    }
+
+    // Updates are individual (one to one) and look better separated with
+    // background.
+    if (prevHighlight == currHighlight &&
+        currNode->state != State::Updated) {
+        return currHighlight;
+    }
+
+    if (prevNode->leaf && prevMoved && currMoved) {
+        return prevHighlight;
+    }
+
+    return ColorGroup::None;
+}
 
 Highlighter::Highlighter(const Tree &tree, bool original)
     : Highlighter(*tree.getRoot(), *tree.getLanguage(), original, 1, 1)
@@ -223,7 +232,7 @@ Highlighter::skipUntil(int targetLine)
             continue;
         }
 
-        colorPicker->setEntry(entry);
+        colorPicker->setEntry(entry.node, entry.moved, entry.state);
 
         while (node->line > line) {
             if (++line == targetLine) {
@@ -239,7 +248,7 @@ Highlighter::skipUntil(int targetLine)
             if (++line == targetLine) {
                 current = node;
                 colorPicker->advancedLine();
-                const decor::Decoration &dec = colorPicker->getHighlight();
+                const decor::Decoration &dec = cs[colorPicker->getHighlight()];
                 spelling = getSpelling(*node, entry.state, dec);
                 split(spelling, '\n', lines);
                 olines.erase(olines.begin(), olines.begin() + i);
@@ -271,7 +280,7 @@ Highlighter::print(int n)
             continue;
         }
 
-        colorPicker->setEntry(entry);
+        colorPicker->setEntry(entry.node, entry.moved, entry.state);
 
         while (node->line > line) {
             ++line;
@@ -284,7 +293,7 @@ Highlighter::print(int n)
         }
 
         if (node->col > col) {
-            auto filler = (colorPicker->getFillHighlight() << ' ');
+            auto filler = (cs[colorPicker->getFillHighlight()] << ' ');
             while (node->col > col) {
                 oss << filler;
                 ++col;
@@ -293,7 +302,8 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        spelling = getSpelling(*node, entry.state, colorPicker->getHighlight());
+        spelling = getSpelling(*node, entry.state,
+                               cs[colorPicker->getHighlight()]);
         split(node->spelling, '\n', olines);
         split(spelling, '\n', lines);
         current = node;
@@ -305,7 +315,7 @@ Highlighter::print(int n)
 void
 Highlighter::printSpelling(int &n)
 {
-    const decor::Decoration &dec = colorPicker->getHighlight();
+    const decor::Decoration &dec = cs[colorPicker->getHighlight()];
 
     auto printLine = [&](boost::string_ref line) {
         if (current->line == this->line) {
@@ -388,61 +398,59 @@ Highlighter::advance(const Entry &entry)
     }
 }
 
-// Retrieves decoration for the specified node considering overrides of its
+// Determines color group for the specified node considering overrides of its
 // properties.
-static const decor::Decoration &
+static ColorGroup
 getHighlight(const Node &node, int moved, State state, const Language &lang)
 {
-    static ColorScheme cs;
-
     // Highlighting based on node state has higher priority.
     switch (state) {
         case State::Deleted:
-            return cs[ColorGroup::Deleted];
+            return ColorGroup::Deleted;
         case State::Inserted:
-            return cs[ColorGroup::Inserted];
+            return ColorGroup::Inserted;
         case State::Updated:
             // TODO: things that were updated and moved at the same time need a
             //       special color?
             //       Or update kinda implies move, since it's obvious that there
             //       was a match between nodes?
             if (!isDiffable(node, state, lang)) {
-                return cs[ColorGroup::Updated];
+                return ColorGroup::Updated;
             }
             break;
 
         case State::Unchanged:
             if (moved) {
-                return cs[ColorGroup::Moved];
+                return ColorGroup::Moved;
             }
             break;
     }
 
     // Highlighting based on node type follows.
     switch (node.type) {
-        case Type::Specifiers: return cs[ColorGroup::Specifiers];
-        case Type::UserTypes:  return cs[ColorGroup::UserTypes];
-        case Type::Types:      return cs[ColorGroup::Types];
-        case Type::Directives: return cs[ColorGroup::Directives];
-        case Type::Comments:   return cs[ColorGroup::Comments];
-        case Type::Functions:  return cs[ColorGroup::Functions];
+        case Type::Specifiers: return ColorGroup::Specifiers;
+        case Type::UserTypes:  return ColorGroup::UserTypes;
+        case Type::Types:      return ColorGroup::Types;
+        case Type::Directives: return ColorGroup::Directives;
+        case Type::Comments:   return ColorGroup::Comments;
+        case Type::Functions:  return ColorGroup::Functions;
 
         case Type::Jumps:
         case Type::Keywords:
-            return cs[ColorGroup::Keywords];
+            return ColorGroup::Keywords;
         case Type::LeftBrackets:
         case Type::RightBrackets:
-            return cs[ColorGroup::Brackets];
+            return ColorGroup::Brackets;
         case Type::Assignments:
         case Type::Operators:
         case Type::LogicalOperators:
         case Type::Comparisons:
-            return cs[ColorGroup::Operators];
+            return ColorGroup::Operators;
         case Type::StrConstants:
         case Type::IntConstants:
         case Type::FPConstants:
         case Type::CharConstants:
-            return cs[ColorGroup::Constants];
+            return ColorGroup::Constants;
 
         case Type::Identifiers:
         case Type::Other:
@@ -451,7 +459,7 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
             break;
     }
 
-    return cs[ColorGroup::Other];
+    return ColorGroup::Other;
 }
 
 std::string
