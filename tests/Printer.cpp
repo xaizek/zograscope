@@ -672,6 +672,40 @@ TEST_CASE("Diffable identifiers are surrounded with brackets", "[printer]")
 {
     Tree oldTree = parseC(R"(
         void f() {
+            cmd_group_open(undo_msg);
+        }
+    )");
+    Tree newTree = parseC(R"(
+        void f() {
+            un_group_open(undo_msg);
+        }
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                      |  1
+         2  void f() {                          |  2  void f() {
+         3      [{-cmd-}_group_open](undo_msg); ~  3      [{+un+}_group_open](undo_msg);
+         4  }                                   |  4  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Diffable identifiers that are too different aren't detailed",
+          "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
             cmd_group_begin(undo_msg);
         }
     )");
@@ -690,13 +724,13 @@ TEST_CASE("Diffable identifiers are surrounded with brackets", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                           |  1
-         2  void f() {                               |  2  void f() {
-         3      [{-cmd-}_group_{-begin-}](undo_msg); <  -
-         -                                           >  3      [{+un+}_group_{+open+}](undo_msg);
-         4  }                                        |  4  }
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                     |  1
+         2  void f() {                         |  2  void f() {
+         3      {#cmd_group_begin#}(undo_msg); <  -
+         -                                     >  3      {#un_group_open#}(undo_msg);
+         4  }                                  |  4  }
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);

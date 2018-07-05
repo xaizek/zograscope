@@ -510,6 +510,17 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
 
     ColorCane cc;
 
+    float worstDistance = std::max(lWords.size(), rWords.size());
+    float sim = 1.0f - diff.getEditDistance()/worstDistance;
+
+    // If Levenshtein distance ends up being too big (similarity is too small),
+    // drop comparison results and get back to just printing two nodes as
+    // updated.
+    if (sim < 0.2f) {
+        cc.append(node.spelling, &node, ColorGroup::Updated);
+        return cc;
+    }
+
     if (surround) {
         cc.append('[', ColorGroup::UpdatedSurroundings);
     }
