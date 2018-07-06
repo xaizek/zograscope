@@ -22,14 +22,12 @@
 
 #include <memory>
 #include <stack>
-#include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <boost/utility/string_ref.hpp>
 
 #include "ColorCane.hpp"
-#include "ColorScheme.hpp"
 
 enum class State : std::uint8_t;
 
@@ -64,7 +62,7 @@ public:
     Highlighter & operator=(const Highlighter&) = delete;
 
     // Destructs the highlighter.
-    ~Highlighter();
+    virtual ~Highlighter();
 
 private:
     // Common implementation of two public constructors.
@@ -82,12 +80,12 @@ public:
     // color.  If not, they are colored as `PieceUpdated`.  On by default.
     void setTransparentDiffables(bool transparent);
 
-    // Prints lines in the range [from, from + n) into a string.  Each line can
-    // be printed at most once, thus calls to this function need to increase
-    // from argument.  Returns the string.
-    std::string print(int from, int n);
-    // Prints lines until the end into a string.  Returns the string.
-    std::string print();
+    // Prints lines in the range [from, from + n).  Each line can be printed at
+    // most once, thus calls to this function need to increase `from` argument.
+    ColorCane print(int from, int n);
+
+    // Prints lines until the end.
+    ColorCane print();
 
 private:
     // Skips everything until target line is reached.
@@ -120,7 +118,6 @@ private:
     const Node *current;                      // Node that's being processed.
     std::unordered_map<const Node *,          // Maps original updated node to
                        int> updates;          // its id among all updated nodes.
-    ColorScheme cs;                           // Terminal color scheme.
     bool printReferences;                     // Label nodes with pair ids.
     bool printBrackets;                       // Bracket diffed identifiers.
     bool transparentDiffables;                // Leave unchanged parts of

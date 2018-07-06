@@ -27,7 +27,7 @@
 
 #include "make/MakeSType.hpp"
 #include "utils/strings.hpp"
-#include "Highlighter.hpp"
+#include "TermHighlighter.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -614,7 +614,7 @@ target:
 
     Tree tree = parseMake(input);
 
-    std::string output = Highlighter(tree).print();
+    std::string output = TermHighlighter(tree).print();
     CHECK(split(output, '\n') == split(expected, '\n'));
 }
 

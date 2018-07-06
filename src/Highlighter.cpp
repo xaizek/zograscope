@@ -30,6 +30,7 @@
 #include "dtl/dtl.hpp"
 
 #include "utils/strings.hpp"
+#include "ColorScheme.hpp"
 #include "ColorCane.hpp"
 #include "Language.hpp"
 #include "tree.hpp"
@@ -195,35 +196,25 @@ Highlighter::setTransparentDiffables(bool transparent)
     transparentDiffables = transparent;
 }
 
-std::string
+ColorCane
 Highlighter::print(int from, int n)
 {
+    colorCane = ColorCane();
     if (from < line) {
         n = std::max(0, n - (line - from));
     }
 
     skipUntil(from);
     print(n);
-
-    std::ostringstream oss;
-    for (const ColorCanePiece &piece : colorCane) {
-        oss << (cs[piece.hi] << piece.text);
-    }
-    colorCane = ColorCane();
-    return oss.str();
+    return std::move(colorCane);
 }
 
-std::string
+ColorCane
 Highlighter::print()
 {
-    print(std::numeric_limits<int>::max());
-
-    std::ostringstream oss;
-    for (const ColorCanePiece &piece : colorCane) {
-        oss << (cs[piece.hi] << piece.text);
-    }
     colorCane = ColorCane();
-    return oss.str();
+    print(std::numeric_limits<int>::max());
+    return std::move(colorCane);
 }
 
 void

@@ -31,7 +31,7 @@
 #include "utils/strings.hpp"
 #include "utils/time.hpp"
 #include "ColorScheme.hpp"
-#include "Highlighter.hpp"
+#include "TermHighlighter.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
 #include "tree-edit-distance.hpp"
@@ -553,8 +553,8 @@ Printer::print(TimeReport &tr)
 
     auto timer = tr.measure("printing");
 
-    Highlighter lh(left, lang, true);
-    Highlighter rh(right, lang, false);
+    TermHighlighter lh(left, lang, true);
+    TermHighlighter rh(right, lang, false);
     std::vector<std::string> l(lsrc.lines.size());
     std::vector<std::string> r(rsrc.lines.size());
 

@@ -20,7 +20,7 @@
 #include <string>
 
 #include "utils/strings.hpp"
-#include "Highlighter.hpp"
+#include "TermHighlighter.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -33,7 +33,7 @@ TEST_CASE("Multiline tokens don't mess up positioning", "[highlighter]")
 
     Tree tree = parseC(input);
 
-    std::string output = Highlighter(tree).print();
+    std::string output = TermHighlighter(tree).print();
     CHECK(split(output, '\n') == split(input, '\n'));
 }
 
@@ -55,7 +55,7 @@ R"(/* line1
 int f() { return 10; }
 // line14)", true);
 
-    Highlighter hi(tree);
+    TermHighlighter hi(tree);
     CHECK(hi.print(1, 2) == "/* line1\n");
     CHECK(hi.print(4, 2) == "// line4\n/* line5");
     CHECK(hi.print(7, 1) == " * line7 */");
@@ -76,6 +76,6 @@ TEST_CASE("Printing a subtree", "[highlighter]")
     const Node *const node = findNode(tree, Type::Comments, "// line2");
     REQUIRE(node != nullptr);
 
-    Highlighter hi(*node, *tree.getLanguage(), true, node->line);
+    TermHighlighter hi(*node, *tree.getLanguage(), true, node->line);
     CHECK(hi.print() == "// line2");
 }
