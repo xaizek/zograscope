@@ -520,10 +520,9 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
     std::vector<boost::string_ref> lWords = toWords(l);
     std::vector<boost::string_ref> rWords = toWords(r);
 
-    bool surround = node.type == Type::Functions
-                 || node.type == Type::Identifiers
-                 || node.type == Type::UserTypes;
-    surround &= printBrackets;
+    const bool surround = node.type == Type::Functions
+                       || node.type == Type::Identifiers
+                       || node.type == Type::UserTypes;
 
     if (surround && lWords.size() == 1U && rWords.size() == 1U) {
         lWords = toChars(l);
@@ -551,7 +550,7 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
         return cc;
     }
 
-    if (surround) {
+    if (surround && printBrackets) {
         cc.append('[', ColorGroup::UpdatedSurroundings);
     }
 
@@ -593,7 +592,7 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
     }
 
     cc.append(original ? lastL : lastR, &node, def);
-    if (surround) {
+    if (surround && printBrackets) {
         cc.append(']', ColorGroup::UpdatedSurroundings);
     }
 
