@@ -186,7 +186,8 @@ Decoration::isEmpty() const
 {
     const bool noDecorator = (decorator == nullptr && extDecorator == nullptr);
     const bool noChildren = (lhs == nullptr && rhs == nullptr);
-    return (noDecorator && noChildren);
+    const bool noSurroundings = (pfx == nullptr && sfx == nullptr);
+    return (noDecorator && noChildren && noSurroundings);
 }
 
 Decoration &
