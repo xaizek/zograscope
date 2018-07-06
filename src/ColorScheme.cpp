@@ -43,6 +43,9 @@ ColorScheme::ColorScheme()
     groups[+ColorGroup::PieceInserted] = (83_fg + inv + black_bg + bold)
                                          .prefix("{+"_lit)
                                          .suffix("+}"_lit);
+    groups[+ColorGroup::PieceUpdated] = Decoration(none)
+                                        .prefix("{~"_lit)
+                                        .suffix("~}"_lit);
     groups[+ColorGroup::UpdatedSurroundings] = (228_fg + inv + black_bg + bold);
 
     groups[+ColorGroup::Deleted] = groups[+ColorGroup::PieceDeleted];

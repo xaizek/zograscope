@@ -20,7 +20,9 @@
 #include <string>
 
 #include "utils/strings.hpp"
+#include "utils/time.hpp"
 #include "TermHighlighter.hpp"
+#include "compare.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -78,4 +80,55 @@ TEST_CASE("Printing a subtree", "[highlighter]")
 
     TermHighlighter hi(*node, *tree.getLanguage(), true, node->line);
     CHECK(hi.print() == "// line2");
+}
+
+TEST_CASE("References are printed", "[highlighter]")
+{
+    Tree oldTree = parseC("int oldVarName;");
+    Tree newTree = parseC("int newVarName;");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    TermHighlighter oldHi(oldTree, true);
+    oldHi.setPrintReferences(true);
+    CHECK(oldHi.print() == "int [{-old-}VarName]{1};");
+
+    TermHighlighter newHi(newTree, false);
+    newHi.setPrintReferences(true);
+    CHECK(newHi.print() == "int [{+new+}VarName]{1};");
+}
+
+TEST_CASE("Brackets can be disabled", "[highlighter]")
+{
+    Tree oldTree = parseC("int oldVarName;");
+    Tree newTree = parseC("int newVarName;");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    TermHighlighter oldHi(oldTree, true);
+    oldHi.setPrintBrackets(false);
+    CHECK(oldHi.print() == "int {-old-}VarName;");
+
+    TermHighlighter newHi(newTree, false);
+    newHi.setPrintBrackets(false);
+    CHECK(newHi.print() == "int {+new+}VarName;");
+}
+
+TEST_CASE("Diffables can be non-transparent", "[highlighter]")
+{
+    Tree oldTree = parseC("int oldVarName;");
+    Tree newTree = parseC("int newVarName;");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    TermHighlighter oldHi(oldTree, true);
+    oldHi.setTransparentDiffables(false);
+    CHECK(oldHi.print() == "int [{-old-}{~VarName~}];");
+
+    TermHighlighter newHi(newTree, false);
+    newHi.setTransparentDiffables(false);
+    CHECK(newHi.print() == "int [{+new+}{~VarName~}];");
 }
