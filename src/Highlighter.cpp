@@ -30,22 +30,17 @@
 #include "dtl/dtl.hpp"
 
 #include "utils/strings.hpp"
-#include "ColorScheme.hpp"
+#include "ColorCane.hpp"
 #include "Language.hpp"
-#include "decoration.hpp"
+#include "colors.hpp"
 #include "tree.hpp"
 
 static int leftShift(const Node *node);
-static const decor::Decoration & getHighlight(const Node &node, int moved,
-                                              State state,
-                                              const Language &lang);
+static ColorGroup getHighlight(const Node &node, int moved, State state,
+                               const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
-static std::string diffSpelling(const std::string &l, const std::string &r,
-                                const decor::Decoration &dec, bool original);
 static std::vector<boost::string_ref> toWords(const std::string &s);
-static std::string getSpelling(const Node &node, State state,
-                               const Language &lang,
-                               const decor::Decoration &dec, bool original);
+static std::vector<boost::string_ref> toChars(const std::string &s);
 
 // Single processing entry.
 struct Highlighter::Entry
@@ -60,63 +55,73 @@ struct Highlighter::Entry
 class Highlighter::ColorPicker
 {
 public:
-    ColorPicker(const Language &lang) : lang(lang)
-    {
-    }
+    ColorPicker(const Language &lang);
 
 public:
-    void setEntry(const Entry &entry)
-    {
-        prevNode = (currNode == entry.node ? nullptr : currNode);
-        currNode = entry.node;
+    void setEntry(const Node *node, bool moved, State state);
 
-        prevMoved = currMoved;
-        currMoved = entry.moved;
+    void advancedLine();
 
-        prevHighlight = currHighlight;
-        currHighlight = &::getHighlight(*currNode, entry.moved, entry.state,
-                                        lang);
-    }
-
-    void advancedLine()
-    {
-        prevNode = nullptr;
-    }
-
-    const decor::Decoration & getHighlight() const
-    {
-        return *currHighlight;
-    }
-
-    const decor::Decoration & getFillHighlight() const
-    {
-        if (prevNode == nullptr) {
-            return decor::none;
-        }
-
-        // Updates are individual (one to one) and look better separated with
-        // background.
-        if (prevHighlight == currHighlight &&
-            currNode->state != State::Updated) {
-            return *currHighlight;
-        }
-
-        if (prevNode->leaf && prevMoved && currMoved) {
-            return *prevHighlight;
-        }
-
-        return decor::none;
-    }
+    ColorGroup getHighlight() const;
+    ColorGroup getFillHighlight() const;
 
 private:
     const Language &lang;
-    const decor::Decoration *currHighlight = &decor::none;
-    const decor::Decoration *prevHighlight = &decor::none;
+    ColorGroup currHighlight = ColorGroup::None;
+    ColorGroup prevHighlight = ColorGroup::None;
     const Node *currNode = nullptr;
     const Node *prevNode = nullptr;
     bool prevMoved = false;
     bool currMoved = false;
 };
+
+Highlighter::ColorPicker::ColorPicker(const Language &lang) : lang(lang) { }
+
+void
+Highlighter::ColorPicker::setEntry(const Node *node, bool moved, State state)
+{
+    prevNode = (currNode == node ? nullptr : currNode);
+    currNode = node;
+
+    prevMoved = currMoved;
+    currMoved = moved;
+
+    prevHighlight = currHighlight;
+    currHighlight = ::getHighlight(*currNode, moved, state, lang);
+}
+
+void
+Highlighter::ColorPicker::advancedLine()
+{
+    prevNode = nullptr;
+}
+
+ColorGroup
+Highlighter::ColorPicker::getHighlight() const
+{
+    return currHighlight;
+}
+
+ColorGroup
+Highlighter::ColorPicker::getFillHighlight() const
+{
+    if (prevNode == nullptr) {
+        return ColorGroup::None;
+    }
+
+    // Updates are individual (one to one) and look better separated with
+    // background.
+    if (prevHighlight == currHighlight &&
+        currNode->state != State::Updated) {
+        return currHighlight;
+    }
+
+    if (prevNode->leaf && prevMoved && currMoved) {
+        return prevHighlight;
+    }
+
+    return ColorGroup::None;
+}
 
 Highlighter::Highlighter(const Tree &tree, bool original)
     : Highlighter(*tree.getRoot(), *tree.getLanguage(), original, 1, 1)
@@ -165,39 +170,51 @@ leftShift(const Node *node)
 Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
                          int lineOffset, int colOffset)
     : lang(lang), line(lineOffset), col(1), colOffset(colOffset),
-      colorPicker(new ColorPicker(lang)), original(original), current(nullptr)
+      colorPicker(new ColorPicker(lang)), original(original), current(nullptr),
+      printReferences(false), printBrackets(true), transparentDiffables(true)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
 
-Highlighter::~Highlighter()
+Highlighter::~Highlighter() = default;
+
+void
+Highlighter::setPrintReferences(bool print)
 {
-    // Emit destructor here with ColorPicker and Entry classes being complete.
+    printReferences = print;
 }
 
-std::string
+void
+Highlighter::setPrintBrackets(bool print)
+{
+    printBrackets = print;
+}
+
+void
+Highlighter::setTransparentDiffables(bool transparent)
+{
+    transparentDiffables = transparent;
+}
+
+ColorCane
 Highlighter::print(int from, int n)
 {
+    colorCane = ColorCane();
     if (from < line) {
         n = std::max(0, n - (line - from));
     }
 
     skipUntil(from);
     print(n);
-
-    std::string result = oss.str();
-    oss.str(std::string());
-    return result;
+    return std::move(colorCane);
 }
 
-std::string
+ColorCane
 Highlighter::print()
 {
+    colorCane = ColorCane();
     print(std::numeric_limits<int>::max());
-
-    std::string result = oss.str();
-    oss.str(std::string());
-    return result;
+    return std::move(colorCane);
 }
 
 void
@@ -227,7 +244,7 @@ Highlighter::skipUntil(int targetLine)
             continue;
         }
 
-        colorPicker->setEntry(entry);
+        colorPicker->setEntry(entry.node, entry.moved, entry.state);
 
         while (node->line > line) {
             if (++line == targetLine) {
@@ -243,9 +260,10 @@ Highlighter::skipUntil(int targetLine)
             if (++line == targetLine) {
                 current = node;
                 colorPicker->advancedLine();
-                const decor::Decoration &dec = colorPicker->getHighlight();
-                spelling = getSpelling(*node, entry.state, lang, dec, original);
-                split(spelling, '\n', lines);
+                ColorGroup def = transparentDiffables
+                               ? ColorGroup::None
+                               : ColorGroup::PieceUpdated;
+                lines = getSpelling(*node, entry.state, def).splitIntoLines();
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
                 return;
@@ -275,7 +293,7 @@ Highlighter::print(int n)
             continue;
         }
 
-        colorPicker->setEntry(entry);
+        colorPicker->setEntry(entry.node, entry.moved, entry.state);
 
         while (node->line > line) {
             ++line;
@@ -283,24 +301,22 @@ Highlighter::print(int n)
             if (--n == 0) {
                 return;
             }
-            oss << '\n';
+            colorCane.append('\n');
             col = colOffset;
         }
 
         if (node->col > col) {
-            auto filler = (colorPicker->getFillHighlight() << ' ');
-            while (node->col > col) {
-                oss << filler;
-                ++col;
-            }
+            ColorGroup fillHi = colorPicker->getFillHighlight();
+            colorCane.append(' ', node->col - col, fillHi);
+            col = node->col;
         }
 
         advance(entry);
 
-        spelling = getSpelling(*node, entry.state, lang,
-                               colorPicker->getHighlight(), original);
+        ColorGroup def = transparentDiffables ? ColorGroup::None
+                                              : ColorGroup::PieceUpdated;
+        lines = getSpelling(*node, entry.state, def).splitIntoLines();
         split(node->spelling, '\n', olines);
-        split(spelling, '\n', lines);
         current = node;
 
         printSpelling(n);
@@ -310,20 +326,18 @@ Highlighter::print(int n)
 void
 Highlighter::printSpelling(int &n)
 {
-    const decor::Decoration &dec = colorPicker->getHighlight();
+    ColorGroup hi = colorPicker->getHighlight();
 
-    auto printLine = [&](boost::string_ref line) {
-        if (current->line == this->line) {
-            oss << (dec << lines.front());
-            return;
-        }
+    auto printLine = [&](ColorCane &cc) {
+        std::vector<ColorCane> ccs = std::move(cc).breakAt(" \t");
 
-        std::size_t whitespaceLength = line.find_first_not_of(" \t");
-        if (whitespaceLength == std::string::npos) {
-            whitespaceLength = line.size();
+        for (auto &piece : ccs[0]) {
+            colorCane.append(piece.text, piece.node, piece.hi);
         }
-        oss << line.substr(0, whitespaceLength)
-            << (dec << line.substr(whitespaceLength));
+        for (auto &piece : ccs[1]) {
+            ColorGroup cg = (piece.hi == ColorGroup::None ? hi : piece.hi);
+            colorCane.append(piece.text, piece.node, cg);
+        }
     };
 
     printLine(lines.front());
@@ -338,7 +352,7 @@ Highlighter::printSpelling(int &n)
             return;
         }
 
-        oss << '\n';
+        colorCane.append('\n');
         printLine(lines[i]);
         col = 1 + olines[i].size();
     }
@@ -393,61 +407,59 @@ Highlighter::advance(const Entry &entry)
     }
 }
 
-// Retrieves decoration for the specified node considering overrides of its
+// Determines color group for the specified node considering overrides of its
 // properties.
-static const decor::Decoration &
+static ColorGroup
 getHighlight(const Node &node, int moved, State state, const Language &lang)
 {
-    static ColorScheme cs;
-
     // Highlighting based on node state has higher priority.
     switch (state) {
         case State::Deleted:
-            return cs[ColorGroup::Deleted];
+            return ColorGroup::Deleted;
         case State::Inserted:
-            return cs[ColorGroup::Inserted];
+            return ColorGroup::Inserted;
         case State::Updated:
             // TODO: things that were updated and moved at the same time need a
             //       special color?
             //       Or update kinda implies move, since it's obvious that there
             //       was a match between nodes?
             if (!isDiffable(node, state, lang)) {
-                return cs[ColorGroup::Updated];
+                return ColorGroup::Updated;
             }
             break;
 
         case State::Unchanged:
             if (moved) {
-                return cs[ColorGroup::Moved];
+                return ColorGroup::Moved;
             }
             break;
     }
 
     // Highlighting based on node type follows.
     switch (node.type) {
-        case Type::Specifiers: return cs[ColorGroup::Specifiers];
-        case Type::UserTypes:  return cs[ColorGroup::UserTypes];
-        case Type::Types:      return cs[ColorGroup::Types];
-        case Type::Directives: return cs[ColorGroup::Directives];
-        case Type::Comments:   return cs[ColorGroup::Comments];
-        case Type::Functions:  return cs[ColorGroup::Functions];
+        case Type::Specifiers: return ColorGroup::Specifiers;
+        case Type::UserTypes:  return ColorGroup::UserTypes;
+        case Type::Types:      return ColorGroup::Types;
+        case Type::Directives: return ColorGroup::Directives;
+        case Type::Comments:   return ColorGroup::Comments;
+        case Type::Functions:  return ColorGroup::Functions;
 
         case Type::Jumps:
         case Type::Keywords:
-            return cs[ColorGroup::Keywords];
+            return ColorGroup::Keywords;
         case Type::LeftBrackets:
         case Type::RightBrackets:
-            return cs[ColorGroup::Brackets];
+            return ColorGroup::Brackets;
         case Type::Assignments:
         case Type::Operators:
         case Type::LogicalOperators:
         case Type::Comparisons:
-            return cs[ColorGroup::Operators];
+            return ColorGroup::Operators;
         case Type::StrConstants:
         case Type::IntConstants:
         case Type::FPConstants:
         case Type::CharConstants:
-            return cs[ColorGroup::Constants];
+            return ColorGroup::Constants;
 
         case Type::Identifiers:
         case Type::Other:
@@ -456,7 +468,35 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
             break;
     }
 
-    return cs[ColorGroup::Other];
+    return ColorGroup::Other;
+}
+
+ColorCane
+Highlighter::getSpelling(const Node &node, State state, ColorGroup def)
+{
+    const bool diffable = isDiffable(node, state, lang);
+    if (!diffable && state != State::Updated) {
+        ColorCane cc;
+        cc.append(node.spelling, &node);
+        return cc;
+    }
+
+    ColorCane cc;
+    if (diffable) {
+        cc = diffSpelling(node, def);
+    } else {
+        cc.append(node.spelling, &node, ColorGroup::Updated);
+    }
+
+    int &id = updates[original ? &node : node.relative];
+    id = updates.size();
+    if (printReferences) {
+        cc.append('{', ColorGroup::UpdatedSurroundings);
+        cc.append(std::to_string(id), nullptr, ColorGroup::UpdatedSurroundings);
+        cc.append('}', ColorGroup::UpdatedSurroundings);
+    }
+
+    return cc;
 }
 
 // Checks whether node spelling can be diffed.
@@ -468,27 +508,26 @@ isDiffable(const Node &node, State state, const Language &lang)
         && state == State::Updated;
 }
 
-/**
- * @brief Diffs two labels.
- *
- * @param l        Original label.
- * @param r        Updated label.
- * @param dec      Default decoration.
- * @param original Whether this is original source.
- *
- * @returns Differed label.
- */
-static std::string
-diffSpelling(const std::string &l, const std::string &r,
-             const decor::Decoration &dec, bool original)
+ColorCane
+Highlighter::diffSpelling(const Node &node, ColorGroup def)
 {
-    // XXX: some kind of caching would be nice.
+    // XXX: some kind of caching would be nice since we're doing the same thing
+    //      for both original and updated nodes.
 
-    using namespace decor;
-    using namespace decor::literals;
+    const std::string &l = (original ? node.spelling : node.relative->spelling);
+    const std::string &r = (original ? node.relative->spelling : node.spelling);
 
     std::vector<boost::string_ref> lWords = toWords(l);
     std::vector<boost::string_ref> rWords = toWords(r);
+
+    const bool surround = node.type == Type::Functions
+                       || node.type == Type::Identifiers
+                       || node.type == Type::UserTypes;
+
+    if (surround && lWords.size() == 1U && rWords.size() == 1U) {
+        lWords = toChars(l);
+        rWords = toChars(r);
+    }
 
     auto cmp = [](const boost::string_ref &a, const boost::string_ref &b) {
         return (a == b);
@@ -498,57 +537,66 @@ diffSpelling(const std::string &l, const std::string &r,
               decltype(cmp)> diff(lWords, rWords, cmp);
     diff.compose();
 
-    std::ostringstream oss;
+    ColorCane cc;
 
-    Decoration deleted = (210_fg + inv + black_bg + bold)
-                         .prefix("{-"_lit)
-                         .suffix("-}"_lit);
-    Decoration inserted = (85_fg + inv + black_bg + bold)
-                          .prefix("{+"_lit)
-                          .suffix("+}"_lit);
+    float worstDistance = std::max(lWords.size(), rWords.size());
+    float sim = 1.0f - diff.getEditDistance()/worstDistance;
+
+    // If Levenshtein distance ends up being too big (similarity is too small),
+    // drop comparison results and get back to just printing two nodes as
+    // updated.
+    if (sim < 0.2f) {
+        cc.append(node.spelling, &node, ColorGroup::Updated);
+        return cc;
+    }
+
+    if (surround && printBrackets) {
+        cc.append('[', ColorGroup::UpdatedSurroundings);
+    }
 
     const char *lastL = l.data(), *lastR = r.data();
 
-    // FIXME: could do a better job than colorizing each character.
-
-    auto printLeft = [&](const dtl::elemInfo &info, const Decoration &dec) {
+    auto printLeft = [&](const dtl::elemInfo &info, ColorGroup hi) {
         const boost::string_ref sr = lWords[info.beforeIdx - 1];
-        oss << boost::string_ref(lastL, sr.data() - lastL);
+        cc.append(boost::string_ref(lastL, sr.data() - lastL), &node);
+        cc.append(sr, &node, hi);
         lastL = sr.data() + sr.size();
-        oss << (dec << sr);
     };
-    auto printRight = [&](const dtl::elemInfo &info, const Decoration &dec) {
+    auto printRight = [&](const dtl::elemInfo &info, ColorGroup hi) {
         const boost::string_ref sr = rWords[info.afterIdx - 1];
-        oss << boost::string_ref(lastR, sr.data() - lastR);
+        cc.append(boost::string_ref(lastR, sr.data() - lastR), &node);
+        cc.append(sr, &node, hi);
         lastR = sr.data() + sr.size();
-        oss << (dec << sr);
     };
 
     for (const auto &x : diff.getSes().getSequence()) {
         switch (x.second.type) {
             case dtl::SES_DELETE:
                 if (original) {
-                    printLeft(x.second, deleted);
+                    printLeft(x.second, ColorGroup::PieceDeleted);
                 }
                 break;
             case dtl::SES_ADD:
                 if (!original) {
-                    printRight(x.second, inserted);
+                    printRight(x.second, ColorGroup::PieceInserted);
                 }
                 break;
             case dtl::SES_COMMON:
                 if (original) {
-                    printLeft(x.second, dec);
+                    printLeft(x.second, def);
                 } else {
-                    printRight(x.second, dec);
+                    printRight(x.second, def);
                 }
                 break;
         }
     }
 
-    oss << (dec << (original ? lastL : lastR));
+    cc.append(original ? lastL : lastR, &node, def);
+    if (surround && printBrackets) {
+        cc.append(']', ColorGroup::UpdatedSurroundings);
+    }
 
-    return oss.str();
+    return cc;
 }
 
 /**
@@ -592,16 +640,15 @@ toWords(const std::string &s)
     return words;
 }
 
-// Formats spelling of a node into a colored string.
-static std::string
-getSpelling(const Node &node, State state, const Language &lang,
-            const decor::Decoration &dec, bool original)
+static std::vector<boost::string_ref>
+toChars(const std::string &s)
 {
-    if (!isDiffable(node, state, lang)) {
-        return node.spelling;
+    std::vector<boost::string_ref> chars;
+    boost::string_ref sr(s);
+
+    for (std::size_t i = 0U; i < s.size(); ++i) {
+        chars.emplace_back(sr.substr(i, 1));
     }
 
-    return original
-         ? diffSpelling(node.spelling, node.relative->spelling, dec, original)
-         : diffSpelling(node.relative->spelling, node.spelling, dec, original);
+    return chars;
 }

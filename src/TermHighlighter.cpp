@@ -1,4 +1,4 @@
-// Copyright (C) 2017 xaizek <xaizek@posteo.net>
+// Copyright (C) 2018 xaizek <xaizek@posteo.net>
 //
 // This file is part of zograscope.
 //
@@ -15,27 +15,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__COLORSCHEME_HPP__
-#define ZOGRASCOPE__COLORSCHEME_HPP__
+#include "TermHighlighter.hpp"
 
-#include <array>
+#include <sstream>
+#include <string>
 
-#include "decoration.hpp"
-#include "colors.hpp"
+#include "ColorCane.hpp"
 
-enum class ColorGroup;
-
-class ColorScheme
+std::string
+TermHighlighter::print(int from, int n)
 {
-public:
-    ColorScheme();
+    std::ostringstream oss;
+    for (const ColorCanePiece &piece : Highlighter::print(from, n)) {
+        oss << (cs[piece.hi] << piece.text);
+    }
+    return oss.str();
+}
 
-public:
-    const decor::Decoration & operator[](ColorGroup colorGroup) const;
-
-private:
-    std::array<decor::Decoration,
-               static_cast<std::size_t>(ColorGroup::ColorGroupCount)> groups;
-};
-
-#endif // ZOGRASCOPE__COLORSCHEME_HPP__
+std::string
+TermHighlighter::print()
+{
+    std::ostringstream oss;
+    for (const ColorCanePiece &piece : Highlighter::print()) {
+        oss << (cs[piece.hi] << piece.text);
+    }
+    return oss.str();
+}

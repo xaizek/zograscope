@@ -499,3 +499,31 @@ dumpNode(std::ostream &os, const Node *node, const Language *lang)
 
     os << '\n';
 }
+
+void
+Tree::propagateStates()
+{
+    std::function<void(Node &, State)> mark = [&](Node &node, State state) {
+        node.state = state;
+        for (Node *child : node.children) {
+            mark(*child, state);
+        }
+    };
+
+    std::function<void(Node &)> visit = [&](Node &node) {
+        if (node.next != nullptr) {
+            if (node.state != State::Unchanged) {
+                mark(*node.next, node.state);
+            }
+            if (node.moved) {
+                markTreeAsMoved(node.next);
+            }
+            return visit(*node.next);
+        }
+
+        for (Node *child : node.children) {
+            visit(*child);
+        }
+    };
+    visit(*getRoot());
+}

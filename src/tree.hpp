@@ -173,6 +173,10 @@ public:
     // Dumps tree on standard output for debugging purposes.
     void dump() const;
 
+    // Propagates states (both added/deleted and moved flags) across layers of
+    // the tree.
+    void propagateStates();
+
 private:
     std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;

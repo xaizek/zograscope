@@ -30,7 +30,7 @@
 #include "utils/optional.hpp"
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
-#include "Highlighter.hpp"
+#include "TermHighlighter.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
 #include "types.hpp"
@@ -234,9 +234,9 @@ FileProcessor::operator()(const std::string &path)
     LineAnalyzer analyzer(tree);
     const std::vector<LineContent> &map = analyzer.getMap();
 
-    std::unique_ptr<Highlighter> hi;
+    std::unique_ptr<TermHighlighter> hi;
     if (args.annotate) {
-        hi.reset(new Highlighter(tree));
+        hi.reset(new TermHighlighter(tree));
         std::cout << (pathHi << path) << '\n';
     }
 

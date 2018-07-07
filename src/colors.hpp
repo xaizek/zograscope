@@ -1,4 +1,4 @@
-// Copyright (C) 2017 xaizek <xaizek@posteo.net>
+// Copyright (C) 2018 xaizek <xaizek@posteo.net>
 //
 // This file is part of zograscope.
 //
@@ -15,27 +15,49 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__COLORSCHEME_HPP__
-#define ZOGRASCOPE__COLORSCHEME_HPP__
+#ifndef ZOGRASCOPE__COLORS_HPP__
+#define ZOGRASCOPE__COLORS_HPP__
 
-#include <array>
-
-#include "decoration.hpp"
-#include "colors.hpp"
-
-enum class ColorGroup;
-
-class ColorScheme
+enum class ColorGroup
 {
-public:
-    ColorScheme();
+    None,
 
-public:
-    const decor::Decoration & operator[](ColorGroup colorGroup) const;
+    // Title,
 
-private:
-    std::array<decor::Decoration,
-               static_cast<std::size_t>(ColorGroup::ColorGroupCount)> groups;
+    LineNo,
+
+    // MissingLine,
+
+    // Parts of location entry: <path>:<line>:<col>.
+    Path,
+    LineNoPart,
+    ColNoPart,
+
+    Deleted,
+    Inserted,
+    Updated,
+    Moved,
+
+    // Parts of updated diffables.
+    PieceDeleted,
+    PieceInserted,
+    PieceUpdated,
+    UpdatedSurroundings,
+
+    Specifiers,
+    UserTypes,
+    Types,
+    Directives,
+    Comments,
+    Constants,
+    Functions,
+    Keywords,
+    Brackets,
+    Operators,
+
+    Other,
+
+    ColorGroupCount
 };
 
-#endif // ZOGRASCOPE__COLORSCHEME_HPP__
+#endif // ZOGRASCOPE__COLORS_HPP__

@@ -141,10 +141,10 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
     printer.print(tr);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                        |  1
-         2  format_str("{-.-}{-.-}{-.-}%s", str); ~  2  format_str("%s{+%+}{+s+}"{+,+}{+ +}{+ell+}, str);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                |  1
+         2  format_str("{-...-}%s", str); ~  2  format_str("%s{+%s+}"{+,+}{+ +}{+ell+}, str);
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -663,6 +663,108 @@ TEST_CASE("Separators in diffable tokens are handled separately", "[printer]")
          2  void f() {                                  |  2  void f() {
          3      something("Destination doesn't exist"); ~  3      something("Destination doesn't exist {+or+} {+not+} {+a+} {+directory+}");
          4  }                                           |  4  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Diffable identifiers are surrounded with brackets", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            cmd_group_open(undo_msg);
+        }
+    )");
+    Tree newTree = parseC(R"(
+        void f() {
+            un_group_open(undo_msg);
+        }
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                      |  1
+         2  void f() {                          |  2  void f() {
+         3      [{-cmd-}_group_open](undo_msg); ~  3      [{+un+}_group_open](undo_msg);
+         4  }                                   |  4  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Diffable identifiers that are too different aren't detailed",
+          "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            cmd_group_begin(undo_msg);
+        }
+    )");
+    Tree newTree = parseC(R"(
+        void f() {
+            un_group_open(undo_msg);
+        }
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                     |  1
+         2  void f() {                         |  2  void f() {
+         3      {#cmd_group_begin#}(undo_msg); <  -
+         -                                     >  3      {#un_group_open#}(undo_msg);
+         4  }                                  |  4  }
+    )");
+
+    REQUIRE(normalizeText(oss.str()) == expected);
+}
+
+TEST_CASE("Diffing by characters", "[printer]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            cmdGroupBegin(undo_msg);
+        }
+    )");
+    Tree newTree = parseC(R"(
+        void f() {
+            unGroupOpen(undo_msg);
+        }
+    )");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    std::ostringstream oss;
+    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                    *oldTree.getLanguage(), oss);
+    printer.print(tr);
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                             |  1
+         2  void f() {                                 |  2  void f() {
+         3      [{-cmd-}Group{-B-}e{-gi-}n](undo_msg); <  -
+         -                                             >  3      [{+un+}Group{+Op+}en](undo_msg);
+         4  }                                          |  4  }
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);

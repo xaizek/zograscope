@@ -25,7 +25,7 @@
 
 #include "tooling/common.hpp"
 #include "utils/optional.hpp"
-#include "Highlighter.hpp"
+#include "TermHighlighter.hpp"
 #include "tree.hpp"
 
 static int run(const CommonArgs &args, TimeReport &tr);
@@ -81,7 +81,7 @@ run(const CommonArgs &args, TimeReport &tr)
 
     dumpTree(args, tree);
     if (!args.dryRun) {
-        std::cout << Highlighter(tree).print() << '\n';
+        std::cout << TermHighlighter(tree).print() << '\n';
     }
     return EXIT_SUCCESS;
 }

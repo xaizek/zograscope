@@ -28,8 +28,8 @@
 
 #include "utils/optional.hpp"
 #include "ColorScheme.hpp"
-#include "Highlighter.hpp"
 #include "Matcher.hpp"
+#include "TermHighlighter.hpp"
 #include "Traverser.hpp"
 #include "common.hpp"
 #include "mtypes.hpp"
@@ -151,8 +151,8 @@ Finder::process(const std::string &path)
             std::cout << (cs[ColorGroup::Path] << path) << ':'
                       << (cs[ColorGroup::LineNoPart] << node->line) << ':'
                       << (cs[ColorGroup::ColNoPart] << node->col) << ": "
-                      << AutoNL { Highlighter(fakeRoot, lang, true,
-                                              node->line).print() }
+                      << AutoNL { TermHighlighter(fakeRoot, lang, true,
+                                                  node->line).print() }
                       << '\n';
         };
 
@@ -168,8 +168,8 @@ Finder::process(const std::string &path)
             std::cout << (cs[ColorGroup::Path] << path) << ':'
                       << (cs[ColorGroup::LineNoPart] << node->line) << ':'
                       << (cs[ColorGroup::ColNoPart] << node->col) << ": "
-                      << AutoNL { Highlighter(*node, lang, true,
-                                              node->line).print() }
+                      << AutoNL { TermHighlighter(*node, lang, true,
+                                                  node->line).print() }
                       << '\n';
         };
 

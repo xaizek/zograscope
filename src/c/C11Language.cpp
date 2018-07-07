@@ -215,7 +215,7 @@ C11Language::isDiffable(const Node *x) const
 {
     return -x->stype == C11SType::Comment
         || -x->stype == C11SType::Directive
-        || x->type == Type::StrConstants;
+        || Language::isDiffable(x);
 }
 
 bool

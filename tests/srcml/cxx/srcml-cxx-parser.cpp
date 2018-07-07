@@ -26,7 +26,7 @@
 
 #include "srcml/cxx/SrcmlCxxSType.hpp"
 #include "utils/strings.hpp"
-#include "Highlighter.hpp"
+#include "TermHighlighter.hpp"
 #include "TreeBuilder.hpp"
 #include "tree.hpp"
 
@@ -50,7 +50,7 @@ TEST_CASE("Position of tokens is computed correctly",
     std::string text = R"(auto a = "separator";)";
 
     Tree tree = parseCxx(text);
-    std::string output = Highlighter(tree).print();
+    std::string output = TermHighlighter(tree).print();
     CHECK(output == text);
 }
 
@@ -305,7 +305,7 @@ TEST_CASE("Braces of empty block are decomposed and stripped",
     )");
     std::string expected = "\nvoid f() {\n}";
 
-    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    TermHighlighter hi(*tree.getRoot(), *tree.getLanguage());
     REQUIRE(hi.print() == expected);
 }
 
@@ -324,7 +324,7 @@ TEST_CASE("Work around incorrect parsing of then/else block",
     )");
     Tree tree = parseCxx(input);
 
-    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    TermHighlighter hi(*tree.getRoot(), *tree.getLanguage());
     REQUIRE(hi.print() + '\n' == input);
 }
 
@@ -334,7 +334,7 @@ TEST_CASE("Unicode characters are handled correctly",
     std::string input = R"(auto a = "µs";)";
     Tree tree = parseCxx(input);
 
-    Highlighter hi(*tree.getRoot(), *tree.getLanguage());
+    TermHighlighter hi(*tree.getRoot(), *tree.getLanguage());
     REQUIRE(hi.print() == input);
 }
 

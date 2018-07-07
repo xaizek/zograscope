@@ -18,13 +18,18 @@
 #ifndef ZOGRASCOPE__HIGHLIGHTER_HPP__
 #define ZOGRASCOPE__HIGHLIGHTER_HPP__
 
+#include <cstdint>
+
 #include <memory>
-#include <sstream>
 #include <stack>
-#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <boost/utility/string_ref.hpp>
+
+#include "ColorCane.hpp"
+
+enum class State : std::uint8_t;
 
 class Language;
 class Node;
@@ -57,7 +62,7 @@ public:
     Highlighter & operator=(const Highlighter&) = delete;
 
     // Destructs the highlighter.
-    ~Highlighter();
+    virtual ~Highlighter();
 
 private:
     // Common implementation of two public constructors.
@@ -65,12 +70,22 @@ private:
                 int lineOffset, int colOffset);
 
 public:
-    // Prints lines in the range [from, from + n) into a string.  Each line can
-    // be printed at most once, thus calls to this function need to increase
-    // from argument.  Returns the string.
-    std::string print(int from, int n);
-    // Prints lines until the end into a string.  Returns the string.
-    std::string print();
+    // Specifies whether nodes should be labeled with references to identify
+    // matching pairs in both trees.  Off by default.
+    void setPrintReferences(bool print);
+    // Specifies whether diffed updated identifiers should be enclosed in
+    // brackets.  On by default.
+    void setPrintBrackets(bool print);
+    // Specifies whether unchanged parts diffables should have their original
+    // color.  If not, they are colored as `PieceUpdated`.  On by default.
+    void setTransparentDiffables(bool transparent);
+
+    // Prints lines in the range [from, from + n).  Each line can be printed at
+    // most once, thus calls to this function need to increase `from` argument.
+    ColorCane print(int from, int n);
+
+    // Prints lines until the end.
+    ColorCane print();
 
 private:
     // Skips everything until target line is reached.
@@ -84,19 +99,29 @@ private:
     // Advances processing to the next node.  The entry here is the one that was
     // returned by `getEntry()` earlier.
     void advance(const Entry &entry);
+    // Formats spelling of a node into a colored string.
+    ColorCane getSpelling(const Node &node, State state, ColorGroup def);
+    // Diffs labels of two nodes (specified one and its relative).  Unchanged
+    // parts are highlighted using `def`.
+    ColorCane diffSpelling(const Node &node, ColorGroup def);
 
 private:
     const Language &lang;                     // Language services.
-    std::ostringstream oss;                   // Temporary output buffer.
+    ColorCane colorCane;                      // Temporary output buffer.
     int line, col;                            // Current position.
-    int colOffset;                            // Horizontal offset;
+    int colOffset;                            // Horizontal offset.
     std::unique_ptr<ColorPicker> colorPicker; // Highlighting state.
     std::vector<boost::string_ref> olines;    // Undiffed spelling.
-    std::vector<boost::string_ref> lines;     // Possibly diffed spelling.
+    std::vector<ColorCane> lines;             // Possibly diffed spelling.
     std::stack<Entry> toProcess;              // State of tree traversal.
-    std::string spelling;                     // Storage behind `lines` field.
     bool original;                            // Whether this is an old version.
     const Node *current;                      // Node that's being processed.
+    std::unordered_map<const Node *,          // Maps original updated node to
+                       int> updates;          // its id among all updated nodes.
+    bool printReferences;                     // Label nodes with pair ids.
+    bool printBrackets;                       // Bracket diffed identifiers.
+    bool transparentDiffables;                // Leave unchanged parts of
+                                              // diffables with original color.
 };
 
 #endif // ZOGRASCOPE__HIGHLIGHTER_HPP__
