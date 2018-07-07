@@ -30,9 +30,9 @@
 #include "dtl/dtl.hpp"
 
 #include "utils/strings.hpp"
-#include "ColorScheme.hpp"
 #include "ColorCane.hpp"
 #include "Language.hpp"
+#include "colors.hpp"
 #include "tree.hpp"
 
 static int leftShift(const Node *node);
