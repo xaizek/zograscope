@@ -108,6 +108,8 @@ $1.objects := $$(sort $$($1.sources:%.cpp=$$(out_dir)/%.o))
 $1.depends := $$($1.objects:.o=.d)
 $1.objects += $(lib)
 
+-include tools/$1/tool.mk
+
 tools_bins += $$($1.bin)
 tools_objects += $$($1.objects)
 tools_depends += $$($1.depends)
@@ -116,8 +118,12 @@ all: $$($1.bin)
 
 $$($1.bin): | $(out_dirs)
 
+ifeq (,$(wildcard tools/$1/tool.mk))
 $$($1.bin): $$($1.objects)
 	$(CXX) $(EXTRA_LDFLAGS) $$^ $(LDFLAGS) -o $$@
+else
+$$($1.bin): $$($1.sources) $(lib)
+endif
 
 endef
 
