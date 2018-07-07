@@ -159,21 +159,40 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 void
 ZSDiff::highlightMatch(const QTextCharFormat &f)
 {
+    QColor lineColor = QColor(Qt::yellow).lighter(160);
+    lineColor = QColor(0xa0, 0xa0, 0xe0, 0x40);
+    QTextCharFormat lineFormat;
+    lineFormat.setBackground(lineColor);
+    lineFormat.setProperty(QTextFormat::FullWidthSelection, true);
+
+    auto collectFormats = [](const QTextBlock &block, QPlainTextEdit *textEdit,
+                            QList<QTextEdit::ExtraSelection> &extraSelections) {
+        for (auto it = block.begin(), end = block.end(); it != end; ++it) {
+            const QTextFragment &tf = it.fragment();
+            if (tf.isValid() && tf.charFormat().background() != QBrush()) {
+                QTextCursor cursor(textEdit->document());
+                cursor.setPosition(tf.position());
+                cursor.setPosition(tf.position() + tf.length(),
+                                   QTextCursor::KeepAnchor);
+                extraSelections.append({ cursor, tf.charFormat() });
+            }
+        }
+    };
+
     if (!f.hasProperty(matchProperty)) {
-        ui->newCode->setExtraSelections({});
-        ui->oldCode->setExtraSelections({});
+        QList<QTextEdit::ExtraSelection> newExtraSelections, oldExtraSelections;
+        collectFormats(ui->newCode->textCursor().block(), ui->newCode,
+                       newExtraSelections);
+        collectFormats(ui->oldCode->textCursor().block(), ui->oldCode,
+                       oldExtraSelections);
+        newExtraSelections.append({ ui->newCode->textCursor(), lineFormat });
+        oldExtraSelections.append({ ui->oldCode->textCursor(), lineFormat });
+        ui->newCode->setExtraSelections(newExtraSelections);
+        ui->oldCode->setExtraSelections(oldExtraSelections);
         return;
     }
 
     auto i = f.property(matchProperty).value<TokenInfo *>();
-
-    QTextCursor oldCursor(ui->oldCode->document());
-    oldCursor.setPosition(i->oldFrom);
-    oldCursor.setPosition(i->oldTo, QTextCursor::KeepAnchor);
-
-    QTextCursor newCursor(ui->newCode->document());
-    newCursor.setPosition(i->newFrom);
-    newCursor.setPosition(i->newTo, QTextCursor::KeepAnchor);
 
     QTextCharFormat format;
     format.setFontOverline(true);
@@ -181,21 +200,33 @@ ZSDiff::highlightMatch(const QTextCharFormat &f)
 
     syncScrolls = false;
 
-    auto updateCursor = [](QPlainTextEdit *textEdit, int from, int to) {
+    auto updateCursor = [&](QPlainTextEdit *textEdit, int from, int to) {
+        QTextCursor sel(textEdit->document());
+        sel.setPosition(from);
+        sel.setPosition(to, QTextCursor::KeepAnchor);
+
+        QTextCursor lineCursor(textEdit->document());
+        lineCursor.setPosition(from);
+
+        QList<QTextEdit::ExtraSelection> extraSelections;
+        collectFormats(lineCursor.block(), textEdit, extraSelections);
+        extraSelections.append({ sel, format });
+        extraSelections.append({ lineCursor, lineFormat });
+        textEdit->setExtraSelections(extraSelections);
+
         QTextCursor cursor = textEdit->textCursor();
         if (cursor.position() < from || cursor.position() > to) {
             cursor.setPosition(from);
             textEdit->setTextCursor(cursor);
         }
+
+        ui->newCode->ensureCursorVisible();
+
+        return sel;
     };
 
-    ui->newCode->setExtraSelections({ { newCursor, format } });
-    updateCursor(ui->newCode, i->newFrom, i->newTo);
-    ui->newCode->ensureCursorVisible();
-
-    ui->oldCode->setExtraSelections({ { oldCursor, format } });
-    updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
-    ui->oldCode->ensureCursorVisible();
+    QTextCursor newCursor = updateCursor(ui->newCode, i->newFrom, i->newTo);
+    QTextCursor oldCursor = updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
 
     if (ui->oldCode->hasFocus()) {
         int leftDiff = oldCursor.block().blockNumber()
