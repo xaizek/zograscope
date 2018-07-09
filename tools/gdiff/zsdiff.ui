@@ -60,6 +60,9 @@
         </item>
         <item>
          <widget class="CodeView" name="oldCode">
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
           <property name="lineWrapMode">
            <enum>QPlainTextEdit::NoWrap</enum>
           </property>
@@ -90,6 +93,9 @@
         </item>
         <item>
          <widget class="CodeView" name="newCode">
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
           <property name="lineWrapMode">
            <enum>QPlainTextEdit::NoWrap</enum>
           </property>

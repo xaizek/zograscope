@@ -48,7 +48,15 @@ Q_DECLARE_METATYPE(TokenInfo *)
 void
 ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
 {
-    QTextCursor cursor(textEdit->document());
+    textEdit->setUpdatesEnabled(false);
+    textEdit->setContextMenuPolicy(Qt::NoContextMenu);
+    textEdit->setReadOnly(true);
+    textEdit->setUndoRedoEnabled(false);
+
+    auto d = new QTextDocument(textEdit);
+    d->setDocumentLayout(new QPlainTextDocumentLayout(d));
+
+    QTextCursor cursor(d);
     GuiColorScheme cs;
     std::vector<int> stopPositions;
 
@@ -98,7 +106,10 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
         }
     }
 
+    textEdit->setDocument(d);
     textEdit->setStopPositions(std::move(stopPositions));
+    textEdit->document()->setDocumentMargin(1);
+    textEdit->setUpdatesEnabled(true);
 }
 
 ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
