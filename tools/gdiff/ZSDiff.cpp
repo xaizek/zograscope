@@ -300,10 +300,14 @@ Q_DECLARE_METATYPE(QTextDocumentFragment)
 void
 ZSDiff::switchView()
 {
-    if (ui->newCode->hasFocus()) {
-        ui->oldCode->setFocus();
-    } else {
-        ui->newCode->setFocus();
+    CodeView *toFocus = (ui->newCode->hasFocus() ? ui->oldCode : ui->newCode);
+    toFocus->setFocus();
+    if (onlyMode()) {
+        if (toFocus == ui->oldCode) {
+            ui->splitter->setSizes({ 1, 0 });
+        } else {
+            ui->splitter->setSizes({ 0, 1 });
+        }
     }
 }
 
@@ -313,10 +317,6 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
     if (event->type() != QEvent::KeyPress) {
         return QObject::eventFilter(obj, event);
     }
-
-    auto onlyMode = [this]() {
-        return ui->splitter->sizes().contains(0);
-    };
 
     auto keyEvent = static_cast<QKeyEvent *>(event);
     if (keyEvent->text() == "q") {
@@ -349,4 +349,10 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         return false;
     }
     return true;
+}
+
+bool
+ZSDiff::onlyMode() const
+{
+    return ui->splitter->sizes().contains(0);
 }

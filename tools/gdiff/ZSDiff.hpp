@@ -53,6 +53,8 @@ private:
 
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
+    bool onlyMode() const;
+
 private:
     Ui::ZSDiff *ui;
     std::unordered_map<const Node *, TokenInfo> info;
