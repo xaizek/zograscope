@@ -15,6 +15,7 @@ public:
     using QPlainTextEdit::firstVisibleBlock;
 
     void setStopPositions(std::vector<int> stopPositions);
+    bool goToFirstStopPosition();
 
 private:
     void updateLineColumn(const QRect &rect, int dy);

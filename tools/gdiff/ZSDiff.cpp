@@ -168,8 +168,15 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 
     qApp->installEventFilter(this);
 
-    // Highlight current line on startup.
-    highlightMatch(ui->oldCode);
+    // Navigate to first change in old or new version of the code and  highlight
+    // current line.
+    if (ui->oldCode->goToFirstStopPosition()) {
+        highlightMatch(ui->oldCode);
+    } else {
+        ui->newCode->goToFirstStopPosition();
+        highlightMatch(ui->newCode);
+        ui->newCode->setFocus();
+    }
 }
 
 void

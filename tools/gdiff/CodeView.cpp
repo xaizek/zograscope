@@ -55,6 +55,17 @@ CodeView::setStopPositions(std::vector<int> stopPositions)
     positions = std::move(stopPositions);
 }
 
+bool
+CodeView::goToFirstStopPosition()
+{
+    if (positions.empty()) return false;
+
+    QTextCursor cursor = textCursor();
+    cursor.setPosition(positions.front());
+    setTextCursor(cursor);
+    return true;
+}
+
 void
 CodeView::updateLineColumn(const QRect &rect, int dy)
 {
@@ -152,10 +163,6 @@ CodeView::keyPressEvent(QKeyEvent *e)
 void
 CodeView::goDown()
 {
-    if (positions.empty()) {
-        return sendKey(Qt::Key_Down);
-    }
-
     const int pos = textCursor().position();
     auto it = std::upper_bound(positions.cbegin(), positions.cend(), pos);
     if (it != positions.cend() && *it == pos) ++it;
@@ -169,10 +176,6 @@ CodeView::goDown()
 void
 CodeView::goUp()
 {
-    if (positions.empty()) {
-        return sendKey(Qt::Key_Up);
-    }
-
     auto it = std::lower_bound(positions.cbegin(), positions.cend(),
                                textCursor().position());
     if (it == positions.cbegin()) return;
