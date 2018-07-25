@@ -58,7 +58,6 @@ private:
     std::unordered_map<const Node *, TokenInfo> info;
     int scrollDiff;
     bool syncScrolls;
-    bool only;
     cpp17::pmr::monolithic mr;
     Tree oldTree;
     Tree newTree;

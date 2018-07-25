@@ -126,7 +126,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
       scrollDiff(0),
-      syncScrolls(true), only(false),
+      syncScrolls(true),
       oldTree(&mr),
       newTree(&mr)
 {
@@ -167,6 +167,9 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     });
 
     qApp->installEventFilter(this);
+
+    // Highlight current line on startup.
+    highlightMatch(ui->oldCode);
 }
 
 void
@@ -304,33 +307,33 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         return QObject::eventFilter(obj, event);
     }
 
+    auto onlyMode = [this]() {
+        return ui->splitter->sizes().contains(0);
+    };
+
     auto keyEvent = static_cast<QKeyEvent *>(event);
     if (keyEvent->text() == "q") {
         close();
     } else if (keyEvent->text() == "s") {
         ui->splitter->setOrientation(Qt::Vertical);
-        if (only) {
+        if (onlyMode()) {
             ui->splitter->setSizes(splitterSizes);
-            only = false;
         }
     } else if (keyEvent->text() == "v") {
         ui->splitter->setOrientation(Qt::Horizontal);
-        if (only) {
+        if (onlyMode()) {
             ui->splitter->setSizes(splitterSizes);
-            only = false;
         }
     } else if (keyEvent->text() == "o") {
-        if (!only && ui->oldCode->hasFocus()) {
+        if (!onlyMode() && ui->oldCode->hasFocus()) {
             splitterSizes = ui->splitter->sizes();
             ui->splitter->setSizes({ 1, 0 });
-            only = true;
-        } else if (!only && ui->newCode->hasFocus()) {
+        } else if (!onlyMode() && ui->newCode->hasFocus()) {
             splitterSizes = ui->splitter->sizes();
             ui->splitter->setSizes({ 0, 1 });
-            only = true;
         }
     } else if (keyEvent->text() == "=") {
-        if (!only) {
+        if (!onlyMode()) {
             ui->splitter->setSizes({ 1, 1 });
         }
     } else if (keyEvent->text() == " ") {
