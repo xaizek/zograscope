@@ -1,10 +1,18 @@
 #ifndef ZSDIFF_HPP
 #define ZSDIFF_HPP
 
+#include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <QMainWindow>
+
+#include "pmr/monolithic.hpp"
+#include "tree.hpp"
+
+#include "GuiColorScheme.hpp"
 
 namespace Ui {
 class ZSDiff;
@@ -16,8 +24,8 @@ class QTextCharFormat;
 class CodeView;
 
 class Node;
-class Tree;
 class TimeReport;
+class SynHi;
 
 struct TokenInfo
 {
@@ -37,8 +45,9 @@ public:
     ~ZSDiff();
 
 private:
-    void printTree(Tree &tree, CodeView *textEdit, bool original);
-    void highlightMatch(const QTextCharFormat &f);
+    std::unique_ptr<SynHi> printTree(Tree &tree, CodeView *textEdit,
+                                     bool original);
+    void highlightMatch(QPlainTextEdit *textEdit);
 
     void switchLayout();
     void switchView();
@@ -50,6 +59,13 @@ private:
     std::unordered_map<const Node *, TokenInfo> info;
     int scrollDiff;
     bool syncScrolls;
+    cpp17::pmr::monolithic mr;
+    Tree oldTree;
+    Tree newTree;
+    std::unique_ptr<SynHi> oldSynHi;
+    std::unique_ptr<SynHi> newSynHi;
+    GuiColorScheme cs;
+    std::vector<std::map<int, TokenInfo *>> oldMap, newMap;
 };
 
 #endif // ZSDIFF_HPP

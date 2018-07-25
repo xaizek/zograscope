@@ -92,7 +92,7 @@ CodeView::paintLineColumn(QPaintEvent *event)
     const int from = event->rect().top();
     const int to = event->rect().bottom();
     while (block.isValid() && top <= to) {
-        if (bottom >= from) {
+        if (bottom >= from && block.isVisible()) {
             if (lineNum == current) {
                 QFont boldFont = normalFont;
                 boldFont.setWeight(QFont::Bold);

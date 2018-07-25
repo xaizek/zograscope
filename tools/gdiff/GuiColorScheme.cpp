@@ -29,7 +29,7 @@ GuiColorScheme::GuiColorScheme()
     groups[+ColorGroup::Types].setForeground(QColor(Qt::green).dark(170));
     groups[+ColorGroup::Types].setFontWeight(QFont::Bold);
     groups[+ColorGroup::Directives].setForeground(Qt::darkYellow);
-    groups[+ColorGroup::Comments].setForeground(Qt::gray);
+    groups[+ColorGroup::Comments].setForeground(QColor(Qt::gray).darker());
     groups[+ColorGroup::Functions].setForeground(Qt::blue);
     groups[+ColorGroup::Keywords].setFontWeight(QFont::Bold);
     //groups[+ColorGroup::Brackets] = 222_fg;

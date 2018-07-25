@@ -9,12 +9,14 @@ SOURCES += \
     main.cpp \
     ZSDiff.cpp \
     CodeView.cpp \
-    GuiColorScheme.cpp
+    GuiColorScheme.cpp \
+    SynHi.cpp
 
 HEADERS += \
     ZSDiff.hpp \
     CodeView.hpp \
-    GuiColorScheme.hpp
+    GuiColorScheme.hpp \
+    SynHi.hpp
 
 FORMS += \
     zsdiff.ui

@@ -1,3 +1,4 @@
 /.qmake.stash
 /moc_*
 /ui_*
+/Makefile
