@@ -68,7 +68,7 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
         bool positionedOnThisLine = false;
         for (const ColorCanePiece &piece : cc) {
             if (piece.node != nullptr &&
-                piece.node->state != State::Unchanged &&
+                (piece.node->state != State::Unchanged || piece.node->moved) &&
                 !positionedOnThisLine) {
                 stopPositions.push_back(from);
                 positionedOnThisLine = true;
@@ -126,7 +126,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
       scrollDiff(0),
-      syncScrolls(true),
+      syncScrolls(true), only(false),
       oldTree(&mr),
       newTree(&mr)
 {
@@ -142,9 +142,6 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);
-
-    connect(ui->mainToolBar->addAction("switch layout"), &QAction::triggered,
-            this, &ZSDiff::switchLayout);
 
     auto onPosChanged = [&](QPlainTextEdit *textEdit) {
         QTextCursor cursor = textEdit->textCursor();
@@ -291,16 +288,6 @@ ZSDiff::~ZSDiff()
 Q_DECLARE_METATYPE(QTextDocumentFragment)
 
 void
-ZSDiff::switchLayout()
-{
-    if (ui->splitter->orientation() == Qt::Vertical) {
-        ui->splitter->setOrientation(Qt::Horizontal);
-    } else {
-        ui->splitter->setOrientation(Qt::Vertical);
-    }
-}
-
-void
 ZSDiff::switchView()
 {
     if (ui->newCode->hasFocus()) {
@@ -321,7 +308,31 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
     if (keyEvent->text() == "q") {
         close();
     } else if (keyEvent->text() == "s") {
-        switchLayout();
+        ui->splitter->setOrientation(Qt::Vertical);
+        if (only) {
+            ui->splitter->setSizes(splitterSizes);
+            only = false;
+        }
+    } else if (keyEvent->text() == "v") {
+        ui->splitter->setOrientation(Qt::Horizontal);
+        if (only) {
+            ui->splitter->setSizes(splitterSizes);
+            only = false;
+        }
+    } else if (keyEvent->text() == "o") {
+        if (!only && ui->oldCode->hasFocus()) {
+            splitterSizes = ui->splitter->sizes();
+            ui->splitter->setSizes({ 1, 0 });
+            only = true;
+        } else if (!only && ui->newCode->hasFocus()) {
+            splitterSizes = ui->splitter->sizes();
+            ui->splitter->setSizes({ 0, 1 });
+            only = true;
+        }
+    } else if (keyEvent->text() == "=") {
+        if (!only) {
+            ui->splitter->setSizes({ 1, 1 });
+        }
     } else if (keyEvent->text() == " ") {
         switchView();
     } else {

@@ -49,7 +49,6 @@ private:
                                      bool original);
     void highlightMatch(QPlainTextEdit *textEdit);
 
-    void switchLayout();
     void switchView();
 
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
@@ -59,6 +58,7 @@ private:
     std::unordered_map<const Node *, TokenInfo> info;
     int scrollDiff;
     bool syncScrolls;
+    bool only;
     cpp17::pmr::monolithic mr;
     Tree oldTree;
     Tree newTree;
@@ -66,6 +66,7 @@ private:
     std::unique_ptr<SynHi> newSynHi;
     GuiColorScheme cs;
     std::vector<std::map<int, TokenInfo *>> oldMap, newMap;
+    QList<int> splitterSizes;
 };
 
 #endif // ZSDIFF_HPP
