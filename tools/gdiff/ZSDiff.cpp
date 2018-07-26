@@ -13,6 +13,7 @@
 
 #include <boost/optional.hpp>
 
+#include "dtl/dtl.hpp"
 #include "pmr/monolithic.hpp"
 
 #include "tooling/common.hpp"
@@ -33,6 +34,13 @@
 
 const int matchProperty = QTextFormat::UserProperty + 2;
 
+struct ZSDiff::SideInfo
+{
+    std::vector<ColorCane> hi;
+    std::vector<std::string> lines;
+    std::vector<std::map<int, TokenInfo *>> map;
+};
+
 // Parses source into a tree.
 static Tree
 parse(const std::string &fileName, TimeReport &tr, cpp17::pmr::monolithic *mr)
@@ -45,11 +53,10 @@ parse(const std::string &fileName, TimeReport &tr, cpp17::pmr::monolithic *mr)
 
 Q_DECLARE_METATYPE(TokenInfo *)
 
-std::unique_ptr<SynHi>
+ZSDiff::SideInfo
 ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
 {
-    QTextCursor cursor(textEdit->document());
-    std::vector<int> stopPositions;
+    std::vector<StablePos> stopPositions;
 
     tree.propagateStates();
     Highlighter highlighter(tree, original);
@@ -60,56 +67,50 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
 
     std::vector<std::map<int, TokenInfo *>> map(hi.size());
 
-    QString text;
+    std::vector<std::string> lines;
     int line = 0;
-    int from = 0;
     for (const ColorCane &cc : hi) {
+        std::string text;
+
         int lineFrom = 0;
         bool positionedOnThisLine = false;
         for (const ColorCanePiece &piece : cc) {
             if (piece.node != nullptr &&
                 (piece.node->state != State::Unchanged || piece.node->moved) &&
                 !positionedOnThisLine) {
-                stopPositions.push_back(from);
+                stopPositions.emplace_back(line, lineFrom);
                 positionedOnThisLine = true;
             }
 
-            text.append(QByteArray(piece.text.data(), piece.text.size()));
-            const int to = from + piece.text.length();
-            lineFrom += piece.text.length();
+            text += piece.text;
+            int lineTo = lineFrom + piece.text.length();
             if (piece.node != nullptr && piece.node->relative != nullptr) {
-                TokenInfo *in = &info[original ? piece.node : piece.node->relative];
-                map[line].emplace(lineFrom, in);
+                TokenInfo *in = &info[original ? piece.node
+                                               : piece.node->relative];
+                map[line].emplace(lineTo, in);
 
                 if (original) {
-                    if (in->oldFrom == 0) {
-                        in->oldFrom = from;
+                    if (in->oldTo.offset == 0) {
+                        in->oldFrom.line = line;
+                        in->oldFrom.offset = lineFrom;
                     }
-                    in->oldTo = to;
+                    in->oldTo.offset = lineTo;
+                    in->oldTo.line = line;
                 } else {
-                    if (in->newFrom == 0) {
-                        in->newFrom = from;
+                    if (in->newTo.offset == 0) {
+                        in->newFrom.line = line;
+                        in->newFrom.offset = lineFrom;
                     }
-                    in->newTo = to;
+                    in->newTo.offset = lineTo;
+                    in->newTo.line = line;
                 }
             } else {
-                map[line].emplace(lineFrom, nullptr);
+                map[line].emplace(lineTo, nullptr);
             }
-            from = to;
+            lineFrom = lineTo;
         }
         ++line;
-        text.append('\n');
-        ++from;
-    }
-    if (text.size() != 0) {
-        text.remove(text.size() - 1, 1);
-    }
-    textEdit->setPlainText(std::move(text));
-
-    if (textEdit == ui->oldCode) {
-        oldMap = std::move(map);
-    } else {
-        newMap = std::move(map);
+        lines.emplace_back(std::move(text));
     }
 
     textEdit->setStopPositions(std::move(stopPositions));
@@ -117,8 +118,7 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
 
     // textEdit->document()->findBlockByNumber(10).setVisible(false);
 
-    return std::unique_ptr<SynHi>(new SynHi(textEdit->document(),
-                                            std::move(hi)));
+    return { std::move(hi), std::move(lines), std::move(map) };
 }
 
 ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
@@ -137,8 +137,51 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 
     compare(oldTree, newTree, tr, true, false);
 
-    oldSynHi = printTree(oldTree, ui->oldCode, true);
-    newSynHi = printTree(newTree, ui->newCode, false);
+    SideInfo leftSide = printTree(oldTree, ui->oldCode, true);
+    oldSynHi.reset(new SynHi(ui->oldCode->document(), std::move(leftSide.hi)));
+    oldMap = std::move(leftSide.map);
+    SideInfo rightSide = printTree(newTree, ui->newCode, false);
+    newSynHi.reset(new SynHi(ui->newCode->document(), std::move(rightSide.hi)));
+    newMap = std::move(rightSide.map);
+
+    auto cmp = [](const std::string &a, const std::string &b) {
+        // XXX: need dice comparison here too?  
+        return (a == b);
+    };
+
+    dtl::Diff<std::string, std::vector<std::string>,
+              decltype(cmp)> diff(leftSide.lines, rightSide.lines, cmp);
+    diff.compose();
+    int leftLine = 0, rightLine = 0;
+    int leftState = -1, rightState = -1;
+    for (const auto &x : diff.getSes().getSequence()) {
+        switch (x.second.type) {
+            case dtl::SES_DELETE:
+                ui->oldCode->insertPlainText(QByteArray(leftSide.lines[x.second.beforeIdx - 1].data(), leftSide.lines[x.second.beforeIdx - 1].size()));
+                ui->oldCode->document()->lastBlock().setUserState(leftLine++);
+                break;
+            case dtl::SES_ADD:
+                ui->newCode->insertPlainText(QByteArray(rightSide.lines[x.second.afterIdx - 1].data(), rightSide.lines[x.second.afterIdx - 1].size()));
+                ui->newCode->document()->lastBlock().setUserState(rightLine++);
+                break;
+            case dtl::SES_COMMON:
+                ui->oldCode->insertPlainText(QByteArray(leftSide.lines[x.second.beforeIdx - 1].data(), leftSide.lines[x.second.beforeIdx - 1].size()));
+                ui->oldCode->document()->lastBlock().setUserState(leftLine++);
+                ui->newCode->insertPlainText(QByteArray(rightSide.lines[x.second.afterIdx - 1].data(), rightSide.lines[x.second.afterIdx - 1].size()));
+                ui->newCode->document()->lastBlock().setUserState(rightLine++);
+                break;
+        }
+        leftState = ui->oldCode->document()->lastBlock().userState();
+        rightState = ui->newCode->document()->lastBlock().userState();
+        ui->oldCode->insertPlainText("\n");
+        ui->newCode->insertPlainText("\n");
+    }
+
+    // Remove extra line.
+    ui->oldCode->document()->lastBlock().setUserState(leftState);
+    ui->oldCode->textCursor().deletePreviousChar();
+    ui->newCode->document()->lastBlock().setUserState(rightState);
+    ui->newCode->textCursor().deletePreviousChar();
 
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);
@@ -182,10 +225,8 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 void
 ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
 {
-    QColor lineColor = QColor(Qt::yellow).lighter(160);
-    lineColor = QColor(0xa0, 0xa0, 0xe0, 0x40);
     QTextCharFormat lineFormat;
-    lineFormat.setBackground(lineColor);
+    lineFormat.setBackground(QColor(0xa0, 0xa0, 0xe0, 0x40));
     lineFormat.setProperty(QTextFormat::FullWidthSelection, true);
 
     auto collectFormats = [&](const ColorCane &cc, QPlainTextEdit *textEdit,
@@ -195,7 +236,7 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         for (const ColorCanePiece &piece : cc) {
             const QTextCharFormat &f = cs[piece.hi];
             const int to = from + piece.text.length();
-            if (f.background() != QBrush()) {
+            if (f.foreground() != QBrush() || f.background() != QBrush()) {
                 QTextCursor cursor(textEdit->document());
                 cursor.setPosition(from);
                 cursor.setPosition(to, QTextCursor::KeepAnchor);
@@ -208,19 +249,31 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
     std::vector<std::map<int, TokenInfo *>> &map = (textEdit == ui->oldCode)
                                                  ? oldMap
                                                  : newMap;
-    std::map<int, TokenInfo *> &line = map[textEdit->textCursor().block().blockNumber()];
+    int lineNum = textEdit->textCursor().block().userState();
+    const std::map<int, TokenInfo *> &line = lineNum >= 0
+                                           ? map[lineNum]
+                                           : std::map<int, TokenInfo *>();
     auto it = line.upper_bound(textEdit->textCursor().positionInBlock());
 
     if (it == line.end() || it->second == nullptr) {
         QList<QTextEdit::ExtraSelection> newExtraSelections, oldExtraSelections;
-        collectFormats(newSynHi->getHi()[ui->newCode->textCursor().blockNumber()],
-                       ui->newCode,
-                       ui->newCode->textCursor().block().position(),
-                       newExtraSelections);
-        collectFormats(oldSynHi->getHi()[ui->oldCode->textCursor().blockNumber()],
-                       ui->oldCode,
-                       ui->oldCode->textCursor().block().position(),
-                       oldExtraSelections);
+
+        int rightLine = ui->newCode->textCursor().block().userState();
+        if (rightLine >= 0) {
+            collectFormats(newSynHi->getHi()[rightLine],
+                           ui->newCode,
+                           ui->newCode->textCursor().block().position(),
+                           newExtraSelections);
+        }
+
+        int leftLine = ui->oldCode->textCursor().block().userState();
+        if (leftLine >= 0) {
+            collectFormats(oldSynHi->getHi()[leftLine],
+                           ui->oldCode,
+                           ui->oldCode->textCursor().block().position(),
+                           oldExtraSelections);
+        }
+
         newExtraSelections.append({ ui->newCode->textCursor(), lineFormat });
         oldExtraSelections.append({ ui->oldCode->textCursor(), lineFormat });
         ui->newCode->setExtraSelections(newExtraSelections);
@@ -236,7 +289,22 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
 
     syncScrolls = false;
 
-    auto updateCursor = [&](QPlainTextEdit *textEdit, int from, int to) {
+    auto updateCursor = [&](QPlainTextEdit *textEdit,
+                            StablePos fromPos, StablePos toPos) {
+        int from = fromPos.offset;
+        int to = toPos.offset;
+        for (QTextBlock block = textEdit->document()->begin();
+             block != textEdit->document()->end();
+             block = block.next()) {
+            if (block.userState() == fromPos.line) {
+                from += block.position();
+            }
+            if (block.userState() == toPos.line) {
+                to += block.position();
+                break;
+            }
+        }
+
         QTextCursor sel(textEdit->document());
         sel.setPosition(from);
         sel.setPosition(to, QTextCursor::KeepAnchor);
@@ -245,14 +313,15 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         lineCursor.setPosition(from);
 
         QList<QTextEdit::ExtraSelection> extraSelections;
-        if (textEdit == ui->oldCode) {
-            collectFormats(oldSynHi->getHi()[lineCursor.blockNumber()],
-                           textEdit,
-                           lineCursor.block().position(), extraSelections);
-        } else {
-            collectFormats(newSynHi->getHi()[lineCursor.blockNumber()],
-                           textEdit, lineCursor.block().position(),
-                           extraSelections);
+        int line = lineCursor.block().userState();
+        if (line >= 0) {
+            if (textEdit == ui->oldCode) {
+                collectFormats(oldSynHi->getHi()[line], textEdit,
+                               lineCursor.block().position(), extraSelections);
+            } else {
+                collectFormats(newSynHi->getHi()[line], textEdit,
+                               lineCursor.block().position(), extraSelections);
+            }
         }
         extraSelections.append({ sel, format });
         extraSelections.append({ lineCursor, lineFormat });

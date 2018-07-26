@@ -37,6 +37,55 @@ private:
     CodeView *parent;
 };
 
+StablePos::StablePos(int line, int offset) : line(line), offset(offset)
+{
+}
+
+StablePos::StablePos(QTextCursor cursor)
+{
+    QTextDocument *document = cursor.document();
+    line = -1;
+    offset = cursor.position();
+    for (QTextBlock block = cursor.block(); ; block = block.previous()) {
+        if (block.userState() >= 0) {
+            line = block.userState();
+            offset -= block.position();
+            break;
+        }
+
+        if (block == document->begin()) {
+            break;
+        }
+    }
+}
+
+QTextCursor
+StablePos::toCursor(QTextDocument *document) const
+{
+    for (QTextBlock block = document->begin();
+         block != document->end();
+         block = block.next()) {
+        if (block.userState() == line) {
+            QTextCursor c(document);
+            c.setPosition(offset + block.position());
+            return c;
+        }
+    }
+    return QTextCursor(document);
+}
+
+bool
+operator<(const StablePos &a, const StablePos &b)
+{
+    return (a.line < b.line || (a.line == b.line && a.offset < b.offset));
+}
+
+bool
+operator==(const StablePos &a, const StablePos &b)
+{
+    return (a.line == b.line && a.offset == b.offset);
+}
+
 CodeView::CodeView(QWidget *parent)
     : QPlainTextEdit(parent), lineColumn(new LineColumn(this))
 {
@@ -48,7 +97,7 @@ CodeView::CodeView(QWidget *parent)
 }
 
 void
-CodeView::setStopPositions(std::vector<int> stopPositions)
+CodeView::setStopPositions(std::vector<StablePos> stopPositions)
 {
     assert(std::is_sorted(stopPositions.cbegin(), stopPositions.cend()) &&
            "Positions must be sorted!");
@@ -60,9 +109,7 @@ CodeView::goToFirstStopPosition()
 {
     if (positions.empty()) return false;
 
-    QTextCursor cursor = textCursor();
-    cursor.setPosition(positions.front());
-    setTextCursor(cursor);
+    setTextCursor(positions.front().toCursor(document()));
     return true;
 }
 
@@ -94,17 +141,16 @@ CodeView::paintLineColumn(QPaintEvent *event)
     QFont normalFont = painter.font();
 
     QTextBlock block = firstVisibleBlock();
-    int lineNum = block.blockNumber();
     int top = contentOffset().y() + blockBoundingRect(block).top();
     int bottom = top + static_cast<int>(blockBoundingRect(block).height());
-
-    const int current = textCursor().block().blockNumber();
 
     const int from = event->rect().top();
     const int to = event->rect().bottom();
     while (block.isValid() && top <= to) {
-        if (bottom >= from && block.isVisible()) {
-            if (lineNum == current) {
+        int lineNum = block.userState();
+
+        if (bottom >= from && block.isVisible() && lineNum >= 0) {
+            if (block == textCursor().block()) {
                 QFont boldFont = normalFont;
                 boldFont.setWeight(QFont::Bold);
                 painter.setFont(boldFont);
@@ -115,7 +161,7 @@ CodeView::paintLineColumn(QPaintEvent *event)
                              fontMetrics().height(),
                              Qt::AlignRight,
                              QString::number(lineNum + 1));
-            if (lineNum == current) {
+            if (block == textCursor().block()) {
                 painter.setFont(normalFont);
             }
         }
@@ -123,7 +169,6 @@ CodeView::paintLineColumn(QPaintEvent *event)
         block = block.next();
         top = bottom;
         bottom = top + static_cast<int>(blockBoundingRect(block).height());
-        ++lineNum;
     }
 }
 
@@ -163,26 +208,22 @@ CodeView::keyPressEvent(QKeyEvent *e)
 void
 CodeView::goDown()
 {
-    const int pos = textCursor().position();
+    StablePos pos(textCursor());
     auto it = std::upper_bound(positions.cbegin(), positions.cend(), pos);
     if (it != positions.cend() && *it == pos) ++it;
     if (it == positions.cend()) return;
 
-    QTextCursor c(document());
-    c.setPosition(*it);
-    setTextCursor(c);
+    setTextCursor(it->toCursor(document()));
 }
 
 void
 CodeView::goUp()
 {
-    auto it = std::lower_bound(positions.cbegin(), positions.cend(),
-                               textCursor().position());
+    StablePos pos(textCursor());
+    auto it = std::lower_bound(positions.cbegin(), positions.cend(), pos);
     if (it == positions.cbegin()) return;
 
-    QTextCursor c(document());
-    c.setPosition(*--it);
-    setTextCursor(c);
+    setTextCursor((--it)->toCursor(document()));
 }
 
 void

@@ -39,10 +39,11 @@ SynHi::getHi() const
 void
 SynHi::highlightBlock(const QString &)
 {
-    if (currentBlock().blockNumber() >= hi.size()) return;
+    int line = currentBlock().userState();
+    if (line < 0 || line >= static_cast<int>(hi.size())) return;
 
     int from = 0;
-    for (const ColorCanePiece &piece : hi[currentBlock().blockNumber()]) {
+    for (const ColorCanePiece &piece : hi[line]) {
         setFormat(from, piece.text.length(), cs[piece.hi]);
         from += piece.text.length();
     }

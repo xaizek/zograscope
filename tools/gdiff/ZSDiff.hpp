@@ -12,6 +12,7 @@
 #include "pmr/monolithic.hpp"
 #include "tree.hpp"
 
+#include "CodeView.hpp"
 #include "GuiColorScheme.hpp"
 
 namespace Ui {
@@ -21,23 +22,23 @@ class ZSDiff;
 class QPlainTextEdit;
 class QTextCharFormat;
 
-class CodeView;
-
 class Node;
 class TimeReport;
 class SynHi;
 
 struct TokenInfo
 {
-    int oldFrom = 0;
-    int oldTo = 0;
-    int newFrom = 0;
-    int newTo = 0;
+    StablePos oldFrom = { 0, 0 };
+    StablePos oldTo = { 0, 0 };
+    StablePos newFrom = { 0, 0 };
+    StablePos newTo = { 0, 0 };
 };
 
 class ZSDiff : public QMainWindow
 {
     Q_OBJECT
+
+    struct SideInfo;
 
 public:
     ZSDiff(const std::string &oldFile, const std::string &newFile,
@@ -45,8 +46,7 @@ public:
     ~ZSDiff();
 
 private:
-    std::unique_ptr<SynHi> printTree(Tree &tree, CodeView *textEdit,
-                                     bool original);
+    SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
     void highlightMatch(QPlainTextEdit *textEdit);
 
     void switchView();

@@ -5,6 +5,20 @@
 
 #include <vector>
 
+struct StablePos
+{
+    int line;
+    int offset;
+
+    StablePos(int line, int offset);
+    explicit StablePos(QTextCursor cursor);
+
+    QTextCursor toCursor(QTextDocument *document) const;
+};
+
+bool operator<(const StablePos &a, const StablePos &b);
+bool operator==(const StablePos &a, const StablePos &b);
+
 class CodeView : public QPlainTextEdit
 {
     class LineColumn;
@@ -14,7 +28,7 @@ public:
 
     using QPlainTextEdit::firstVisibleBlock;
 
-    void setStopPositions(std::vector<int> stopPositions);
+    void setStopPositions(std::vector<StablePos> stopPositions);
     bool goToFirstStopPosition();
 
 private:
@@ -31,7 +45,7 @@ private:
 
 private:
     LineColumn *lineColumn;
-    std::vector<int> positions;
+    std::vector<StablePos> positions;
 };
 
 #endif // CODEVIEW_HPP
