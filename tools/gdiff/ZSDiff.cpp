@@ -137,11 +137,14 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 
     compare(oldTree, newTree, tr, true, false);
 
+    QTextDocument *oldDoc = ui->oldCode->document();
+    QTextDocument *newDoc = ui->newCode->document();
+
     SideInfo leftSide = printTree(oldTree, ui->oldCode, true);
-    oldSynHi.reset(new SynHi(ui->oldCode->document(), std::move(leftSide.hi)));
+    oldSynHi.reset(new SynHi(oldDoc, std::move(leftSide.hi)));
     oldMap = std::move(leftSide.map);
     SideInfo rightSide = printTree(newTree, ui->newCode, false);
-    newSynHi.reset(new SynHi(ui->newCode->document(), std::move(rightSide.hi)));
+    newSynHi.reset(new SynHi(newDoc, std::move(rightSide.hi)));
     newMap = std::move(rightSide.map);
 
     auto cmp = [](const std::string &a, const std::string &b) {
@@ -156,31 +159,41 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     int leftState = -1, rightState = -1;
     for (const auto &x : diff.getSes().getSequence()) {
         switch (x.second.type) {
+            std::string *left, *right;
+
             case dtl::SES_DELETE:
-                ui->oldCode->insertPlainText(QByteArray(leftSide.lines[x.second.beforeIdx - 1].data(), leftSide.lines[x.second.beforeIdx - 1].size()));
-                ui->oldCode->document()->lastBlock().setUserState(leftLine++);
+                left = &leftSide.lines[x.second.beforeIdx - 1];
+                ui->oldCode->insertPlainText(QByteArray(left->data(),
+                                                        left->size()));
+                oldDoc->lastBlock().setUserState(leftLine++);
                 break;
             case dtl::SES_ADD:
-                ui->newCode->insertPlainText(QByteArray(rightSide.lines[x.second.afterIdx - 1].data(), rightSide.lines[x.second.afterIdx - 1].size()));
-                ui->newCode->document()->lastBlock().setUserState(rightLine++);
+                right = &rightSide.lines[x.second.afterIdx - 1];
+                ui->newCode->insertPlainText(QByteArray(right->data(),
+                                                        right->size()));
+                newDoc->lastBlock().setUserState(rightLine++);
                 break;
             case dtl::SES_COMMON:
-                ui->oldCode->insertPlainText(QByteArray(leftSide.lines[x.second.beforeIdx - 1].data(), leftSide.lines[x.second.beforeIdx - 1].size()));
-                ui->oldCode->document()->lastBlock().setUserState(leftLine++);
-                ui->newCode->insertPlainText(QByteArray(rightSide.lines[x.second.afterIdx - 1].data(), rightSide.lines[x.second.afterIdx - 1].size()));
-                ui->newCode->document()->lastBlock().setUserState(rightLine++);
+                left = &leftSide.lines[x.second.beforeIdx - 1];
+                right = &rightSide.lines[x.second.afterIdx - 1];
+                ui->oldCode->insertPlainText(QByteArray(left->data(),
+                                                        left->size()));
+                oldDoc->lastBlock().setUserState(leftLine++);
+                ui->newCode->insertPlainText(QByteArray(right->data(),
+                                                        right->size()));
+                newDoc->lastBlock().setUserState(rightLine++);
                 break;
         }
-        leftState = ui->oldCode->document()->lastBlock().userState();
-        rightState = ui->newCode->document()->lastBlock().userState();
+        leftState = oldDoc->lastBlock().userState();
+        rightState = newDoc->lastBlock().userState();
         ui->oldCode->insertPlainText("\n");
         ui->newCode->insertPlainText("\n");
     }
 
     // Remove extra line.
-    ui->oldCode->document()->lastBlock().setUserState(leftState);
+    oldDoc->lastBlock().setUserState(leftState);
     ui->oldCode->textCursor().deletePreviousChar();
-    ui->newCode->document()->lastBlock().setUserState(rightState);
+    newDoc->lastBlock().setUserState(rightState);
     ui->newCode->textCursor().deletePreviousChar();
 
     ui->newCode->moveCursor(QTextCursor::Start);
