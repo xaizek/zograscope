@@ -89,7 +89,7 @@ public:
     virtual bool isValueNode(SType stype) const = 0;
     // Checks whether this node with its descendants should be placed one level
     // deeper.
-    virtual bool isLayerBreak(SType stype) const = 0;
+    virtual bool isLayerBreak(SType parent, SType stype) const = 0;
     // Checks whether leading space in spelling of nodes of this kind should be
     // skipped for the purposes of comparison.
     virtual bool shouldDropLeadingWS(SType stype) const = 0;

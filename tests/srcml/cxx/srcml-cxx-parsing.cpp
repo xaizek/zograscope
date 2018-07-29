@@ -475,3 +475,19 @@ TEST_CASE("Case labels are moved to a separate layer",
         }
     )");
 }
+
+TEST_CASE("Initializers are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        std::map<int, std::function<Action(DataTag data)>> keys {
+            { 'B', makeCmdThunk("browse-all")     },
+        };
+    )", R"(
+        std::map<int, std::function<Action(DataTag data)>> keys {
+            { 'b', makeCmdThunk("browse")         }                /// Additions
+            ,
+            { 'B', makeCmdThunk("browse-all")     },
+        };
+    )");
+}

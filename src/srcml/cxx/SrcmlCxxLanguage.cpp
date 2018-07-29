@@ -481,7 +481,7 @@ SrcmlCxxLanguage::isValueNode(SType stype) const
 }
 
 bool
-SrcmlCxxLanguage::isLayerBreak(SType stype) const
+SrcmlCxxLanguage::isLayerBreak(SType parent, SType stype) const
 {
     return -stype == SrcmlCxxSType::Call
         || -stype == SrcmlCxxSType::Constructor
@@ -496,6 +496,7 @@ SrcmlCxxLanguage::isLayerBreak(SType stype) const
         || -stype == SrcmlCxxSType::Name
         || -stype == SrcmlCxxSType::Lambda
         || -stype == SrcmlCxxSType::Case
+        || (-parent == SrcmlCxxSType::Expr && -stype == SrcmlCxxSType::Block)
         || isValueNode(stype);
 }
 

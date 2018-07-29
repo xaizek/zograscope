@@ -275,7 +275,7 @@ C11Language::isValueNode(SType stype) const
 }
 
 bool
-C11Language::isLayerBreak(SType stype) const
+C11Language::isLayerBreak(SType /*parent*/, SType stype) const
 {
     switch (-stype) {
         case C11SType::FunctionDefinition:

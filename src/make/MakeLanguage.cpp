@@ -153,7 +153,7 @@ MakeLanguage::isValueNode(SType stype) const
 }
 
 bool
-MakeLanguage::isLayerBreak(SType stype) const
+MakeLanguage::isLayerBreak(SType /*parent*/, SType stype) const
 {
     return -stype == MakeSType::CallExpr
         || -stype == MakeSType::AssignmentExpr
