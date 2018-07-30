@@ -1,6 +1,7 @@
 #include "CodeView.hpp"
 
 #include <QPainter>
+#include <QScrollBar>
 #include <QTextBlock>
 
 #include <cassert>
@@ -94,6 +95,14 @@ CodeView::CodeView(QWidget *parent)
     });
     connect(this, &QPlainTextEdit::updateRequest,
             this, &CodeView::updateLineColumn);
+
+    connect(verticalScrollBar(), &QScrollBar::valueChanged,
+            [&](int pos) { emit scrolled(pos); });
+    // Qt seems to have a bug or just very weird behaviour of not emitting
+    // QScrollBar::valueChanged when scrollbar is updated as a result of a key
+    // press.  Below is a workaround.
+    connect(this, &QPlainTextEdit::cursorPositionChanged,
+            [&]() { emit scrolled(verticalScrollBar()->sliderPosition()); });
 }
 
 void
@@ -187,7 +196,7 @@ CodeView::keyPressEvent(QKeyEvent *e)
 {
     if (e->text() == "z") {
         centerCursor();
-        emit cursorPositionChanged();
+        emit scrolled(verticalScrollBar()->sliderPosition());
         return;
     }
     if (e->text() == "j") {

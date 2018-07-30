@@ -209,17 +209,13 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
             [=]() { onPosChanged(ui->newCode); });
 
-    connect(ui->oldCode->verticalScrollBar(), &QScrollBar::valueChanged,
-            [&](int oldPos) {
+    connect(ui->oldCode, &CodeView::scrolled, [&](int pos) {
         if (!syncScrolls) return;
-        ui->newCode->verticalScrollBar()->setSliderPosition(oldPos +
-                                                            scrollDiff);
+        ui->newCode->verticalScrollBar()->setSliderPosition(pos + scrollDiff);
     });
-    connect(ui->newCode->verticalScrollBar(), &QScrollBar::valueChanged,
-            [&](int newPos) {
+    connect(ui->newCode, &CodeView::scrolled, [&](int pos) {
         if (!syncScrolls) return;
-        ui->oldCode->verticalScrollBar()->setSliderPosition(newPos -
-                                                            scrollDiff);
+        ui->oldCode->verticalScrollBar()->setSliderPosition(pos - scrollDiff);
     });
 
     qApp->installEventFilter(this);

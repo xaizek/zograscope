@@ -21,6 +21,8 @@ bool operator==(const StablePos &a, const StablePos &b);
 
 class CodeView : public QPlainTextEdit
 {
+    Q_OBJECT
+
     class LineColumn;
 
 public:
@@ -30,6 +32,9 @@ public:
 
     void setStopPositions(std::vector<StablePos> stopPositions);
     bool goToFirstStopPosition();
+
+signals:
+    void scrolled(int pos);
 
 private:
     void updateLineColumn(const QRect &rect, int dy);
