@@ -333,29 +333,12 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
             cursor.setPosition(from);
             textEdit->setTextCursor(cursor);
         }
-
-        ui->newCode->ensureCursorVisible();
-
-        return sel;
     };
 
-    QTextCursor newCursor = updateCursor(ui->newCode, i->newFrom, i->newTo);
-    QTextCursor oldCursor = updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
+    updateCursor(ui->newCode, i->newFrom, i->newTo);
+    updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
 
-    if (ui->oldCode->hasFocus()) {
-        int leftDiff = oldCursor.block().blockNumber()
-                     - ui->oldCode->firstVisibleBlock().blockNumber();
-        int rightPos = newCursor.block().blockNumber() - leftDiff;
-        ui->newCode->verticalScrollBar()->setSliderPosition(rightPos);
-    } else {
-        int rightDiff = newCursor.block().blockNumber()
-                      - ui->newCode->firstVisibleBlock().blockNumber();
-        int leftPos = oldCursor.block().blockNumber() - rightDiff;
-        ui->oldCode->verticalScrollBar()->setSliderPosition(leftPos);
-    }
-
-    scrollDiff = ui->newCode->verticalScrollBar()->sliderPosition()
-               - ui->oldCode->verticalScrollBar()->sliderPosition();
+    alignViews();
 
     syncScrolls = true;
 }
@@ -433,6 +416,28 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         return false;
     }
     return true;
+}
+
+void
+ZSDiff::alignViews()
+{
+    QTextCursor oldCursor = ui->oldCode->textCursor();
+    QTextCursor newCursor = ui->newCode->textCursor();
+
+    if (ui->oldCode->hasFocus()) {
+        int leftDiff = oldCursor.block().blockNumber()
+                     - ui->oldCode->firstVisibleBlock().blockNumber();
+        int rightPos = newCursor.block().blockNumber() - leftDiff;
+        ui->newCode->verticalScrollBar()->setSliderPosition(rightPos);
+    } else {
+        int rightDiff = newCursor.block().blockNumber()
+                      - ui->newCode->firstVisibleBlock().blockNumber();
+        int leftPos = oldCursor.block().blockNumber() - rightDiff;
+        ui->oldCode->verticalScrollBar()->setSliderPosition(leftPos);
+    }
+
+    scrollDiff = ui->newCode->verticalScrollBar()->sliderPosition()
+               - ui->oldCode->verticalScrollBar()->sliderPosition();
 }
 
 void

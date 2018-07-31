@@ -54,6 +54,7 @@ private:
 
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
+    void alignViews();
     void syncScrollTo(CodeView *textEdit);
     bool onlyMode() const;
 
