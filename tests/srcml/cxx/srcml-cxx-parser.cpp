@@ -232,6 +232,10 @@ TEST_CASE("Block nodes are spliced into their parents",
             something
         };
 
+        union Union {
+            int a;
+        };
+
         enum class EnumClass {
             something
         };

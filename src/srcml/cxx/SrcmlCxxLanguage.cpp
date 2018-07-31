@@ -451,6 +451,7 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
             -parent == SrcmlCxxSType::Destructor ||
             -parent == SrcmlCxxSType::Struct ||
             -parent == SrcmlCxxSType::Class ||
+            -parent == SrcmlCxxSType::Union ||
             -parent == SrcmlCxxSType::Enum ||
             -parent == SrcmlCxxSType::Then ||
             -parent == SrcmlCxxSType::Else ||
