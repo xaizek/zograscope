@@ -530,3 +530,42 @@ TEST_CASE("Classes are moved to a separate layer",
         };
     )");
 }
+
+TEST_CASE("Structs are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        struct
+            RenameTagCmd                                           /// Deletions
+            : public AutoCmdLineCmd
+            <RenameTagCmd>                                         /// Deletions
+        {
+            virtual void execImpl() override
+            {
+                tagStorage.replace(tag, nav->getScopeOf(data),
+                                tag->getRole(), newName);
+            }
+        };
+    )", R"(
+        struct RenameTagCmd : public AutoCmdLineCmd<RenameTagCmd>  /// Additions
+        {                                                          /// Additions
+            virtual void execImpl() override                       /// Additions
+            {                                                      /// Additions
+                tagStorage.replace(tag, tag->getAssociatedTags(),  /// Additions
+                                   tag->getRole(), newName);       /// Additions
+            }                                                      /// Additions
+        };                                                         /// Additions
+
+        struct
+            RenameInScopeCmd                                       /// Additions
+            : public AutoCmdLineCmd
+              <RenameInScopeCmd>                                   /// Additions
+        {
+            virtual void execImpl() override
+            {
+                tagStorage.replace(tag, nav->getScopeOf(data),
+                                   tag->getRole(), newName);
+            }
+        };
+    )");
+}
