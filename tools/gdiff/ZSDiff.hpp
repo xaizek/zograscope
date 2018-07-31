@@ -48,6 +48,7 @@ public:
 private:
     SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
     void highlightMatch(QPlainTextEdit *textEdit);
+    TokenInfo * getTokenInfo(QPlainTextEdit *textEdit);
 
     void switchView();
 

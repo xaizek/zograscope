@@ -255,16 +255,8 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         }
     };
 
-    std::vector<std::map<int, TokenInfo *>> &map = (textEdit == ui->oldCode)
-                                                 ? oldMap
-                                                 : newMap;
-    int lineNum = textEdit->textCursor().block().userState();
-    const std::map<int, TokenInfo *> &line = lineNum >= 0
-                                           ? map[lineNum]
-                                           : std::map<int, TokenInfo *>();
-    auto it = line.upper_bound(textEdit->textCursor().positionInBlock());
-
-    if (it == line.end() || it->second == nullptr) {
+    TokenInfo *i = getTokenInfo(textEdit);
+    if (i == nullptr) {
         QList<QTextEdit::ExtraSelection> newExtraSelections, oldExtraSelections;
 
         int rightLine = ui->newCode->textCursor().block().userState();
@@ -289,8 +281,6 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         ui->oldCode->setExtraSelections(oldExtraSelections);
         return;
     }
-
-    TokenInfo *i = it->second;
 
     QTextCharFormat format;
     format.setFontOverline(true);
@@ -366,6 +356,20 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
                - ui->oldCode->verticalScrollBar()->sliderPosition();
 
     syncScrolls = true;
+}
+
+TokenInfo *
+ZSDiff::getTokenInfo(QPlainTextEdit *textEdit)
+{
+    std::vector<std::map<int, TokenInfo *>> &map = (textEdit == ui->oldCode)
+                                                 ? oldMap
+                                                 : newMap;
+    int lineNum = textEdit->textCursor().block().userState();
+    const std::map<int, TokenInfo *> &line = lineNum >= 0
+                                           ? map[lineNum]
+                                           : std::map<int, TokenInfo *>();
+    auto it = line.upper_bound(textEdit->textCursor().positionInBlock());
+    return (it == line.end() ? nullptr : it->second);
 }
 
 ZSDiff::~ZSDiff()
