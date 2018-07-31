@@ -17,6 +17,9 @@
 
 #include "SrcmlTransformer.hpp"
 
+#include <cstdlib>
+
+#include <fstream>
 #include <stdexcept>
 #include <string>
 
@@ -34,6 +37,54 @@ namespace ti = tinyxml2;
 // XXX: hard-coded width of a tabulation character.
 const int tabWidth = 4;
 
+namespace {
+
+// Temporary file in RAII-style.
+class TempFile
+{
+public:
+    // Makes temporary file whose name is a mangled version of an input name.
+    // The file is removed in destructor.
+    explicit TempFile(boost::filesystem::path baseName)
+    {
+        namespace fs = boost::filesystem;
+
+        path = (
+            fs::temp_directory_path()
+         /  fs::unique_path(baseName.stem().string() + '-' +
+                            "-%%%%-%%%%" + baseName.extension().string())
+        ).string();
+    }
+
+    // Make sure temporary file is deleted only once.
+    TempFile(const TempFile &rhs) = delete;
+    TempFile & operator=(const TempFile &rhs) = delete;
+
+    // Removes temporary file, if it still exists.
+    ~TempFile()
+    {
+        static_cast<void>(std::remove(path.c_str()));
+    }
+
+public:
+    // Provides implicit conversion to a file path string.
+    operator std::string() const
+    {
+        return path;
+    }
+
+    // Explicit conversion to a file path string.
+    const std::string & str() const
+    {
+        return path;
+    }
+
+private:
+    std::string path; // Path to the temporary file.
+};
+
+}
+
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
 
@@ -50,14 +101,25 @@ SrcmlTransformer::SrcmlTransformer(const std::string &contents,
 void
 SrcmlTransformer::transform()
 {
-    bool passOnStdin = !boost::filesystem::exists(path);
+    std::string filePath = path;
+    TempFile tmpFile(path);
+
+    if (!boost::filesystem::exists(path)) {
+        std::ofstream ofs(tmpFile);
+        if (!ofs) {
+            throw std::runtime_error("Failed to open temporary file: " +
+                                     tmpFile.str());
+        }
+        ofs << contents;
+
+        filePath = tmpFile;
+    }
 
     std::vector<std::string> cmd = {
-        "srcml", "--language=" + language, "--src-encoding=utf8",
-        (passOnStdin ? "-" : path)
+        "srcml", "--language=" + language, "--src-encoding=utf8", filePath
     };
 
-    std::string xml = readCommandOutput(cmd, passOnStdin ? contents : "");
+    std::string xml = readCommandOutput(cmd, std::string());
 
     ti::XMLDocument doc;
     doc.Parse(xml.data(), xml.size());
