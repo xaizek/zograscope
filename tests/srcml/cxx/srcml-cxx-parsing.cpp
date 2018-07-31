@@ -569,3 +569,38 @@ TEST_CASE("Structs are moved to a separate layer",
         };
     )");
 }
+
+TEST_CASE("Unions are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        union
+            RenameTagCmd                                           /// Deletions
+        {
+            void execImpl()
+            {
+                tagStorage.replace(tag, nav->getScopeOf(data),
+                                   tag->getRole(), newName);
+            }
+        };
+    )", R"(
+        union RenameTagCmd                                         /// Additions
+        {                                                          /// Additions
+            void execImpl()                                        /// Additions
+            {                                                      /// Additions
+                tagStorage.replace(tag, tag->getAssociatedTags(),  /// Additions
+                                   tag->getRole(), newName);       /// Additions
+            }                                                      /// Additions
+        };                                                         /// Additions
+
+        union
+            RenameInScopeCmd                                       /// Additions
+        {
+            void execImpl()
+            {
+                tagStorage.replace(tag, nav->getScopeOf(data),
+                                tag->getRole(), newName);
+            }
+        };
+    )");
+}
