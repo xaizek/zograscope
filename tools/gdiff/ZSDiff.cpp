@@ -209,13 +209,15 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
             [=]() { onPosChanged(ui->newCode); });
 
-    connect(ui->oldCode, &CodeView::scrolled, [&](int pos) {
-        if (!syncScrolls) return;
-        ui->newCode->verticalScrollBar()->setSliderPosition(pos + scrollDiff);
+    connect(ui->oldCode, &CodeView::scrolled, [&](int /*pos*/) {
+        if (syncScrolls) {
+            syncScrollTo(ui->oldCode);
+        }
     });
-    connect(ui->newCode, &CodeView::scrolled, [&](int pos) {
-        if (!syncScrolls) return;
-        ui->oldCode->verticalScrollBar()->setSliderPosition(pos - scrollDiff);
+    connect(ui->newCode, &CodeView::scrolled, [&](int /*pos*/) {
+        if (syncScrolls) {
+            syncScrollTo(ui->newCode);
+        }
     });
 
     qApp->installEventFilter(this);
@@ -431,6 +433,18 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         return false;
     }
     return true;
+}
+
+void
+ZSDiff::syncScrollTo(CodeView *textEdit)
+{
+    if (textEdit == ui->newCode) {
+        int pos = ui->newCode->verticalScrollBar()->sliderPosition();
+        ui->oldCode->verticalScrollBar()->setSliderPosition(pos - scrollDiff);
+    } else {
+        int pos = ui->oldCode->verticalScrollBar()->sliderPosition();
+        ui->newCode->verticalScrollBar()->setSliderPosition(pos + scrollDiff);
+    }
 }
 
 bool
