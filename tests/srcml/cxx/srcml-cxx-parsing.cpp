@@ -491,3 +491,42 @@ TEST_CASE("Initializers are moved to a separate layer",
         };
     )");
 }
+
+TEST_CASE("Classes are moved to a separate layer",
+          "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        class
+            RenameTagCmd                                           /// Deletions
+            : public AutoCmdLineCmd
+            <RenameTagCmd>                                         /// Deletions
+        {
+            virtual void execImpl() override
+            {
+                tagStorage.replace(tag, nav->getScopeOf(data),
+                                tag->getRole(), newName);
+            }
+        };
+    )", R"(
+        class RenameTagCmd : public AutoCmdLineCmd<RenameTagCmd>   /// Additions
+        {                                                          /// Additions
+            virtual void execImpl() override                       /// Additions
+            {                                                      /// Additions
+                tagStorage.replace(tag, tag->getAssociatedTags(),  /// Additions
+                                   tag->getRole(), newName);       /// Additions
+            }                                                      /// Additions
+        };                                                         /// Additions
+
+        class
+            RenameInScopeCmd                                       /// Additions
+            : public AutoCmdLineCmd
+              <RenameInScopeCmd>                                   /// Additions
+        {
+            virtual void execImpl() override
+            {
+                tagStorage.replace(tag, nav->getScopeOf(data),
+                                   tag->getRole(), newName);
+            }
+        };
+    )");
+}
