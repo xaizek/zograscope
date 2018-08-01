@@ -127,6 +127,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
       ui(new Ui::ZSDiff),
       scrollDiff(0),
       syncScrolls(true),
+      syncMatches(false),
       oldTree(&mr),
       newTree(&mr)
 {
@@ -236,6 +237,11 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 void
 ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
 {
+    struct CursInfo {
+        QTextCursor cursor;
+        bool needUpdate;
+    };
+
     QTextCharFormat lineFormat;
     lineFormat.setBackground(QColor(0xa0, 0xa0, 0xe0, 0x40));
     lineFormat.setProperty(QTextFormat::FullWidthSelection, true);
@@ -329,18 +335,26 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         textEdit->setExtraSelections(extraSelections);
 
         QTextCursor cursor = textEdit->textCursor();
-        if (cursor.position() < from || cursor.position() > to) {
-            cursor.setPosition(from);
-            textEdit->setTextCursor(cursor);
-        }
+        int currentPos = cursor.position();
+        cursor.setPosition(from);
+        return CursInfo { cursor, (currentPos < from || currentPos > to) };
     };
 
-    updateCursor(ui->newCode, i->newFrom, i->newTo);
-    updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
-
-    alignViews();
+    CursInfo newInfo = updateCursor(ui->newCode, i->newFrom, i->newTo);
+    CursInfo oldInfo = updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
 
     syncScrolls = true;
+
+    if (oldInfo.needUpdate) {
+        ui->oldCode->setTextCursor(oldInfo.cursor);
+    }
+    if (newInfo.needUpdate) {
+        ui->newCode->setTextCursor(newInfo.cursor);
+    }
+
+    if (syncMatches) {
+        alignViews();
+    }
 }
 
 TokenInfo *
@@ -388,6 +402,16 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
     auto keyEvent = static_cast<QKeyEvent *>(event);
     if (keyEvent->text() == "q") {
         close();
+    } else if (keyEvent->text() == "a") {
+        doSyncMatches();
+    } else if (keyEvent->text() == "A") {
+        // Reset token alignment.
+        scrollDiff = 0;
+        if (ui->newCode->hasFocus()) {
+            syncScrollTo(ui->newCode);
+        } else {
+            syncScrollTo(ui->oldCode);
+        }
     } else if (keyEvent->text() == "s") {
         ui->splitter->setOrientation(Qt::Vertical);
         if (onlyMode()) {
@@ -419,8 +443,19 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
 }
 
 void
+ZSDiff::doSyncMatches()
+{
+    CodeView *codeView = (ui->newCode->hasFocus() ? ui->newCode : ui->oldCode);
+    if (getTokenInfo(codeView) != nullptr) {
+        alignViews();
+    }
+}
+
+void
 ZSDiff::alignViews()
 {
+    syncScrolls = false;
+
     QTextCursor oldCursor = ui->oldCode->textCursor();
     QTextCursor newCursor = ui->newCode->textCursor();
 
@@ -438,6 +473,8 @@ ZSDiff::alignViews()
 
     scrollDiff = ui->newCode->verticalScrollBar()->sliderPosition()
                - ui->oldCode->verticalScrollBar()->sliderPosition();
+
+    syncScrolls = true;
 }
 
 void

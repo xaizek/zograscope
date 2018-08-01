@@ -54,6 +54,9 @@ private:
 
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
+    void doSyncMatches();
+    // Aligns cursor in the other pane to make it match position of a token
+    // that corresponds to one under the cursor of the current pane.
     void alignViews();
     void syncScrollTo(CodeView *textEdit);
     bool onlyMode() const;
@@ -63,6 +66,7 @@ private:
     std::unordered_map<const Node *, TokenInfo> info;
     int scrollDiff;
     bool syncScrolls;
+    bool syncMatches;
     cpp17::pmr::monolithic mr;
     Tree oldTree;
     Tree newTree;
