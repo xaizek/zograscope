@@ -205,6 +205,12 @@ CodeView::keyPressEvent(QKeyEvent *e)
     if (e->text() == "k") {
         return goUp();
     }
+    if (e->text() == "t") {
+        return makeTop();
+    }
+    if (e->text() == "b") {
+        return makeBottom();
+    }
     if (e->text() == "g") {
         return sendKey(Qt::Key_Home, Qt::ControlModifier);
     }
@@ -233,6 +239,27 @@ CodeView::goUp()
     if (it == positions.cbegin()) return;
 
     setTextCursor((--it)->toCursor(document()));
+}
+
+void
+CodeView::makeTop()
+{
+    int newPos = textCursor().block().blockNumber();
+    verticalScrollBar()->setSliderPosition(newPos);
+    setTextCursor(textCursor());
+    emit scrolled(verticalScrollBar()->sliderPosition());
+}
+
+void
+CodeView::makeBottom()
+{
+    QTextCursor bottom = cursorForPosition(QPoint(0.0f, viewport()->height()));
+    int height = bottom.block().blockNumber()
+        - firstVisibleBlock().blockNumber() + 1;
+    int newPos = textCursor().block().blockNumber() - height + 1;
+    verticalScrollBar()->setSliderPosition(newPos);
+    setTextCursor(textCursor());
+    emit scrolled(verticalScrollBar()->sliderPosition());
 }
 
 void

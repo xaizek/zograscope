@@ -46,6 +46,10 @@ private:
 
     void goDown();
     void goUp();
+    // Scroll current view to put current line at the top.
+    void makeTop();
+    // Scroll current view to put current line at the bottom.
+    void makeBottom();
     void sendKey(int key, Qt::KeyboardModifiers modifiers = Qt::NoModifier);
 
 private:

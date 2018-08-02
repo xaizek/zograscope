@@ -347,9 +347,13 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
 
     if (oldInfo.needUpdate) {
         ui->oldCode->setTextCursor(oldInfo.cursor);
+    } else {
+        ui->oldCode->setTextCursor(ui->oldCode->textCursor());
     }
     if (newInfo.needUpdate) {
         ui->newCode->setTextCursor(newInfo.cursor);
+    } else {
+        ui->newCode->setTextCursor(ui->newCode->textCursor());
     }
 
     if (syncMatches) {
