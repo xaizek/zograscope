@@ -381,10 +381,10 @@ Q_DECLARE_METATYPE(QTextDocumentFragment)
 void
 ZSDiff::switchView()
 {
-    CodeView *toFocus = (ui->newCode->hasFocus() ? ui->oldCode : ui->newCode);
-    toFocus->setFocus();
+    CodeView *view = inactiveView();
+    view->setFocus();
     if (onlyMode()) {
-        if (toFocus == ui->oldCode) {
+        if (view == ui->oldCode) {
             ui->splitter->setSizes({ 1, 0 });
         } else {
             ui->splitter->setSizes({ 0, 1 });
@@ -407,11 +407,7 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
     } else if (keyEvent->text() == "A") {
         // Reset token alignment.
         scrollDiff = 0;
-        if (ui->newCode->hasFocus()) {
-            syncScrollTo(ui->newCode);
-        } else {
-            syncScrollTo(ui->oldCode);
-        }
+        syncScrollTo(activeView());
     } else if (keyEvent->text() == "s") {
         ui->splitter->setOrientation(Qt::Vertical);
         if (onlyMode()) {
@@ -445,8 +441,7 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
 void
 ZSDiff::doSyncMatches()
 {
-    CodeView *codeView = (ui->newCode->hasFocus() ? ui->newCode : ui->oldCode);
-    if (getTokenInfo(codeView) != nullptr) {
+    if (getTokenInfo(activeView()) != nullptr) {
         alignViews();
     }
 }
@@ -493,4 +488,16 @@ bool
 ZSDiff::onlyMode() const
 {
     return ui->splitter->sizes().contains(0);
+}
+
+CodeView *
+ZSDiff::activeView()
+{
+    return (ui->newCode->hasFocus() ? ui->newCode : ui->oldCode);
+}
+
+CodeView *
+ZSDiff::inactiveView()
+{
+    return (ui->newCode->hasFocus() ? ui->oldCode : ui->newCode);
 }

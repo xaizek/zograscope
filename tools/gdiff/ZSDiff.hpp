@@ -60,6 +60,8 @@ private:
     void alignViews();
     void syncScrollTo(CodeView *textEdit);
     bool onlyMode() const;
+    CodeView * activeView();
+    CodeView * inactiveView();
 
 private:
     Ui::ZSDiff *ui;
