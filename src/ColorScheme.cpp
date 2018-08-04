@@ -46,7 +46,7 @@ ColorScheme::ColorScheme()
     groups[+ColorGroup::PieceUpdated] = Decoration(none)
                                         .prefix("{~"_lit)
                                         .suffix("~}"_lit);
-    groups[+ColorGroup::UpdatedSurroundings] = (228_fg + inv + black_bg + bold);
+    groups[+ColorGroup::UpdatedSurroundings] = (165_fg + inv + white_bg + bold);
 
     groups[+ColorGroup::Deleted] = groups[+ColorGroup::PieceDeleted];
     groups[+ColorGroup::Inserted] = groups[+ColorGroup::PieceInserted];
@@ -56,7 +56,7 @@ ColorScheme::ColorScheme()
     groups[+ColorGroup::Inserted] = (85_fg + inv + black_bg + bold)
                                     .prefix("{+"_lit)
                                     .suffix("+}"_lit);
-    groups[+ColorGroup::Updated] = groups[+ColorGroup::UpdatedSurroundings];
+    groups[+ColorGroup::Updated] = (228_fg + inv + black_bg + bold);
     groups[+ColorGroup::Updated].prefix("{#"_lit).suffix("#}"_lit);
     groups[+ColorGroup::Moved] = (81_fg + inv + bold)
                                  .prefix("{:"_lit)
