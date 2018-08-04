@@ -10,13 +10,15 @@ SOURCES += \
     ZSDiff.cpp \
     CodeView.cpp \
     GuiColorScheme.cpp \
-    SynHi.cpp
+    SynHi.cpp \
+    BlankLineAttr.cpp
 
 HEADERS += \
     ZSDiff.hpp \
     CodeView.hpp \
     GuiColorScheme.hpp \
-    SynHi.hpp
+    SynHi.hpp \
+    BlankLineAttr.hpp
 
 FORMS += \
     zsdiff.ui

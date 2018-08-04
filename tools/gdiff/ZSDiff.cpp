@@ -153,6 +153,19 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
         return (a == b);
     };
 
+    oldDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
+                                              &blankLineAttr);
+    newDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
+                                              &blankLineAttr);
+
+    QTextCharFormat blankLineFormat;
+    blankLineFormat.setObjectType(blankLineAttr.getType());
+    auto addBlank = [&blankLineFormat](CodeView *view) {
+        QTextCursor c = view->textCursor();
+        c.insertText(QString(QChar::ObjectReplacementCharacter),
+                     blankLineFormat);
+    };
+
     dtl::Diff<std::string, std::vector<std::string>,
               decltype(cmp)> diff(leftSide.lines, rightSide.lines, cmp);
     diff.compose();
@@ -167,12 +180,14 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
                 ui->oldCode->insertPlainText(QByteArray(left->data(),
                                                         left->size()));
                 oldDoc->lastBlock().setUserState(leftLine++);
+                addBlank(ui->newCode);
                 break;
             case dtl::SES_ADD:
                 right = &rightSide.lines[x.second.afterIdx - 1];
                 ui->newCode->insertPlainText(QByteArray(right->data(),
                                                         right->size()));
                 newDoc->lastBlock().setUserState(rightLine++);
+                addBlank(ui->oldCode);
                 break;
             case dtl::SES_COMMON:
                 left = &leftSide.lines[x.second.beforeIdx - 1];

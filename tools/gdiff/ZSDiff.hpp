@@ -12,6 +12,7 @@
 #include "pmr/monolithic.hpp"
 #include "tree.hpp"
 
+#include "BlankLineAttr.hpp"
 #include "CodeView.hpp"
 #include "GuiColorScheme.hpp"
 
@@ -77,6 +78,7 @@ private:
     GuiColorScheme cs;
     std::vector<std::map<int, TokenInfo *>> oldMap, newMap;
     QList<int> splitterSizes;
+    BlankLineAttr blankLineAttr;
 };
 
 #endif // ZSDIFF_HPP
