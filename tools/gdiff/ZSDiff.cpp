@@ -117,6 +117,8 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     textEdit->document()->setDocumentMargin(1);
 
     // textEdit->document()->findBlockByNumber(10).setVisible(false);
+    textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse |
+                                      Qt::TextSelectableByKeyboard);
 
     return { std::move(hi), std::move(lines), std::move(map) };
 }
