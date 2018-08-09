@@ -259,9 +259,18 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         bool needUpdate;
     };
 
-    QTextCharFormat lineFormat;
-    lineFormat.setBackground(QColor(0xa0, 0xa0, 0xe0, 0x40));
-    lineFormat.setProperty(QTextFormat::FullWidthSelection, true);
+    QColor currColor(0xa0, 0xe0, 0xa0, 0x60);
+    QColor otherColor(0xa0, 0xa0, 0xe0, 0x60);
+
+    QTextCharFormat oldLineFormat;
+    QColor lineColor = (ui->oldCode->hasFocus() ? currColor : otherColor);
+    oldLineFormat.setBackground(lineColor);
+    oldLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
+
+    QTextCharFormat newLineFormat;
+    lineColor = (ui->newCode->hasFocus() ? currColor : otherColor);
+    newLineFormat.setBackground(lineColor);
+    newLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
 
     auto collectFormats = [&](const ColorCane &cc, QPlainTextEdit *textEdit,
                               int position,
@@ -300,8 +309,8 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
                            oldExtraSelections);
         }
 
-        newExtraSelections.append({ ui->newCode->textCursor(), lineFormat });
-        oldExtraSelections.append({ ui->oldCode->textCursor(), lineFormat });
+        newExtraSelections.append({ ui->newCode->textCursor(), newLineFormat });
+        oldExtraSelections.append({ ui->oldCode->textCursor(), oldLineFormat });
         ui->newCode->setExtraSelections(newExtraSelections);
         ui->oldCode->setExtraSelections(oldExtraSelections);
         return;
@@ -348,7 +357,9 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
             }
         }
         extraSelections.append({ sel, format });
-        extraSelections.append({ lineCursor, lineFormat });
+        extraSelections.append({ lineCursor, textEdit == ui->oldCode
+                                             ? oldLineFormat
+                                             : newLineFormat });
         textEdit->setExtraSelections(extraSelections);
 
         QTextCursor cursor = textEdit->textCursor();
@@ -411,6 +422,7 @@ ZSDiff::switchView()
             ui->splitter->setSizes({ 0, 1 });
         }
     }
+    highlightMatch(view);
 }
 
 bool

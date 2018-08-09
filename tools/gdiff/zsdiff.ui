@@ -66,9 +66,6 @@
           <property name="lineWrapMode">
            <enum>QPlainTextEdit::NoWrap</enum>
           </property>
-          <property name="cursorWidth">
-           <number>10</number>
-          </property>
           <property name="textInteractionFlags">
            <set>Qt::TextEditorInteraction</set>
           </property>
@@ -95,9 +92,6 @@
           </property>
           <property name="lineWrapMode">
            <enum>QPlainTextEdit::NoWrap</enum>
-          </property>
-          <property name="cursorWidth">
-           <number>10</number>
           </property>
          </widget>
         </item>
