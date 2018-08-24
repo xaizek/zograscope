@@ -47,12 +47,8 @@ BlankLineAttr::drawObject(QPainter *painter, const QRectF &rect,
     QPen pen(QColor(0, 0, 0, 0));
     painter->setPen(pen);
 
-    QBrush brush(QColor(0xf0, 0xf0, 0xf0));
+    QBrush brush(QColor(0xb8, 0xb8, 0xb8), Qt::FDiagPattern);
     painter->setBrush(brush);
 
     painter->drawRect(r);
-
-    r = r.adjusted(0, r.height()/2, 0, 0);
-    painter->setPen(Qt::DotLine);
-    painter->drawLine(r.topLeft(), r.topRight());
 }
