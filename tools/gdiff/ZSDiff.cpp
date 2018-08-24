@@ -238,15 +238,21 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
         }
     });
 
+    connect(ui->oldCode, &CodeView::focused, [&]() {
+        highlightMatch(ui->oldCode);
+    });
+    connect(ui->newCode, &CodeView::focused, [&]() {
+        highlightMatch(ui->newCode);
+    });
+
     qApp->installEventFilter(this);
 
     // Navigate to first change in old or new version of the code and  highlight
     // current line.
     if (ui->oldCode->goToFirstStopPosition()) {
-        highlightMatch(ui->oldCode);
+        ui->oldCode->setFocus();
     } else {
         ui->newCode->goToFirstStopPosition();
-        highlightMatch(ui->newCode);
         ui->newCode->setFocus();
     }
 }
