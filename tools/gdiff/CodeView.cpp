@@ -221,6 +221,13 @@ CodeView::keyPressEvent(QKeyEvent *e)
 }
 
 void
+CodeView::focusInEvent(QFocusEvent *e)
+{
+    QPlainTextEdit::focusInEvent(e);
+    emit focused();
+}
+
+void
 CodeView::goDown()
 {
     StablePos pos(textCursor());

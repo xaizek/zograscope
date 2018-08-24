@@ -35,6 +35,7 @@ public:
 
 signals:
     void scrolled(int pos);
+    void focused();
 
 private:
     void updateLineColumn(const QRect &rect, int dy);
@@ -43,6 +44,7 @@ private:
 
     virtual void resizeEvent(QResizeEvent *e) override;
     virtual void keyPressEvent(QKeyEvent *e) override;
+    virtual void focusInEvent(QFocusEvent *e) override;
 
     void goDown();
     void goUp();
