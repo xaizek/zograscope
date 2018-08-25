@@ -11,9 +11,9 @@
 #include <utility>
 #include <vector>
 
+#include <boost/utility/string_ref.hpp>
 #include <boost/optional.hpp>
 
-#include "dtl/dtl.hpp"
 #include "pmr/monolithic.hpp"
 
 #include "tooling/common.hpp"
@@ -24,6 +24,7 @@
 #include "TreeBuilder.hpp"
 #include "Language.hpp"
 #include "STree.hpp"
+#include "align.hpp"
 #include "colors.hpp"
 #include "compare.hpp"
 #include "tree.hpp"
@@ -37,7 +38,6 @@ const int matchProperty = QTextFormat::UserProperty + 2;
 struct ZSDiff::SideInfo
 {
     std::vector<ColorCane> hi;
-    std::vector<std::string> lines;
     std::vector<std::map<int, TokenInfo *>> map;
 };
 
@@ -67,11 +67,8 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
 
     std::vector<std::map<int, TokenInfo *>> map(hi.size());
 
-    std::vector<std::string> lines;
     int line = 0;
     for (const ColorCane &cc : hi) {
-        std::string text;
-
         int lineFrom = 0;
         bool positionedOnThisLine = false;
         for (const ColorCanePiece &piece : cc) {
@@ -82,7 +79,6 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
                 positionedOnThisLine = true;
             }
 
-            text += piece.text;
             int lineTo = lineFrom + piece.text.length();
             if (piece.node != nullptr && piece.node->relative != nullptr) {
                 TokenInfo *in = &info[original ? piece.node
@@ -110,7 +106,6 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
             lineFrom = lineTo;
         }
         ++line;
-        lines.emplace_back(std::move(text));
     }
 
     textEdit->setStopPositions(std::move(stopPositions));
@@ -120,7 +115,7 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse |
                                       Qt::TextSelectableByKeyboard);
 
-    return { std::move(hi), std::move(lines), std::move(map) };
+    return { std::move(hi), std::move(map) };
 }
 
 ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
@@ -150,11 +145,6 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     newSynHi.reset(new SynHi(newDoc, std::move(rightSide.hi)));
     newMap = std::move(rightSide.map);
 
-    auto cmp = [](const std::string &a, const std::string &b) {
-        // XXX: need dice comparison here too?  
-        return (a == b);
-    };
-
     oldDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
                                               &blankLineAttr);
     newDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
@@ -167,41 +157,53 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
         c.insertText(QString(QChar::ObjectReplacementCharacter),
                      blankLineFormat);
     };
+    auto addLine = [](CodeView *view, boost::string_ref s, int lineNo) {
+        view->insertPlainText(QByteArray(s.data(), s.size()));
+        view->document()->lastBlock().setUserState(lineNo);
+    };
 
-    dtl::Diff<std::string, std::vector<std::string>,
-              decltype(cmp)> diff(leftSide.lines, rightSide.lines, cmp);
-    diff.compose();
-    int leftLine = 0, rightLine = 0;
+    DiffSource lsrc = (tr.measure("left-print"),
+                       DiffSource(*oldTree.getRoot()));
+    DiffSource rsrc = (tr.measure("right-print"),
+                       DiffSource(*newTree.getRoot()));
+    std::vector<DiffLine> diff = (tr.measure("compare"),
+                                  makeDiff(std::move(lsrc), std::move(rsrc)));
+
     int leftState = -1, rightState = -1;
-    for (const auto &x : diff.getSes().getSequence()) {
-        switch (x.second.type) {
-            std::string *left, *right;
-
-            case dtl::SES_DELETE:
-                left = &leftSide.lines[x.second.beforeIdx - 1];
-                ui->oldCode->insertPlainText(QByteArray(left->data(),
-                                                        left->size()));
-                oldDoc->lastBlock().setUserState(leftLine++);
+    unsigned int i = 0U;
+    unsigned int j = 0U;
+    for (DiffLine d : diff) {
+        switch (d.type) {
+            case Diff::Left:
+                addLine(ui->oldCode, lsrc.lines[i].str(), i);
                 addBlank(ui->newCode);
+                ++i;
                 break;
-            case dtl::SES_ADD:
-                right = &rightSide.lines[x.second.afterIdx - 1];
-                ui->newCode->insertPlainText(QByteArray(right->data(),
-                                                        right->size()));
-                newDoc->lastBlock().setUserState(rightLine++);
+            case Diff::Right:
                 addBlank(ui->oldCode);
+                addLine(ui->newCode, rsrc.lines[j].str(), j);
+                ++j;
                 break;
-            case dtl::SES_COMMON:
-                left = &leftSide.lines[x.second.beforeIdx - 1];
-                right = &rightSide.lines[x.second.afterIdx - 1];
-                ui->oldCode->insertPlainText(QByteArray(left->data(),
-                                                        left->size()));
-                oldDoc->lastBlock().setUserState(leftLine++);
-                ui->newCode->insertPlainText(QByteArray(right->data(),
-                                                        right->size()));
-                newDoc->lastBlock().setUserState(rightLine++);
+            case Diff::Identical:
+            case Diff::Different:
+                addLine(ui->oldCode, lsrc.lines[i].str(), i);
+                addLine(ui->newCode, rsrc.lines[j].str(), j);
+                ++i;
+                ++j;
+                break;
+
+            case Diff::Fold:
+                for (int k = 0; k < d.data; ++k, ++i, ++j) {
+                    if (k != 0) {
+                        ui->oldCode->insertPlainText("\n");
+                        ui->newCode->insertPlainText("\n");
+                    }
+                    addLine(ui->oldCode, lsrc.lines[i].str(), i);
+                    addLine(ui->newCode, rsrc.lines[j].str(), j);
+                }
                 break;
         }
+
         leftState = oldDoc->lastBlock().userState();
         rightState = newDoc->lastBlock().userState();
         ui->oldCode->insertPlainText("\n");
