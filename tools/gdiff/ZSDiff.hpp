@@ -48,6 +48,7 @@ public:
 
 private:
     SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
+    void diffAndPrint(TimeReport &tr);
     void highlightMatch(QPlainTextEdit *textEdit);
     TokenInfo * getTokenInfo(QPlainTextEdit *textEdit);
 

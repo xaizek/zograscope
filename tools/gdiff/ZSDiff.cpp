@@ -151,6 +151,57 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     newDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
                                               &blankLineAttr);
 
+    diffAndPrint(tr);
+    ui->newCode->moveCursor(QTextCursor::Start);
+    ui->oldCode->moveCursor(QTextCursor::Start);
+
+    auto onPosChanged = [&](QPlainTextEdit *textEdit) {
+        QTextCursor cursor = textEdit->textCursor();
+        if (cursor.hasSelection()) return;
+        highlightMatch(textEdit);
+    };
+    connect(ui->oldCode, &QPlainTextEdit::cursorPositionChanged,
+            [=]() { onPosChanged(ui->oldCode); });
+    connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
+            [=]() { onPosChanged(ui->newCode); });
+
+    connect(ui->oldCode, &CodeView::scrolled, [&](int /*pos*/) {
+        if (syncScrolls) {
+            syncScrollTo(ui->oldCode);
+        }
+    });
+    connect(ui->newCode, &CodeView::scrolled, [&](int /*pos*/) {
+        if (syncScrolls) {
+            syncScrollTo(ui->newCode);
+        }
+    });
+
+    auto onFocus = [&](CodeView *view) {
+        if (firstTimeFocus) {
+            firstTimeFocus = false;
+            view->centerCursor();
+            syncScrollTo(view);
+        }
+        highlightMatch(view);
+    };
+    connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
+    connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
+
+    qApp->installEventFilter(this);
+
+    // Navigate to first change in old or new version of the code and  highlight
+    // current line.
+    if (ui->oldCode->goToFirstStopPosition()) {
+        ui->oldCode->setFocus();
+    } else {
+        ui->newCode->goToFirstStopPosition();
+        ui->newCode->setFocus();
+    }
+}
+
+void
+ZSDiff::diffAndPrint(TimeReport &tr)
+{
     QTextCharFormat blankLineFormat;
     blankLineFormat.setObjectType(blankLineAttr.getType());
     auto addBlank = [&blankLineFormat](CodeView *view) {
@@ -162,6 +213,9 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
         view->insertPlainText(QByteArray(s.data(), s.size()));
         view->document()->lastBlock().setUserState(lineNo);
     };
+
+    QTextDocument *oldDoc = ui->oldCode->document();
+    QTextDocument *newDoc = ui->newCode->document();
 
     DiffSource lsrc = (tr.measure("left-print"),
                        DiffSource(*oldTree.getRoot()));
@@ -217,51 +271,6 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     newDoc->lastBlock().setUserState(rightState);
     ui->newCode->textCursor().deletePreviousChar();
 
-    ui->newCode->moveCursor(QTextCursor::Start);
-    ui->oldCode->moveCursor(QTextCursor::Start);
-
-    auto onPosChanged = [&](QPlainTextEdit *textEdit) {
-        QTextCursor cursor = textEdit->textCursor();
-        if (cursor.hasSelection()) return;
-        highlightMatch(textEdit);
-    };
-    connect(ui->oldCode, &QPlainTextEdit::cursorPositionChanged,
-            [=]() { onPosChanged(ui->oldCode); });
-    connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
-            [=]() { onPosChanged(ui->newCode); });
-
-    connect(ui->oldCode, &CodeView::scrolled, [&](int /*pos*/) {
-        if (syncScrolls) {
-            syncScrollTo(ui->oldCode);
-        }
-    });
-    connect(ui->newCode, &CodeView::scrolled, [&](int /*pos*/) {
-        if (syncScrolls) {
-            syncScrollTo(ui->newCode);
-        }
-    });
-
-    auto onFocus = [&](CodeView *view) {
-        if (firstTimeFocus) {
-            firstTimeFocus = false;
-            view->centerCursor();
-            syncScrollTo(view);
-        }
-        highlightMatch(view);
-    };
-    connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
-    connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
-
-    qApp->installEventFilter(this);
-
-    // Navigate to first change in old or new version of the code and  highlight
-    // current line.
-    if (ui->oldCode->goToFirstStopPosition()) {
-        ui->oldCode->setFocus();
-    } else {
-        ui->newCode->goToFirstStopPosition();
-        ui->newCode->setFocus();
-    }
 }
 
 void
