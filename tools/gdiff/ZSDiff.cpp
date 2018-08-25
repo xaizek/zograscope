@@ -125,6 +125,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
       scrollDiff(0),
       syncScrolls(true),
       syncMatches(false),
+      firstTimeFocus(true),
       oldTree(&mr),
       newTree(&mr)
 {
@@ -240,12 +241,16 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
         }
     });
 
-    connect(ui->oldCode, &CodeView::focused, [&]() {
-        highlightMatch(ui->oldCode);
-    });
-    connect(ui->newCode, &CodeView::focused, [&]() {
-        highlightMatch(ui->newCode);
-    });
+    auto onFocus = [&](CodeView *view) {
+        if (firstTimeFocus) {
+            firstTimeFocus = false;
+            view->centerCursor();
+            syncScrollTo(view);
+        }
+        highlightMatch(view);
+    };
+    connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
+    connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
 
     qApp->installEventFilter(this);
 

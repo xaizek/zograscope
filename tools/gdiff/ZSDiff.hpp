@@ -70,6 +70,7 @@ private:
     int scrollDiff;
     bool syncScrolls;
     bool syncMatches;
+    bool firstTimeFocus;
     cpp17::pmr::monolithic mr;
     Tree oldTree;
     Tree newTree;
