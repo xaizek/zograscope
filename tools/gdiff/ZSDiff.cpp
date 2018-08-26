@@ -126,6 +126,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
       syncScrolls(true),
       syncMatches(false),
       firstTimeFocus(true),
+      folded(false),
       oldTree(&mr),
       newTree(&mr)
 {
@@ -152,6 +153,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
                                               &blankLineAttr);
 
     diffAndPrint(tr);
+    fold();
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);
 
@@ -224,6 +226,9 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     std::vector<DiffLine> diff = (tr.measure("compare"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
 
+    leftFolded.resize(lsrc.lines.size());
+    rightFolded.resize(rsrc.lines.size());
+
     int leftState = -1, rightState = -1;
     unsigned int i = 0U;
     unsigned int j = 0U;
@@ -248,6 +253,20 @@ ZSDiff::diffAndPrint(TimeReport &tr)
                 break;
 
             case Diff::Fold:
+                {
+                    std::string msg = "@@@ folded " + std::to_string(d.data)
+                                    + " lines @@@";
+                    ui->oldCode->insertPlainText(QByteArray(msg.data(),
+                                                            msg.size()));
+                    oldDoc->lastBlock().setVisible(false);
+                    oldDoc->lastBlock().setUserState(-2);
+                    ui->oldCode->insertPlainText("\n");
+                    ui->newCode->insertPlainText(QByteArray(msg.data(),
+                                                            msg.size()));
+                    newDoc->lastBlock().setVisible(false);
+                    newDoc->lastBlock().setUserState(-2);
+                    ui->newCode->insertPlainText("\n");
+                }
                 for (int k = 0; k < d.data; ++k, ++i, ++j) {
                     if (k != 0) {
                         ui->oldCode->insertPlainText("\n");
@@ -255,6 +274,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
                     }
                     addLine(ui->oldCode, lsrc.lines[i].str(), i);
                     addLine(ui->newCode, rsrc.lines[j].str(), j);
+                    leftFolded[i] = true;
+                    rightFolded[j] = true;
                 }
                 break;
         }
@@ -270,7 +291,6 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     ui->oldCode->textCursor().deletePreviousChar();
     newDoc->lastBlock().setUserState(rightState);
     ui->newCode->textCursor().deletePreviousChar();
-
 }
 
 void
@@ -425,6 +445,71 @@ ZSDiff::getTokenInfo(QPlainTextEdit *textEdit)
     return (it == line.end() ? nullptr : it->second);
 }
 
+void
+ZSDiff::fold()
+{
+    auto foldView = [this](CodeView *view, const std::vector<bool> &folded) {
+        QTextDocument *doc = view->document();
+
+        for (QTextBlock block = doc->begin();
+            block != doc->end();
+            block = block.next()) {
+            int line = block.userState();
+            if (line < 0) {
+                if (line == -2) {
+                    block.setVisible(true);
+                }
+                continue;
+            }
+
+            if (folded[line]) {
+                block.setVisible(false);
+            }
+        }
+
+        view->update();
+        view->viewport()->update();
+        view->ensureCursorVisible();
+    };
+
+    foldView(ui->oldCode, leftFolded);
+    foldView(ui->newCode, rightFolded);
+    activeView()->ensureCursorVisible();
+    folded = true;
+}
+
+void
+ZSDiff::unfold()
+{
+    auto unfoldView = [this](CodeView *view) {
+        QTextDocument *doc = view->document();
+
+        for (QTextBlock block = doc->begin();
+            block != doc->end();
+            block = block.next()) {
+            int line = block.userState();
+            if (line < 0) {
+                if (line == -2) {
+                    block.setVisible(false);
+                }
+                continue;
+            }
+
+            if (!block.isVisible()) {
+                block.setVisible(true);
+            }
+        }
+
+        view->update();
+        view->viewport()->update();
+    };
+
+    unfoldView(ui->oldCode);
+    unfoldView(ui->newCode);
+    activeView()->ensureCursorVisible();
+    folded = false;
+}
+
 ZSDiff::~ZSDiff()
 {
     delete ui;
@@ -463,6 +548,12 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         // Reset token alignment.
         scrollDiff = 0;
         syncScrollTo(activeView());
+    } else if (keyEvent->text() == "f") {
+        if (folded) {
+            unfold();
+        } else {
+            fold();
+        }
     } else if (keyEvent->text() == "s") {
         ui->splitter->setOrientation(Qt::Vertical);
         if (onlyMode()) {

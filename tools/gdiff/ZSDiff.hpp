@@ -51,6 +51,8 @@ private:
     void diffAndPrint(TimeReport &tr);
     void highlightMatch(QPlainTextEdit *textEdit);
     TokenInfo * getTokenInfo(QPlainTextEdit *textEdit);
+    void fold();
+    void unfold();
 
     void switchView();
 
@@ -72,6 +74,7 @@ private:
     bool syncScrolls;
     bool syncMatches;
     bool firstTimeFocus;
+    bool folded;
     cpp17::pmr::monolithic mr;
     Tree oldTree;
     Tree newTree;
@@ -81,6 +84,8 @@ private:
     std::vector<std::map<int, TokenInfo *>> oldMap, newMap;
     QList<int> splitterSizes;
     BlankLineAttr blankLineAttr;
+    // Whether respective lines supposed to be folded.
+    std::vector<bool> leftFolded, rightFolded;
 };
 
 #endif // ZSDIFF_HPP
