@@ -82,7 +82,7 @@ CodeView::paintLineColumn(QPaintEvent *event)
 
     QTextBlock block = firstVisibleBlock();
     int lineNum = block.blockNumber();
-    int top = blockBoundingRect(block).top();
+    int top = contentOffset().y() + blockBoundingRect(block).top();
     int bottom = top + static_cast<int>(blockBoundingRect(block).height());
 
     const int from = event->rect().top();
