@@ -80,21 +80,33 @@ CodeView::paintLineColumn(QPaintEvent *event)
     painter.fillRect(event->rect(), QColor(Qt::gray).light(148));
     painter.setPen(Qt::black);
 
+    QFont normalFont = painter.font();
+
     QTextBlock block = firstVisibleBlock();
     int lineNum = block.blockNumber();
     int top = contentOffset().y() + blockBoundingRect(block).top();
     int bottom = top + static_cast<int>(blockBoundingRect(block).height());
 
+    const int current = textCursor().block().blockNumber();
+
     const int from = event->rect().top();
     const int to = event->rect().bottom();
     while (block.isValid() && top <= to) {
         if (bottom >= from) {
+            if (lineNum == current) {
+                QFont boldFont = normalFont;
+                boldFont.setWeight(QFont::Bold);
+                painter.setFont(boldFont);
+            }
             painter.drawText(0,
                              top,
                              lineColumn->width() - LineColumn::rightMargin,
                              fontMetrics().height(),
                              Qt::AlignRight,
                              QString::number(lineNum + 1));
+            if (lineNum == current) {
+                painter.setFont(normalFont);
+            }
         }
 
         block = block.next();
