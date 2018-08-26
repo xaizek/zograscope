@@ -74,7 +74,9 @@ public:
     void stop()
     {
         current->stop();
-        current = current->parent;
+        if (current->parent != nullptr) {
+            current = current->parent;
+        }
     }
 
 private:
