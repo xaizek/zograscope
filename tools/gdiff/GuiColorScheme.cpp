@@ -10,7 +10,7 @@ GuiColorScheme::GuiColorScheme()
 {
     groups[+ColorGroup::Inserted].setBackground(Qt::green);
     groups[+ColorGroup::Deleted].setForeground(Qt::white);
-    groups[+ColorGroup::Deleted].setBackground(Qt::red);
+    groups[+ColorGroup::Deleted].setBackground(QColor(Qt::red).lighter(120));
     groups[+ColorGroup::Updated].setBackground(Qt::yellow);
     groups[+ColorGroup::Moved].setForeground(Qt::white);
     groups[+ColorGroup::Moved].setBackground(Qt::blue);
