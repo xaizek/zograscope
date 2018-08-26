@@ -20,19 +20,25 @@ main(int argc, char *argv[]) try
 
     if (args.help) {
         std::cout << "Usage: zs-gdiff [options...] old-file new-file\n"
+                  << "   or: zs-gdiff [options...] <7 or 9 args from git>\n"
                   << "\n"
                   << "Options:\n";
         env.printOptions();
         return EXIT_SUCCESS;
     }
-    if (args.pos.size() != 2U) {
+    if (args.pos.size() != 2U && args.pos.size() != 7U &&
+        args.pos.size() != 9U) {
         env.teardown(true);
         std::cerr << "Wrong positional arguments\n"
-                  << "Expected exactly 2\n";
+                  << "Expected 2 (cli) or 7 or 9 (git)\n";
         return EXIT_FAILURE;
     }
 
-    ZSDiff w(args.pos[0], args.pos[1], env.getTimeKeeper());
+    const bool git = (args.pos.size() != 2U);
+    const std::string &oldFile = (git ? args.pos[1] : args.pos[0]);
+    const std::string &newFile = (git ? args.pos[4] : args.pos[1]);
+
+    ZSDiff w(oldFile, newFile, env.getTimeKeeper());
     w.show();
 
     int result = app.exec();
