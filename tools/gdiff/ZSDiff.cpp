@@ -467,14 +467,12 @@ ZSDiff::fold()
             }
         }
 
-        view->update();
-        view->viewport()->update();
-        view->ensureCursorVisible();
+        updateView(view);
     };
 
     foldView(ui->oldCode, leftFolded);
     foldView(ui->newCode, rightFolded);
-    activeView()->ensureCursorVisible();
+    updateLayout();
     folded = true;
 }
 
@@ -500,14 +498,37 @@ ZSDiff::unfold()
             }
         }
 
-        view->update();
-        view->viewport()->update();
+        updateView(view);
     };
 
     unfoldView(ui->oldCode);
     unfoldView(ui->newCode);
-    activeView()->ensureCursorVisible();
+    updateLayout();
     folded = false;
+}
+
+void
+ZSDiff::updateView(CodeView *view)
+{
+    view->update();
+    view->updateGeometry();
+    view->viewport()->update();
+    view->verticalScrollBar()->update();
+}
+
+void
+ZSDiff::updateLayout()
+{
+    CodeView *view = activeView();
+    view->ensureCursorVisible();
+    highlightMatch(view);
+    if (ui->splitter->orientation() == Qt::Vertical) {
+        ui->splitter->setOrientation(Qt::Horizontal);
+        ui->splitter->setOrientation(Qt::Vertical);
+    } else {
+        ui->splitter->setOrientation(Qt::Vertical);
+        ui->splitter->setOrientation(Qt::Horizontal);
+    }
 }
 
 ZSDiff::~ZSDiff()

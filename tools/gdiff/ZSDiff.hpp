@@ -53,6 +53,8 @@ private:
     TokenInfo * getTokenInfo(QPlainTextEdit *textEdit);
     void fold();
     void unfold();
+    void updateView(CodeView *view);
+    void updateLayout();
 
     void switchView();
 
