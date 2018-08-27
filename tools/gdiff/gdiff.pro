@@ -11,14 +11,16 @@ SOURCES += \
     CodeView.cpp \
     GuiColorScheme.cpp \
     SynHi.cpp \
-    BlankLineAttr.cpp
+    BlankLineAttr.cpp \
+    FoldTextAttr.cpp
 
 HEADERS += \
     ZSDiff.hpp \
     CodeView.hpp \
     GuiColorScheme.hpp \
     SynHi.hpp \
-    BlankLineAttr.hpp
+    BlankLineAttr.hpp \
+    FoldTextAttr.hpp
 
 FORMS += \
     zsdiff.ui

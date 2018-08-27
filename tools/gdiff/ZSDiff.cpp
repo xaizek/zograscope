@@ -149,8 +149,12 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
 
     oldDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
                                               &blankLineAttr);
+    oldDoc->documentLayout()->registerHandler(foldTextAttr.getType(),
+                                              &foldTextAttr);
     newDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
                                               &blankLineAttr);
+    newDoc->documentLayout()->registerHandler(foldTextAttr.getType(),
+                                              &foldTextAttr);
 
     diffAndPrint(tr);
     fold();
@@ -206,6 +210,10 @@ ZSDiff::diffAndPrint(TimeReport &tr)
 {
     QTextCharFormat blankLineFormat;
     blankLineFormat.setObjectType(blankLineAttr.getType());
+
+    QTextCharFormat foldTextFormat;
+    foldTextFormat.setObjectType(foldTextAttr.getType());
+
     auto addBlank = [&blankLineFormat](CodeView *view) {
         QTextCursor c = view->textCursor();
         c.insertText(QString(QChar::ObjectReplacementCharacter),
@@ -254,15 +262,22 @@ ZSDiff::diffAndPrint(TimeReport &tr)
 
             case Diff::Fold:
                 {
-                    std::string msg = "@@@ folded " + std::to_string(d.data)
-                                    + " lines @@@";
-                    ui->oldCode->insertPlainText(QByteArray(msg.data(),
-                                                            msg.size()));
+                    QTextCursor c;
+
+                    QVariant v;
+                    v.setValue(d.data);
+                    foldTextFormat.setProperty(foldTextAttr.getProp(), v);
+
+                    c = ui->oldCode->textCursor();
+                    c.insertText(QString(QChar::ObjectReplacementCharacter),
+                                 foldTextFormat);
+                    c = ui->newCode->textCursor();
+                    c.insertText(QString(QChar::ObjectReplacementCharacter),
+                                 foldTextFormat);
+
                     oldDoc->lastBlock().setVisible(false);
                     oldDoc->lastBlock().setUserState(-2);
                     ui->oldCode->insertPlainText("\n");
-                    ui->newCode->insertPlainText(QByteArray(msg.data(),
-                                                            msg.size()));
                     newDoc->lastBlock().setVisible(false);
                     newDoc->lastBlock().setUserState(-2);
                     ui->newCode->insertPlainText("\n");

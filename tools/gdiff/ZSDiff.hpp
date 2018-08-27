@@ -14,6 +14,7 @@
 
 #include "BlankLineAttr.hpp"
 #include "CodeView.hpp"
+#include "FoldTextAttr.hpp"
 #include "GuiColorScheme.hpp"
 
 namespace Ui {
@@ -86,6 +87,7 @@ private:
     std::vector<std::map<int, TokenInfo *>> oldMap, newMap;
     QList<int> splitterSizes;
     BlankLineAttr blankLineAttr;
+    FoldTextAttr foldTextAttr;
     // Whether respective lines supposed to be folded.
     std::vector<bool> leftFolded, rightFolded;
 };
