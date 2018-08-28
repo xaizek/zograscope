@@ -5,6 +5,8 @@
 #include <QTextDocumentFragment>
 #include <QTextStream>
 #include <QScrollBar>
+#include <QStackedWidget>
+#include <QTextBrowser>
 
 #include <functional>
 #include <string>
@@ -202,6 +204,16 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     } else {
         ui->newCode->goToFirstStopPosition();
         ui->newCode->setFocus();
+    }
+
+    ui->mainToolBar->hide();
+    ui->statusBar->showMessage("Press F1 to toggle help");
+
+    QFile file(":/help.html");
+    if (file.open(QFile::ReadOnly)) {
+        ui->helpTextBrowser->setHtml(file.readAll());
+    } else {
+        ui->helpTextBrowser->setText("Loading help failed");
     }
 }
 
@@ -608,6 +620,9 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         }
     } else if (keyEvent->text() == " ") {
         switchView();
+    } else if (keyEvent->key() == Qt::Key_F1) {
+        int newIndex = 1 - ui->stackedWidget->currentIndex();
+        ui->stackedWidget->setCurrentIndex(newIndex);
     } else {
         return false;
     }

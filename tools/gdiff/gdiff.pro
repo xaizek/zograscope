@@ -35,3 +35,6 @@ INCLUDEPATH += $$PWD/../../third-party
 DEPENDPATH += $$PWD/../../third-party
 
 PRE_TARGETDEPS += $$OUT/libzograscope.a
+
+RESOURCES += \
+    resources.qrc
