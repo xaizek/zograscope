@@ -9,8 +9,8 @@ from a flat picture." ([wiki][wiki-zograscope])
 
 ## Description ##
 
-`zograscope` is built around terminal-based syntax-aware diff and can
-potentially become a collection of tools.
+`zograscope` is built around syntax-aware diff and includes a number of
+additional tools.
 
 The nature of syntax-aware diff requires knowledge of structure of the code,
 which can be used to build other simple tools that can benefit from this
@@ -95,6 +95,10 @@ A terminal-based syntax-aware diff.
 ### [zs-find](tools/find/README.md) ###
 
 Grep-like tool that finds elements of source code structure.
+
+### [zs-gdiff](tools/gdiff/README.md) ###
+
+A Qt5 GUI version of syntax-aware diff.
 
 ### [zs-hi](tools/hi/README.md) ###
 
