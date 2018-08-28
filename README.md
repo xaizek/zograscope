@@ -9,8 +9,8 @@ from a flat picture." ([wiki][wiki-zograscope])
 
 ## Description ##
 
-`zograscope` is built around terminal-based syntax-aware diff and can
-potentially become a collection of tools.
+`zograscope` is built around syntax-aware diff and includes a number of
+additional tools.
 
 The nature of syntax-aware diff requires knowledge of structure of the code,
 which can be used to build other simple tools that can benefit from this
@@ -96,6 +96,10 @@ A terminal-based syntax-aware diff.
 
 Grep-like tool that finds elements of source code structure.
 
+### [zs-gdiff](tools/gdiff/README.md) ###
+
+A Qt5 GUI version of syntax-aware diff.
+
 ### [zs-hi](tools/hi/README.md) ###
 
 Simple syntax highlighter for xterm-256color palette.
@@ -107,6 +111,8 @@ Counter of lines of code.
 ## Building and installing ##
 
 ```
+echo 'HAVE_QT5 := yes' > config.mk # if Qt5 is available
+
 make release check
 ```
 
@@ -131,6 +137,7 @@ make install
 * [GNU Bison][bison]
 * [Boost][boost], tested with 1.59, but older versions might work too
 * (optional, run-time, for C++) [srcml][srcml]
+* (optional, for `gdiff` tool) [qt5][qt5]
 
 ## Documentation ##
 
@@ -176,6 +183,7 @@ Kaizhong Zhang and Dennis Shasha.
 [bison]: https://www.gnu.org/software/bison/
 [boost]: http://www.boost.org/
 [srcml]: http://www.srcml.org/
+[qt5]: https://www.qt.io/
 
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code
