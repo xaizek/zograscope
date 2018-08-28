@@ -11,6 +11,8 @@ PREFIX  := /usr
 # a variable that can be overridden to control which tests to run
 TESTS :=
 
+HAVE_QT5 := no
+
 ifneq ($(OS),Windows_NT)
     bin_suffix :=
 else
@@ -98,6 +100,13 @@ tests_objects := $(tests_sources:%.cpp=$(out_dir)/%.o)
 tests_depends := $(tests_objects:%.o=%.d)
 tests_objects += $(lib)
 
+all:
+
+# includes tool-specific configuration
+define pull_tool_template
+-include tools/$1/tool.mk
+endef
+
 # tool definition template, takes single argument: name of the tool
 define tool_template
 
@@ -107,8 +116,6 @@ $1.sources := $$(filter-out tools/$1/data/%, \
 $1.objects := $$(sort $$($1.sources:%.cpp=$$(out_dir)/%.o))
 $1.depends := $$($1.objects:.o=.d)
 $1.objects += $(lib)
-
--include tools/$1/tool.mk
 
 tools_bins += $$($1.bin)
 tools_objects += $$($1.objects)
@@ -128,6 +135,7 @@ endif
 endef
 
 tools := $(patsubst tools/%/,%,$(sort $(dir $(wildcard tools/*/*.cpp))))
+$(foreach tool, $(tools), $(eval $(call pull_tool_template,$(tool))))
 $(foreach tool, $(tools), $(eval $(call tool_template,$(tool))))
 
 out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))

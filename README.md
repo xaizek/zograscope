@@ -111,6 +111,8 @@ Counter of lines of code.
 ## Building and installing ##
 
 ```
+echo 'HAVE_QT5 := yes' > config.mk # if Qt5 is available
+
 make release check
 ```
 
@@ -135,6 +137,7 @@ make install
 * [GNU Bison][bison]
 * [Boost][boost], tested with 1.59, but older versions might work too
 * (optional, run-time, for C++) [srcml][srcml]
+* (optional, for `gdiff` tool) [qt5][qt5]
 
 ## Documentation ##
 
@@ -180,6 +183,7 @@ Kaizhong Zhang and Dennis Shasha.
 [bison]: https://www.gnu.org/software/bison/
 [boost]: http://www.boost.org/
 [srcml]: http://www.srcml.org/
+[qt5]: https://www.qt.io/
 
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code

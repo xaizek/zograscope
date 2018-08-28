@@ -1,3 +1,7 @@
+ifneq ($(HAVE_QT5),yes)
+tools := $(filter-out gdiff,$(tools))
+endif
+
 gdiff.abs_out := $(abspath $(out_dir))/tools/gdiff
 
 gdiff.extradeps := $(addprefix tools/gdiff/, gdiff.pro help.html resources.qrc)
