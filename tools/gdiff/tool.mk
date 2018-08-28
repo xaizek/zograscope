@@ -1,5 +1,8 @@
 gdiff.abs_out := $(abspath $(out_dir))/tools/gdiff
 
+gdiff.extradeps := $(addprefix tools/gdiff/, gdiff.pro help.html resources.qrc)
+gdiff.extradeps += $(wildcard $(addprefix tools/gdiff/, *.ui *.hpp))
+
 gdiff.qmake_args := OUT="$(abspath $(out_dir))"
 ifeq ($(is_release),0)
     gdiff.qmake_args += CONFIG+=debug

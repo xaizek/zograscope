@@ -122,7 +122,7 @@ ifeq (,$(wildcard tools/$1/tool.mk))
 $$($1.bin): $$($1.objects)
 	$(CXX) $(EXTRA_LDFLAGS) $$^ $(LDFLAGS) -o $$@
 else
-$$($1.bin): $$($1.sources) $(lib)
+$$($1.bin): $$($1.sources) $$($1.extradeps) $(lib)
 endif
 
 endef
