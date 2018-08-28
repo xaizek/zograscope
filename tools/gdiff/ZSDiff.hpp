@@ -65,6 +65,7 @@ private:
     // Aligns cursor in the other pane to make it match position of a token
     // that corresponds to one under the cursor of the current pane.
     void alignViews();
+    void split(Qt::Orientation orientation);
     void syncScrollTo(CodeView *textEdit);
     bool onlyMode() const;
     CodeView * activeView();

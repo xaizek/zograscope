@@ -591,15 +591,9 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
             fold();
         }
     } else if (keyEvent->text() == "s") {
-        ui->splitter->setOrientation(Qt::Vertical);
-        if (onlyMode()) {
-            ui->splitter->setSizes(splitterSizes);
-        }
+        split(Qt::Vertical);
     } else if (keyEvent->text() == "v") {
-        ui->splitter->setOrientation(Qt::Horizontal);
-        if (onlyMode()) {
-            ui->splitter->setSizes(splitterSizes);
-        }
+        split(Qt::Horizontal);
     } else if (keyEvent->text() == "o") {
         if (!onlyMode() && ui->oldCode->hasFocus()) {
             splitterSizes = ui->splitter->sizes();
@@ -652,6 +646,18 @@ ZSDiff::alignViews()
                - ui->oldCode->verticalScrollBar()->sliderPosition();
 
     syncScrolls = true;
+}
+
+void
+ZSDiff::split(Qt::Orientation orientation)
+{
+    ui->splitter->setOrientation(orientation);
+    activeView()->ensureCursorVisible();
+    highlightMatch(activeView());
+    syncScrollTo(activeView());
+    if (onlyMode()) {
+        ui->splitter->setSizes(splitterSizes);
+    }
 }
 
 void
