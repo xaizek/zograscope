@@ -1,5 +1,5 @@
-#ifndef CODEVIEW_HPP
-#define CODEVIEW_HPP
+#ifndef ZOGRASCOPE__TOOLS__GDIFF__CODEVIEW_HPP__
+#define ZOGRASCOPE__TOOLS__GDIFF__CODEVIEW_HPP__
 
 #include <QPlainTextEdit>
 
@@ -59,4 +59,4 @@ private:
     std::vector<StablePos> positions;
 };
 
-#endif // CODEVIEW_HPP
+#endif // ZOGRASCOPE__TOOLS__GDIFF__CODEVIEW_HPP__

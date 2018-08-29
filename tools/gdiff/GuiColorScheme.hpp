@@ -1,5 +1,5 @@
-#ifndef GUICOLORSCHEME_HPP
-#define GUICOLORSCHEME_HPP
+#ifndef ZOGRASCOPE__TOOLS__GDIFF__GUICOLORSCHEME_HPP__
+#define ZOGRASCOPE__TOOLS__GDIFF__GUICOLORSCHEME_HPP__
 
 #include <array>
 
@@ -20,4 +20,4 @@ private:
                static_cast<std::size_t>(ColorGroup::ColorGroupCount)> groups;
 };
 
-#endif // GUICOLORSCHEME_HPP
+#endif // ZOGRASCOPE__TOOLS__GDIFF__GUICOLORSCHEME_HPP__

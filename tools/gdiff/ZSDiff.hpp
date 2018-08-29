@@ -1,5 +1,5 @@
-#ifndef ZSDIFF_HPP
-#define ZSDIFF_HPP
+#ifndef ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
+#define ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
 
 #include <map>
 #include <memory>
@@ -93,4 +93,4 @@ private:
     std::vector<bool> leftFolded, rightFolded;
 };
 
-#endif // ZSDIFF_HPP
+#endif // ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
