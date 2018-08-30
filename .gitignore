@@ -10,6 +10,7 @@ config.mk
 /zs-hi
 /zs-diff
 /zs-find
+/zs-gdiff
 /zs-stats
 /libzograscope.a
 *.o
