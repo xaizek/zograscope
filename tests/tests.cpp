@@ -56,9 +56,11 @@ enum class Changes
 static bool isParsed(const std::string &fileName, const std::string &str);
 static Tree parse(const std::string &fileName, const std::string &str,
                   bool coarse);
-static void diffSources(const std::string &left, const std::string &right,
-                        bool skipRefine, const std::string &fileName,
-                        const std::string &marker);
+static std::string diffSources(const std::string &left,
+                               const std::string &right,
+                               bool skipRefine,
+                               const std::string &fileName,
+                               const std::string &marker);
 static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src, const std::string &marker);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
@@ -229,27 +231,30 @@ normalizeText(const std::string &s)
     return result;
 }
 
-void
+#undef diffC
+std::string
 diffC(const std::string &left, const std::string &right, bool skipRefine)
 {
-    diffSources(left, right, skipRefine, "test-input.c", "/// ");
+    return diffSources(left, right, skipRefine, "test-input.c", "/// ");
 }
 
-void
+#undef diffMake
+std::string
 diffMake(const std::string &left, const std::string &right)
 {
-    diffSources(left, right, true, "Makefile.test", "## ");
+    return diffSources(left, right, true, "Makefile.test", "## ");
 }
 
-void
+#undef diffSrcmlCxx
+std::string
 diffSrcmlCxx(const std::string &left, const std::string &right)
 {
-    diffSources(left, right, true, "test-input.cpp", "/// ");
+    return diffSources(left, right, true, "test-input.cpp", "/// ");
 }
 
 // Compares two sources with expectation being embedded in them in form of
-// trailing markers.
-static void
+// trailing markers.  Returns difference report.
+static std::string
 diffSources(const std::string &left, const std::string &right, bool skipRefine,
             const std::string &fileName, const std::string &marker)
 {
@@ -267,15 +272,9 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     std::vector<Changes> oldMap = makeChangeMap(oldTree);
     std::vector<Changes> newMap = makeChangeMap(newTree);
 
-    bool needPrint = false;
-    CHECKED_ELSE(oldMap == expectedOld) {
-        needPrint = true;
-    }
-    CHECKED_ELSE(newMap == expectedNew) {
-        needPrint = true;
-    }
+    bool differ = (oldMap != expectedOld || newMap != expectedNew);
 
-    if (needPrint) {
+    if (differ) {
         Tree oldTree = parse(fileName, cleanedLeft, true);
         Tree newTree = parse(fileName, cleanedRight, true);
 
@@ -283,14 +282,19 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
 
         decor::enableDecorations();
 
+        std::ostringstream oss;
         Printer printer(*oldTree.getRoot(), annotate(expectedOld, oldMap),
                         *newTree.getRoot(), annotate(expectedNew, newMap),
-                        *oldTree.getLanguage(), std::cout);
+                        *oldTree.getLanguage(), oss);
         printer.addHeader({ "old", "new" });
         printer.print(tr);
 
         decor::disableDecorations();
+
+        return oss.str();
     }
+
+    return std::string();
 }
 
 static std::pair<std::string, std::vector<Changes>>
@@ -471,4 +475,10 @@ operator<<(std::ostream &os, Changes changes)
     }
 
     return (os << "Unknown Changes value");
+}
+
+void
+reportDiffFailure(const std::string &report)
+{
+    std::cout << report;
 }
