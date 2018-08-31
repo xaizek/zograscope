@@ -20,8 +20,8 @@
 
 #include <array>
 
-#include "decoration.hpp"
 #include "colors.hpp"
+#include "decoration.hpp"
 
 class ColorScheme
 {
