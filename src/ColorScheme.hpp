@@ -23,8 +23,6 @@
 #include "decoration.hpp"
 #include "colors.hpp"
 
-enum class ColorGroup;
-
 class ColorScheme
 {
 public:
