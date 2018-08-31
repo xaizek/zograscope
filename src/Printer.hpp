@@ -26,31 +26,40 @@ class Language;
 class Node;
 class TimeReport;
 
+// Single table header for the printer.
 struct Header
 {
-    std::string left;
-    std::string right;
+    std::string left;  // Left side value.
+    std::string right; // Right side value.
 };
 
+// Prints two trees with nodes marked with comparison states along side each
+// other with highlighting and alignment as textual table into a stream.
 class Printer
 {
 public:
+    // Remembers arguments for future use.  The references must be valid while
+    // the object exists.
     Printer(const Node &left, const Node &right, const Language &lang,
             std::ostream &os);
+    // Analogous constructor which additionally accepts annotations which are
+    // prepended to source lines.
     Printer(const Node &left, std::vector<std::string> &&leftAnnots,
             const Node &right, std::vector<std::string> &&rightAnnots,
             const Language &lang, std::ostream &os);
 
 public:
+    // Adds table header.
     void addHeader(Header header);
+    // Performs printing.
     void print(TimeReport &tr);
 
 private:
-    const Node &left, &right;
-    std::vector<std::string> leftAnnots, rightAnnots;
-    const Language &lang;
-    std::ostream &os;
-    std::vector<Header> headers;
+    const Node &left, &right;                         // Tree roots.
+    std::vector<std::string> leftAnnots, rightAnnots; // Annotations.
+    const Language &lang;                             // Language of the trees.
+    std::ostream &os;                                 // Output stream.
+    std::vector<Header> headers;                      // Table headers.
 };
 
 #endif // ZOGRASCOPE__PRINTER_HPP__
