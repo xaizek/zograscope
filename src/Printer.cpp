@@ -419,7 +419,7 @@ private:
 
 }
 
-Printer::Printer(Node &left, Node &right, const Language &lang,
+Printer::Printer(const Node &left, const Node &right, const Language &lang,
                  std::ostream &os)
     : left(left), right(right), lang(lang), os(os)
 {

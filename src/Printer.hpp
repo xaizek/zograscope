@@ -35,15 +35,16 @@ struct Header
 class Printer
 {
 public:
-    Printer(Node &left, Node &right, const Language &lang, std::ostream &os);
+    Printer(const Node &left, const Node &right, const Language &lang,
+            std::ostream &os);
 
 public:
     void addHeader(Header header);
     void print(TimeReport &tr);
 
 private:
-    Node &left;
-    Node &right;
+    const Node &left;
+    const Node &right;
     const Language &lang;
     std::ostream &os;
     std::vector<Header> headers;
