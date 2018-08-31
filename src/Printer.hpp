@@ -37,14 +37,17 @@ class Printer
 public:
     Printer(const Node &left, const Node &right, const Language &lang,
             std::ostream &os);
+    Printer(const Node &left, std::vector<std::string> &&leftAnnots,
+            const Node &right, std::vector<std::string> &&rightAnnots,
+            const Language &lang, std::ostream &os);
 
 public:
     void addHeader(Header header);
     void print(TimeReport &tr);
 
 private:
-    const Node &left;
-    const Node &right;
+    const Node &left, &right;
+    std::vector<std::string> leftAnnots, rightAnnots;
     const Language &lang;
     std::ostream &os;
     std::vector<Header> headers;

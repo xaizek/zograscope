@@ -425,6 +425,15 @@ Printer::Printer(const Node &left, const Node &right, const Language &lang,
 {
 }
 
+Printer::Printer(const Node &left, std::vector<std::string> &&leftAnnots,
+                 const Node &right, std::vector<std::string> &&rightAnnots,
+                 const Language &lang, std::ostream &os)
+    : left(left), right(right),
+      leftAnnots(std::move(leftAnnots)), rightAnnots(std::move(rightAnnots)),
+      lang(lang), os(os)
+{
+}
+
 void
 Printer::addHeader(Header header)
 {
@@ -451,6 +460,15 @@ Printer::print(TimeReport &tr)
 
     LayoutBuilder layoutBuilder(lsrc, rsrc, headers);
 
+    auto annotate = [](std::string &str,
+                       const std::vector<std::string> &annots,
+                       std::size_t index) {
+        if (index < annots.size()) {
+            str.insert(str.begin(),
+                       annots[index].cbegin(), annots[index].cend());
+        }
+    };
+
     unsigned int i = 0U, j = 0U;
     for (DiffLine d : diff) {
         if (d.type == Diff::Fold) {
@@ -462,12 +480,14 @@ Printer::print(TimeReport &tr)
         if (d.type != Diff::Right) {
             if (layoutBuilder.isLeftVisible()) {
                 l[i] = lh.print(i + 1, 1);
+                annotate(l[i], leftAnnots, i);
             }
             layoutBuilder.measureLeft(l[i++]);
         }
         if (d.type != Diff::Left) {
             if (layoutBuilder.isRightVisible()) {
                 r[j] = rh.print(j + 1, 1);
+                annotate(r[j], rightAnnots, j);
             }
             layoutBuilder.measureRight(r[j++]);
         }
