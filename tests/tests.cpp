@@ -20,9 +20,11 @@
 #include "Catch/catch.hpp"
 
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,14 +56,18 @@ enum class Changes
 static bool isParsed(const std::string &fileName, const std::string &str);
 static Tree parse(const std::string &fileName, const std::string &str,
                   bool coarse);
-static void diffSources(const std::string &left, const std::string &right,
-                        bool skipRefine, const std::string &fileName,
-                        const std::string &marker);
+static std::string diffSources(const std::string &left,
+                               const std::string &right,
+                               bool skipRefine,
+                               const std::string &fileName,
+                               const std::string &marker);
 static std::pair<std::string, std::vector<Changes>>
 extractExpectations(const std::string &src, const std::string &marker);
 static std::pair<std::string, std::string> splitAt(const boost::string_ref &s,
                                                    const std::string &delim);
 static std::vector<Changes> makeChangeMap(Tree &tree);
+static std::vector<std::string> annotate(const std::vector<Changes> &expected,
+                                         const std::vector<Changes> &actual);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
 
 bool
@@ -225,27 +231,30 @@ normalizeText(const std::string &s)
     return result;
 }
 
-void
+#undef diffC
+std::string
 diffC(const std::string &left, const std::string &right, bool skipRefine)
 {
-    diffSources(left, right, skipRefine, "test-input.c", "/// ");
+    return diffSources(left, right, skipRefine, "test-input.c", "/// ");
 }
 
-void
+#undef diffMake
+std::string
 diffMake(const std::string &left, const std::string &right)
 {
-    diffSources(left, right, true, "Makefile.test", "## ");
+    return diffSources(left, right, true, "Makefile.test", "## ");
 }
 
-void
+#undef diffSrcmlCxx
+std::string
 diffSrcmlCxx(const std::string &left, const std::string &right)
 {
-    diffSources(left, right, true, "test-input.cpp", "/// ");
+    return diffSources(left, right, true, "test-input.cpp", "/// ");
 }
 
 // Compares two sources with expectation being embedded in them in form of
-// trailing markers.
-static void
+// trailing markers.  Returns difference report.
+static std::string
 diffSources(const std::string &left, const std::string &right, bool skipRefine,
             const std::string &fileName, const std::string &marker)
 {
@@ -263,29 +272,29 @@ diffSources(const std::string &left, const std::string &right, bool skipRefine,
     std::vector<Changes> oldMap = makeChangeMap(oldTree);
     std::vector<Changes> newMap = makeChangeMap(newTree);
 
-    bool needPrint = false;
-    CHECKED_ELSE(oldMap == expectedOld) {
-        needPrint = true;
-    }
-    CHECKED_ELSE(newMap == expectedNew) {
-        needPrint = true;
-    }
+    bool differ = (oldMap != expectedOld || newMap != expectedNew);
 
-    if (needPrint) {
-        Tree oldTree = parse(fileName, left, true);
-        Tree newTree = parse(fileName, right, true);
+    if (differ) {
+        Tree oldTree = parse(fileName, cleanedLeft, true);
+        Tree newTree = parse(fileName, cleanedRight, true);
 
         compare(oldTree, newTree, tr, true, skipRefine);
 
         decor::enableDecorations();
 
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                        *oldTree.getLanguage(), std::cout);
+        std::ostringstream oss;
+        Printer printer(*oldTree.getRoot(), annotate(expectedOld, oldMap),
+                        *newTree.getRoot(), annotate(expectedNew, newMap),
+                        *oldTree.getLanguage(), oss);
         printer.addHeader({ "old", "new" });
         printer.print(tr);
 
         decor::disableDecorations();
+
+        return oss.str();
     }
+
+    return std::string();
 }
 
 static std::pair<std::string, std::vector<Changes>>
@@ -422,6 +431,36 @@ makeChangeMap(Tree &tree)
     return map;
 }
 
+// Generates per-line annotations for source code based on expected and actual
+// changes.
+static std::vector<std::string>
+annotate(const std::vector<Changes> &expected,
+         const std::vector<Changes> &actual)
+{
+    std::vector<std::string> annots;
+    annots.reserve(expected.size());
+
+    auto mismatch = decor::red_bg + decor::white_fg + decor::bold;
+    auto match = decor::green_fg;
+
+    std::ostringstream oss;
+    for (std::size_t i = 0U; i < expected.size(); ++i) {
+        bool matched = (actual[i] == expected[i]);
+        if (!matched) {
+            oss << mismatch;
+        } else {
+            oss << match;
+        }
+        oss << std::setw(9) << expected[i];
+        oss << decor::def;
+        oss << '|';
+        annots.push_back(oss.str());
+        oss.str(std::string());
+    }
+
+    return annots;
+}
+
 static std::ostream &
 operator<<(std::ostream &os, Changes changes)
 {
@@ -436,4 +475,10 @@ operator<<(std::ostream &os, Changes changes)
     }
 
     return (os << "Unknown Changes value");
+}
+
+void
+reportDiffFailure(const std::string &report)
+{
+    std::cout << report;
 }

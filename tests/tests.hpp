@@ -153,15 +153,38 @@ int countInternal(const Node &root, SType stype, State state);
 std::string normalizeText(const std::string &s);
 
 // Compares two C sources with expectation being embedded in them in form of
-// trailing `/// <expectation>` markers.
-void diffC(const std::string &left, const std::string &right, bool skipRefine);
+// trailing `/// <expectation>` markers.  Returns difference report.
+std::string diffC(const std::string &left, const std::string &right,
+                  bool skipRefine);
+// This is a wrapper that makes reported failure point be somewhere in the test.
+#define diffC(left, right, skipRefine) do { \
+        std::string difference = diffC((left), (right), (skipRefine)); \
+        CHECK(difference.empty()); \
+        reportDiffFailure(difference); \
+    } while (false)
 
 // Compares two Make sources with expectation being embedded in them in form of
-// trailing `## <expectation>` markers.
-void diffMake(const std::string &left, const std::string &right);
+// trailing `## <expectation>` markers.  Returns difference report.
+std::string diffMake(const std::string &left, const std::string &right);
+// This is a wrapper that makes reported failure point be somewhere in the test.
+#define diffMake(left, right) do { \
+        std::string difference = diffMake((left), (right)); \
+        CHECK(difference.empty()); \
+        reportDiffFailure(difference); \
+    } while (false)
 
 // Compares two C++ sources with expectation being embedded in them in form of
-// trailing `/// <expectation>` markers.
-void diffSrcmlCxx(const std::string &left, const std::string &right);
+// trailing `/// <expectation>` markers.  Returns difference report.
+std::string diffSrcmlCxx(const std::string &left, const std::string &right);
+// This is a wrapper that makes reported failure point be somewhere in the test.
+#define diffSrcmlCxx(left, right) do { \
+        std::string difference = diffSrcmlCxx((left), (right)); \
+        CHECK(difference.empty()); \
+        reportDiffFailure(difference); \
+    } while (false)
+
+// Prints report.  This function is needed to make out custom output appear
+// after Catch's failure report.
+void reportDiffFailure(const std::string &report);
 
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__

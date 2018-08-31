@@ -20,10 +20,8 @@
 
 #include <array>
 
-#include "decoration.hpp"
 #include "colors.hpp"
-
-enum class ColorGroup;
+#include "decoration.hpp"
 
 class ColorScheme
 {
