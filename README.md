@@ -2,6 +2,13 @@
 
 ![Screenshot](data/examples/c/screenshot.png)
 
+1. [Description](#description)
+2. [Tools](#tools)
+3. [Building and Installing](#building-and-installing)
+4. [Documentation](#documentation)
+5. [License](#license)
+6. [Credits](#credits)
+
 ## Name ##
 
 "A zograscope is an optical device for enhancing the sense of depth perception
@@ -108,7 +115,7 @@ Simple syntax highlighter for xterm-256color palette.
 
 Counter of lines of code.
 
-## Building and installing ##
+## Building and Installing ##
 
 ```
 echo 'HAVE_QT5 := yes' > config.mk # if Qt5 is available
