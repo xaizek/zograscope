@@ -17,14 +17,10 @@
 
 #include "common.hpp"
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -32,6 +28,7 @@
 #include <boost/optional.hpp>
 #include "pmr/monolithic.hpp"
 
+#include "utils/fs.hpp"
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
 #include "Language.hpp"
@@ -44,7 +41,6 @@ namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args,
                                       po::options_description &options);
-static std::string readFile(const std::string &path);
 
 void
 Environment::setup(const std::vector<std::string> &argv)
@@ -165,23 +161,6 @@ buildTreeFromFile(const std::string &path, const std::string &contents,
     }
 
     return optional_t<Tree>(std::move(t));
-}
-
-static std::string
-readFile(const std::string &path)
-{
-    if (boost::filesystem::is_directory(path)) {
-        throw std::runtime_error("Not a regular file: " + path);
-    }
-
-    std::ifstream ifile(path);
-    if (!ifile) {
-        throw std::runtime_error("Can't open file: " + path);
-    }
-
-    std::ostringstream iss;
-    iss << ifile.rdbuf();
-    return iss.str();
 }
 
 void
