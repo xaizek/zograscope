@@ -23,6 +23,7 @@
 
 #include "tooling/common.hpp"
 
+#include "DiffList.hpp"
 #include "ZSDiff.hpp"
 
 int
@@ -52,8 +53,8 @@ main(int argc, char *argv[]) try
     }
 
     const bool git = (args.pos.size() != 2U);
-    const std::string &oldFile = (git ? args.pos[1] : args.pos[0]);
-    const std::string &newFile = (git ? args.pos[4] : args.pos[1]);
+    const DiffEntryFile oldFile = (git ? args.pos[1] : args.pos[0]);
+    const DiffEntryFile newFile = (git ? args.pos[4] : args.pos[1]);
 
     ZSDiff w(oldFile, newFile, env.getTimeKeeper());
     w.show();

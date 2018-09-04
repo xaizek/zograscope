@@ -12,7 +12,8 @@ SOURCES += \
     GuiColorScheme.cpp \
     SynHi.cpp \
     BlankLineAttr.cpp \
-    FoldTextAttr.cpp
+    FoldTextAttr.cpp \
+    DiffList.cpp
 
 HEADERS += \
     ZSDiff.hpp \
@@ -20,7 +21,8 @@ HEADERS += \
     GuiColorScheme.hpp \
     SynHi.hpp \
     BlankLineAttr.hpp \
-    FoldTextAttr.hpp
+    FoldTextAttr.hpp \
+    DiffList.hpp
 
 FORMS += \
     zsdiff.ui

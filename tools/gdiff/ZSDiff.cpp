@@ -39,6 +39,7 @@
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
 #include "ColorCane.hpp"
+#include "DiffList.hpp"
 #include "Highlighter.hpp"
 #include "TreeBuilder.hpp"
 #include "Language.hpp"
@@ -60,10 +61,10 @@ struct ZSDiff::SideInfo
 
 // Parses source into a tree.
 static Tree
-parse(const std::string &fileName, TimeReport &tr, cpp17::pmr::monolithic *mr)
+parse(const DiffEntryFile &file, TimeReport &tr, cpp17::pmr::monolithic *mr)
 {
     CommonArgs args = {};
-    return *buildTreeFromFile(fileName, args, tr, mr);
+    return *buildTreeFromFile(file.path, file.contents, args, tr, mr);
 }
 
 Q_DECLARE_METATYPE(TokenInfo *)
@@ -133,7 +134,7 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     return { std::move(hi), std::move(map) };
 }
 
-ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
+ZSDiff::ZSDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile,
                TimeReport &tr, QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),

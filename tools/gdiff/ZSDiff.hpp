@@ -41,6 +41,7 @@ class ZSDiff;
 class QPlainTextEdit;
 class QTextCharFormat;
 
+class DiffEntryFile;
 class Node;
 class TimeReport;
 class SynHi;
@@ -60,7 +61,7 @@ class ZSDiff : public QMainWindow
     struct SideInfo;
 
 public:
-    ZSDiff(const std::string &oldFile, const std::string &newFile,
+    ZSDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile,
            TimeReport &tr, QWidget *parent = nullptr);
     ~ZSDiff();
 
