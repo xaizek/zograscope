@@ -135,11 +135,17 @@ optional_t<Tree>
 buildTreeFromFile(const std::string &path, const CommonArgs &args,
                   TimeReport &tr, cpp17::pmr::memory_resource *mr)
 {
+    return buildTreeFromFile(path, readFile(path), args, tr, mr);
+}
+
+optional_t<Tree>
+buildTreeFromFile(const std::string &path, const std::string &contents,
+                  const CommonArgs &args, TimeReport &tr,
+                  cpp17::pmr::memory_resource *mr)
+{
     auto timer = tr.measure("parsing: " + path);
 
     std::unique_ptr<Language> lang = Language::create(path, args.lang);
-
-    const std::string contents = readFile(path);
 
     cpp17::pmr::monolithic localMR;
 

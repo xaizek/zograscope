@@ -96,7 +96,15 @@ private:
 
 // Reads and parses a file to build its tree.
 optional_t<Tree> buildTreeFromFile(const std::string &path,
-                                   const CommonArgs &args, TimeReport &tr,
+                                   const CommonArgs &args,
+                                   TimeReport &tr,
+                                   cpp17::pmr::memory_resource *mr);
+
+// Parses a file to build its tree.
+optional_t<Tree> buildTreeFromFile(const std::string &path,
+                                   const std::string &contents,
+                                   const CommonArgs &args,
+                                   TimeReport &tr,
                                    cpp17::pmr::memory_resource *mr);
 
 void dumpTree(const CommonArgs &args, Tree &tree);
