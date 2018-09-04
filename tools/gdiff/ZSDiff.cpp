@@ -52,8 +52,6 @@
 #include "SynHi.hpp"
 #include "ui_zsdiff.h"
 
-const int matchProperty = QTextFormat::UserProperty + 2;
-
 struct ZSDiff::SideInfo
 {
     std::vector<ColorCane> hi;
@@ -64,8 +62,6 @@ struct ZSDiff::SideInfo
 static Tree
 parse(const std::string &fileName, TimeReport &tr, cpp17::pmr::monolithic *mr)
 {
-    std::unique_ptr<Language> lang = Language::create(fileName);
-
     CommonArgs args = {};
     return *buildTreeFromFile(fileName, args, tr, mr);
 }
