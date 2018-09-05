@@ -20,6 +20,7 @@
 #include <cstdlib>
 
 #include <iostream>
+#include <utility>
 
 #include "tooling/common.hpp"
 
@@ -53,12 +54,14 @@ main(int argc, char *argv[]) try
     }
 
     const bool git = (args.pos.size() != 2U);
-    const DiffEntry diffEntry = {
+    DiffEntry diffEntry = {
         (git ? args.pos[1] : args.pos[0]),
         (git ? args.pos[4] : args.pos[1])
     };
+    DiffList diffList;
+    diffList.add(std::move(diffEntry));
 
-    ZSDiff w(diffEntry, env.getTimeKeeper());
+    ZSDiff w(std::move(diffList), env.getTimeKeeper());
     w.show();
 
     int result = app.exec();

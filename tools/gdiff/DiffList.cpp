@@ -31,3 +31,43 @@ DiffEntryFile::DiffEntryFile(std::string path) : path(std::move(path))
 DiffEntryFile::DiffEntryFile(std::string path, std::string contents)
     : path(std::move(path)), contents(std::move(contents))
 { }
+
+void
+DiffList::add(DiffEntry entry)
+{
+    entries.push_back(std::move(entry));
+}
+
+bool
+DiffList::empty() const
+{
+    return entries.empty();
+}
+
+const DiffEntry &
+DiffList::getCurrent() const
+{
+    return entries[current];
+}
+
+const std::vector<DiffEntry> &
+DiffList::getEntries() const
+{
+    return entries;
+}
+
+void
+DiffList::nextEntry()
+{
+    if (current + 1 < entries.size()) {
+        ++current;
+    }
+}
+
+void
+DiffList::previousEntry()
+{
+    if (current > 0U) {
+        --current;
+    }
+}

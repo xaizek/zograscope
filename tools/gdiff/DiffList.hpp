@@ -26,6 +26,7 @@ struct DiffEntryFile
     std::string path;
     std::string contents;
 
+    DiffEntryFile() = default;
     DiffEntryFile(std::string path);
     DiffEntryFile(std::string path, std::string contents);
 };
@@ -34,6 +35,23 @@ struct DiffEntry
 {
     DiffEntryFile original;
     DiffEntryFile updated;
+};
+
+class DiffList
+{
+public:
+    void add(DiffEntry entry);
+
+    bool empty() const;
+    const DiffEntry & getCurrent() const;
+    const std::vector<DiffEntry> & getEntries() const;
+
+    void nextEntry();
+    void previousEntry();
+
+private:
+    std::vector<DiffEntry> entries;
+    unsigned int current = 0U;
 };
 
 #endif // ZOGRASCOPE__TOOLS__GDIFF__DIFFLIST_HPP__

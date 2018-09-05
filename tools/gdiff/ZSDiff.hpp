@@ -31,6 +31,7 @@
 
 #include "BlankLineAttr.hpp"
 #include "CodeView.hpp"
+#include "DiffList.hpp"
 #include "FoldTextAttr.hpp"
 #include "GuiColorScheme.hpp"
 
@@ -41,7 +42,6 @@ class ZSDiff;
 class QPlainTextEdit;
 class QTextCharFormat;
 
-class DiffEntry;
 class Node;
 class TimeReport;
 class SynHi;
@@ -61,8 +61,7 @@ class ZSDiff : public QMainWindow
     struct SideInfo;
 
 public:
-    ZSDiff(const DiffEntry &diffEntry, TimeReport &tr,
-           QWidget *parent = nullptr);
+    ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent = nullptr);
     ~ZSDiff();
 
 private:
@@ -111,6 +110,7 @@ private:
     // Whether respective lines supposed to be folded.
     std::vector<bool> leftFolded, rightFolded;
     TimeReport &timeReport;
+    DiffList diffList;
 };
 
 #endif // ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
