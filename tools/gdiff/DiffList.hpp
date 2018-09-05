@@ -30,4 +30,10 @@ struct DiffEntryFile
     DiffEntryFile(std::string path, std::string contents);
 };
 
+struct DiffEntry
+{
+    DiffEntryFile original;
+    DiffEntryFile updated;
+};
+
 #endif // ZOGRASCOPE__TOOLS__GDIFF__DIFFLIST_HPP__

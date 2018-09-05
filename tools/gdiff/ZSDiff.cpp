@@ -134,8 +134,7 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     return { std::move(hi), std::move(map) };
 }
 
-ZSDiff::ZSDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile,
-               TimeReport &tr, QWidget *parent)
+ZSDiff::ZSDiff(const DiffEntry &diffEntry, TimeReport &tr, QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
       scrollDiff(0),
@@ -148,14 +147,14 @@ ZSDiff::ZSDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile,
       timeReport(tr)
 {
     ui->setupUi(this);
-    loadDiff(oldFile, newFile);
+    loadDiff(diffEntry);
 }
 
 void
-ZSDiff::loadDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile)
+ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
-    oldTree = parse(oldFile, timeReport, &mr);
-    newTree = parse(newFile, timeReport, &mr);
+    oldTree = parse(diffEntry.original, timeReport, &mr);
+    newTree = parse(diffEntry.updated, timeReport, &mr);
 
     compare(oldTree, newTree, timeReport, true, false);
 

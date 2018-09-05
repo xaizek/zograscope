@@ -53,10 +53,12 @@ main(int argc, char *argv[]) try
     }
 
     const bool git = (args.pos.size() != 2U);
-    const DiffEntryFile oldFile = (git ? args.pos[1] : args.pos[0]);
-    const DiffEntryFile newFile = (git ? args.pos[4] : args.pos[1]);
+    const DiffEntry diffEntry = {
+        (git ? args.pos[1] : args.pos[0]),
+        (git ? args.pos[4] : args.pos[1])
+    };
 
-    ZSDiff w(oldFile, newFile, env.getTimeKeeper());
+    ZSDiff w(diffEntry, env.getTimeKeeper());
     w.show();
 
     int result = app.exec();
