@@ -125,11 +125,6 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     }
 
     textEdit->setStopPositions(std::move(stopPositions));
-    textEdit->document()->setDocumentMargin(1);
-
-    // textEdit->document()->findBlockByNumber(10).setVisible(false);
-    textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse |
-                                      Qt::TextSelectableByKeyboard);
 
     return { std::move(hi), std::move(map) };
 }
@@ -148,6 +143,26 @@ ZSDiff::ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent)
       diffList(std::move(diffList))
 {
     ui->setupUi(this);
+
+    qApp->installEventFilter(this);
+
+    ui->oldCode->setTextInteractionFlags(Qt::TextSelectableByMouse |
+                                         Qt::TextSelectableByKeyboard);
+    ui->oldCode->document()->setDocumentMargin(1);
+    ui->newCode->setTextInteractionFlags(Qt::TextSelectableByMouse |
+                                         Qt::TextSelectableByKeyboard);
+    ui->newCode->document()->setDocumentMargin(1);
+
+    ui->mainToolBar->hide();
+    ui->statusBar->showMessage("Press F1 to toggle help");
+
+    QFile file(":/help.html");
+    if (file.open(QFile::ReadOnly)) {
+        ui->helpTextBrowser->setHtml(file.readAll());
+    } else {
+        ui->helpTextBrowser->setText("Loading help failed");
+    }
+
     loadDiff(this->diffList.getCurrent());
 }
 
@@ -215,8 +230,6 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
     connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
 
-    qApp->installEventFilter(this);
-
     // Navigate to first change in old or new version of the code and  highlight
     // current line.
     if (ui->oldCode->goToFirstStopPosition()) {
@@ -224,16 +237,6 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     } else {
         ui->newCode->goToFirstStopPosition();
         ui->newCode->setFocus();
-    }
-
-    ui->mainToolBar->hide();
-    ui->statusBar->showMessage("Press F1 to toggle help");
-
-    QFile file(":/help.html");
-    if (file.open(QFile::ReadOnly)) {
-        ui->helpTextBrowser->setHtml(file.readAll());
-    } else {
-        ui->helpTextBrowser->setText("Loading help failed");
     }
 }
 
