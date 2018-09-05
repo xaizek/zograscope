@@ -144,14 +144,20 @@ ZSDiff::ZSDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile,
       firstTimeFocus(true),
       folded(false),
       oldTree(&mr),
-      newTree(&mr)
+      newTree(&mr),
+      timeReport(tr)
 {
     ui->setupUi(this);
+    loadDiff(oldFile, newFile);
+}
 
-    oldTree = parse(oldFile, tr, &mr);
-    newTree = parse(newFile, tr, &mr);
+void
+ZSDiff::loadDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile)
+{
+    oldTree = parse(oldFile, timeReport, &mr);
+    newTree = parse(newFile, timeReport, &mr);
 
-    compare(oldTree, newTree, tr, true, false);
+    compare(oldTree, newTree, timeReport, true, false);
 
     QTextDocument *oldDoc = ui->oldCode->document();
     QTextDocument *newDoc = ui->newCode->document();
@@ -172,7 +178,7 @@ ZSDiff::ZSDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile,
     newDoc->documentLayout()->registerHandler(foldTextAttr.getType(),
                                               &foldTextAttr);
 
-    diffAndPrint(tr);
+    diffAndPrint(timeReport);
     fold();
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);

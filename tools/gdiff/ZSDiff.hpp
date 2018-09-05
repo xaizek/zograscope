@@ -66,6 +66,7 @@ public:
     ~ZSDiff();
 
 private:
+    void loadDiff(const DiffEntryFile &oldFile, const DiffEntryFile &newFile);
     SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
     void diffAndPrint(TimeReport &tr);
     void highlightMatch(QPlainTextEdit *textEdit);
@@ -109,6 +110,7 @@ private:
     FoldTextAttr foldTextAttr;
     // Whether respective lines supposed to be folded.
     std::vector<bool> leftFolded, rightFolded;
+    TimeReport &timeReport;
 };
 
 #endif // ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
