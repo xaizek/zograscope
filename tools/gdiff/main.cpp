@@ -19,6 +19,9 @@
 
 #include <cstdlib>
 
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+
 #include <iostream>
 #include <utility>
 
@@ -28,18 +31,27 @@
 #include "Repository.hpp"
 #include "ZSDiff.hpp"
 
+// Tool-specific type for holding arguments.
+struct Args : CommonArgs
+{
+    bool staged; // Use staged changes instead of unstaged.
+};
+
+static boost::program_options::options_description getLocalOpts();
+static Args parseLocalArgs(const Environment &env);
+
 int
 main(int argc, char *argv[]) try
 {
     QApplication app(argc, argv);
 
-    Environment env;
+    Environment env(getLocalOpts());
     env.setup({ argv + 1, argv + argc });
 
-    const CommonArgs &args = env.getCommonArgs();
+    Args args = parseLocalArgs(env);
 
     if (args.help) {
-        std::cout << "Usage: zs-gdiff [options...]\n"
+        std::cout << "Usage: zs-gdiff [options...] [--cached]\n"
                   << "   or: zs-gdiff [options...] old-file new-file\n"
                   << "   or: zs-gdiff [options...] <7 or 9 args from git>\n"
                   << "\n"
@@ -58,7 +70,7 @@ main(int argc, char *argv[]) try
     DiffList diffList;
     const bool statusDiff = (args.pos.size() == 0U);
     if (statusDiff) {
-        for (DiffEntry &diffEntry : Repository(".").listStatus(false)) {
+        for (DiffEntry &diffEntry : Repository(".").listStatus(args.staged)) {
             diffList.add(std::move(diffEntry));
         }
     } else {
@@ -84,4 +96,27 @@ main(int argc, char *argv[]) try
 } catch (const std::exception &e) {
     std::cerr << "ERROR: " << e.what() << '\n';
     return EXIT_FAILURE;
+}
+
+static boost::program_options::options_description
+getLocalOpts()
+{
+    boost::program_options::options_description options;
+    options.add_options()
+        ("cached", "use staged changes instead of unstaged");
+
+    return options;
+}
+
+static Args
+parseLocalArgs(const Environment &env)
+{
+    Args args;
+    static_cast<CommonArgs &>(args) = env.getCommonArgs();
+
+    const boost::program_options::variables_map &varMap = env.getVarMap();
+
+    args.staged = varMap.count("cached");
+
+    return args;
 }
