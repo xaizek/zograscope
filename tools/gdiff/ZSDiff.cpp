@@ -657,16 +657,18 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         switchView();
     } else if (keyEvent->key() == Qt::Key_N &&
                keyEvent->modifiers() == Qt::ControlModifier) {
-        diffList.nextEntry();
-        ui->oldCode->clear();
-        ui->newCode->clear();
-        loadDiff(diffList.getCurrent());
+        if (diffList.nextEntry()) {
+            ui->oldCode->clear();
+            ui->newCode->clear();
+            loadDiff(diffList.getCurrent());
+        }
     } else if (keyEvent->key() == Qt::Key_P &&
                keyEvent->modifiers() == Qt::ControlModifier) {
-        diffList.previousEntry();
-        ui->oldCode->clear();
-        ui->newCode->clear();
-        loadDiff(diffList.getCurrent());
+        if (diffList.previousEntry()) {
+            ui->oldCode->clear();
+            ui->newCode->clear();
+            loadDiff(diffList.getCurrent());
+        }
     } else if (keyEvent->key() == Qt::Key_F1) {
         int newIndex = 1 - ui->stackedWidget->currentIndex();
         ui->stackedWidget->setCurrentIndex(newIndex);

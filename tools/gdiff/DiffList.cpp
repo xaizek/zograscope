@@ -65,18 +65,22 @@ DiffList::getEntries() const
     return entries;
 }
 
-void
+bool
 DiffList::nextEntry()
 {
     if (current + 1 < entries.size()) {
         ++current;
+        return true;
     }
+    return false;
 }
 
-void
+bool
 DiffList::previousEntry()
 {
     if (current > 0U) {
         --current;
+        return true;
     }
+    return false;
 }

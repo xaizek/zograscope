@@ -48,8 +48,8 @@ public:
     const DiffEntry & getCurrent() const;
     const std::vector<DiffEntry> & getEntries() const;
 
-    void nextEntry();
-    void previousEntry();
+    bool nextEntry();
+    bool previousEntry();
 
 private:
     std::vector<DiffEntry> entries;
