@@ -161,6 +161,9 @@ ZSDiff::ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent)
 void
 ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
+    ui->oldLabel->setText(QString("--- %1").arg(diffEntry.original.title.c_str()));
+    ui->newLabel->setText(QString("+++ %1").arg(diffEntry.updated.title.c_str()));
+
     if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.original.path,
                                                     diffEntry.original.contents,
                                                     {}, timeReport, &mr)) {
