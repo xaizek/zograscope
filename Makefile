@@ -11,7 +11,8 @@ PREFIX  := /usr
 # a variable that can be overridden to control which tests to run
 TESTS :=
 
-HAVE_QT5 := no
+# optional build-time dependencies
+QT5_PROG :=
 
 ifneq ($(OS),Windows_NT)
     bin_suffix :=

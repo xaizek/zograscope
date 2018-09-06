@@ -117,8 +117,9 @@ Counter of lines of code.
 
 ## Building and Installing ##
 
-```
-echo 'HAVE_QT5 := yes' > config.mk # if Qt5 is available
+```bash
+# if Qt5 is available (use `qmake` if it corresponds to Qt5 on your machine)
+echo 'QT5_PROG := qmake-qt5' >> config.mk
 
 make release check
 ```
