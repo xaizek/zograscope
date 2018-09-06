@@ -25,6 +25,7 @@
 #include "tooling/common.hpp"
 
 #include "DiffList.hpp"
+#include "Repository.hpp"
 #include "ZSDiff.hpp"
 
 int
@@ -38,28 +39,41 @@ main(int argc, char *argv[]) try
     const CommonArgs &args = env.getCommonArgs();
 
     if (args.help) {
-        std::cout << "Usage: zs-gdiff [options...] old-file new-file\n"
+        std::cout << "Usage: zs-gdiff [options...]\n"
+                  << "   or: zs-gdiff [options...] old-file new-file\n"
                   << "   or: zs-gdiff [options...] <7 or 9 args from git>\n"
                   << "\n"
                   << "Options:\n";
         env.printOptions();
         return EXIT_SUCCESS;
     }
-    if (args.pos.size() != 2U && args.pos.size() != 7U &&
-        args.pos.size() != 9U) {
+    if (args.pos.size() != 0U && args.pos.size() != 2U &&
+        args.pos.size() != 7U && args.pos.size() != 9U) {
         env.teardown(true);
         std::cerr << "Wrong positional arguments\n"
                   << "Expected 2 (cli) or 7 or 9 (git)\n";
         return EXIT_FAILURE;
     }
 
-    const bool git = (args.pos.size() != 2U);
-    DiffEntry diffEntry = {
-        (git ? args.pos[1] : args.pos[0]),
-        (git ? args.pos[4] : args.pos[1])
-    };
     DiffList diffList;
-    diffList.add(std::move(diffEntry));
+    const bool statusDiff = (args.pos.size() == 0U);
+    if (statusDiff) {
+        for (DiffEntry &diffEntry : Repository(".").listStatus(false)) {
+            diffList.add(std::move(diffEntry));
+        }
+    } else {
+        const bool gitExt = (args.pos.size() != 2U);
+        DiffEntry diffEntry = {
+            (gitExt ? args.pos[1] : args.pos[0]),
+            (gitExt ? args.pos[4] : args.pos[1])
+        };
+        diffList.add(std::move(diffEntry));
+    }
+
+    if (diffList.empty()) {
+        std::cout << "No changed files were discovered\n";
+        return EXIT_SUCCESS;
+    }
 
     ZSDiff w(std::move(diffList), env.getTimeKeeper());
     w.show();

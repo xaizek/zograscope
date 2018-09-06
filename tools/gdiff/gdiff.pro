@@ -13,7 +13,8 @@ SOURCES += \
     SynHi.cpp \
     BlankLineAttr.cpp \
     FoldTextAttr.cpp \
-    DiffList.cpp
+    DiffList.cpp \
+    Repository.cpp
 
 HEADERS += \
     ZSDiff.hpp \
@@ -22,14 +23,15 @@ HEADERS += \
     SynHi.hpp \
     BlankLineAttr.hpp \
     FoldTextAttr.hpp \
-    DiffList.hpp
+    DiffList.hpp \
+    Repository.hpp
 
 FORMS += \
     zsdiff.ui
 
 LIBS += -L$$OUT/ -lzograscope
 LIBS += -lboost_iostreams -lboost_program_options -lboost_filesystem
-LIBS += -lboost_system
+LIBS += -lboost_system -lgit2
 
 INCLUDEPATH += $$PWD/../../src
 DEPENDPATH += $$PWD/../../src
