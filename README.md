@@ -120,6 +120,8 @@ Counter of lines of code.
 ```bash
 # if Qt5 is available (use `qmake` if it corresponds to Qt5 on your machine)
 echo 'QT5_PROG := qmake-qt5' >> config.mk
+# if libgit2 is present
+echo 'HAVE_LIBGIT2 := yes'   >> config.mk
 
 make release check
 ```
@@ -146,6 +148,7 @@ make install
 * [Boost][boost], tested with 1.59, but older versions might work too
 * (optional, run-time, for C++) [srcml][srcml]
 * (optional, for `gdiff` tool) [qt5][qt5]
+* (optional, for `gdiff` tool) [libgit2][libgit2]
 
 ## Documentation ##
 
@@ -192,6 +195,7 @@ Kaizhong Zhang and Dennis Shasha.
 [boost]: http://www.boost.org/
 [srcml]: http://www.srcml.org/
 [qt5]: https://www.qt.io/
+[libgit2]: https://libgit2.org/
 
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code

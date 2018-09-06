@@ -1,6 +1,9 @@
 ifeq ($(QT5_PROG),)
     tools := $(filter-out gdiff,$(tools))
 endif
+ifeq ($(HAVE_LIBGIT2),)
+    tools := $(filter-out gdiff,$(tools))
+endif
 
 gdiff.abs_out := $(abspath $(out_dir))/tools/gdiff
 

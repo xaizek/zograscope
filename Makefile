@@ -13,6 +13,7 @@ TESTS :=
 
 # optional build-time dependencies
 QT5_PROG :=
+HAVE_LIBGIT2 :=
 
 ifneq ($(OS),Windows_NT)
     bin_suffix :=
