@@ -50,7 +50,7 @@ class Repository
 
 public:
     // Creates an instance from path to or in repository.  Throws
-    // `std::invalid_argument` on failure to find or open repository.
+    // `std::runtime_error` on failure to find or open repository.
     explicit Repository(const std::string &path);
 
     // No copy/move constructing.

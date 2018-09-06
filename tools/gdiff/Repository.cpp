@@ -28,6 +28,27 @@
 
 #include "DiffList.hpp"
 
+namespace {
+
+class GitException : public std::runtime_error
+{
+public:
+    GitException(const std::string &msg)
+        : std::runtime_error(addMoreInfo(msg))
+    { }
+
+private:
+    static std::string addMoreInfo(const std::string &msg)
+    {
+        if (const git_error *err = giterr_last()) {
+            return msg + " (" + err->message + ')';
+        }
+        return msg;
+    }
+};
+
+}
+
 // A RAII wrapper that manages lifetime of libgit2's handles.
 template <typename T>
 class Repository::GitObjPtr
@@ -101,12 +122,12 @@ Repository::Repository(const std::string &path)
 {
     git_buf repoPath = GIT_BUF_INIT_CONST(NULL, 0);
     if (git_repository_discover(&repoPath, path.c_str(), false, nullptr) != 0) {
-        throw std::invalid_argument("Could not discover repository");
+        throw GitException("Could not discover repository");
     }
     BOOST_SCOPE_EXIT_ALL(&repoPath) { git_buf_free(&repoPath); };
 
     if (git_repository_open(&repo, repoPath.ptr) != 0) {
-        throw std::invalid_argument("Could not open repository");
+        throw GitException("Could not open repository");
     }
 }
 
@@ -123,13 +144,13 @@ Repository::listStatus(bool staged)
                              : GIT_STATUS_SHOW_WORKDIR_ONLY;
     GitObjPtr<git_status_list> statusList;
     if (git_status_list_new(&statusList, repo, &statusOpts) != 0) {
-        throw std::runtime_error("Failed to list status of files");
+        throw GitException("Failed to list status of files");
     }
 
     auto readObj = [&](const git_oid &id) {
         GitObjPtr<git_blob> blob;
         if (git_blob_lookup(&blob, repo, &id) != 0) {
-            throw std::runtime_error("Failed to read a blob");
+            throw GitException("Failed to read a blob");
         }
         return std::string(static_cast<const char *>(git_blob_rawcontent(blob)),
                            static_cast<std::size_t>(git_blob_rawsize(blob)));
