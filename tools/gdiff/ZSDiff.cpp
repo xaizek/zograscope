@@ -59,14 +59,6 @@ struct ZSDiff::SideInfo
     std::vector<std::map<int, TokenInfo *>> map;
 };
 
-// Parses source into a tree.
-static Tree
-parse(const DiffEntryFile &file, TimeReport &tr, cpp17::pmr::monolithic *mr)
-{
-    CommonArgs args = {};
-    return *buildTreeFromFile(file.path, file.contents, args, tr, mr);
-}
-
 Q_DECLARE_METATYPE(TokenInfo *)
 
 ZSDiff::SideInfo
@@ -169,8 +161,25 @@ ZSDiff::ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent)
 void
 ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
-    oldTree = parse(diffEntry.original, timeReport, &mr);
-    newTree = parse(diffEntry.updated, timeReport, &mr);
+    if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.original.path,
+                                                    diffEntry.original.contents,
+                                                    {}, timeReport, &mr)) {
+        oldTree = *tree;
+    } else {
+        ui->oldCode->setPlaceholderText("   PARSING HAS FAILED");
+        ui->newCode->setPlaceholderText("   PARSING HAS FAILED");
+        return;
+    }
+
+    if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.updated.path,
+                                                    diffEntry.updated.contents,
+                                                    {}, timeReport, &mr)) {
+        newTree = *tree;
+    } else {
+        ui->oldCode->setPlaceholderText("   PARSING HAS FAILED");
+        ui->newCode->setPlaceholderText("   PARSING HAS FAILED");
+        return;
+    }
 
     compare(oldTree, newTree, timeReport, true, false);
 
