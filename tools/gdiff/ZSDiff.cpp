@@ -278,8 +278,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     std::vector<DiffLine> diff = (tr.measure("compare"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
 
-    leftFolded.resize(lsrc.lines.size());
-    rightFolded.resize(rsrc.lines.size());
+    leftFolded.assign(lsrc.lines.size(), false);
+    rightFolded.assign(rsrc.lines.size(), false);
 
     int leftState = -1, rightState = -1;
     unsigned int i = 0U;
