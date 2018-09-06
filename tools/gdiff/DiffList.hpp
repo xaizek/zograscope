@@ -23,12 +23,14 @@
 
 struct DiffEntryFile
 {
+    std::string title;
     std::string path;
     std::string contents;
 
     DiffEntryFile() = default;
     DiffEntryFile(std::string path);
-    DiffEntryFile(std::string path, std::string contents);
+    DiffEntryFile(std::string title, std::string path);
+    DiffEntryFile(std::string title, std::string path, std::string contents);
 };
 
 struct DiffEntry

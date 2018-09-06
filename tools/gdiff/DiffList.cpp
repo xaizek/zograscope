@@ -23,13 +23,22 @@
 
 #include "utils/fs.hpp"
 
-DiffEntryFile::DiffEntryFile(std::string path) : path(std::move(path))
+DiffEntryFile::DiffEntryFile(std::string path)
+    : title(path), path(std::move(path))
 {
     contents = readFile(this->path);
 }
 
-DiffEntryFile::DiffEntryFile(std::string path, std::string contents)
-    : path(std::move(path)), contents(std::move(contents))
+DiffEntryFile::DiffEntryFile(std::string title, std::string path)
+    : title(std::move(title)), path(std::move(path))
+{
+    contents = readFile(this->path);
+}
+
+DiffEntryFile::DiffEntryFile(std::string title, std::string path,
+                             std::string contents)
+    : title(std::move(title)), path(std::move(path)),
+      contents(std::move(contents))
 { }
 
 void
