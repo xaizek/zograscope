@@ -53,6 +53,12 @@
 #include "SynHi.hpp"
 #include "ui_zsdiff.h"
 
+// TODO: diff entries should be diffed more than once, we need to store results
+//       of diffing along with state of code views (maybe just be creating N
+//       pairs of widgets and switching to them as needed).
+
+// TODO: probably need to display list of diff entries in the GUI somehow.
+
 struct ZSDiff::SideInfo
 {
     std::vector<ColorCane> hi;
