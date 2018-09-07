@@ -17,14 +17,10 @@
 
 #include "common.hpp"
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -32,6 +28,7 @@
 #include <boost/optional.hpp>
 #include "pmr/monolithic.hpp"
 
+#include "utils/fs.hpp"
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
 #include "Language.hpp"
@@ -44,7 +41,6 @@ namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args,
                                       po::options_description &options);
-static std::string readFile(const std::string &path);
 
 void
 Environment::setup(const std::vector<std::string> &argv)
@@ -135,11 +131,17 @@ optional_t<Tree>
 buildTreeFromFile(const std::string &path, const CommonArgs &args,
                   TimeReport &tr, cpp17::pmr::memory_resource *mr)
 {
+    return buildTreeFromFile(path, readFile(path), args, tr, mr);
+}
+
+optional_t<Tree>
+buildTreeFromFile(const std::string &path, const std::string &contents,
+                  const CommonArgs &args, TimeReport &tr,
+                  cpp17::pmr::memory_resource *mr)
+{
     auto timer = tr.measure("parsing: " + path);
 
     std::unique_ptr<Language> lang = Language::create(path, args.lang);
-
-    const std::string contents = readFile(path);
 
     cpp17::pmr::monolithic localMR;
 
@@ -159,23 +161,6 @@ buildTreeFromFile(const std::string &path, const CommonArgs &args,
     }
 
     return optional_t<Tree>(std::move(t));
-}
-
-static std::string
-readFile(const std::string &path)
-{
-    if (boost::filesystem::is_directory(path)) {
-        throw std::runtime_error("Not a regular file: " + path);
-    }
-
-    std::ifstream ifile(path);
-    if (!ifile) {
-        throw std::runtime_error("Can't open file: " + path);
-    }
-
-    std::ostringstream iss;
-    iss << ifile.rdbuf();
-    return iss.str();
 }
 
 void

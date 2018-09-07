@@ -1,5 +1,8 @@
-ifneq ($(HAVE_QT5),yes)
-tools := $(filter-out gdiff,$(tools))
+ifeq ($(QT5_PROG),)
+    tools := $(filter-out gdiff,$(tools))
+endif
+ifeq ($(HAVE_LIBGIT2),)
+    tools := $(filter-out gdiff,$(tools))
 endif
 
 gdiff.abs_out := $(abspath $(out_dir))/tools/gdiff
@@ -14,7 +17,7 @@ endif
 
 $(out_dir)/zs-gdiff:
 	@cd $(gdiff.abs_out)/ && \
-	    qmake-qt5 $(gdiff.qmake_args) $(abspath .)/tools/gdiff/gdiff.pro
+	    $(QT5_PROG) $(gdiff.qmake_args) $(abspath .)/tools/gdiff/gdiff.pro
 	+@$(MAKE) -C $(gdiff.abs_out)/
 	@mv $(gdiff.abs_out)/zs-gdiff $(out_dir)/zs-gdiff
 

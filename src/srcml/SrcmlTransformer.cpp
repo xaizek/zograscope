@@ -101,22 +101,18 @@ SrcmlTransformer::SrcmlTransformer(const std::string &contents,
 void
 SrcmlTransformer::transform()
 {
-    std::string filePath = path;
     TempFile tmpFile(path);
 
-    if (!boost::filesystem::exists(path)) {
-        std::ofstream ofs(tmpFile);
-        if (!ofs) {
-            throw std::runtime_error("Failed to open temporary file: " +
-                                     tmpFile.str());
-        }
-        ofs << contents;
-
-        filePath = tmpFile;
+    std::ofstream ofs(tmpFile);
+    if (!ofs) {
+        throw std::runtime_error("Failed to open temporary file: " +
+                                 tmpFile.str());
     }
+    ofs << contents;
+    ofs.close();
 
     std::vector<std::string> cmd = {
-        "srcml", "--language=" + language, "--src-encoding=utf8", filePath
+        "srcml", "--language=" + language, "--src-encoding=utf8", tmpFile
     };
 
     std::string xml = readCommandOutput(cmd, std::string());

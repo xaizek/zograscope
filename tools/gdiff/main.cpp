@@ -19,43 +19,77 @@
 
 #include <cstdlib>
 
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+
 #include <iostream>
+#include <utility>
 
 #include "tooling/common.hpp"
 
+#include "DiffList.hpp"
+#include "Repository.hpp"
 #include "ZSDiff.hpp"
+
+// Tool-specific type for holding arguments.
+struct Args : CommonArgs
+{
+    bool staged; // Use staged changes instead of unstaged.
+};
+
+static boost::program_options::options_description getLocalOpts();
+static Args parseLocalArgs(const Environment &env);
 
 int
 main(int argc, char *argv[]) try
 {
     QApplication app(argc, argv);
 
-    Environment env;
+    Environment env(getLocalOpts());
     env.setup({ argv + 1, argv + argc });
 
-    const CommonArgs &args = env.getCommonArgs();
+    Args args = parseLocalArgs(env);
 
     if (args.help) {
-        std::cout << "Usage: zs-gdiff [options...] old-file new-file\n"
+        std::cout << "Usage: zs-gdiff [options...] [--cached]\n"
+                  << "   or: zs-gdiff [options...] old-file new-file\n"
                   << "   or: zs-gdiff [options...] <7 or 9 args from git>\n"
                   << "\n"
                   << "Options:\n";
         env.printOptions();
         return EXIT_SUCCESS;
     }
-    if (args.pos.size() != 2U && args.pos.size() != 7U &&
-        args.pos.size() != 9U) {
+    if (args.pos.size() != 0U && args.pos.size() != 2U &&
+        args.pos.size() != 7U && args.pos.size() != 9U) {
         env.teardown(true);
         std::cerr << "Wrong positional arguments\n"
                   << "Expected 2 (cli) or 7 or 9 (git)\n";
         return EXIT_FAILURE;
     }
 
-    const bool git = (args.pos.size() != 2U);
-    const std::string &oldFile = (git ? args.pos[1] : args.pos[0]);
-    const std::string &newFile = (git ? args.pos[4] : args.pos[1]);
+    DiffList diffList;
+    LaunchMode launchMode;
+    if (args.pos.size() == 0U) {
+        launchMode = (args.staged ? LaunchMode::Staged : LaunchMode::Unstaged);
+        for (DiffEntry &diffEntry : Repository(".").listStatus(args.staged)) {
+            diffList.add(std::move(diffEntry));
+        }
+    } else {
+        launchMode = args.pos.size() == 2U ? LaunchMode::Standalone
+                                           : LaunchMode::GitExt;
+        DiffEntry diffEntry = {
+            (launchMode == LaunchMode::GitExt ? args.pos[1] : args.pos[0]),
+            (launchMode == LaunchMode::GitExt ? args.pos[4] : args.pos[1])
+        };
+        diffList.add(std::move(diffEntry));
+    }
 
-    ZSDiff w(oldFile, newFile, env.getTimeKeeper());
+    if (diffList.empty()) {
+        std::cout << "No changed files were discovered\n";
+        return EXIT_SUCCESS;
+    }
+
+    ZSDiff w(launchMode, std::move(diffList), env.getTimeKeeper());
     w.show();
 
     int result = app.exec();
@@ -64,4 +98,27 @@ main(int argc, char *argv[]) try
 } catch (const std::exception &e) {
     std::cerr << "ERROR: " << e.what() << '\n';
     return EXIT_FAILURE;
+}
+
+static boost::program_options::options_description
+getLocalOpts()
+{
+    boost::program_options::options_description options;
+    options.add_options()
+        ("cached", "use staged changes instead of unstaged");
+
+    return options;
+}
+
+static Args
+parseLocalArgs(const Environment &env)
+{
+    Args args;
+    static_cast<CommonArgs &>(args) = env.getCommonArgs();
+
+    const boost::program_options::variables_map &varMap = env.getVarMap();
+
+    args.staged = varMap.count("cached");
+
+    return args;
 }

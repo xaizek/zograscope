@@ -39,6 +39,7 @@
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
 #include "ColorCane.hpp"
+#include "DiffList.hpp"
 #include "Highlighter.hpp"
 #include "TreeBuilder.hpp"
 #include "Language.hpp"
@@ -52,23 +53,17 @@
 #include "SynHi.hpp"
 #include "ui_zsdiff.h"
 
-const int matchProperty = QTextFormat::UserProperty + 2;
+// TODO: diff entries should be diffed more than once, we need to store results
+//       of diffing along with state of code views (maybe just be creating N
+//       pairs of widgets and switching to them as needed).
+
+// TODO: probably need to display list of diff entries in the GUI somehow.
 
 struct ZSDiff::SideInfo
 {
     std::vector<ColorCane> hi;
     std::vector<std::map<int, TokenInfo *>> map;
 };
-
-// Parses source into a tree.
-static Tree
-parse(const std::string &fileName, TimeReport &tr, cpp17::pmr::monolithic *mr)
-{
-    std::unique_ptr<Language> lang = Language::create(fileName);
-
-    CommonArgs args = {};
-    return *buildTreeFromFile(fileName, args, tr, mr);
-}
 
 Q_DECLARE_METATYPE(TokenInfo *)
 
@@ -128,17 +123,12 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     }
 
     textEdit->setStopPositions(std::move(stopPositions));
-    textEdit->document()->setDocumentMargin(1);
-
-    // textEdit->document()->findBlockByNumber(10).setVisible(false);
-    textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse |
-                                      Qt::TextSelectableByKeyboard);
 
     return { std::move(hi), std::move(map) };
 }
 
-ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
-               TimeReport &tr, QWidget *parent)
+ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
+               QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
       scrollDiff(0),
@@ -147,14 +137,64 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
       firstTimeFocus(true),
       folded(false),
       oldTree(&mr),
-      newTree(&mr)
+      newTree(&mr),
+      timeReport(tr),
+      launchMode(launchMode),
+      diffList(std::move(diffList))
 {
     ui->setupUi(this);
 
-    oldTree = parse(oldFile, tr, &mr);
-    newTree = parse(newFile, tr, &mr);
+    qApp->installEventFilter(this);
 
-    compare(oldTree, newTree, tr, true, false);
+    ui->oldCode->setTextInteractionFlags(Qt::TextSelectableByMouse |
+                                         Qt::TextSelectableByKeyboard);
+    ui->oldCode->document()->setDocumentMargin(1);
+    ui->newCode->setTextInteractionFlags(Qt::TextSelectableByMouse |
+                                         Qt::TextSelectableByKeyboard);
+    ui->newCode->document()->setDocumentMargin(1);
+
+    ui->mainToolBar->hide();
+    ui->statusBar->showMessage("Press F1 to toggle help");
+
+    QFile file(":/help.html");
+    if (file.open(QFile::ReadOnly)) {
+        ui->helpTextBrowser->setHtml(file.readAll());
+    } else {
+        ui->helpTextBrowser->setText("Loading help failed");
+    }
+
+    loadDiff(this->diffList.getCurrent());
+}
+
+void
+ZSDiff::loadDiff(const DiffEntry &diffEntry)
+{
+    ui->oldLabel->setText(QString("--- %1").arg(diffEntry.original.title.c_str()));
+    ui->newLabel->setText(QString("+++ %1").arg(diffEntry.updated.title.c_str()));
+
+    updateTitle();
+
+    if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.original.path,
+                                                    diffEntry.original.contents,
+                                                    {}, timeReport, &mr)) {
+        oldTree = *tree;
+    } else {
+        ui->oldCode->setPlaceholderText("   PARSING HAS FAILED");
+        ui->newCode->setPlaceholderText("   PARSING HAS FAILED");
+        return;
+    }
+
+    if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.updated.path,
+                                                    diffEntry.updated.contents,
+                                                    {}, timeReport, &mr)) {
+        newTree = *tree;
+    } else {
+        ui->oldCode->setPlaceholderText("   PARSING HAS FAILED");
+        ui->newCode->setPlaceholderText("   PARSING HAS FAILED");
+        return;
+    }
+
+    compare(oldTree, newTree, timeReport, true, false);
 
     QTextDocument *oldDoc = ui->oldCode->document();
     QTextDocument *newDoc = ui->newCode->document();
@@ -175,7 +215,7 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     newDoc->documentLayout()->registerHandler(foldTextAttr.getType(),
                                               &foldTextAttr);
 
-    diffAndPrint(tr);
+    diffAndPrint(timeReport);
     fold();
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);
@@ -212,8 +252,6 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
     connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
     connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
 
-    qApp->installEventFilter(this);
-
     // Navigate to first change in old or new version of the code and  highlight
     // current line.
     if (ui->oldCode->goToFirstStopPosition()) {
@@ -222,16 +260,31 @@ ZSDiff::ZSDiff(const std::string &oldFile, const std::string &newFile,
         ui->newCode->goToFirstStopPosition();
         ui->newCode->setFocus();
     }
+}
 
-    ui->mainToolBar->hide();
-    ui->statusBar->showMessage("Press F1 to toggle help");
-
-    QFile file(":/help.html");
-    if (file.open(QFile::ReadOnly)) {
-        ui->helpTextBrowser->setHtml(file.readAll());
-    } else {
-        ui->helpTextBrowser->setText("Loading help failed");
+void
+ZSDiff::updateTitle()
+{
+    QString title;
+    switch (launchMode) {
+        case LaunchMode::Standalone:
+            title = "Standalone mode";
+            break;
+        case LaunchMode::GitExt:
+            title = "Git external diff mode";
+            break;
+        case LaunchMode::Staged:
+            title = QString("Staged in repository (%1/%2)")
+                        .arg(diffList.getPosition())
+                        .arg(diffList.getCount());
+            break;
+        case LaunchMode::Unstaged:
+            title = QString("Unstaged in repository (%1/%2)")
+                        .arg(diffList.getPosition())
+                        .arg(diffList.getCount());;
+            break;
     }
+    ui->title->setText(title);
 }
 
 void
@@ -263,8 +316,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     std::vector<DiffLine> diff = (tr.measure("compare"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
 
-    leftFolded.resize(lsrc.lines.size());
-    rightFolded.resize(rsrc.lines.size());
+    leftFolded.assign(lsrc.lines.size(), false);
+    rightFolded.assign(rsrc.lines.size(), false);
 
     int leftState = -1, rightState = -1;
     unsigned int i = 0U;
@@ -637,6 +690,20 @@ ZSDiff::eventFilter(QObject *obj, QEvent *event)
         }
     } else if (keyEvent->text() == " ") {
         switchView();
+    } else if (keyEvent->key() == Qt::Key_N &&
+               keyEvent->modifiers() == Qt::ControlModifier) {
+        if (diffList.nextEntry()) {
+            ui->oldCode->clear();
+            ui->newCode->clear();
+            loadDiff(diffList.getCurrent());
+        }
+    } else if (keyEvent->key() == Qt::Key_P &&
+               keyEvent->modifiers() == Qt::ControlModifier) {
+        if (diffList.previousEntry()) {
+            ui->oldCode->clear();
+            ui->newCode->clear();
+            loadDiff(diffList.getCurrent());
+        }
     } else if (keyEvent->key() == Qt::Key_F1) {
         int newIndex = 1 - ui->stackedWidget->currentIndex();
         ui->stackedWidget->setCurrentIndex(newIndex);
