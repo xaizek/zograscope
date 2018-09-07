@@ -53,6 +53,18 @@ DiffList::empty() const
     return entries.empty();
 }
 
+int
+DiffList::getCount() const
+{
+    return entries.size();
+}
+
+int
+DiffList::getPosition() const
+{
+    return current + 1;
+}
+
 const DiffEntry &
 DiffList::getCurrent() const
 {

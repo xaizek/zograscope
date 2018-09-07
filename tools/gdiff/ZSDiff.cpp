@@ -268,10 +268,14 @@ ZSDiff::updateTitle()
             title = "Git external diff mode";
             break;
         case LaunchMode::Staged:
-            title = "Staged in repository";
+            title = QString("Staged in repository (%1/%2)")
+                        .arg(diffList.getPosition())
+                        .arg(diffList.getCount());
             break;
         case LaunchMode::Unstaged:
-            title = "Unstaged in repository";
+            title = QString("Unstaged in repository (%1/%2)")
+                        .arg(diffList.getPosition())
+                        .arg(diffList.getCount());;
             break;
     }
     ui->title->setText(title);

@@ -45,6 +45,9 @@ public:
     void add(DiffEntry entry);
 
     bool empty() const;
+    int getCount() const;
+    int getPosition() const;
+
     const DiffEntry & getCurrent() const;
     const std::vector<DiffEntry> & getEntries() const;
 
