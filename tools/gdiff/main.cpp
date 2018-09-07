@@ -68,16 +68,18 @@ main(int argc, char *argv[]) try
     }
 
     DiffList diffList;
-    const bool statusDiff = (args.pos.size() == 0U);
-    if (statusDiff) {
+    LaunchMode launchMode;
+    if (args.pos.size() == 0U) {
+        launchMode = (args.staged ? LaunchMode::Staged : LaunchMode::Unstaged);
         for (DiffEntry &diffEntry : Repository(".").listStatus(args.staged)) {
             diffList.add(std::move(diffEntry));
         }
     } else {
-        const bool gitExt = (args.pos.size() != 2U);
+        launchMode = args.pos.size() == 2U ? LaunchMode::Standalone
+                                           : LaunchMode::GitExt;
         DiffEntry diffEntry = {
-            (gitExt ? args.pos[1] : args.pos[0]),
-            (gitExt ? args.pos[4] : args.pos[1])
+            (launchMode == LaunchMode::GitExt ? args.pos[1] : args.pos[0]),
+            (launchMode == LaunchMode::GitExt ? args.pos[4] : args.pos[1])
         };
         diffList.add(std::move(diffEntry));
     }
@@ -87,7 +89,7 @@ main(int argc, char *argv[]) try
         return EXIT_SUCCESS;
     }
 
-    ZSDiff w(std::move(diffList), env.getTimeKeeper());
+    ZSDiff w(launchMode, std::move(diffList), env.getTimeKeeper());
     w.show();
 
     int result = app.exec();

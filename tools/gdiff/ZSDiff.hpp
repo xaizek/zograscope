@@ -54,6 +54,14 @@ struct TokenInfo
     StablePos newTo = { 0, 0 };
 };
 
+enum class LaunchMode
+{
+    Standalone,
+    GitExt,
+    Staged,
+    Unstaged,
+};
+
 class ZSDiff : public QMainWindow
 {
     Q_OBJECT
@@ -61,11 +69,13 @@ class ZSDiff : public QMainWindow
     struct SideInfo;
 
 public:
-    ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent = nullptr);
+    ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
+           QWidget *parent = nullptr);
     ~ZSDiff();
 
 private:
     void loadDiff(const DiffEntry &diffEntry);
+    void updateTitle();
     SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
     void diffAndPrint(TimeReport &tr);
     void highlightMatch(QPlainTextEdit *textEdit);
@@ -110,6 +120,7 @@ private:
     // Whether respective lines supposed to be folded.
     std::vector<bool> leftFolded, rightFolded;
     TimeReport &timeReport;
+    LaunchMode launchMode;
     DiffList diffList;
 };
 

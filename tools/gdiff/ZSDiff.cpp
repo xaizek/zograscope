@@ -121,7 +121,8 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     return { std::move(hi), std::move(map) };
 }
 
-ZSDiff::ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent)
+ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
+               QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
       scrollDiff(0),
@@ -132,6 +133,7 @@ ZSDiff::ZSDiff(DiffList diffList, TimeReport &tr, QWidget *parent)
       oldTree(&mr),
       newTree(&mr),
       timeReport(tr),
+      launchMode(launchMode),
       diffList(std::move(diffList))
 {
     ui->setupUi(this);
@@ -163,6 +165,8 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
     ui->oldLabel->setText(QString("--- %1").arg(diffEntry.original.title.c_str()));
     ui->newLabel->setText(QString("+++ %1").arg(diffEntry.updated.title.c_str()));
+
+    updateTitle();
 
     if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.original.path,
                                                     diffEntry.original.contents,
@@ -250,6 +254,27 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
         ui->newCode->goToFirstStopPosition();
         ui->newCode->setFocus();
     }
+}
+
+void
+ZSDiff::updateTitle()
+{
+    QString title;
+    switch (launchMode) {
+        case LaunchMode::Standalone:
+            title = "Standalone mode";
+            break;
+        case LaunchMode::GitExt:
+            title = "Git external diff mode";
+            break;
+        case LaunchMode::Staged:
+            title = "Staged in repository";
+            break;
+        case LaunchMode::Unstaged:
+            title = "Unstaged in repository";
+            break;
+    }
+    ui->title->setText(title);
 }
 
 void
