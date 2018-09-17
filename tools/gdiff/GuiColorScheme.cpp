@@ -25,12 +25,16 @@ operator+(ColorGroup cg)
 
 GuiColorScheme::GuiColorScheme()
 {
-    groups[+ColorGroup::Inserted].setBackground(Qt::green);
+    groups[+ColorGroup::Inserted].setBackground(QColor(Qt::green).light(150));
+    groups[+ColorGroup::Inserted].setFontWeight(QFont::Bold);
     groups[+ColorGroup::Deleted].setForeground(Qt::white);
-    groups[+ColorGroup::Deleted].setBackground(QColor(Qt::red).lighter(120));
+    groups[+ColorGroup::Deleted].setBackground(QColor(0xff, 0x40, 0x40));
+    groups[+ColorGroup::Deleted].setFontWeight(QFont::Bold);
     groups[+ColorGroup::Updated].setBackground(Qt::yellow);
+    groups[+ColorGroup::Updated].setFontWeight(QFont::Bold);
     groups[+ColorGroup::Moved].setForeground(Qt::white);
-    groups[+ColorGroup::Moved].setBackground(Qt::blue);
+    groups[+ColorGroup::Moved].setBackground(QColor(Qt::blue).light(140));
+    groups[+ColorGroup::Moved].setFontWeight(QFont::Bold);
 
     groups[+ColorGroup::PieceInserted].setBackground(QColor(Qt::yellow).light(150));
     groups[+ColorGroup::PieceInserted].setForeground(QColor(Qt::green).dark(200));
@@ -49,8 +53,8 @@ GuiColorScheme::GuiColorScheme()
     groups[+ColorGroup::Comments].setForeground(QColor(Qt::gray).darker());
     groups[+ColorGroup::Functions].setForeground(Qt::blue);
     groups[+ColorGroup::Keywords].setFontWeight(QFont::Bold);
-    //groups[+ColorGroup::Brackets] = 222_fg;
-    //groups[+ColorGroup::Operators] = 224_fg;
+    groups[+ColorGroup::Brackets].setForeground(QColor(Qt::yellow).dark(230));
+    groups[+ColorGroup::Operators].setForeground(QColor(Qt::blue).dark(150));
     groups[+ColorGroup::Constants].setForeground(Qt::magenta);
 }
 

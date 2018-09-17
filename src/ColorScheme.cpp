@@ -37,7 +37,7 @@ ColorScheme::ColorScheme()
     groups[+ColorGroup::LineNoPart] = decor::cyan_fg;
     groups[+ColorGroup::ColNoPart] = decor::cyan_fg;
 
-    groups[+ColorGroup::PieceDeleted] = (203_fg + inv + black_bg + bold)
+    groups[+ColorGroup::PieceDeleted] = (124_fg + white_bg + bold + inv)
                                         .prefix("{-"_lit)
                                         .suffix("-}"_lit);
     groups[+ColorGroup::PieceInserted] = (83_fg + inv + black_bg + bold)
@@ -46,7 +46,7 @@ ColorScheme::ColorScheme()
     groups[+ColorGroup::PieceUpdated] = Decoration(none)
                                         .prefix("{~"_lit)
                                         .suffix("~}"_lit);
-    groups[+ColorGroup::UpdatedSurroundings] = (165_fg + inv + white_bg + bold);
+    groups[+ColorGroup::UpdatedSurroundings] = (213_bg + 232_fg + bold);
 
     groups[+ColorGroup::Deleted] = groups[+ColorGroup::PieceDeleted];
     groups[+ColorGroup::Inserted] = groups[+ColorGroup::PieceInserted];
