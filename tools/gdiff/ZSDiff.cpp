@@ -616,9 +616,6 @@ ZSDiff::updateView(CodeView *view)
 void
 ZSDiff::updateLayout()
 {
-    CodeView *view = activeView();
-    view->ensureCursorVisible();
-    highlightMatch(view);
     if (ui->splitter->orientation() == Qt::Vertical) {
         ui->splitter->setOrientation(Qt::Horizontal);
         ui->splitter->setOrientation(Qt::Vertical);
@@ -626,6 +623,10 @@ ZSDiff::updateLayout()
         ui->splitter->setOrientation(Qt::Vertical);
         ui->splitter->setOrientation(Qt::Horizontal);
     }
+
+    CodeView *view = activeView();
+    view->ensureCursorVisible();
+    highlightMatch(view);
 }
 
 ZSDiff::~ZSDiff()
