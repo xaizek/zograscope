@@ -556,15 +556,17 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
 
     const char *lastL = l.data(), *lastR = r.data();
 
-    auto printLeft = [&](const dtl::elemInfo &info, ColorGroup hi) {
+    auto printLeft = [&](const dtl::elemInfo &info, ColorGroup hi,
+                         ColorGroup def) {
         const boost::string_ref sr = lWords[info.beforeIdx - 1];
-        cc.append(boost::string_ref(lastL, sr.data() - lastL), &node);
+        cc.append(boost::string_ref(lastL, sr.data() - lastL), &node, def);
         cc.append(sr, &node, hi);
         lastL = sr.data() + sr.size();
     };
-    auto printRight = [&](const dtl::elemInfo &info, ColorGroup hi) {
+    auto printRight = [&](const dtl::elemInfo &info, ColorGroup hi,
+                          ColorGroup def) {
         const boost::string_ref sr = rWords[info.afterIdx - 1];
-        cc.append(boost::string_ref(lastR, sr.data() - lastR), &node);
+        cc.append(boost::string_ref(lastR, sr.data() - lastR), &node, def);
         cc.append(sr, &node, hi);
         lastR = sr.data() + sr.size();
     };
@@ -573,19 +575,19 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
         switch (x.second.type) {
             case dtl::SES_DELETE:
                 if (original) {
-                    printLeft(x.second, ColorGroup::PieceDeleted);
+                    printLeft(x.second, ColorGroup::PieceDeleted, def);
                 }
                 break;
             case dtl::SES_ADD:
                 if (!original) {
-                    printRight(x.second, ColorGroup::PieceInserted);
+                    printRight(x.second, ColorGroup::PieceInserted, def);
                 }
                 break;
             case dtl::SES_COMMON:
                 if (original) {
-                    printLeft(x.second, def);
+                    printLeft(x.second, def, def);
                 } else {
-                    printRight(x.second, def);
+                    printRight(x.second, def, def);
                 }
                 break;
         }

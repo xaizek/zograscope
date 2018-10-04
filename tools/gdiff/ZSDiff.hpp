@@ -79,6 +79,10 @@ private:
     SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
     void diffAndPrint(TimeReport &tr);
     void highlightMatch(QPlainTextEdit *textEdit);
+    void syncOtherCursor(QPlainTextEdit *textEdit);
+    void resolveRange(QPlainTextEdit *textEdit,
+                      StablePos fromPos, StablePos toPos,
+                      int &from, int &to);
     TokenInfo * getTokenInfo(QPlainTextEdit *textEdit);
     void fold();
     void unfold();
@@ -98,6 +102,7 @@ private:
     bool onlyMode() const;
     CodeView * activeView();
     CodeView * inactiveView();
+    CodeView * otherView(CodeView *view);
 
 private:
     Ui::ZSDiff *ui;

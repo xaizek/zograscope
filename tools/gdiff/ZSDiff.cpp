@@ -247,12 +247,13 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
             view->centerCursor();
             syncScrollTo(view);
         }
+        syncOtherCursor(otherView(view));
         highlightMatch(view);
     };
     connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
     connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
 
-    // Navigate to first change in old or new version of the code and  highlight
+    // Navigate to first change in old or new version of the code and highlight
     // current line.
     if (ui->oldCode->goToFirstStopPosition()) {
         ui->oldCode->setFocus();
@@ -393,13 +394,9 @@ ZSDiff::diffAndPrint(TimeReport &tr)
 void
 ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
 {
-    struct CursInfo {
-        QTextCursor cursor;
-        bool needUpdate;
-    };
-
     QColor currColor(0xa0, 0xe0, 0xa0, 0x60);
     QColor otherColor(0xa0, 0xa0, 0xe0, 0x60);
+    QColor otherMatchColor(0xff, 0x80, 0x80, 0x60);
 
     QTextCharFormat oldLineFormat;
     QColor lineColor = (ui->oldCode->hasFocus() ? currColor : otherColor);
@@ -428,31 +425,38 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         }
     };
 
+    QList<QTextEdit::ExtraSelection> newExtraSelections, oldExtraSelections;
+
+    int rightLine = ui->newCode->textCursor().block().userState();
+    if (rightLine >= 0) {
+        collectFormats(newSynHi->getHi()[rightLine],
+                       ui->newCode,
+                       ui->newCode->textCursor().block().position(),
+                       newExtraSelections);
+    }
+
+    int leftLine = ui->oldCode->textCursor().block().userState();
+    if (leftLine >= 0) {
+        collectFormats(oldSynHi->getHi()[leftLine],
+                       ui->oldCode,
+                       ui->oldCode->textCursor().block().position(),
+                       oldExtraSelections);
+    }
+
+    newExtraSelections.append({ ui->newCode->textCursor(), newLineFormat });
+    oldExtraSelections.append({ ui->oldCode->textCursor(), oldLineFormat });
+
     TokenInfo *i = getTokenInfo(textEdit);
     if (i == nullptr) {
-        QList<QTextEdit::ExtraSelection> newExtraSelections, oldExtraSelections;
-
-        int rightLine = ui->newCode->textCursor().block().userState();
-        if (rightLine >= 0) {
-            collectFormats(newSynHi->getHi()[rightLine],
-                           ui->newCode,
-                           ui->newCode->textCursor().block().position(),
-                           newExtraSelections);
-        }
-
-        int leftLine = ui->oldCode->textCursor().block().userState();
-        if (leftLine >= 0) {
-            collectFormats(oldSynHi->getHi()[leftLine],
-                           ui->oldCode,
-                           ui->oldCode->textCursor().block().position(),
-                           oldExtraSelections);
-        }
-
-        newExtraSelections.append({ ui->newCode->textCursor(), newLineFormat });
-        oldExtraSelections.append({ ui->oldCode->textCursor(), oldLineFormat });
         ui->newCode->setExtraSelections(newExtraSelections);
         ui->oldCode->setExtraSelections(oldExtraSelections);
         return;
+    }
+
+    if (textEdit == ui->oldCode) {
+        newLineFormat.setBackground(otherMatchColor);
+    } else {
+        oldLineFormat.setBackground(otherMatchColor);
     }
 
     QTextCharFormat format;
@@ -462,20 +466,10 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
     syncScrolls = false;
 
     auto updateCursor = [&](QPlainTextEdit *textEdit,
+                            QList<QTextEdit::ExtraSelection> &extraSelections,
                             StablePos fromPos, StablePos toPos) {
-        int from = fromPos.offset;
-        int to = toPos.offset;
-        for (QTextBlock block = textEdit->document()->begin();
-             block != textEdit->document()->end();
-             block = block.next()) {
-            if (block.userState() == fromPos.line) {
-                from += block.position();
-            }
-            if (block.userState() == toPos.line) {
-                to += block.position();
-                break;
-            }
-        }
+        int from, to;
+        resolveRange(textEdit, fromPos, toPos, from, to);
 
         QTextCursor sel(textEdit->document());
         sel.setPosition(from);
@@ -484,7 +478,6 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
         QTextCursor lineCursor(textEdit->document());
         lineCursor.setPosition(from);
 
-        QList<QTextEdit::ExtraSelection> extraSelections;
         int line = lineCursor.block().userState();
         if (line >= 0) {
             if (textEdit == ui->oldCode) {
@@ -500,6 +493,41 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
                                              ? oldLineFormat
                                              : newLineFormat });
         textEdit->setExtraSelections(extraSelections);
+    };
+
+    updateCursor(ui->newCode, newExtraSelections, i->newFrom, i->newTo);
+    updateCursor(ui->oldCode, oldExtraSelections, i->oldFrom, i->oldTo);
+
+    syncScrolls = true;
+
+    ui->oldCode->setTextCursor(ui->oldCode->textCursor());
+    ui->newCode->setTextCursor(ui->newCode->textCursor());
+
+    if (syncMatches) {
+        alignViews();
+    }
+
+    ui->newCode->setExtraSelections(newExtraSelections);
+    ui->oldCode->setExtraSelections(oldExtraSelections);
+}
+
+void
+ZSDiff::syncOtherCursor(QPlainTextEdit *textEdit)
+{
+    struct CursInfo {
+        QTextCursor cursor;
+        bool needUpdate;
+    };
+
+    TokenInfo *i = getTokenInfo(textEdit);
+    if (i == nullptr) {
+        return;
+    }
+
+    auto updateCursor = [&](QPlainTextEdit *textEdit,
+                            StablePos fromPos, StablePos toPos) {
+        int from, to;
+        resolveRange(textEdit, fromPos, toPos, from, to);
 
         QTextCursor cursor = textEdit->textCursor();
         int currentPos = cursor.position();
@@ -510,21 +538,31 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
     CursInfo newInfo = updateCursor(ui->newCode, i->newFrom, i->newTo);
     CursInfo oldInfo = updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
 
-    syncScrolls = true;
-
     if (oldInfo.needUpdate) {
         ui->oldCode->setTextCursor(oldInfo.cursor);
-    } else {
-        ui->oldCode->setTextCursor(ui->oldCode->textCursor());
     }
     if (newInfo.needUpdate) {
         ui->newCode->setTextCursor(newInfo.cursor);
-    } else {
-        ui->newCode->setTextCursor(ui->newCode->textCursor());
     }
+}
 
-    if (syncMatches) {
-        alignViews();
+void
+ZSDiff::resolveRange(QPlainTextEdit *textEdit,
+                     StablePos fromPos, StablePos toPos,
+                     int &from, int &to)
+{
+    from = fromPos.offset;
+    to = toPos.offset;
+    for (QTextBlock block = textEdit->document()->begin();
+         block != textEdit->document()->end();
+         block = block.next()) {
+        if (block.userState() == fromPos.line) {
+            from += block.position();
+        }
+        if (block.userState() == toPos.line) {
+            to += block.position();
+            break;
+        }
     }
 }
 
@@ -616,9 +654,6 @@ ZSDiff::updateView(CodeView *view)
 void
 ZSDiff::updateLayout()
 {
-    CodeView *view = activeView();
-    view->ensureCursorVisible();
-    highlightMatch(view);
     if (ui->splitter->orientation() == Qt::Vertical) {
         ui->splitter->setOrientation(Qt::Horizontal);
         ui->splitter->setOrientation(Qt::Vertical);
@@ -626,6 +661,10 @@ ZSDiff::updateLayout()
         ui->splitter->setOrientation(Qt::Vertical);
         ui->splitter->setOrientation(Qt::Horizontal);
     }
+
+    CodeView *view = activeView();
+    view->ensureCursorVisible();
+    highlightMatch(view);
 }
 
 ZSDiff::~ZSDiff()
@@ -647,6 +686,7 @@ ZSDiff::switchView()
             ui->splitter->setSizes({ 0, 1 });
         }
     }
+    syncOtherCursor(otherView(view));
     highlightMatch(view);
 }
 
@@ -787,4 +827,10 @@ CodeView *
 ZSDiff::inactiveView()
 {
     return (ui->newCode->hasFocus() ? ui->oldCode : ui->newCode);
+}
+
+CodeView *
+ZSDiff::otherView(CodeView *view)
+{
+    return (view == ui->newCode ? ui->oldCode : ui->newCode);
 }

@@ -30,19 +30,19 @@ GuiColorScheme::GuiColorScheme()
     groups[+ColorGroup::Deleted].setForeground(Qt::white);
     groups[+ColorGroup::Deleted].setBackground(QColor(0xff, 0x40, 0x40));
     groups[+ColorGroup::Deleted].setFontWeight(QFont::Bold);
-    groups[+ColorGroup::Updated].setBackground(Qt::yellow);
+    groups[+ColorGroup::Updated].setBackground(QColor(Qt::yellow).light(150));
     groups[+ColorGroup::Updated].setFontWeight(QFont::Bold);
     groups[+ColorGroup::Moved].setForeground(Qt::white);
     groups[+ColorGroup::Moved].setBackground(QColor(Qt::blue).light(140));
     groups[+ColorGroup::Moved].setFontWeight(QFont::Bold);
 
-    groups[+ColorGroup::PieceInserted].setBackground(QColor(Qt::yellow).light(150));
-    groups[+ColorGroup::PieceInserted].setForeground(QColor(Qt::green).dark(200));
+    groups[+ColorGroup::PieceInserted].setForeground(Qt::black);
+    groups[+ColorGroup::PieceInserted].setBackground(QColor(0x00, 0xff, 0x30));
     groups[+ColorGroup::PieceInserted].setFontWeight(QFont::Bold);
-    groups[+ColorGroup::PieceDeleted].setBackground(QColor(Qt::yellow).light(150));
-    groups[+ColorGroup::PieceDeleted].setForeground(Qt::red);
+    groups[+ColorGroup::PieceDeleted].setForeground(Qt::white);
+    groups[+ColorGroup::PieceDeleted].setBackground(Qt::red);
     groups[+ColorGroup::PieceDeleted].setFontWeight(QFont::Bold);
-    groups[+ColorGroup::PieceUpdated].setBackground(Qt::yellow);
+    groups[+ColorGroup::PieceUpdated].setBackground(QColor(Qt::yellow).light(140));
     groups[+ColorGroup::PieceUpdated].setFontWeight(QFont::Bold);
 
     groups[+ColorGroup::Specifiers].setForeground(QColor(Qt::yellow).darker(250));

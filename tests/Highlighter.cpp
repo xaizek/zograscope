@@ -132,3 +132,20 @@ TEST_CASE("Diffables can be non-transparent", "[highlighter]")
     newHi.setTransparentDiffables(false);
     CHECK(newHi.print() == "int [{+new+}{~VarName~}];");
 }
+
+TEST_CASE("Non-transparent diffables have background filled", "[highlighter]")
+{
+    Tree oldTree = parseC("// aa bb cc");
+    Tree newTree = parseC("// aa bb dd");
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, true);
+
+    TermHighlighter oldHi(oldTree, true);
+    oldHi.setTransparentDiffables(false);
+    CHECK(oldHi.print() == "{~// aa bb ~}{-cc-}");
+
+    TermHighlighter newHi(newTree, false);
+    newHi.setTransparentDiffables(false);
+    CHECK(newHi.print() == "{~// aa bb ~}{+dd+}");
+}
