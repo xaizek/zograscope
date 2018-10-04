@@ -252,7 +252,7 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
     connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
 
-    // Navigate to first change in old or new version of the code and  highlight
+    // Navigate to first change in old or new version of the code and highlight
     // current line.
     if (ui->oldCode->goToFirstStopPosition()) {
         ui->oldCode->setFocus();
