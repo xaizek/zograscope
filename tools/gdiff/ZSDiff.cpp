@@ -247,9 +247,7 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
             view->centerCursor();
             syncScrollTo(view);
         }
-        if (getTokenInfo(otherView(view)) != nullptr) {
-            highlightMatch(otherView(view), true);
-        }
+        syncOtherCursor(otherView(view));
         highlightMatch(view);
     };
     connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
@@ -394,13 +392,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
 }
 
 void
-ZSDiff::highlightMatch(QPlainTextEdit *textEdit, bool updateOtherCursor)
+ZSDiff::highlightMatch(QPlainTextEdit *textEdit)
 {
-    struct CursInfo {
-        QTextCursor cursor;
-        bool needUpdate;
-    };
-
     QColor currColor(0xa0, 0xe0, 0xa0, 0x60);
     QColor otherColor(0xa0, 0xa0, 0xe0, 0x60);
     QColor otherMatchColor(0xff, 0x80, 0x80, 0x60);
@@ -500,30 +493,15 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit, bool updateOtherCursor)
                                              ? oldLineFormat
                                              : newLineFormat });
         textEdit->setExtraSelections(extraSelections);
-
-        QTextCursor cursor = textEdit->textCursor();
-        int currentPos = cursor.position();
-        cursor.setPosition(from);
-        return CursInfo { cursor, (currentPos < from || currentPos > to) };
     };
 
-    CursInfo newInfo = updateCursor(ui->newCode, newExtraSelections,
-                                    i->newFrom, i->newTo);
-    CursInfo oldInfo = updateCursor(ui->oldCode, oldExtraSelections,
-                                    i->oldFrom, i->oldTo);
+    updateCursor(ui->newCode, newExtraSelections, i->newFrom, i->newTo);
+    updateCursor(ui->oldCode, oldExtraSelections, i->oldFrom, i->oldTo);
 
     syncScrolls = true;
 
-    if (updateOtherCursor && oldInfo.needUpdate) {
-        ui->oldCode->setTextCursor(oldInfo.cursor);
-    } else {
-        ui->oldCode->setTextCursor(ui->oldCode->textCursor());
-    }
-    if (updateOtherCursor && newInfo.needUpdate) {
-        ui->newCode->setTextCursor(newInfo.cursor);
-    } else {
-        ui->newCode->setTextCursor(ui->newCode->textCursor());
-    }
+    ui->oldCode->setTextCursor(ui->oldCode->textCursor());
+    ui->newCode->setTextCursor(ui->newCode->textCursor());
 
     if (syncMatches) {
         alignViews();
@@ -531,6 +509,41 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit, bool updateOtherCursor)
 
     ui->newCode->setExtraSelections(newExtraSelections);
     ui->oldCode->setExtraSelections(oldExtraSelections);
+}
+
+void
+ZSDiff::syncOtherCursor(QPlainTextEdit *textEdit)
+{
+    struct CursInfo {
+        QTextCursor cursor;
+        bool needUpdate;
+    };
+
+    TokenInfo *i = getTokenInfo(textEdit);
+    if (i == nullptr) {
+        return;
+    }
+
+    auto updateCursor = [&](QPlainTextEdit *textEdit,
+                            StablePos fromPos, StablePos toPos) {
+        int from, to;
+        resolveRange(textEdit, fromPos, toPos, from, to);
+
+        QTextCursor cursor = textEdit->textCursor();
+        int currentPos = cursor.position();
+        cursor.setPosition(from);
+        return CursInfo { cursor, (currentPos < from || currentPos > to) };
+    };
+
+    CursInfo newInfo = updateCursor(ui->newCode, i->newFrom, i->newTo);
+    CursInfo oldInfo = updateCursor(ui->oldCode, i->oldFrom, i->oldTo);
+
+    if (oldInfo.needUpdate) {
+        ui->oldCode->setTextCursor(oldInfo.cursor);
+    }
+    if (newInfo.needUpdate) {
+        ui->newCode->setTextCursor(newInfo.cursor);
+    }
 }
 
 void
@@ -673,9 +686,7 @@ ZSDiff::switchView()
             ui->splitter->setSizes({ 0, 1 });
         }
     }
-    if (getTokenInfo(otherView(view)) != nullptr) {
-        highlightMatch(otherView(view), true);
-    }
+    syncOtherCursor(otherView(view));
     highlightMatch(view);
 }
 

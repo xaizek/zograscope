@@ -78,8 +78,8 @@ private:
     void updateTitle();
     SideInfo printTree(Tree &tree, CodeView *textEdit, bool original);
     void diffAndPrint(TimeReport &tr);
-    void highlightMatch(QPlainTextEdit *textEdit,
-                        bool updateOtherCursor = false);
+    void highlightMatch(QPlainTextEdit *textEdit);
+    void syncOtherCursor(QPlainTextEdit *textEdit);
     void resolveRange(QPlainTextEdit *textEdit,
                       StablePos fromPos, StablePos toPos,
                       int &from, int &to);
