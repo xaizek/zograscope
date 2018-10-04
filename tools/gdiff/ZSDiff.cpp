@@ -475,19 +475,8 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit, bool updateOtherCursor)
     auto updateCursor = [&](QPlainTextEdit *textEdit,
                             QList<QTextEdit::ExtraSelection> &extraSelections,
                             StablePos fromPos, StablePos toPos) {
-        int from = fromPos.offset;
-        int to = toPos.offset;
-        for (QTextBlock block = textEdit->document()->begin();
-             block != textEdit->document()->end();
-             block = block.next()) {
-            if (block.userState() == fromPos.line) {
-                from += block.position();
-            }
-            if (block.userState() == toPos.line) {
-                to += block.position();
-                break;
-            }
-        }
+        int from, to;
+        resolveRange(textEdit, fromPos, toPos, from, to);
 
         QTextCursor sel(textEdit->document());
         sel.setPosition(from);
@@ -542,6 +531,26 @@ ZSDiff::highlightMatch(QPlainTextEdit *textEdit, bool updateOtherCursor)
 
     ui->newCode->setExtraSelections(newExtraSelections);
     ui->oldCode->setExtraSelections(oldExtraSelections);
+}
+
+void
+ZSDiff::resolveRange(QPlainTextEdit *textEdit,
+                     StablePos fromPos, StablePos toPos,
+                     int &from, int &to)
+{
+    from = fromPos.offset;
+    to = toPos.offset;
+    for (QTextBlock block = textEdit->document()->begin();
+         block != textEdit->document()->end();
+         block = block.next()) {
+        if (block.userState() == fromPos.line) {
+            from += block.position();
+        }
+        if (block.userState() == toPos.line) {
+            to += block.position();
+            break;
+        }
+    }
 }
 
 TokenInfo *

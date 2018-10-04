@@ -80,6 +80,9 @@ private:
     void diffAndPrint(TimeReport &tr);
     void highlightMatch(QPlainTextEdit *textEdit,
                         bool updateOtherCursor = false);
+    void resolveRange(QPlainTextEdit *textEdit,
+                      StablePos fromPos, StablePos toPos,
+                      int &from, int &to);
     TokenInfo * getTokenInfo(QPlainTextEdit *textEdit);
     void fold();
     void unfold();
