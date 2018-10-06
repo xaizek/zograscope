@@ -42,7 +42,6 @@ ifneq ($(is_release),0)
     # EXTRA_LDFLAGS  := -Wl,--strip-all
 
     out_dir := release
-    target  := release
 else
     EXTRA_CXXFLAGS := -O0 -g
     EXTRA_LDFLAGS  := -g
@@ -68,7 +67,6 @@ else
             out_dir := .
         endif
     endif
-    target := debug
 endif
 
 -include config.mk
@@ -167,7 +165,7 @@ $(lib): | $(out_dirs)
 $(lib): $(lib_objects)
 	$(AR) cr $@ $^
 
-check: $(target) $(out_dir)/tests/tests reset-coverage
+check: $(out_dir)/tests/tests reset-coverage
 	@$(out_dir)/tests/tests $(TESTS)
 
 install: release
