@@ -30,8 +30,6 @@ static void postOrderAndInit(Node &root, std::vector<Node *> &v);
 static void postOrderAndInitImpl(Node &node, std::vector<Node *> &v);
 static void clear(Node *node);
 static bool haveValues(const Node *x, const Node *y);
-static void matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
-                                           const std::vector<Node *> &po2);
 static bool unmatchedInternal(const Node *node);
 static bool canMatch(const Node *x, const Node *y);
 static bool isTerminal(const Node *n);
@@ -182,7 +180,7 @@ Distiller::distill(Node &T1, Node &T2)
     // bind statements too strongly, which ruins picking correct value out of
     // several identical candidates.
     matchPartiallyMatchedInternal(true);
-    matchFirstLevelMatchedInternal(po1, po2);
+    matchFirstLevelMatchedInternal();
 
     // Second round.
 
@@ -200,7 +198,7 @@ Distiller::distill(Node &T1, Node &T2)
 
     distillInternal();
     matchPartiallyMatchedInternal(false);
-    matchFirstLevelMatchedInternal(po1, po2);
+    matchFirstLevelMatchedInternal();
 
     // Marking remaining unmatched nodes.
     for (Node *x : po1) {
@@ -583,11 +581,8 @@ haveValues(const Node *x, const Node *y)
         && y->hasValue();
 }
 
-// This pass matches nodes, whose direct children (ignoring comments) are
-// already matched with each other.
-static void
-matchFirstLevelMatchedInternal(const std::vector<Node *> &po1,
-                               const std::vector<Node *> &po2)
+void
+Distiller::matchFirstLevelMatchedInternal()
 {
     for (Node *x : po1) {
         if (!unmatchedInternal(x)) {

@@ -66,6 +66,9 @@ private:
     // Matches unmatched internal nodes with similar nodes that have maximum
     // number of common terminal nodes.
     void matchPartiallyMatchedInternal(bool excludeValues);
+    // This pass matches nodes, whose direct children (ignoring comments) are
+    // already matched with each other.
+    void matchFirstLevelMatchedInternal();
 
 private:
     Language &lang;                // Language of the nodes.
