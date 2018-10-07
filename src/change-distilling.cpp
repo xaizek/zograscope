@@ -677,6 +677,43 @@ isTerminal(const Node *n)
 void
 Distiller::match(Node *x, Node *y, State state)
 {
+    auto isSimilarTree = [](Node *x, Node *y) {
+        if (x->children.size() != y->children.size()) {
+            return false;
+        }
+        for (auto l = x->children.begin(), r = y->children.begin();
+             l != x->children.end() && r != y->children.end();
+             ++l, ++r) {
+            if ((*l)->stype != (*r)->stype) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    if (isSimilarTree(x, y)) {
+        for (auto l = x->children.begin(), r = y->children.begin();
+             l != x->children.end() && r != y->children.end();
+             ++l, ++r) {
+            (*l)->parent = x;
+            (*r)->parent = y;
+
+            if (lang.isSatellite((*l)->stype) &&
+                lang.isSatellite((*r)->stype)) {
+                (*l)->state = State::Unchanged;
+                (*r)->state = State::Unchanged;
+
+                (*l)->relative = *r;
+                (*r)->relative = *l;
+            }
+        }
+        x->state = state;
+        y->state = state;
+        x->relative = y;
+        y->relative = x;
+        return;
+    }
+
     markNode(*x, state);
     markNode(*y, state);
 
