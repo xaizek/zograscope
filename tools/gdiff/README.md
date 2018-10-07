@@ -5,7 +5,7 @@
 ## Description ##
 
 `zs-gdiff` is a GUI syntax-aware diff that uses Qt5.  See [description of
-zs-diff][zs-diff] for more details.
+zs-diff][zs-diff] for more details and comparison agains other tools.
 
 The tool can either accept two files on command-line, be integrated with `git`
 by its means (yet using external GUI tools from `git` isn't very convenient in
