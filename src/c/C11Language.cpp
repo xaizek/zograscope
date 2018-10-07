@@ -189,7 +189,6 @@ C11Language::canBeFlattened(const Node *, const Node *child, int level) const
             return -child->stype != C11SType::Declaration
                 && -child->stype != C11SType::ReturnValueStmt
                 && -child->stype != C11SType::CallExpr
-                && -child->stype != C11SType::Initializer
                 && -child->stype != C11SType::Parameter;
     }
 }

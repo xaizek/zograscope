@@ -17,6 +17,7 @@
 
 #include "align.hpp"
 
+#include <algorithm>
 #include <deque>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@
 #include <boost/utility/string_ref.hpp>
 #include "dtl/dtl.hpp"
 
+#include "utils/CountIterator.hpp"
 #include "utils/strings.hpp"
 #include "tree.hpp"
 
@@ -118,9 +120,36 @@ makeDiff(DiffSource &&l, DiffSource &&r)
     std::vector<LineInfo> &lt = l.lines;
     std::vector<LineInfo> &rt = r.lines;
 
+    for (LineInfo &info : lt) {
+        std::sort(info.rels.begin(), info.rels.end());
+    }
+    for (LineInfo &info : rt) {
+        std::sort(info.nodes.begin(), info.nodes.end());
+    }
+
     auto cmp = [](LineInfo &a, LineInfo &b) {
-        // XXX: hard-coded threshold.
-        return (a.text.compare(b.text) >= 0.8f);
+        auto skipNulls = [](std::vector<const Node *> &v) {
+            return std::find_if(v.cbegin(), v.cend(), [](const Node *n) {
+                return (n != nullptr);
+            });
+        };
+
+        auto aRels = skipNulls(a.rels);
+        auto bNodes = skipNulls(b.nodes);
+
+        int all = a.rels.size() + b.nodes.size();
+        if (all == 0) {
+            // Match empty lines.
+            return true;
+        }
+
+        int matched = std::set_intersection(aRels, a.rels.cend(),
+                                            bNodes, b.nodes.cend(),
+                                            CountIterator()).getCount();
+        int total = (a.rels.cend() - aRels) + (b.nodes.cend() - bNodes);
+        // XXX: hard-coded thresholds.
+        return (total != 0 && 2.0f*matched/total >= 0.6f)
+            || (all > 2 && all < 7 && a.text.compare(b.text) >= 0.8f);
     };
 
     dtl::Diff<LineInfo, std::vector<LineInfo>, decltype(cmp)> diff(lt, rt, cmp);

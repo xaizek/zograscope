@@ -115,8 +115,7 @@ TEST_CASE("String literal contents is compared", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                |  1
          2          char str[] = "this is ~  2          char str[] = "this is
-         3          {-a-}                 <  -
-         -                                >  3          {+the+}
+         3          {-a-}                 ~  3          {+the+}
          4          string";              ~  4          string";
     )");
 
@@ -178,9 +177,8 @@ R"(void f() {
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1  void f() {                 |  1  void f() {
          -                             >  2      {+{+}
-         -                             >  3          /* {+Failure+} is bad. */
+         2      /* {-This-} is bad. */ ~  3          /* {+Failure+} is bad. */
          -                             >  4      {+}+}
-         2      /* {-This-} is bad. */ <  -
          3  }                          |  5  }
     )");
 
@@ -232,8 +230,10 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
           1                                         |   1
-          2  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:} ~   2  void h() {
-          3  {:}:}                                  ~   3  }
+          2  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:} <   -
+          3  {:}:}                                  <   -
+          -                                         >   2  void h() {
+          -                                         >   3  }
           4                                         |   4
           5  {:void:}{: :}{:g:}{:(:}{:):}           ~   5  {:void:}{: :}{:g:}{:(:}{:):}
           6  {:{:}                                  ~   6  {:{:}
@@ -243,8 +243,10 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
          10      {:movedStuff:}{:;:}                ~  10      {:movedStuff:}{:;:}
          11  {:}:}                                  ~  11  {:}:}
          12                                         |  12
-         13  void h() {                             ~  13  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:}
-         14  }                                      ~  14  {:}:}
+         13  void h() {                             <  --
+         14  }                                      <  --
+         --                                         >  13  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:}
+         --                                         >  14  {:}:}
     )");
 
     REQUIRE(normalizeText(oss.str()) == expected);
@@ -462,9 +464,9 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                                                                              |   1
          2  void f() {                                                                                  |   2  void f() {
-         3      {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        ~   3      {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
+         -                                                                                              >   3      {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
          -                                                                                              >   4          {+cfg+}{+.+}{+short_term_mux_titles+}{+ +}{+=+}{+ +}{+1+}{+;+}
-         -                                                                                              >   5      {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
+         3      {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        ~   5      {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
          4          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}                       ~   6          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}
          5      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:} ~   7      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:}
          6          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}                        ~   8          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}
@@ -589,10 +591,10 @@ TEST_CASE("Single side view doesn't contain blanks", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         |  1
         |  2  struct Args {
-        >  3      bool noRefine;      {+// Don't run TED on updated nodes.+}
-        >  4      bool gitDiff;       {+// Invoked by git and file was changed.+}
-        >  5      bool gitRename;     {+// File was renamed and possibly changed too.+}
-        >  6      bool gitRenameOnly; {+// File was renamed without changing it.+}
+        ~  3      bool noRefine;      {+// Don't run TED on updated nodes.+}
+        ~  4      bool gitDiff;       {+// Invoked by git and file was changed.+}
+        ~  5      bool gitRename;     {+// File was renamed and possibly changed too.+}
+        ~  6      bool gitRenameOnly; {+// File was renamed without changing it.+}
         |  7  };
     )");
 
@@ -728,8 +730,7 @@ TEST_CASE("Diffable identifiers that are too different aren't detailed",
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                     |  1
          2  void f() {                         |  2  void f() {
-         3      {#cmd_group_begin#}(undo_msg); <  -
-         -                                     >  3      {#un_group_open#}(undo_msg);
+         3      {#cmd_group_begin#}(undo_msg); ~  3      {#un_group_open#}(undo_msg);
          4  }                                  |  4  }
     )");
 
@@ -762,8 +763,7 @@ TEST_CASE("Diffing by characters", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                             |  1
          2  void f() {                                 |  2  void f() {
-         3      [{-cmd-}Group{-B-}e{-gi-}n](undo_msg); <  -
-         -                                             >  3      [{+un+}Group{+Op+}en](undo_msg);
+         3      [{-cmd-}Group{-B-}e{-gi-}n](undo_msg); ~  3      [{+un+}Group{+Op+}en](undo_msg);
          4  }                                          |  4  }
     )");
 
