@@ -172,6 +172,7 @@ Repository::listStatus(bool staged)
                               ? entry->head_to_index
                               : entry->index_to_workdir;
 
+        // TODO: also handle added and removed files.
         if (delta->status == GIT_DELTA_MODIFIED) {
             entries.push_back({ makeEntry(delta->old_file, false),
                                 makeEntry(delta->new_file, !staged) });

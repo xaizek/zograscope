@@ -53,11 +53,16 @@
 #include "SynHi.hpp"
 #include "ui_zsdiff.h"
 
-// TODO: diff entries should be diffed more than once, we need to store results
-//       of diffing along with state of code views (maybe just be creating N
-//       pairs of widgets and switching to them as needed).
+// TODO: diff entries shouldn't be diffed more than once, we need to store
+//       results of diffing along with state of code views (maybe just be
+//       creating N pairs of widgets and switching to them as needed).
 
 // TODO: probably need to display list of diff entries in the GUI somehow.
+
+// TODO: fallback to regular diff when parsing fails?
+
+// TODO: in future we could support more modes of `git diff`, `git show` and
+//       `git stash` invocation.
 
 struct ZSDiff::SideInfo
 {
