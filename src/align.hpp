@@ -38,22 +38,35 @@ enum class Diff
 struct DiffLine
 {
     DiffLine(Diff type, int data = 0) : type(type), data(data)
-    {
-    }
+    { }
 
     Diff type;
     int data;
 };
 
+// Single line information of `DiffSource`.
+struct LineInfo
+{
+    LineInfo() : text(boost::string_ref())
+    { }
+    LineInfo(boost::string_ref text, const Node *n, const Node *relative)
+        : text(text), nodes({ n }), rels({ relative })
+    { }
+
+    DiceString text;                 // Unhighlighted line.
+    std::vector<const Node *> nodes; // Nodes that appear on this line.
+    std::vector<const Node *> rels;  // Relatives of nodes on this line.
+};
+
 // Represents tree in a form suitable for diffing.
 struct DiffSource
 {
-    // Formats tokens from the tree without highlighting and recording presence
-    // of changes for each line.
-    DiffSource(const Node &root);
+    // Formats tokens from the tree without highlighting and collects meta
+    // information about every line.
+    explicit DiffSource(const Node &root);
 
-    std::vector<DiceString> lines; // Unhighlighted lines generated from tree.
-    std::vector<bool> modified;    // Whether respective line contains changes.
+    std::vector<LineInfo> lines; // Information about lines.
+    std::vector<bool> modified;  // Whether certain line contains changes.
 
 private:
     std::deque<std::string> storage; // Storage that backs the lines.

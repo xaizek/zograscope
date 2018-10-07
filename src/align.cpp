@@ -30,7 +30,7 @@
 DiffSource::DiffSource(const Node &root)
 {
     struct {
-        std::vector<DiceString> &lines;
+        std::vector<LineInfo> &lines;
         std::vector<bool> &modified;
         std::deque<std::string> &storage;
 
@@ -39,22 +39,24 @@ DiffSource::DiffSource(const Node &root)
         int line;
         int col;
 
-        void run(const Node &node, bool forceChanged)
+        void run(const Node &node, bool forceChanged,
+                 const Node *n, const Node *relative)
         {
             if (node.next != nullptr) {
                 forceChanged |= (node.moved || node.state != State::Unchanged);
-                return run(*node.next, forceChanged);
+                n = (node.next->last ? &node : nullptr);
+                relative = (node.relative != nullptr ? node.relative : nullptr);
+                return run(*node.next, forceChanged, n, relative);
             }
 
             if (node.leaf) {
                 if (node.line > line) {
                     if (!buffer.empty()) {
                         storage.push_back(buffer);
-                        lines.back() = DiceString(storage.back());
+                        lines.back().text = DiceString(storage.back());
                         buffer.clear();
                     }
-                    lines.insert(lines.cend(), node.line - line,
-                                 boost::string_ref());
+                    lines.insert(lines.cend(), node.line - line, LineInfo());
                     modified.insert(modified.cend(), node.line - line, false);
                     line = node.line;
                     col = 1;
@@ -65,10 +67,17 @@ DiffSource::DiffSource(const Node &root)
                     col = node.col;
                 }
 
+                const Node *leafN = (node.relative == nullptr ? n : &node);
+                const Node *leafRelative = (node.relative != nullptr)
+                                         ? node.relative
+                                         : relative;
+
                 spell.clear();
                 split(node.spelling, '\n', spell);
                 col += spell.front().size();
                 buffer.append(spell.front().cbegin(), spell.front().cend());
+                lines.back().nodes.push_back(leafN);
+                lines.back().rels.push_back(leafRelative);
 
                 const bool changed = forceChanged
                                   || node.moved
@@ -80,24 +89,24 @@ DiffSource::DiffSource(const Node &root)
                     col = 1 + spell[i].size();
                     if (!buffer.empty()) {
                         storage.push_back(buffer);
-                        lines.back() = DiceString(storage.back());
+                        lines.back().text = DiceString(storage.back());
                         buffer.clear();
                     }
-                    lines.emplace_back(spell[i]);
+                    lines.emplace_back(spell[i], leafN, leafRelative);
                     modified.emplace_back(changed);
                 }
             }
 
             for (Node *child : node.children) {
-                run(*child, forceChanged);
+                run(*child, forceChanged, n, relative);
             }
         }
     } visitor { lines, modified, storage, {}, {}, 0, 1 };
 
-    visitor.run(root, false);
+    visitor.run(root, false, nullptr, nullptr);
     if (!visitor.buffer.empty()) {
         storage.push_back(std::move(visitor.buffer));
-        lines.back() = DiceString(storage.back());
+        lines.back().text = DiceString(storage.back());
     }
 }
 
@@ -106,16 +115,15 @@ makeDiff(DiffSource &&l, DiffSource &&r)
 {
     using size_type = std::vector<std::string>::size_type;
 
-    const std::vector<DiceString> &lt = l.lines;
-    const std::vector<DiceString> &rt = r.lines;
+    std::vector<LineInfo> &lt = l.lines;
+    std::vector<LineInfo> &rt = r.lines;
 
-    auto cmp = [](DiceString &a, DiceString &b) {
+    auto cmp = [](LineInfo &a, LineInfo &b) {
         // XXX: hard-coded threshold.
-        return (a.compare(b) >= 0.8f);
+        return (a.text.compare(b.text) >= 0.8f);
     };
 
-    dtl::Diff<DiceString, std::vector<DiceString>, decltype(cmp)> diff(lt, rt,
-                                                                       cmp);
+    dtl::Diff<LineInfo, std::vector<LineInfo>, decltype(cmp)> diff(lt, rt, cmp);
     diff.compose();
 
     size_type identicalLines = 0U;
@@ -139,7 +147,8 @@ makeDiff(DiffSource &&l, DiffSource &&r)
     };
 
     auto handleSameLines = [&](size_type i, size_type j) {
-        if (lt[i].str() == rt[j].str() && !l.modified[i] && !r.modified[j]) {
+        if (!l.modified[i] && !r.modified[j] &&
+            lt[i].text.str() == rt[j].text.str()) {
             ++identicalLines;
             diffSeq.emplace_back(Diff::Identical);
         } else {

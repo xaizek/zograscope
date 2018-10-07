@@ -331,19 +331,19 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     for (DiffLine d : diff) {
         switch (d.type) {
             case Diff::Left:
-                addLine(ui->oldCode, lsrc.lines[i].str(), i);
+                addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
                 addBlank(ui->newCode);
                 ++i;
                 break;
             case Diff::Right:
                 addBlank(ui->oldCode);
-                addLine(ui->newCode, rsrc.lines[j].str(), j);
+                addLine(ui->newCode, rsrc.lines[j].text.str(), j);
                 ++j;
                 break;
             case Diff::Identical:
             case Diff::Different:
-                addLine(ui->oldCode, lsrc.lines[i].str(), i);
-                addLine(ui->newCode, rsrc.lines[j].str(), j);
+                addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
+                addLine(ui->newCode, rsrc.lines[j].text.str(), j);
                 ++i;
                 ++j;
                 break;
@@ -375,8 +375,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
                         ui->oldCode->insertPlainText("\n");
                         ui->newCode->insertPlainText("\n");
                     }
-                    addLine(ui->oldCode, lsrc.lines[i].str(), i);
-                    addLine(ui->newCode, rsrc.lines[j].str(), j);
+                    addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
+                    addLine(ui->newCode, rsrc.lines[j].text.str(), j);
                     leftFolded[i] = true;
                     rightFolded[j] = true;
                 }
