@@ -51,7 +51,7 @@ public:
     void append(boost::string_ref text, const Node *node, ColorGroup hi = {});
     // Appends single character.
     void append(char text, ColorGroup hi = {}, const Node *node = nullptr);
-    // Appends single character that's repeated `count` times..
+    // Appends single character that's repeated `count` times.
     void append(char text, int count, ColorGroup hi = {},
                 const Node *node = nullptr);
 
