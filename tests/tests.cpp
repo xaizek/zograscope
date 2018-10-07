@@ -141,7 +141,8 @@ findNode(const Tree &tree, Type type, const std::string &label)
 }
 
 const Node *
-findNode(const Tree &tree, std::function<bool(const Node *)> pred)
+findNode(const Tree &tree, std::function<bool(const Node *)> pred,
+         bool skipLastLayer)
 {
     const Node *needle = nullptr;
 
@@ -157,7 +158,7 @@ findNode(const Tree &tree, std::function<bool(const Node *)> pred)
             }
         }
 
-        if (node->next != nullptr) {
+        if (node->next != nullptr && (!node->next->last || !skipLastLayer)) {
             return visit(node->next);
         }
 

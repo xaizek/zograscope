@@ -289,6 +289,28 @@ postOrder(Node &node, std::vector<Node *> &v)
 void
 reduceTreesCoarse(Node *T1, Node *T2)
 {
+    struct {
+        void match(Node *x, Node *y) {
+            // Assumption is that matched nodes have exactly the same structure.
+            // Might want to check it in code.
+
+            x->state = State::Unchanged;
+            y->state = State::Unchanged;
+            x->relative = y;
+            y->relative = x;
+
+            for (auto l = x->children.begin(), r = y->children.begin();
+                 l != x->children.end() && r != y->children.end();
+                 ++l, ++r) {
+                match(*l, *r);
+            }
+
+            if (x->next && !x->next->last && y->next && !y->next->last) {
+                match(x->next, y->next);
+            }
+        }
+    } matcher;
+
     const std::vector<std::size_t> children1 = hashChildren(*T1);
     const std::vector<std::size_t> children2 = hashChildren(*T2);
 
@@ -301,9 +323,8 @@ reduceTreesCoarse(Node *T1, Node *T2)
 
             const std::size_t hash2 = children2[j];
             if (hash1 == hash2) {
-                T1->children[i]->relative = T2->children[j];
+                matcher.match(T1->children[i], T2->children[j]);
                 T1->children[i]->satellite = true;
-                T2->children[j]->relative = T1->children[i];
                 T2->children[j]->satellite = true;
                 break;
             }

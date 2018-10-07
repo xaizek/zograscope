@@ -41,3 +41,27 @@ TEST_CASE("Locations are propagated to inner (non-leaf) nodes", "[tree]")
     CHECK(node->line == 3);
     CHECK(node->col == 17);
 }
+
+TEST_CASE("Coarse reduction links matched nodes", "[tree]")
+{
+    Tree oldTree = parseC(R"(
+        int main(int argc, char *argv[]) {
+            return 0;
+        }
+    )", true);
+
+    Tree newTree = parseC(R"(
+        int main(int argc, char *argv[]) {
+            return 0;
+        }
+    )", true);
+
+    reduceTreesCoarse(oldTree.getRoot(), newTree.getRoot());
+
+    auto test = [&](const Node *node) {
+        return node != oldTree.getRoot() && node != newTree.getRoot()
+            && node->state == State::Unchanged && node->relative == nullptr;
+    };
+    CHECK(findNode(oldTree, test, true) == nullptr);
+    CHECK(findNode(newTree, test, true) == nullptr);
+}
