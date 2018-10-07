@@ -318,10 +318,6 @@ Comparator::detectMoves(Node *x)
         return;
     }
 
-    auto cmp = [](Node *x, Node *y) {
-        return x->relative == y;
-    };
-
     if (y != nullptr && lang.hasMoveableItems(x)) {
         if (lang.hasFixedStructure(x)) {
             detectMovesInFixedStructure(x, y);
@@ -330,6 +326,10 @@ Comparator::detectMoves(Node *x)
             }
             return;
         }
+
+        auto cmp = [](Node *x, Node *y) {
+            return x->relative == y;
+        };
 
         dtl::Diff<Node *, cpp17::pmr::vector<Node *>, decltype(cmp)>
             diff(x->children, y->children, cmp);
