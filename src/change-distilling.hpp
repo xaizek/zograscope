@@ -18,7 +18,11 @@
 #ifndef ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 #define ZOGRASCOPE__CHANGE_DISTILLING_HPP__
 
+#include <cstdint>
+
 #include <vector>
+
+enum class State : std::uint8_t;
 
 class DiceString;
 class Language;
@@ -69,6 +73,8 @@ private:
     // This pass matches nodes, whose direct children (ignoring comments) are
     // already matched with each other.
     void matchFirstLevelMatchedInternal();
+    // Changes state of two nodes and connects them.
+    void match(Node *x, Node *y, State state);
 
 private:
     Language &lang;                // Language of the nodes.

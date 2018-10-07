@@ -33,7 +33,6 @@ static bool haveValues(const Node *x, const Node *y);
 static bool unmatchedInternal(const Node *node);
 static bool canMatch(const Node *x, const Node *y);
 static bool isTerminal(const Node *n);
-static void match(Node *x, Node *y, State state);
 static void markNode(Node &node, State state);
 
 namespace {
@@ -154,7 +153,7 @@ Distiller::distill(Node &T1, Node &T2)
     initialize(T1, T2);
 
     std::vector<TerminalMatch> matches;
-    auto matchTerminals = [&matches]() {
+    auto matchTerminals = [&]() {
         for (const TerminalMatch &m : matches) {
             if (m.x->relative == nullptr && m.y->relative == nullptr) {
                 match(m.x, m.y, (m.similarity == 1.0f &&
@@ -675,9 +674,8 @@ isTerminal(const Node *n)
     return (n->children.empty() && n->type != Type::Comments);
 }
 
-// Changes state of two nodes and connects them.
-static void
-match(Node *x, Node *y, State state)
+void
+Distiller::match(Node *x, Node *y, State state)
 {
     markNode(*x, state);
     markNode(*y, state);
