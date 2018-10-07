@@ -227,7 +227,7 @@ TEST_CASE("Adding/removing/modifying initializers", "[comparison]")
 {
     diffC(R"(
         char ARR1[] =
-                    "a"        /// Deletions
+                    "a"        /// Updates
                     ;
 
         char ARR2[]
@@ -237,7 +237,7 @@ TEST_CASE("Adding/removing/modifying initializers", "[comparison]")
         const char ARR3[];
     )", R"(
         char ARR1[] =
-                    "b"        /// Additions
+                    "b"        /// Updates
                     ;
 
         char ARR2[];

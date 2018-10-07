@@ -143,7 +143,8 @@ const Node * findNode(const Tree &tree, Type type,
                       const std::string &label = {});
 
 // Finds the first node that matches the predicate.
-const Node * findNode(const Tree &tree, std::function<bool(const Node *)> pred);
+const Node * findNode(const Tree &tree, std::function<bool(const Node *)> pred,
+                      bool skipLastLayer = false);
 
 int countLeaves(const Node &root, State state);
 

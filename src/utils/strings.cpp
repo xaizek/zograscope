@@ -25,26 +25,7 @@
 
 #include <boost/utility/string_ref.hpp>
 
-class CountIterator :
-    public std::iterator<std::output_iterator_tag, void, void, void, void>
-{
-public:
-    CountIterator & operator*() { return *this; }
-    CountIterator & operator++() { return *this; }
-    CountIterator & operator++(int) { return *this; }
-
-    template <typename T>
-    CountIterator & operator=(const T &)
-    {
-        ++count;
-        return *this;
-    }
-
-    int getCount() const { return count; }
-
-private:
-    int count = 0;
-};
+#include "utils/CountIterator.hpp"
 
 float
 DiceString::compare(DiceString &other)

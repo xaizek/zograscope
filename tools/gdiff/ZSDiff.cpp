@@ -53,11 +53,16 @@
 #include "SynHi.hpp"
 #include "ui_zsdiff.h"
 
-// TODO: diff entries should be diffed more than once, we need to store results
-//       of diffing along with state of code views (maybe just be creating N
-//       pairs of widgets and switching to them as needed).
+// TODO: diff entries shouldn't be diffed more than once, we need to store
+//       results of diffing along with state of code views (maybe just be
+//       creating N pairs of widgets and switching to them as needed).
 
 // TODO: probably need to display list of diff entries in the GUI somehow.
+
+// TODO: fallback to regular diff when parsing fails?
+
+// TODO: in future we could support more modes of `git diff`, `git show` and
+//       `git stash` invocation.
 
 struct ZSDiff::SideInfo
 {
@@ -326,19 +331,19 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     for (DiffLine d : diff) {
         switch (d.type) {
             case Diff::Left:
-                addLine(ui->oldCode, lsrc.lines[i].str(), i);
+                addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
                 addBlank(ui->newCode);
                 ++i;
                 break;
             case Diff::Right:
                 addBlank(ui->oldCode);
-                addLine(ui->newCode, rsrc.lines[j].str(), j);
+                addLine(ui->newCode, rsrc.lines[j].text.str(), j);
                 ++j;
                 break;
             case Diff::Identical:
             case Diff::Different:
-                addLine(ui->oldCode, lsrc.lines[i].str(), i);
-                addLine(ui->newCode, rsrc.lines[j].str(), j);
+                addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
+                addLine(ui->newCode, rsrc.lines[j].text.str(), j);
                 ++i;
                 ++j;
                 break;
@@ -370,8 +375,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
                         ui->oldCode->insertPlainText("\n");
                         ui->newCode->insertPlainText("\n");
                     }
-                    addLine(ui->oldCode, lsrc.lines[i].str(), i);
-                    addLine(ui->newCode, rsrc.lines[j].str(), j);
+                    addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
+                    addLine(ui->newCode, rsrc.lines[j].text.str(), j);
                     leftFolded[i] = true;
                     rightFolded[j] = true;
                 }

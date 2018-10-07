@@ -77,7 +77,7 @@ were in fact captured albeit not perfectly.
 
 ![zs-diff](data/example/screenshots/zs-diff.png)
 
-Alignment and fine-grained matching need improvements as well as change
+Fine-grained matching would benefit from improvements as well as change
 detection for more complicated cases in general, but changes that were applied
 to this piece of code are quite easy to see and reason about.
 

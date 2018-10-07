@@ -702,11 +702,10 @@ init_declarator
                        +C11SType::Declarator); }
     | declarator '=' initializer
     { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::WithoutInitializer),
-                         tb->addNode({ tb->addNode({ tb->addNode($2, @2,
-                                                     +C11SType::Separator) },
-                                                   +C11SType::Bundle),
-                                       $3 },
-                                     +C11SType::WithoutInitializer) },
+                         tb->addNode({ tb->addNode($2, @2,
+                                       +C11SType::Separator) },
+                                     +C11SType::Bundle),
+                         $3 },
                        +C11SType::Declarator); }
     ;
 

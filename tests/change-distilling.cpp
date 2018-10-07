@@ -17,32 +17,13 @@
 
 #include "Catch/catch.hpp"
 
-#include "c/C11SType.hpp"
+#include "utils/time.hpp"
+#include "compare.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
 
-TEST_CASE("Locations are propagated to inner (non-leaf) nodes", "[tree]")
-{
-    using namespace c11stypes;
-
-    Tree tree = parseC(R"(
-            int main(int argc, char *argv[]) {
-                return 0;
-            }
-    )", true);
-
-    auto test = [](const Node *node) {
-        return (node->stype == +C11SType::ReturnValueStmt);
-    };
-    const Node *const node = findNode(tree, test);
-    REQUIRE(node != nullptr);
-
-    CHECK(node->line == 3);
-    CHECK(node->col == 17);
-}
-
-TEST_CASE("Coarse reduction links matched nodes", "[tree]")
+TEST_CASE("Distilling links matched nodes", "[change-distiller]")
 {
     Tree oldTree = parseC(R"(
         int main(int argc, char *argv[]) {
@@ -52,11 +33,12 @@ TEST_CASE("Coarse reduction links matched nodes", "[tree]")
 
     Tree newTree = parseC(R"(
         int main(int argc, char *argv[]) {
-            return 0;
+            return 1;
         }
     )", true);
 
-    reduceTreesCoarse(oldTree.getRoot(), newTree.getRoot());
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, false);
 
     auto test = [&](const Node *node) {
         return node != oldTree.getRoot() && node != newTree.getRoot()
