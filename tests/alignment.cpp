@@ -271,3 +271,97 @@ TEST_CASE("Lines with matching nodes are aligned for multiline tokens",
 
     REQUIRE(normalizeText(oss.str()) == expected);
 }
+
+TEST_CASE("Separators are aligned when subtree separators match",
+          "[alignment]")
+{
+    SECTION("Simplified")
+    {
+        Tree oldTree = parseCxx(R"(
+            static void
+            getParent()
+            {
+                return x;
+            }
+        )");
+        Tree newTree = parseCxx(R"(
+            void
+            Comparator::getParent()
+            {
+                return x;
+            }
+        )");
+
+        TimeReport tr;
+        compare(oldTree, newTree, tr, true, false);
+
+        std::ostringstream oss;
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), oss);
+        printer.print(tr);
+
+        std::string expected = normalizeText(R"(
+            ~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             1                  |  1
+             2  {-static-} void ~  2  void
+             3  {-getParent-}() <  -
+             -                  >  3  {+Comparator+}{+:+}{+:+}{+getParent+}()
+             4  {               |  4  {
+             5      return x;   |  5      return x;
+             6  }               |  6  }
+        )");
+
+        REQUIRE(normalizeText(oss.str()) == expected);
+    }
+
+    SECTION("More complicated")
+    {
+        Tree oldTree = parseCxx(R"(
+            static const Node *
+            getParent(const Node *x)
+            {
+                do {
+                    x = x->parent;
+                } while (x != nullptr && isUnmovable(x));
+                return x;
+            }
+        )");
+        Tree newTree = parseCxx(R"(
+            const Node *
+            Comparator::getParent(const Node *x)
+            {
+                do {
+                    x = x->parentNode;
+                } while (x != nullptr &&
+                         lang.isUnmovable(x));
+                return x;
+            }
+        )");
+
+        TimeReport tr;
+        compare(oldTree, newTree, tr, true, false);
+
+        std::ostringstream oss;
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), oss);
+        printer.print(tr);
+
+        std::string expected = normalizeText(R"(
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             1                                                    |   1
+             2  {-static-} const Node *                           ~   2  const Node *
+             3  {:getParent:}(const Node *x)                      ~   3  {+Comparator+}{+:+}{+:+}{:getParent:}(const Node *x)
+             4  {                                                 |   4  {
+             5      do {                                          |   5      do {
+             6          x = x->[parent];                          ~   6          x = x->[parent{+Node+}];
+             7      } while (x != nullptr && {:isUnmovable:}(x)); ~   7      } while (x != nullptr &&
+             -                                                    >   8               {+lang+}{+.+}{:isUnmovable:}(x));
+             8      return x;                                     |   9      return x;
+             9  }                                                 |  10  }
+        )");
+
+        REQUIRE(normalizeText(oss.str()) == expected);
+    }
+}

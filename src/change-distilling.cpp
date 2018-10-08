@@ -677,36 +677,68 @@ isTerminal(const Node *n)
 void
 Distiller::match(Node *x, Node *y, State state)
 {
-    auto isSimilarTree = [](Node *x, Node *y) {
-        if (x->children.size() != y->children.size()) {
-            return false;
-        }
-        for (auto l = x->children.begin(), r = y->children.begin();
-             l != x->children.end() && r != y->children.end();
-             ++l, ++r) {
-            if ((*l)->stype != (*r)->stype) {
+    auto isSimilarTree = [&](Node *x, Node *y) {
+        auto l = x->children.begin();
+        auto r = y->children.begin();
+        int satellites = 0;
+        while (true) {
+            while (l != x->children.end() && !lang.isSatellite((*l)->stype)) {
+                ++l;
+            }
+            while (r != y->children.end() && !lang.isSatellite((*r)->stype)) {
+                ++r;
+            }
+
+            if ((l == x->children.end()) != (r == y->children.end())) {
                 return false;
             }
+            if (l == x->children.end()) {
+                break;
+            }
+
+            if ((*l)->stype != (*r)->stype || (*l)->label != (*r)->label) {
+                return false;
+            }
+
+            ++satellites;
+            ++l;
+            ++r;
         }
-        return true;
+        return (satellites > 0);
     };
 
     if (isSimilarTree(x, y)) {
-        for (auto l = x->children.begin(), r = y->children.begin();
-             l != x->children.end() && r != y->children.end();
-             ++l, ++r) {
+        for (auto l = x->children.begin(); l != x->children.end(); ++l) {
             (*l)->parent = x;
-            (*r)->parent = y;
-
-            if (lang.isSatellite((*l)->stype) &&
-                lang.isSatellite((*r)->stype)) {
-                (*l)->state = State::Unchanged;
-                (*r)->state = State::Unchanged;
-
-                (*l)->relative = *r;
-                (*r)->relative = *l;
-            }
         }
+        for (auto r = y->children.begin(); r != y->children.end(); ++r) {
+            (*r)->parent = y;
+        }
+
+        auto l = x->children.begin();
+        auto r = y->children.begin();
+        while (true) {
+            while (l != x->children.end() && !lang.isSatellite((*l)->stype)) {
+                ++l;
+            }
+            while (r != y->children.end() && !lang.isSatellite((*r)->stype)) {
+                ++r;
+            }
+
+            if (l == x->children.end()) {
+                break;
+            }
+
+            (*l)->state = State::Unchanged;
+            (*r)->state = State::Unchanged;
+
+            (*l)->relative = *r;
+            (*r)->relative = *l;
+
+            ++l;
+            ++r;
+        }
+
         x->state = state;
         y->state = state;
         x->relative = y;
