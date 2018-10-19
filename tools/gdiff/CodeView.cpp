@@ -234,6 +234,16 @@ CodeView::keyPressEvent(QKeyEvent *e)
     if (e->text() == "G") {
         return sendKey(Qt::Key_End, Qt::ControlModifier);
     }
+    if (e->key() == Qt::Key_E && e->modifiers() == Qt::ControlModifier) {
+        int newPos = verticalScrollBar()->sliderPosition() + 1;
+        verticalScrollBar()->setSliderPosition(newPos);
+        return;
+    }
+    if (e->key() == Qt::Key_Y && e->modifiers() == Qt::ControlModifier) {
+        int newPos = verticalScrollBar()->sliderPosition() - 1;
+        verticalScrollBar()->setSliderPosition(newPos);
+        return;
+    }
     return QPlainTextEdit::keyPressEvent(e);
 }
 
