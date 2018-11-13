@@ -319,7 +319,7 @@ ZSDiff::diffAndPrint(TimeReport &tr)
                        DiffSource(*oldTree.getRoot()));
     DiffSource rsrc = (tr.measure("right-print"),
                        DiffSource(*newTree.getRoot()));
-    std::vector<DiffLine> diff = (tr.measure("compare"),
+    std::vector<DiffLine> diff = (tr.measure("align"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
 
     leftFolded.assign(lsrc.lines.size(), false);
