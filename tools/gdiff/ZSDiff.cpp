@@ -70,6 +70,88 @@ struct ZSDiff::SideInfo
     std::vector<std::map<int, TokenInfo *>> map;
 };
 
+// Helper for filling code view quickly (doing it without buffering is awfully
+// slow).
+class ZSDiff::CodeBuffer
+{
+public:
+    // Adds a blank line.
+    void addBlank()
+    {
+        text += QChar::ObjectReplacementCharacter;
+        text += '\n';
+        userState.push_back(-1);
+        visible.push_back(true);
+        format.emplace_back();
+        format.back().setObjectType(BlankLineAttr::getType());
+    }
+
+    // Adds line with the text.
+    void addLine(boost::string_ref s, int lineNo)
+    {
+        text += QByteArray(s.data(), s.size());
+        text += '\n';
+        userState.push_back(lineNo);
+        visible.push_back(true);
+        format.emplace_back();
+    }
+
+    // Adds a fold of specified height.
+    void addFold(int height)
+    {
+        QTextCharFormat foldTextFormat;
+        foldTextFormat.setObjectType(FoldTextAttr::getType());
+
+        QVariant v;
+        v.setValue(height);
+        foldTextFormat.setProperty(FoldTextAttr::getProp(), v);
+
+        text += QChar::ObjectReplacementCharacter;
+        text += '\n';
+        userState.push_back(-2);
+        visible.push_back(false);
+        format.emplace_back(std::move(foldTextFormat));
+    }
+
+    // Displays buffered data onto a code view.
+    void display(CodeView *view)
+    {
+        if (text.endsWith('\n')) {
+            text.remove(text.size() - 1, 1);
+        }
+
+        QTextDocument *doc = view->document();
+        doc->setPlainText(text);
+
+        QTextCharFormat noFormat;
+
+        int i = 0;
+        for (QTextBlock b = doc->begin(); b != doc->end(); b = b.next()) {
+            if (!b.isValid()) {
+                continue;
+            }
+
+            b.setUserState(userState[i]);
+            b.setVisible(visible[i]);
+
+            if (format[i] != noFormat) {
+                QTextCursor c(b);
+                c.setPosition(c.position() + 1, QTextCursor::KeepAnchor);
+                c.setCharFormat(format[i]);
+            }
+
+            ++i;
+        }
+    }
+
+private:
+    QString text;                        // Complete text.
+    std::vector<int> userState;          // User state of corresponding line.
+    std::vector<bool> visible;           // Whether specific line is visible.
+    std::vector<QTextCharFormat> format; // Format of corresponding line.
+};
+
+
 Q_DECLARE_METATYPE(TokenInfo *)
 
 ZSDiff::SideInfo
@@ -320,19 +402,6 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     QTextCharFormat foldTextFormat;
     foldTextFormat.setObjectType(foldTextAttr.getType());
 
-    auto addBlank = [&blankLineFormat](CodeView *view) {
-        QTextCursor c = view->textCursor();
-        c.insertText(QString(QChar::ObjectReplacementCharacter),
-                     blankLineFormat);
-    };
-    auto addLine = [](CodeView *view, boost::string_ref s, int lineNo) {
-        view->insertPlainText(QByteArray(s.data(), s.size()));
-        view->document()->lastBlock().setUserState(lineNo);
-    };
-
-    QTextDocument *oldDoc = ui->oldCode->document();
-    QTextDocument *newDoc = ui->newCode->document();
-
     DiffSource lsrc = (tr.measure("left-print"),
                        DiffSource(*oldTree.getRoot()));
     DiffSource rsrc = (tr.measure("right-print"),
@@ -345,75 +414,47 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     leftFolded.assign(lsrc.lines.size(), false);
     rightFolded.assign(rsrc.lines.size(), false);
 
-    int leftState = -1, rightState = -1;
+    CodeBuffer leftBuf, rightBuf;
+
     unsigned int i = 0U;
     unsigned int j = 0U;
     for (DiffLine d : diff) {
         switch (d.type) {
             case Diff::Left:
-                addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
-                addBlank(ui->newCode);
+                leftBuf.addLine(lsrc.lines[i].text.str(), i);
+                rightBuf.addBlank();
                 ++i;
                 break;
             case Diff::Right:
-                addBlank(ui->oldCode);
-                addLine(ui->newCode, rsrc.lines[j].text.str(), j);
+                leftBuf.addBlank();
+                rightBuf.addLine(rsrc.lines[j].text.str(), j);
                 ++j;
                 break;
             case Diff::Identical:
             case Diff::Different:
-                addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
-                addLine(ui->newCode, rsrc.lines[j].text.str(), j);
+                leftBuf.addLine(lsrc.lines[i].text.str(), i);
+                rightBuf.addLine(rsrc.lines[j].text.str(), j);
                 ++i;
                 ++j;
                 break;
 
             case Diff::Fold:
-                {
-                    QTextCursor c;
-
-                    QVariant v;
-                    v.setValue(d.data);
-                    foldTextFormat.setProperty(foldTextAttr.getProp(), v);
-
-                    c = ui->oldCode->textCursor();
-                    c.insertText(QString(QChar::ObjectReplacementCharacter),
-                                 foldTextFormat);
-                    c = ui->newCode->textCursor();
-                    c.insertText(QString(QChar::ObjectReplacementCharacter),
-                                 foldTextFormat);
-
-                    oldDoc->lastBlock().setVisible(false);
-                    oldDoc->lastBlock().setUserState(-2);
-                    ui->oldCode->insertPlainText("\n");
-                    newDoc->lastBlock().setVisible(false);
-                    newDoc->lastBlock().setUserState(-2);
-                    ui->newCode->insertPlainText("\n");
-                }
+                leftBuf.addFold(d.data);
+                rightBuf.addFold(d.data);
                 for (int k = 0; k < d.data; ++k, ++i, ++j) {
-                    if (k != 0) {
-                        ui->oldCode->insertPlainText("\n");
-                        ui->newCode->insertPlainText("\n");
-                    }
-                    addLine(ui->oldCode, lsrc.lines[i].text.str(), i);
-                    addLine(ui->newCode, rsrc.lines[j].text.str(), j);
+                    leftBuf.addLine(lsrc.lines[i].text.str(), i);
+                    rightBuf.addLine(rsrc.lines[j].text.str(), j);
                     leftFolded[i] = true;
                     rightFolded[j] = true;
                 }
                 break;
         }
-
-        leftState = oldDoc->lastBlock().userState();
-        rightState = newDoc->lastBlock().userState();
-        ui->oldCode->insertPlainText("\n");
-        ui->newCode->insertPlainText("\n");
     }
 
-    // Remove extra line.
-    oldDoc->lastBlock().setUserState(leftState);
-    ui->oldCode->textCursor().deletePreviousChar();
-    newDoc->lastBlock().setUserState(rightState);
-    ui->newCode->textCursor().deletePreviousChar();
+    timer.measure("displaying");
+
+    leftBuf.display(ui->oldCode);
+    rightBuf.display(ui->newCode);
 }
 
 void

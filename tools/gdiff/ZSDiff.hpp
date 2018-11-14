@@ -67,6 +67,7 @@ class ZSDiff : public QMainWindow
     Q_OBJECT
 
     struct SideInfo;
+    struct CodeBuffer;
 
 public:
     ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
