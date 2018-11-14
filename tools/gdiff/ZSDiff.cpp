@@ -246,10 +246,8 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     QTextDocument *newDoc = ui->newCode->document();
 
     SideInfo leftSide = printTree(oldTree, ui->oldCode, true);
-    oldSynHi.reset(new SynHi(oldDoc, std::move(leftSide.hi)));
     oldMap = std::move(leftSide.map);
     SideInfo rightSide = printTree(newTree, ui->newCode, false);
-    newSynHi.reset(new SynHi(newDoc, std::move(rightSide.hi)));
     newMap = std::move(rightSide.map);
 
     oldDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
@@ -261,8 +259,16 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     newDoc->documentLayout()->registerHandler(foldTextAttr.getType(),
                                               &foldTextAttr);
 
+    oldSynHi.reset();
+    newSynHi.reset();
+
     diffAndPrint(timeReport);
+
+    oldSynHi.reset(new SynHi(oldDoc, std::move(leftSide.hi)));
+    newSynHi.reset(new SynHi(newDoc, std::move(rightSide.hi)));
+
     fold();
+
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);
 
