@@ -107,6 +107,8 @@ private:
 private:
     Ui::ZSDiff *ui;
     std::unordered_map<const Node *, TokenInfo> info;
+    // Whether diff entry is already loaded.
+    bool loaded;
     int scrollDiff;
     bool syncScrolls;
     bool syncMatches;

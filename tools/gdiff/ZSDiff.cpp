@@ -136,6 +136,7 @@ ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
                QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
+      loaded(false),
       scrollDiff(0),
       syncScrolls(true),
       syncMatches(false),
@@ -175,6 +176,8 @@ void
 ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
     auto timer = timeReport.measure("loading-entry");
+
+    loaded = false;
 
     ui->oldLabel->setText(QString("--- %1").arg(diffEntry.original.title.c_str()));
     ui->newLabel->setText(QString("+++ %1").arg(diffEntry.updated.title.c_str()));
@@ -228,6 +231,7 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     ui->oldCode->moveCursor(QTextCursor::Start);
 
     auto onPosChanged = [&](QPlainTextEdit *textEdit) {
+        if (!loaded) return;
         QTextCursor cursor = textEdit->textCursor();
         if (cursor.hasSelection()) return;
         highlightMatch(textEdit);
@@ -237,18 +241,20 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
             [=]() { onPosChanged(ui->newCode); });
 
-    connect(ui->oldCode, &CodeView::scrolled, [&](int /*pos*/) {
-        if (syncScrolls) {
-            syncScrollTo(ui->oldCode);
+    auto onScrolled = [&](CodeView *codeView) {
+        if (loaded && syncScrolls) {
+            syncScrollTo(codeView);
         }
+    };
+    connect(ui->oldCode, &CodeView::scrolled, [=](int /*pos*/) {
+        onScrolled(ui->oldCode);
     });
-    connect(ui->newCode, &CodeView::scrolled, [&](int /*pos*/) {
-        if (syncScrolls) {
-            syncScrollTo(ui->newCode);
-        }
+    connect(ui->newCode, &CodeView::scrolled, [=](int /*pos*/) {
+        onScrolled(ui->newCode);
     });
 
     auto onFocus = [&](CodeView *view) {
+        if (!loaded) return;
         if (firstTimeFocus) {
             firstTimeFocus = false;
             view->centerCursor();
@@ -259,6 +265,8 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     };
     connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
     connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
+
+    loaded = true;
 
     // Navigate to first change in old or new version of the code and highlight
     // current line.
