@@ -169,6 +169,42 @@ ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
         ui->helpTextBrowser->setText("Loading help failed");
     }
 
+    auto onPosChanged = [&](QPlainTextEdit *textEdit) {
+        if (!loaded) return;
+        QTextCursor cursor = textEdit->textCursor();
+        if (cursor.hasSelection()) return;
+        highlightMatch(textEdit);
+    };
+    connect(ui->oldCode, &QPlainTextEdit::cursorPositionChanged,
+            [=]() { onPosChanged(ui->oldCode); });
+    connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
+            [=]() { onPosChanged(ui->newCode); });
+
+    auto onScrolled = [&](CodeView *codeView) {
+        if (loaded && syncScrolls) {
+            syncScrollTo(codeView);
+        }
+    };
+    connect(ui->oldCode, &CodeView::scrolled, [=](int /*pos*/) {
+        onScrolled(ui->oldCode);
+    });
+    connect(ui->newCode, &CodeView::scrolled, [=](int /*pos*/) {
+        onScrolled(ui->newCode);
+    });
+
+    auto onFocus = [&](CodeView *view) {
+        if (!loaded) return;
+        if (firstTimeFocus) {
+            firstTimeFocus = false;
+            view->centerCursor();
+            syncScrollTo(view);
+        }
+        syncOtherCursor(otherView(view));
+        highlightMatch(view);
+    };
+    connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
+    connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
+
     loadDiff(this->diffList.getCurrent());
 }
 
@@ -229,42 +265,6 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     fold();
     ui->newCode->moveCursor(QTextCursor::Start);
     ui->oldCode->moveCursor(QTextCursor::Start);
-
-    auto onPosChanged = [&](QPlainTextEdit *textEdit) {
-        if (!loaded) return;
-        QTextCursor cursor = textEdit->textCursor();
-        if (cursor.hasSelection()) return;
-        highlightMatch(textEdit);
-    };
-    connect(ui->oldCode, &QPlainTextEdit::cursorPositionChanged,
-            [=]() { onPosChanged(ui->oldCode); });
-    connect(ui->newCode, &QPlainTextEdit::cursorPositionChanged,
-            [=]() { onPosChanged(ui->newCode); });
-
-    auto onScrolled = [&](CodeView *codeView) {
-        if (loaded && syncScrolls) {
-            syncScrollTo(codeView);
-        }
-    };
-    connect(ui->oldCode, &CodeView::scrolled, [=](int /*pos*/) {
-        onScrolled(ui->oldCode);
-    });
-    connect(ui->newCode, &CodeView::scrolled, [=](int /*pos*/) {
-        onScrolled(ui->newCode);
-    });
-
-    auto onFocus = [&](CodeView *view) {
-        if (!loaded) return;
-        if (firstTimeFocus) {
-            firstTimeFocus = false;
-            view->centerCursor();
-            syncScrollTo(view);
-        }
-        syncOtherCursor(otherView(view));
-        highlightMatch(view);
-    };
-    connect(ui->oldCode, &CodeView::focused, [=]() { onFocus(ui->oldCode); });
-    connect(ui->newCode, &CodeView::focused, [=]() { onFocus(ui->newCode); });
 
     loaded = true;
 
