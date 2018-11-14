@@ -174,6 +174,8 @@ ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
 void
 ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
+    auto timer = timeReport.measure("loading-entry");
+
     ui->oldLabel->setText(QString("--- %1").arg(diffEntry.original.title.c_str()));
     ui->newLabel->setText(QString("+++ %1").arg(diffEntry.updated.title.c_str()));
 
@@ -296,6 +298,8 @@ ZSDiff::updateTitle()
 void
 ZSDiff::diffAndPrint(TimeReport &tr)
 {
+    auto timer = tr.measure("aligning-and-printing");
+
     QTextCharFormat blankLineFormat;
     blankLineFormat.setObjectType(blankLineAttr.getType());
 
@@ -321,6 +325,8 @@ ZSDiff::diffAndPrint(TimeReport &tr)
                        DiffSource(*newTree.getRoot()));
     std::vector<DiffLine> diff = (tr.measure("align"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
+
+    timer.measure("visualizing");
 
     leftFolded.assign(lsrc.lines.size(), false);
     rightFolded.assign(rsrc.lines.size(), false);
