@@ -39,7 +39,7 @@ SynHi::getHi() const
 void
 SynHi::highlightBlock(const QString &)
 {
-    int line = currentBlock().userState();
+    int line = currentBlockState();
     if (line < 0 || line >= static_cast<int>(hi.size())) return;
 
     int from = 0;
