@@ -446,8 +446,8 @@ Printer::print(TimeReport &tr)
     auto diffingTimer = tr.measure("printing");
 
     // Do comparison without highlighting as it skews alignment results.
-    DiffSource lsrc = (tr.measure("left-print"), DiffSource(left));
-    DiffSource rsrc = (tr.measure("right-print"), DiffSource(right));
+    DiffSource lsrc = (tr.measure("left-align-print"), DiffSource(left));
+    DiffSource rsrc = (tr.measure("right-align-print"), DiffSource(right));
     std::vector<DiffLine> diff = (tr.measure("align"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
 

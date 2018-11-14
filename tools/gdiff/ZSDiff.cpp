@@ -327,9 +327,11 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     QTextDocument *oldDoc = ui->oldCode->document();
     QTextDocument *newDoc = ui->newCode->document();
 
-    SideInfo leftSide = printTree(oldTree, ui->oldCode, true);
+    SideInfo leftSide = (timeReport.measure("left-print"),
+                         printTree(oldTree, ui->oldCode, true));
     oldMap = std::move(leftSide.map);
-    SideInfo rightSide = printTree(newTree, ui->newCode, false);
+    SideInfo rightSide = (timeReport.measure("right-print"),
+                          printTree(newTree, ui->newCode, false));
     newMap = std::move(rightSide.map);
 
     oldDoc->documentLayout()->registerHandler(blankLineAttr.getType(),
@@ -402,9 +404,9 @@ ZSDiff::diffAndPrint(TimeReport &tr)
     QTextCharFormat foldTextFormat;
     foldTextFormat.setObjectType(foldTextAttr.getType());
 
-    DiffSource lsrc = (tr.measure("left-print"),
+    DiffSource lsrc = (tr.measure("left-align-print"),
                        DiffSource(*oldTree.getRoot()));
-    DiffSource rsrc = (tr.measure("right-print"),
+    DiffSource rsrc = (tr.measure("right-align-print"),
                        DiffSource(*newTree.getRoot()));
     std::vector<DiffLine> diff = (tr.measure("align"),
                                   makeDiff(std::move(lsrc), std::move(rsrc)));
