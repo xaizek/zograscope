@@ -28,6 +28,7 @@
 
 #include "utils/optional.hpp"
 #include "ColorScheme.hpp"
+#include "Grepper.hpp"
 #include "Matcher.hpp"
 #include "TermHighlighter.hpp"
 #include "Traverser.hpp"
