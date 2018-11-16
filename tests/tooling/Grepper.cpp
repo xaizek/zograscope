@@ -17,8 +17,6 @@
 
 #include "Catch/catch.hpp"
 
-#include <string>
-
 #include "tooling/Grepper.hpp"
 #include "tooling/Matcher.hpp"
 #include "mtypes.hpp"
