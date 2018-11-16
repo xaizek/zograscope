@@ -525,6 +525,9 @@ SrcmlCxxLanguage::classify(SType stype) const
         case SrcmlCxxSType::EnumDecl:
             return MType::Declaration;
 
+        case SrcmlCxxSType::ExprStmt:
+            return MType::Statement;
+
         case SrcmlCxxSType::Function:
         case SrcmlCxxSType::Constructor:
         case SrcmlCxxSType::Destructor:

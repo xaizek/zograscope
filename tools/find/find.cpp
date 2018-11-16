@@ -37,6 +37,7 @@ Each of tokens is just a value of a token like `[` or `int`.
 
 Available matchers:
    decl   Any sort of declaration
+   stmt   Statement
    func   Functions (their definitions only)
    param  Parameter of a function
    comm   Comments of any kind

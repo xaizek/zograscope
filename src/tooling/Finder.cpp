@@ -58,6 +58,8 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
     auto convert = [](const std::string &str) {
         if (str == "decl") {
             return MType::Declaration;
+        } else if (str == "stmt") {
+            return MType::Statement;
         } else if (str == "func") {
             return MType::Function;
         } else if (str == "param") {
