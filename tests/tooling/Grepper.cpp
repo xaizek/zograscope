@@ -36,6 +36,44 @@ TEST_CASE("Empty grepper matches nothing but succeeds", "[tooling][grepper]")
     CHECK(grepper.getMatched() == 0);
 }
 
+TEST_CASE("Grep expressions", "[tooling][grepper]")
+{
+    auto grepHandler = [&](const std::vector<Node *> &/*match*/) { };
+
+    Tree tree = parseC("void chars(const char *, const char);", true);
+
+    SECTION("Wildcard") {
+        Grepper grepper({ "const", "//" });
+        CHECK(grepper.grep(tree.getRoot(), grepHandler));
+        CHECK(grepper.getMatched() == 2);
+    }
+    SECTION("Prefix") {
+        Grepper grepper({ "/^vo/" });
+        CHECK(grepper.grep(tree.getRoot(), grepHandler));
+        CHECK(grepper.getMatched() == 1);
+    }
+    SECTION("Suffix") {
+        Grepper grepper({ "/r$/" });
+        CHECK(grepper.grep(tree.getRoot(), grepHandler));
+        CHECK(grepper.getMatched() == 2);
+    }
+    SECTION("Substring") {
+        Grepper grepper({ "/har/" });
+        CHECK(grepper.grep(tree.getRoot(), grepHandler));
+        CHECK(grepper.getMatched() == 3);
+    }
+    SECTION("Exact") {
+        Grepper grepper({ "/^char$/" });
+        CHECK(grepper.grep(tree.getRoot(), grepHandler));
+        CHECK(grepper.getMatched() == 2);
+    }
+    SECTION("Regexp") {
+        Grepper grepper({ "//[(*,);]/" });
+        CHECK(grepper.grep(tree.getRoot(), grepHandler));
+        CHECK(grepper.getMatched() == 5);
+    }
+}
+
 TEST_CASE("Grep starts each processing with clear match", "[tooling][grepper]")
 {
     Matcher matcher(MType::Parameter, nullptr);

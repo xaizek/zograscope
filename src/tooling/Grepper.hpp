@@ -18,18 +18,25 @@
 #ifndef ZOGRASCOPE__TOOLING__GREPPER_HPP__
 #define ZOGRASCOPE__TOOLING__GREPPER_HPP__
 
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <cassert>
+
+#include <regex>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "tree.hpp"
 
-// Finds specified of tokens in a tree.
+// Finds specified pattern of tokens in a tree.
 class Grepper
 {
+    class Expr;
+
 public:
     // Constructs grepper for the specified pattern.
-    Grepper(std::vector<std::string> pattern = {});
+    Grepper(const std::vector<std::string> &pattern = {});
 
 public:
     // Matches leafs of `node` and invokes `handler` on full match.  Returns
@@ -59,16 +66,89 @@ private:
     bool handle(Node *node, F &&handler);
 
 private:
-    std::vector<std::string> pattern; // Spellings to match against.
-    std::vector<Node *> match;        // Currently matched nodes.
+    std::vector<Expr> pattern; // Expressions to match against.
+    std::vector<Node *> match; // Currently matched nodes.
 
     int seen;    // Number of nodes of specified type seen.
     int matched; // Number of nodes of specified which were matched.
 };
 
+// Single token matching expression.
+class Grepper::Expr
+{
+    // Type of the expression.
+    enum class Type
+    {
+        Exact,     // x or /^x$/ -- matches `x`
+        Prefix,    // /^x/       -- matches anything that starts with `x`
+        Suffix,    // /x$/       -- matches anything that ends with `x`
+        Substring, // /x/        -- matches anything that contains `x`
+        Regexp,    // //x/       -- matches `x` regular expression
+        Wildcard,  // //         -- matches anything
+    };
+
+public:
+    // Parses an expression to initialize an instance.
+    explicit Expr(std::string expr);
+
+public:
+    // Checks whether given string matches the expression.
+    bool matches(const std::string &str) const;
+
+private:
+    std::string text;  // Text to match against (if not a regexp).
+    std::regex regexp; // Compiled regexp for regexp type.
+    Type type;         // Type of the expression.
+};
+
 inline
-Grepper::Grepper(std::vector<std::string> pattern)
-    : pattern(std::move(pattern)), seen(0), matched(0)
+Grepper::Expr::Expr(std::string expr) : text(std::move(expr))
+{
+    if (text.length() < 2U || text.front() != '/' || text.back() != '/') {
+        type = Type::Exact;
+    } else if (text.length() == 2U) {
+        type = Type::Wildcard;
+    } else {
+        text.erase(0, 1);
+        text.pop_back();
+        if (text.front() == '^' && text.back() == '$') {
+            type = Type::Exact;
+            text.erase(0, 1);
+            text.pop_back();
+        } else if (text.front() == '/') {
+            type = Type::Regexp;
+            text.erase(0, 1);
+            regexp.assign(text);
+        } else if (text.front() == '^') {
+            type = Type::Prefix;
+            text.erase(0, 1);
+        } else if (text.back() == '$') {
+            type = Type::Suffix;
+            text.pop_back();
+        } else {
+            type = Type::Substring;
+        }
+    }
+}
+
+inline bool
+Grepper::Expr::matches(const std::string &str) const
+{
+    switch (type) {
+        case Type::Exact:     return (str == text);
+        case Type::Prefix:    return boost::starts_with(str, text);
+        case Type::Suffix:    return boost::ends_with(str, text);
+        case Type::Substring: return boost::contains(str, text);
+        case Type::Regexp:    return std::regex_match(str, regexp);
+        case Type::Wildcard:  return true;
+    }
+    assert(false && "Type has impossible value.");
+    return false;
+}
+
+inline
+Grepper::Grepper(const std::vector<std::string> &pattern)
+    : pattern(pattern.cbegin(), pattern.cend()), seen(0), matched(0)
 {
 }
 
@@ -113,7 +193,7 @@ Grepper::handle(Node *node, F &&handler)
 {
     ++seen;
 
-    if (node->spelling != pattern[match.size()]) {
+    if (!pattern[match.size()].matches(node->spelling)) {
         match.clear();
         return false;
     }
