@@ -128,6 +128,12 @@ makeDiff(DiffSource &&l, DiffSource &&r)
     }
 
     auto cmp = [](LineInfo &a, LineInfo &b) {
+        int all = a.rels.size() + b.nodes.size();
+        if (all == 0) {
+            // Match empty lines.
+            return true;
+        }
+
         auto skipNulls = [](std::vector<const Node *> &v) {
             return std::find_if(v.cbegin(), v.cend(), [](const Node *n) {
                 return (n != nullptr);
@@ -136,12 +142,6 @@ makeDiff(DiffSource &&l, DiffSource &&r)
 
         auto aRels = skipNulls(a.rels);
         auto bNodes = skipNulls(b.nodes);
-
-        int all = a.rels.size() + b.nodes.size();
-        if (all == 0) {
-            // Match empty lines.
-            return true;
-        }
 
         int matched = std::set_intersection(aRels, a.rels.cend(),
                                             bNodes, b.nodes.cend(),
