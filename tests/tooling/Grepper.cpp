@@ -24,6 +24,18 @@
 
 #include "tests.hpp"
 
+TEST_CASE("Empty grepper matches nothing but succeeds", "[tooling][grepper]")
+{
+    auto grepHandler = [&](const std::vector<Node *> &/*match*/) { };
+
+    Tree tree = parseC("void chars(const char *, const char);", true);
+
+    Grepper grepper;
+    CHECK(grepper.grep(tree.getRoot(), grepHandler));
+    CHECK(grepper.getSeen() == 0);
+    CHECK(grepper.getMatched() == 0);
+}
+
 TEST_CASE("Grep starts each processing with clear match", "[tooling][grepper]")
 {
     Matcher matcher(MType::Parameter, nullptr);

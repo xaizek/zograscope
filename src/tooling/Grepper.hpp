@@ -33,9 +33,9 @@ public:
 
 public:
     // Matches leafs of `node` and invokes `handler` on full match.  Returns
-    // `true` if at something was matched, `false` otherwise.  `handler` must be
-    // callable as if it has `void handler(std::vector<Node *> nodes)`
-    // signature.
+    // `true` if at something was matched or pattern is empty, `false`
+    // otherwise.  `handler` must be callable as if it has
+    // `void handler(std::vector<Node *> nodes)` signature.
     template <typename F>
     bool grep(Node *node, F &&handler);
 
