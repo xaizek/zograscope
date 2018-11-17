@@ -27,6 +27,7 @@ operator<<(std::ostream &os, MType mtype)
     switch (mtype) {
         case MType::Other:       return (os << "Other");
         case MType::Declaration: return (os << "Declaration");
+        case MType::Statement:   return (os << "Statement");
         case MType::Function:    return (os << "Function");
         case MType::Parameter:   return (os << "Parameter");
         case MType::Comment:     return (os << "Comment");

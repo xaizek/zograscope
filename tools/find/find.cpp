@@ -27,20 +27,28 @@ static int run(const Args &args, TimeReport &tr);
 
 const char *const usage =
 R"(Usage: zs-find [options...] [paths...] : matchers...
-   or: zs-find [options...] [paths...] : [matchers...] : tokens...
-   or: zs-find [options...] [paths...] :: tokens...
+   or: zs-find [options...] [paths...] : [matchers...] : expressions...
+   or: zs-find [options...] [paths...] :: expressions...
 
 Paths can specify both files and directories.  When no path is specified, "." is
 assumed.
 
-Each of tokens is just a value of a token like `[` or `int`.
-
 Available matchers:
    decl   Any sort of declaration
+   stmt   Statement
    func   Functions (their definitions only)
    param  Parameter of a function
    comm   Comments of any kind
    dir    Preprocessor-alike directives
+
+Possible expressions (each of which can match a token):
+   x      Matches exactly `x`
+   /^x/   Matches any token that starts with `x`
+   /x$/   Matches any token that ends with `x`
+   /^x$/  Matches exactly `x`
+   /x/    Matches any token that contains `x` as a substring
+   //x/   Matches regular expression `x`
+   //     Matches any token
 )";
 
 int
