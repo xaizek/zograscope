@@ -425,7 +425,9 @@ SrcmlCxxLanguage::isDiffable(const Node *x) const
 bool
 SrcmlCxxLanguage::isStructural(const Node *x) const
 {
-    return Language::isStructural(x);
+    return Language::isStructural(x)
+        || x->label == ","
+        || x->label == ";";
 }
 
 bool

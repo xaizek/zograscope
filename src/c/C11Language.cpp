@@ -220,7 +220,9 @@ C11Language::isDiffable(const Node *x) const
 bool
 C11Language::isStructural(const Node *x) const
 {
-    return Language::isStructural(x);
+    return Language::isStructural(x)
+        || x->label == ","
+        || x->label == ";";
 }
 
 bool
