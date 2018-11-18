@@ -90,7 +90,7 @@ public:
     const std::vector<LineContent> & getMap() const;
 
 private:
-    void updateMap(unsigned int line, Type nodeType);
+    void updateMap(unsigned int line, const Node &node);
     void visit(const Node &node);
 
 private:
@@ -137,26 +137,19 @@ LineAnalyzer::getMap() const
 }
 
 inline void
-LineAnalyzer::updateMap(unsigned int line, Type nodeType)
+LineAnalyzer::updateMap(unsigned int line, const Node &node)
 {
     if (map.size() <= line) {
         map.resize(line + 1);
     }
 
     LineContent type;
-    switch (nodeType) {
-        case Type::Comments:
-            type = LineContent::Comment;
-            break;
-
-        case Type::LeftBrackets:
-        case Type::RightBrackets:
-            type = LineContent::Structural;
-            break;
-
-        default:
-            type = LineContent::Code;
-            break;
+    if (node.type == Type::Comments) {
+        type = LineContent::Comment;
+    } else if (lang.isStructural(&node)) {
+        type = LineContent::Structural;
+    } else {
+        type = LineContent::Code;
     }
 
     if (map[line] == LineContent::Blank ||
@@ -178,13 +171,13 @@ LineAnalyzer::visit(const Node &node)
     if (node.leaf) {
         unsigned int line = node.line - 1;
         std::vector<boost::string_ref> lines = split(node.label, '\n');
-        updateMap(line, node.type);
+        updateMap(line, node);
         for (std::size_t i = 1U; i < lines.size(); ++i) {
-            updateMap(++line, node.type);
+            updateMap(++line, node);
         }
 
         if (lang.isEolContinuation(&node)) {
-            updateMap(line + 1, node.type);
+            updateMap(line + 1, node);
         }
     }
 

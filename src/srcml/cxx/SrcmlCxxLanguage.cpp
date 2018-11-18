@@ -423,6 +423,12 @@ SrcmlCxxLanguage::isDiffable(const Node *x) const
 }
 
 bool
+SrcmlCxxLanguage::isStructural(const Node *x) const
+{
+    return Language::isStructural(x);
+}
+
+bool
 SrcmlCxxLanguage::isEolContinuation(const Node *x) const
 {
     return (x->label == "\\");

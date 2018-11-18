@@ -52,6 +52,9 @@ public:
     virtual bool isContainer(const Node *x) const override;
     // Checks whether spelling of a node can be diffed.
     virtual bool isDiffable(const Node *x) const override;
+    // Checks whether a node represents a structural (auxiliary, like braces)
+    // token.
+    virtual bool isStructural(const Node *x) const override;
     // Checks whether a node represents a token used to declare line
     // continuation.
     virtual bool isEolContinuation(const Node *x) const override;

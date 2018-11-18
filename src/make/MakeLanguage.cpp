@@ -118,6 +118,12 @@ MakeLanguage::isDiffable(const Node *x) const
 }
 
 bool
+MakeLanguage::isStructural(const Node *x) const
+{
+    return Language::isStructural(x);
+}
+
+bool
 MakeLanguage::isEolContinuation(const Node *x) const
 {
     return (-x->stype == MakeSType::LineGlue);

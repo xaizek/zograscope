@@ -119,6 +119,13 @@ Language::isDiffable(const Node *x) const
 }
 
 bool
+Language::isStructural(const Node *x) const
+{
+    return x->type == Type::LeftBrackets
+        || x->type == Type::RightBrackets;
+}
+
+bool
 Language::isPayloadOfFixed(const Node *x) const
 {
     return !isSatellite(x->stype)
