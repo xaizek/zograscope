@@ -143,7 +143,7 @@ LineAnalyzer::updateMap(unsigned int line, Type nodeType)
         map.resize(line + 1);
     }
 
-    LineContent type = LineContent::Blank;
+    LineContent type;
     switch (nodeType) {
         case Type::Comments:
             type = LineContent::Comment;
@@ -157,10 +157,6 @@ LineAnalyzer::updateMap(unsigned int line, Type nodeType)
         default:
             type = LineContent::Code;
             break;
-    }
-
-    if (type == LineContent::Blank) {
-        return;
     }
 
     if (map[line] == LineContent::Blank ||
