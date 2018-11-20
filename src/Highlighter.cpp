@@ -260,10 +260,7 @@ Highlighter::skipUntil(int targetLine)
             if (++line == targetLine) {
                 current = node;
                 colorPicker->advancedLine();
-                ColorGroup def = transparentDiffables
-                               ? ColorGroup::None
-                               : ColorGroup::PieceUpdated;
-                lines = getSpelling(*node, entry.state, def).splitIntoLines();
+                lines = getSpelling(*node, entry.state).splitIntoLines();
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
                 return;
@@ -313,9 +310,7 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        ColorGroup def = transparentDiffables ? ColorGroup::None
-                                              : ColorGroup::PieceUpdated;
-        lines = getSpelling(*node, entry.state, def).splitIntoLines();
+        lines = getSpelling(*node, entry.state).splitIntoLines();
         split(node->spelling, '\n', olines);
         current = node;
 
@@ -472,7 +467,7 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
 }
 
 ColorCane
-Highlighter::getSpelling(const Node &node, State state, ColorGroup def)
+Highlighter::getSpelling(const Node &node, State state)
 {
     const bool diffable = isDiffable(node, state, lang);
     if (!diffable && state != State::Updated) {
@@ -483,6 +478,8 @@ Highlighter::getSpelling(const Node &node, State state, ColorGroup def)
 
     ColorCane cc;
     if (diffable) {
+        ColorGroup def = transparentDiffables ? ColorGroup::None
+                                              : ColorGroup::PieceUpdated;
         cc = diffSpelling(node, def);
     } else {
         cc.append(node.spelling, &node, ColorGroup::Updated);
