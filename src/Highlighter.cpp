@@ -478,9 +478,7 @@ Highlighter::getSpelling(const Node &node, State state)
 
     ColorCane cc;
     if (diffable) {
-        ColorGroup def = transparentDiffables ? ColorGroup::None
-                                              : ColorGroup::PieceUpdated;
-        cc = diffSpelling(node, def);
+        cc = diffSpelling(node);
     } else {
         cc.append(node.spelling, &node, ColorGroup::Updated);
     }
@@ -506,7 +504,7 @@ isDiffable(const Node &node, State state, const Language &lang)
 }
 
 ColorCane
-Highlighter::diffSpelling(const Node &node, ColorGroup def)
+Highlighter::diffSpelling(const Node &node)
 {
     // XXX: some kind of caching would be nice since we're doing the same thing
     //      for both original and updated nodes.
@@ -567,6 +565,10 @@ Highlighter::diffSpelling(const Node &node, ColorGroup def)
         cc.append(sr, &node, hi);
         lastR = sr.data() + sr.size();
     };
+
+    // Unchanged parts are highlighted using this color group.
+    ColorGroup def = transparentDiffables ? ColorGroup::None
+                                          : ColorGroup::PieceUpdated;
 
     for (const auto &x : diff.getSes().getSequence()) {
         switch (x.second.type) {
