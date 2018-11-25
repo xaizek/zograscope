@@ -141,6 +141,7 @@ makeDiff(DiffSource &&l, DiffSource &&r)
         };
 
         auto aRels = skipNulls(a.rels);
+        auto bRels = skipNulls(b.rels);
         auto bNodes = skipNulls(b.nodes);
 
         int matched = std::set_intersection(aRels, a.rels.cend(),
@@ -148,7 +149,15 @@ makeDiff(DiffSource &&l, DiffSource &&r)
                                             CountIterator()).getCount();
         int total = (a.rels.cend() - aRels) + (b.nodes.cend() - bNodes);
         // XXX: hard-coded thresholds.
-        return (total != 0 && 2.0f*matched/total >= 0.6f)
+        return false
+            // Check for matched tokens first.
+            || (total != 0 && 2.0f*matched/total >= 0.6f)
+            // Check for complete replacement of tokens which look alike a bit.
+            || (matched == 0 &&
+                aRels == a.rels.cend() && bRels == b.rels.cend() &&
+                !a.nodes.empty() && !b.nodes.empty() &&
+                a.text.compare(b.text) >= 0.4f)
+            // Resort to text based comparison for small total number of tokens.
             || (all > 2 && all < 7 && a.text.compare(b.text) >= 0.8f);
     };
 

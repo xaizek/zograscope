@@ -365,3 +365,104 @@ TEST_CASE("Separators are aligned when subtree separators match",
         REQUIRE(normalizeText(oss.str()) == expected);
     }
 }
+
+TEST_CASE("Completely added/removed lines are aligned against each other",
+          "[alignment]")
+{
+    SECTION("Addition")
+    {
+        Tree oldTree = parseC(R"(
+            #include <a.h>
+            #include <c.h>
+        )", true);
+        Tree newTree = parseC(R"(
+            #include <a.h>
+            #include <b.h>
+            #include <c.h>
+        )", true);
+
+        TimeReport tr;
+        compare(oldTree, newTree, tr, true, false);
+
+        std::ostringstream oss;
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), oss);
+        printer.print(tr);
+
+        std::string expected = normalizeText(R"(
+            ~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~
+            |  1
+            |  2              #include <a.h>
+            >  3              {+#include <b.h>+}
+            |  4              #include <c.h>
+        )");
+
+        REQUIRE(normalizeText(oss.str()) == expected);
+    }
+
+    SECTION("Deletion")
+    {
+        Tree oldTree = parseC(R"(
+            #include <a.h>
+            #include <b.h>
+            #include <c.h>
+        )", true);
+        Tree newTree = parseC(R"(
+            #include <a.h>
+            #include <c.h>
+        )", true);
+
+        TimeReport tr;
+        compare(oldTree, newTree, tr, true, false);
+
+        std::ostringstream oss;
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), oss);
+        printer.print(tr);
+
+        std::string expected = normalizeText(R"(
+            ~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~
+             1                                 |
+             2              #include <a.h>     |
+             3              {-#include <b.h>-} <
+             4              #include <c.h>     |
+        )");
+
+        REQUIRE(normalizeText(oss.str()) == expected);
+    }
+
+    SECTION("Replacement")
+    {
+        Tree oldTree = parseC(R"(
+            #include <a.h>
+            #include <someveryoldfilewithclumsyname.h>
+            #include <c.h>
+        )", true);
+        Tree newTree = parseC(R"(
+            #include <a.h>
+            #include <longnewheader.h>
+            #include <c.h>
+        )", true);
+
+        TimeReport tr;
+        compare(oldTree, newTree, tr, true, false);
+
+        std::ostringstream oss;
+        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
+                        *oldTree.getLanguage(), oss);
+        printer.print(tr);
+
+        std::string expected = normalizeText(R"(
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             1                                                             |  1
+             2              #include <a.h>                                 |  2              #include <a.h>
+             3              {-#include <someveryoldfilewithclumsyname.h>-} ~  3              {+#include <longnewheader.h>+}
+             4              #include <c.h>                                 |  4              #include <c.h>
+        )");
+
+        REQUIRE(normalizeText(oss.str()) == expected);
+    }
+}
