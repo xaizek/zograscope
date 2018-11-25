@@ -217,6 +217,20 @@ countInternal(const Node &root, SType stype, State state)
 }
 
 std::string
+compareAndPrint(Tree &&original, Tree &&updated, bool skipRefine)
+{
+    TimeReport tr;
+    compare(original, updated, tr, true, skipRefine);
+
+    std::ostringstream oss;
+    Printer printer(*original.getRoot(), *updated.getRoot(),
+                    *original.getLanguage(), oss);
+    printer.print(tr);
+
+    return normalizeText(oss.str());
+}
+
+std::string
 normalizeText(const std::string &s)
 {
     std::string result;

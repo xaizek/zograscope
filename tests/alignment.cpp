@@ -17,16 +17,13 @@
 
 #include "Catch/catch.hpp"
 
-#include "utils/time.hpp"
-#include "Printer.hpp"
-#include "compare.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
 
 TEST_CASE("Lines with matching nodes are aligned", "[alignment]")
 {
-    Tree oldTree = parseCxx(R"(
+    std::string printed = compareAndPrint(parseCxx(R"(
         // Bad alignment
 
         class RenameTagCmd : public AutoCmdLineCmd<RenameTagCmd>
@@ -69,8 +66,7 @@ TEST_CASE("Lines with matching nodes are aligned", "[alignment]")
                 return { Action::DoNothing, {} };
             }
         };
-    )");
-    Tree newTree = parseCxx(R"(
+    )"), parseCxx(R"(
         // Bad alignment
 
         class RenameTagCmd : public AutoCmdLineCmd<RenameTagCmd>
@@ -154,15 +150,7 @@ TEST_CASE("Lines with matching nodes are aligned", "[alignment]")
                 return { Action::DoNothing, {} };
             }
         };
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,21 +208,20 @@ TEST_CASE("Lines with matching nodes are aligned", "[alignment]")
         .............................................................. @@ folded 34 identical lines @@ ................................................................................................................................................................
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Lines with matching nodes are aligned for multiline tokens",
           "[alignment]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         /* This is an example file. */
         int check(int id, const char inf[]) {
             int status;
             waitpid(&status);
             return status;
         }
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         /* This file is an example used
          * to compare diffs. */
         int check(pid_t pid, const char info[], time_t start) {
@@ -244,15 +231,7 @@ TEST_CASE("Lines with matching nodes are aligned for multiline tokens",
             }
             return status;
         }
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, false);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true));
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -269,7 +248,7 @@ TEST_CASE("Lines with matching nodes are aligned for multiline tokens",
          7  }                                                   |  10          }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Separators are aligned when subtree separators match",
@@ -277,28 +256,19 @@ TEST_CASE("Separators are aligned when subtree separators match",
 {
     SECTION("Simplified")
     {
-        Tree oldTree = parseCxx(R"(
+        std::string printed = compareAndPrint(parseCxx(R"(
             static void
             getParent()
             {
                 return x;
             }
-        )");
-        Tree newTree = parseCxx(R"(
+        )"), parseCxx(R"(
             void
             Comparator::getParent()
             {
                 return x;
             }
-        )");
-
-        TimeReport tr;
-        compare(oldTree, newTree, tr, true, false);
-
-        std::ostringstream oss;
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                        *oldTree.getLanguage(), oss);
-        printer.print(tr);
+        )"));
 
         std::string expected = normalizeText(R"(
             ~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -312,12 +282,12 @@ TEST_CASE("Separators are aligned when subtree separators match",
              6  }               |  6  }
         )");
 
-        REQUIRE(normalizeText(oss.str()) == expected);
+        REQUIRE(printed == expected);
     }
 
     SECTION("More complicated")
     {
-        Tree oldTree = parseCxx(R"(
+        std::string printed = compareAndPrint(parseCxx(R"(
             static const Node *
             getParent(const Node *x)
             {
@@ -326,8 +296,7 @@ TEST_CASE("Separators are aligned when subtree separators match",
                 } while (x != nullptr && isUnmovable(x));
                 return x;
             }
-        )");
-        Tree newTree = parseCxx(R"(
+        )"), parseCxx(R"(
             const Node *
             Comparator::getParent(const Node *x)
             {
@@ -337,15 +306,7 @@ TEST_CASE("Separators are aligned when subtree separators match",
                          lang.isUnmovable(x));
                 return x;
             }
-        )");
-
-        TimeReport tr;
-        compare(oldTree, newTree, tr, true, false);
-
-        std::ostringstream oss;
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                        *oldTree.getLanguage(), oss);
-        printer.print(tr);
+        )"));
 
         std::string expected = normalizeText(R"(
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -362,7 +323,7 @@ TEST_CASE("Separators are aligned when subtree separators match",
              9  }                                                 |  10  }
         )");
 
-        REQUIRE(normalizeText(oss.str()) == expected);
+        REQUIRE(printed == expected);
     }
 }
 
@@ -371,23 +332,14 @@ TEST_CASE("Completely added/removed lines are aligned against each other",
 {
     SECTION("Addition")
     {
-        Tree oldTree = parseC(R"(
+        std::string printed = compareAndPrint(parseC(R"(
             #include <a.h>
             #include <c.h>
-        )", true);
-        Tree newTree = parseC(R"(
+        )", true), parseC(R"(
             #include <a.h>
             #include <b.h>
             #include <c.h>
-        )", true);
-
-        TimeReport tr;
-        compare(oldTree, newTree, tr, true, false);
-
-        std::ostringstream oss;
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                        *oldTree.getLanguage(), oss);
-        printer.print(tr);
+        )", true));
 
         std::string expected = normalizeText(R"(
             ~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~
@@ -398,28 +350,19 @@ TEST_CASE("Completely added/removed lines are aligned against each other",
             |  4              #include <c.h>
         )");
 
-        REQUIRE(normalizeText(oss.str()) == expected);
+        REQUIRE(printed == expected);
     }
 
     SECTION("Deletion")
     {
-        Tree oldTree = parseC(R"(
+        std::string printed = compareAndPrint(parseC(R"(
             #include <a.h>
             #include <b.h>
             #include <c.h>
-        )", true);
-        Tree newTree = parseC(R"(
+        )", true), parseC(R"(
             #include <a.h>
             #include <c.h>
-        )", true);
-
-        TimeReport tr;
-        compare(oldTree, newTree, tr, true, false);
-
-        std::ostringstream oss;
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                        *oldTree.getLanguage(), oss);
-        printer.print(tr);
+        )", true));
 
         std::string expected = normalizeText(R"(
             ~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~
@@ -430,29 +373,20 @@ TEST_CASE("Completely added/removed lines are aligned against each other",
              4              #include <c.h>     |
         )");
 
-        REQUIRE(normalizeText(oss.str()) == expected);
+        REQUIRE(printed == expected);
     }
 
     SECTION("Replacement")
     {
-        Tree oldTree = parseC(R"(
+        std::string printed = compareAndPrint(parseC(R"(
             #include <a.h>
             #include <someveryoldfilewithclumsyname.h>
             #include <c.h>
-        )", true);
-        Tree newTree = parseC(R"(
+        )", true), parseC(R"(
             #include <a.h>
             #include <longnewheader.h>
             #include <c.h>
-        )", true);
-
-        TimeReport tr;
-        compare(oldTree, newTree, tr, true, false);
-
-        std::ostringstream oss;
-        Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                        *oldTree.getLanguage(), oss);
-        printer.print(tr);
+        )", true));
 
         std::string expected = normalizeText(R"(
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -463,6 +397,6 @@ TEST_CASE("Completely added/removed lines are aligned against each other",
              4              #include <c.h>                                 |  4              #include <c.h>
         )");
 
-        REQUIRE(normalizeText(oss.str()) == expected);
+        REQUIRE(printed == expected);
     }
 }

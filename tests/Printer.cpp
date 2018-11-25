@@ -69,16 +69,9 @@ TEST_CASE("Width of titles is considered on determining width", "[printer]")
 
 TEST_CASE("Comment contents is compared", "[printer]")
 {
-    Tree oldTree = parseC("// This is that comment.\n");
-    Tree newTree = parseC("// This is this comment.\n");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    std::string printed = compareAndPrint(parseC("// This is that comment.\n"),
+                                          parseC("// This is this comment.\n"),
+                                          true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,29 +79,20 @@ TEST_CASE("Comment contents is compared", "[printer]")
          1  // This is {-that-} comment. ~  1  // This is {+this+} comment.
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("String literal contents is compared", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         char str[] = "this is
         a
         string";
-    )");
-    Tree newTree = parseC(R"(
+    )"), parseC(R"(
         char str[] = "this is
         the
         string";
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,25 +103,16 @@ TEST_CASE("String literal contents is compared", "[printer]")
          4          string";              ~  4          string";
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         format_str("...%s", str);
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         format_str("%s%s", ell, str);
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, false);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true));
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,31 +121,22 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
          2  format_str("{-...-}%s", str); ~  2  format_str("%s{+%s+}"{+,+}{+ +}{+ell+}, str);
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Comment contents is not marked as updated on move", "[printer]")
 {
-    Tree oldTree = parseC(
+    std::string printed = compareAndPrint(parseC(
 R"(void f() {
     /* This is bad. */
 }
-    )");
-    Tree newTree = parseC(
+    )"), parseC(
 R"(void f() {
     {
         /* Failure is bad. */
     }
 }
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,12 +148,12 @@ R"(void f() {
          3  }                          |  5  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Lines with moves aren't folded", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
         }
 
@@ -201,8 +167,7 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
 
         void h() {
         }
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         void h() {
         }
 
@@ -216,15 +181,7 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
 
         void f() {
         }
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,12 +206,12 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
          --                                         >  14  {:}:}
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         int array[] = {
             somethingOldThatWontMatch,
             somethingOldThatWontMatch,
@@ -271,8 +228,7 @@ TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
             somethingOldThatWontMatch,
             somethingOldThatWontMatch,
         };
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         int array[] = {
             aNewThingThatHasNothingInCommonWithTheOldOne,
             aNewThingThatHasNothingInCommonWithTheOldOne,
@@ -289,15 +245,7 @@ TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
             aNewThingThatHasNothingInCommonWithTheOldOne,
             aNewThingThatHasNothingInCommonWithTheOldOne,
         };
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true), true);
 
     std::string expected = normalizeText(R"(
          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -327,26 +275,17 @@ TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
           17  {-}-};                                 ~  17  {+}+};
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Highlighting skips leading whitespace", "[printer]")
 {
-    Tree oldTree = parseC("");
-    Tree newTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(""), parseC(R"(
         /* This
          * is
          * a
          * comment */
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
@@ -358,29 +297,20 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
         >  5           {+* comment */+}
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Highlighting fills background in a meaningful way", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void func_proto(int a);
         int a;
         int b;
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         int a;
         int b;
         void func_prototype(int a);
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -392,29 +322,20 @@ TEST_CASE("Highlighting fills background in a meaningful way", "[printer]")
          -                                                              >  4  {:void:}{: :}{#func_prototype#}{:(:}{:int:}{: :}{:a:}{:):}{:;:}
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Highlighting doesn't fill background where shouldn't 1", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             some_function(argument);
         }
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         void f() {
             some_function(argument + 1);
         }
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -425,12 +346,12 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 1", "[printer]")
          4  }                                |  4  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             if (*p == 'T') {
                 cfg.trunc_normal_sb_msgs = 1;
@@ -438,8 +359,7 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
                 cfg.shorten_title_paths = 1;
             }
         }
-    )", true);
-    Tree newTree = parseC(R"(
+    )", true), parseC(R"(
         void f() {
             if (*p == 'M') {
                 cfg.short_term_mux_titles = 1;
@@ -449,15 +369,7 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
                 cfg.shorten_title_paths = 1;
             }
         }
-    )", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )", true), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -474,7 +386,7 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
          8  }                                                                                           |  10  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Widths is adjusted correctly on long headers", "[printer]")
@@ -530,21 +442,12 @@ TEST_CASE("Widths is adjusted correctly on long headers", "[printer]")
 
 TEST_CASE("Deletions only leave only one side", "[printer]")
 {
-    Tree emptyTree = parseC("");
-    Tree tree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         /* This
          * is
          * a
          * comment */
-    )");
-
-    TimeReport tr;
-    compare(tree, emptyTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*tree.getRoot(), *emptyTree.getRoot(),
-                    *tree.getLanguage(), oss);
-    printer.print(tr);
+    )"), parseC(""), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
@@ -556,35 +459,26 @@ TEST_CASE("Deletions only leave only one side", "[printer]")
          5           {-* comment */-} <
     )");
 
-    CHECK(normalizeText(oss.str()) == expected);
+    CHECK(printed == expected);
 }
 
 TEST_CASE("Single side view doesn't contain blanks", "[printer]")
 {
-    Tree treeA = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         struct Args {
             bool noRefine;
             bool gitDiff;
             bool gitRename;
             bool gitRenameOnly;
         };
-    )");
-    Tree treeB = parseC(R"(
+    )"), parseC(R"(
         struct Args {
             bool noRefine;      // Don't run TED on updated nodes.
             bool gitDiff;       // Invoked by git and file was changed.
             bool gitRename;     // File was renamed and possibly changed too.
             bool gitRenameOnly; // File was renamed without changing it.
         };
-    )");
-
-    TimeReport tr;
-    compare(treeA, treeB, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*treeA.getRoot(), *treeB.getRoot(),
-                    *treeA.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -598,31 +492,22 @@ TEST_CASE("Single side view doesn't contain blanks", "[printer]")
         |  7  };
     )");
 
-    CHECK(normalizeText(oss.str()) == expected);
+    CHECK(printed == expected);
 }
 
 TEST_CASE("Adjacent updates aren't merged with background", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             if (someLongVariableName == 0) {
             }
         }
-    )");
-    Tree newTree = parseC(R"(
+    )"), parseC(R"(
         void f() {
             if (someLongVariableName != 1) {
             }
         }
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -634,29 +519,20 @@ TEST_CASE("Adjacent updates aren't merged with background", "[printer]")
          5  }                                            |  5  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Separators in diffable tokens are handled separately", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             something("Destination doesn't exist");
         }
-    )");
-    Tree newTree = parseC(R"(
+    )"), parseC(R"(
         void f() {
             something("Destination doesn't exist or not a directory");
         }
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -667,29 +543,20 @@ TEST_CASE("Separators in diffable tokens are handled separately", "[printer]")
          4  }                                           |  4  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Diffable identifiers are surrounded with brackets", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             cmd_group_open(undo_msg);
         }
-    )");
-    Tree newTree = parseC(R"(
+    )"), parseC(R"(
         void f() {
             un_group_open(undo_msg);
         }
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -700,30 +567,21 @@ TEST_CASE("Diffable identifiers are surrounded with brackets", "[printer]")
          4  }                                   |  4  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Diffable identifiers that are too different aren't detailed",
           "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             cmd_group_begin(undo_msg);
         }
-    )");
-    Tree newTree = parseC(R"(
+    )"), parseC(R"(
         void f() {
             un_group_open(undo_msg);
         }
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -734,29 +592,20 @@ TEST_CASE("Diffable identifiers that are too different aren't detailed",
          4  }                                  |  4  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
 
 TEST_CASE("Diffing by characters", "[printer]")
 {
-    Tree oldTree = parseC(R"(
+    std::string printed = compareAndPrint(parseC(R"(
         void f() {
             cmdGroupBegin(undo_msg);
         }
-    )");
-    Tree newTree = parseC(R"(
+    )"), parseC(R"(
         void f() {
             unGroupOpen(undo_msg);
         }
-    )");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, true);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    )"), true);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -767,5 +616,5 @@ TEST_CASE("Diffing by characters", "[printer]")
          4  }                                          |  4  }
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }

@@ -17,25 +17,16 @@
 
 #include "Catch/catch.hpp"
 
-#include "utils/time.hpp"
-#include "Printer.hpp"
-#include "compare.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
 
 TEST_CASE("Content of string literals is compared in Make", "[make][printer]")
 {
-    Tree oldTree = parseMake("a = '#define VERSION 0.9'");
-    Tree newTree = parseMake("a = '#define VERSION 0.10'");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, false);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    std::string printed = compareAndPrint(
+        parseMake("a = '#define VERSION 0.9'"),
+        parseMake("a = '#define VERSION 0.10'")
+    );
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,5 +34,5 @@ TEST_CASE("Content of string literals is compared in Make", "[make][printer]")
          1  a = '#define VERSION 0.{-9-}' ~  1  a = '#define VERSION 0.{+10+}'
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }

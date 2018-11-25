@@ -150,6 +150,10 @@ int countLeaves(const Node &root, State state);
 
 int countInternal(const Node &root, SType stype, State state);
 
+// Diffs two trees and prints result into a normalized string.
+std::string compareAndPrint(Tree &&original, Tree &&updated,
+                            bool skipRefine = false);
+
 // Strips whitespace and drops empty lines.
 std::string normalizeText(const std::string &s);
 

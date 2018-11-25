@@ -19,25 +19,16 @@
 
 #include "Catch/catch.hpp"
 
-#include "utils/time.hpp"
-#include "Printer.hpp"
-#include "compare.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
 
 TEST_CASE("Directives are diffed", "[printer]")
 {
-    Tree oldTree = parseC("#define DEFINE (1 + 2 + 3)", true);
-    Tree newTree = parseC("#define DEFINE (1 + 2 + 3 + 4)", true);
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, false);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    std::string printed = compareAndPrint(
+        parseC("#define DEFINE (1 + 2 + 3)", true),
+        parseC("#define DEFINE (1 + 2 + 3 + 4)", true)
+    );
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,5 +36,5 @@ TEST_CASE("Directives are diffed", "[printer]")
          1  #define DEFINE (1 + 2 + 3) ~  1  #define DEFINE (1 + 2 + 3 {+++} {+4+})
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }

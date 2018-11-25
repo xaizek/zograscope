@@ -17,25 +17,16 @@
 
 #include "Catch/catch.hpp"
 
-#include "utils/time.hpp"
-#include "Printer.hpp"
-#include "compare.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
 
 TEST_CASE("Comment contents is compared in C++", "[.srcml][srcml-cxx][printer]")
 {
-    Tree oldTree = parseCxx("// This is that comment.\n");
-    Tree newTree = parseCxx("// This is this comment.\n");
-
-    TimeReport tr;
-    compare(oldTree, newTree, tr, true, false);
-
-    std::ostringstream oss;
-    Printer printer(*oldTree.getRoot(), *newTree.getRoot(),
-                    *oldTree.getLanguage(), oss);
-    printer.print(tr);
+    std::string printed = compareAndPrint(
+        parseCxx("// This is that comment.\n"),
+        parseCxx("// This is this comment.\n")
+    );
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,5 +34,5 @@ TEST_CASE("Comment contents is compared in C++", "[.srcml][srcml-cxx][printer]")
          1  // This is {-that-} comment. ~  1  // This is {+this+} comment.
     )");
 
-    REQUIRE(normalizeText(oss.str()) == expected);
+    REQUIRE(printed == expected);
 }
