@@ -82,3 +82,23 @@ TEST_CASE("Inversion of conditional is detected", "[make][comparison]")
         endif
     )");
 }
+
+TEST_CASE("Rules are on a separate layer", "[make][comparison]")
+{
+    diffMake(R"(
+$(out_dir)/%.cpp: %.ico | $(out_dirs)
+	ecppc -b -m image/x-icon -o $@ $<
+
+$(out_dirs) $(out_dir)/docs:
+	mkdir -p $@
+    )", R"(
+$(out_dir)/%.cpp: %.ico | $(out_dirs)
+	ecppc -b -m image/x-icon -o $@ $<
+
+$(out_dir)/%.cpp: %.txt | $(out_dirs)  ## Additions
+	ecppc -b -m text/plain -o $@ $<    ## Additions
+
+$(out_dirs) $(out_dir)/docs:
+	mkdir -p $@
+    )");
+}
