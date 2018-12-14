@@ -469,7 +469,8 @@ refine(Node &node)
         return;
     }
 
-    if (node.leaf && node.state == State::Updated && node.next != nullptr) {
+    if (node.leaf && node.state == State::Updated &&
+        node.next != nullptr && node.relative->next != nullptr) {
         node.state = State::Unchanged;
         node.relative->state = State::Unchanged;
 

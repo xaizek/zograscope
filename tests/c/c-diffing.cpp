@@ -140,6 +140,21 @@ TEST_CASE("Results of coarse comparison are refined with fine", "[comparison]")
     )", false);
 }
 
+TEST_CASE("Refining doesn't crash on unbalanced match", "[comparison]")
+{
+    // Sometimes two nodes of different height can be matched, refining needs to
+    // handle this gracefully.
+    diffC(R"(
+        void set_colorscheme(void) {
+            cs_load_primary(name);      /// Mixed
+        }
+    )", R"(
+        void set_colorscheme(void) {
+            cs_load_primary(names[0]);  /// Mixed
+        }
+    )", false);
+}
+
 TEST_CASE("Functions are matched using best match algorithm", "[comparison]")
 {
     Tree oldTree = parseC(R"(
