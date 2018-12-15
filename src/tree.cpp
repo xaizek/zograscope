@@ -99,8 +99,12 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node,
         putNodeChild(n, newChild, lang);
     }
 
-    n.line = n.children.front()->line;
-    n.col = n.children.front()->col;
+    // The check below can be true if putNodeChild() decided to not add any
+    // children.
+    if (!n.children.empty()) {
+        n.line = n.children.front()->line;
+        n.col = n.children.front()->col;
+    }
 
     auto valueChild = std::find_if(node->children.begin(), node->children.end(),
                                    [lang](const SNode *node) {
