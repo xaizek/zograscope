@@ -94,7 +94,9 @@ MakeLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
         case 2:
             return false;
         default:
-            return -child->stype != MakeSType::CallExpr;
+            return -child->stype != MakeSType::CallExpr
+                && -child->stype != MakeSType::Recipe
+                && -child->stype != MakeSType::Rule;
     }
 }
 
@@ -164,6 +166,7 @@ MakeLanguage::isLayerBreak(SType /*parent*/, SType stype) const
     return -stype == MakeSType::CallExpr
         || -stype == MakeSType::AssignmentExpr
         || -stype == MakeSType::Rule
+        || -stype == MakeSType::Recipe
         || isValueNode(stype);
 }
 
@@ -216,6 +219,7 @@ MakeLanguage::toString(SType stype) const
         case MakeSType::ArgumentList:        return "MakeSType::ArgumentList";
         case MakeSType::Argument:            return "MakeSType::Argument";
         case MakeSType::Rule:                return "MakeSType::Rule";
+        case MakeSType::Recipe:              return "MakeSType::Recipe";
         case MakeSType::Punctuation:         return "MakeSType::Punctuation";
     }
 

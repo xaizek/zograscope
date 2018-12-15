@@ -699,9 +699,10 @@ targets
 
 recipes
     : recipe
-    { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
+    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Recipe) },
+                       +MakeSType::TemporaryContainer); }
     | recipes recipe
-    { $$ = tb->append($1, tb->addNode($2, @2)); }
+    { $$ = tb->append($1, tb->addNode($2, @2, +MakeSType::Recipe)); }
     ;
 
 recipes_opt

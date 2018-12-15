@@ -102,3 +102,35 @@ $(out_dirs) $(out_dir)/docs:
 	mkdir -p $@
     )");
 }
+
+TEST_CASE("Rules and recipes are on a separate layers", "[make][comparison]")
+{
+    diffMake(R"(
+.PHONY: coverage self-coverage reset-coverage
+
+coverage: check $(bin)
+	find $(out_dir)/ -name '*.o' -exec gcov -p {} + > $(out_dir)/gcov.out \  ## Deletions
+	|| (cat $(out_dir)/gcov.out && false)                                    ## Deletions
+	$(GCOV_PREFIX)uncov-gcov --root . --no-gcov --capture-worktree \         ## Mixed
+	                         --exclude tests --exclude web \                 ## Mixed
+	| $(UNCOV_PREFIX)uncov new                                               ## Mixed
+	find . -name '*.gcov' -delete                                            ## Deletions
+
+self-coverage: UNCOV_PREFIX := $(out_dir)/                                   ## Deletions
+self-coverage: GCOV_PREFIX := ./                                             ## Deletions
+self-coverage: coverage                                                      ## Mixed
+    )", R"(
+.PHONY: coverage self-coverage self-coverage-release reset-coverage  ## Mixed
+
+coverage: check $(bin)
+	uncov new-gcovi --exclude tests/ --exclude web/ \                ## Mixed
+	                --capture-worktree $(out_dir)                    ## Mixed
+
+self-coverage-release:                                               ## Mixed
+	+$(MAKE) release                                                 ## Additions
+
+self-coverage: check self-coverage-release                           ## Additions
+	release/uncov new-gcovi --exclude tests/ --exclude web/ \        ## Additions
+	                        --capture-worktree $(out_dir)            ## Additions
+    )");
+}
