@@ -157,8 +157,11 @@ makeDiff(DiffSource &&l, DiffSource &&r)
                 aRels == a.rels.cend() && bRels == b.rels.cend() &&
                 !a.nodes.empty() && !b.nodes.empty() &&
                 a.text.compare(b.text) >= 0.4f)
-            // Resort to text based comparison for small total number of tokens.
-            || (all > 2 && all < 7 && a.text.compare(b.text) >= 0.8f);
+            // Resort to text based comparison for small total number of tokens
+            // unless one of lines contains only removed/added tokens (first
+            // condition).
+            || ((aRels == a.rels.cend()) == (bRels == b.rels.cend()) &&
+                all > 2 && all < 7 && a.text.compare(b.text) >= 0.8f);
     };
 
     dtl::Diff<LineInfo, std::vector<LineInfo>, decltype(cmp)> diff(lt, rt, cmp);

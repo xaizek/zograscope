@@ -400,3 +400,41 @@ TEST_CASE("Completely added/removed lines are aligned against each other",
         REQUIRE(printed == expected);
     }
 }
+
+TEST_CASE("Identical lines in different states don't match",
+          "[alignment]")
+{
+    std::string printed = compareAndPrint(parseC(R"(
+        static int
+        history_cmd(const cmd_info_t *cmd_info) {
+            return 1;
+        }
+    )", true), parseC(R"(
+        static int
+        hideui_cmd(const cmd_info_t *cmd_info) {
+            return 666;
+        }
+
+        static int
+        history_cmd(const cmd_info_t *cmd_info) {
+            return 0;
+        }
+    )", true));
+
+    std::string expected = normalizeText(R"(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                            |   1
+         -                                            >   2  {+static+}{+ +}{+int+}
+         -                                            >   3  {+hideui_cmd+}{+(+}{+const+}{+ +}{+cmd_info_t+}{+ +}{+*+}{+cmd_info+}{+)+}{+ +}{+{+}
+         -                                            >   4      {+return+}{+ +}{+666+}{+;+}
+         -                                            >   5  {+}+}
+         -                                            >   6
+         2  static int                                |   7  static int
+         3  history_cmd(const cmd_info_t *cmd_info) { |   8  history_cmd(const cmd_info_t *cmd_info) {
+         4      return {#1#};                         ~   9      return {#0#};
+         5  }                                         |  10  }
+    )");
+
+    REQUIRE(printed == expected);
+}
