@@ -57,6 +57,7 @@ struct Args : CommonArgs
 struct Header { const boost::string_ref data; };
 struct Bullet { const boost::string_ref data; };
 struct Part { const int part; const int whole; };
+struct Total { const int data; };
 
 // Formatted value printers.
 inline std::ostream &
@@ -79,6 +80,12 @@ operator<<(std::ostream &os, const Part &val)
     return os << "\t" << val.part << " ("
               << std::fixed << std::setprecision(4) << percent*100.0f
               << "%)";
+}
+
+inline std::ostream &
+operator<<(std::ostream &os, const Total &val)
+{
+    return os << '\t' << val.data;
 }
 
 class LineAnalyzer
@@ -282,7 +289,7 @@ FileProcessor::printReport() const
               << Bullet { "comment" }    << Part { comment, lines } << '\n'
               << Bullet { "code" }       << Part { code, lines } << '\n'
               << Bullet { "structural" } << Part { structural, lines } << '\n'
-              << Bullet { "total" } << '\t' << lines << '\n';
+              << Bullet { "total" }      << Total { lines } << '\n';
 }
 
 static boost::program_options::options_description getLocalOpts();
