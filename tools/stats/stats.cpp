@@ -287,11 +287,19 @@ FileProcessor::printReport() const
 
     int lines = blank + comment + code + structural;
     std::cout << Header { "Line statistics" }
-              << Bullet { "blank" }      << Part { blank, lines } << '\n'
-              << Bullet { "comment" }    << Part { comment, lines } << '\n'
-              << Bullet { "code" }       << Part { code, lines } << '\n'
+              << Bullet { "blank" }      << Part { blank, lines }      << '\n'
+              << Bullet { "comment" }    << Part { comment, lines }    << '\n'
+              << Bullet { "code" }       << Part { code, lines }       << '\n'
               << Bullet { "structural" } << Part { structural, lines } << '\n'
-              << Bullet { "total" }      << Total { lines } << '\n';
+              << '\n';
+
+    std::cout << Header { "Totals" }
+              << Bullet { "all" }
+                 << Total { lines } << '\n'
+              << Bullet { "all-com" }
+                 << Part { lines - comment, lines } << '\n'
+              << Bullet { "all-com-st" }
+                 << Part { lines - comment - structural, lines } << '\n';
 }
 
 static boost::program_options::options_description getLocalOpts();
