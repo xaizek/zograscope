@@ -57,6 +57,7 @@ struct Args : CommonArgs
 struct Header { const boost::string_ref data; };
 struct Bullet { const boost::string_ref data; };
 struct Part { const int part; const int whole; };
+struct Total { const int data; };
 
 // Formatted value printers.
 inline std::ostream &
@@ -76,9 +77,17 @@ inline std::ostream &
 operator<<(std::ostream &os, const Part &val)
 {
     float percent = (val.whole == 0 ? 1.0f : 1.0f*val.part/val.whole);
-    return os << "\t" << val.part << " ("
+    return os << '\t' << std::setfill(' ') << std::setw(countWidth(val.whole))
+              << val.part << " ("
               << std::fixed << std::setprecision(4) << percent*100.0f
               << "%)";
+}
+
+inline std::ostream &
+operator<<(std::ostream &os, const Total &val)
+{
+    return os << '\t' << std::setfill(' ') << std::setw(countWidth(val.data))
+              << val.data;
 }
 
 class LineAnalyzer
@@ -278,11 +287,19 @@ FileProcessor::printReport() const
 
     int lines = blank + comment + code + structural;
     std::cout << Header { "Line statistics" }
-              << Bullet { "blank" }      << Part { blank, lines } << '\n'
-              << Bullet { "comment" }    << Part { comment, lines } << '\n'
-              << Bullet { "code" }       << Part { code, lines } << '\n'
+              << Bullet { "blank" }      << Part { blank, lines }      << '\n'
+              << Bullet { "comment" }    << Part { comment, lines }    << '\n'
+              << Bullet { "code" }       << Part { code, lines }       << '\n'
               << Bullet { "structural" } << Part { structural, lines } << '\n'
-              << Bullet { "total" } << '\t' << lines << '\n';
+              << '\n';
+
+    std::cout << Header { "Totals" }
+              << Bullet { "all" }
+                 << Total { lines } << '\n'
+              << Bullet { "all-com" }
+                 << Part { lines - comment, lines } << '\n'
+              << Bullet { "all-com-st" }
+                 << Part { lines - comment - structural, lines } << '\n';
 }
 
 static boost::program_options::options_description getLocalOpts();
