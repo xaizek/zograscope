@@ -52,6 +52,7 @@ main(int argc, char *argv[]) try
 
     if (args.help) {
         std::cout << "Usage: zs-gdiff [options...] [--cached]\n"
+                  << "   or: zs-gdiff [options...] reference\n"
                   << "   or: zs-gdiff [options...] old-file new-file\n"
                   << "   or: zs-gdiff [options...] <7 or 9 args from git>\n"
                   << "\n"
@@ -59,11 +60,12 @@ main(int argc, char *argv[]) try
         env.printOptions();
         return EXIT_SUCCESS;
     }
-    if (args.pos.size() != 0U && args.pos.size() != 2U &&
+    if (args.pos.size() != 0U && args.pos.size() != 1U &&
+        args.pos.size() != 2U &&
         args.pos.size() != 7U && args.pos.size() != 9U) {
         env.teardown(true);
         std::cerr << "Wrong positional arguments\n"
-                  << "Expected 2 (cli) or 7 or 9 (git)\n";
+                  << "Expected 0-2 (from cli) or 7 or 9 (from git)\n";
         return EXIT_FAILURE;
     }
 
@@ -72,6 +74,11 @@ main(int argc, char *argv[]) try
     if (args.pos.size() == 0U) {
         launchMode = (args.staged ? LaunchMode::Staged : LaunchMode::Unstaged);
         for (DiffEntry &diffEntry : Repository(".").listStatus(args.staged)) {
+            diffList.add(std::move(diffEntry));
+        }
+    } else if (args.pos.size() == 1U) {
+        launchMode = LaunchMode::Commit;
+        for (DiffEntry &diffEntry : Repository(".").listCommit(args.pos[0])) {
             diffList.add(std::move(diffEntry));
         }
     } else {

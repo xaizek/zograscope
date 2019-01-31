@@ -389,6 +389,11 @@ ZSDiff::updateTitle()
                         .arg(diffList.getPosition())
                         .arg(diffList.getCount());;
             break;
+        case LaunchMode::Commit:
+            title = QString("File in commit (%1/%2)")
+                        .arg(diffList.getPosition())
+                        .arg(diffList.getCount());
+            break;
     }
     ui->title->setText(title);
 }

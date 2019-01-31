@@ -45,9 +45,6 @@ public:
 // Provides high-level access to repository data.
 class Repository
 {
-    template <typename T>
-    class GitObjPtr;
-
 public:
     // Creates an instance from path to or in repository.  Throws
     // `std::runtime_error` on failure to find or open repository.
@@ -65,6 +62,9 @@ public:
     // Lists either staged or unstaged modified entries in the working directory
     // of the repository.
     std::vector<DiffEntry> listStatus(bool staged);
+
+    // Lists change set of specified reference against its parent.
+    std::vector<DiffEntry> listCommit(const std::string &ref);
 
 public:
     const LibGitUser libgitUser; // libgit2 lifetime management.

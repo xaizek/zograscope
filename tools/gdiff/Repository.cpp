@@ -47,11 +47,9 @@ private:
     }
 };
 
-}
-
 // A RAII wrapper that manages lifetime of libgit2's handles.
 template <typename T>
-class Repository::GitObjPtr
+class GitObjPtr
 {
 public:
     // Frees the handle.
@@ -89,10 +87,28 @@ private:
         git_object_free(ptr);
     }
 
+    // Frees `git_diff`.
+    void deleteObj(git_diff *ptr)
+    {
+        git_diff_free(ptr);
+    }
+
     // Frees `git_status_list`.
     void deleteObj(git_status_list *ptr)
     {
         git_status_list_free(ptr);
+    }
+
+    // Frees `git_commit`.
+    void deleteObj(git_commit *ptr)
+    {
+        git_commit_free(ptr);
+    }
+
+    // Frees `git_tree`.
+    void deleteObj(git_tree *ptr)
+    {
+        git_tree_free(ptr);
     }
 
     // Frees `git_blob`.
@@ -107,6 +123,13 @@ private:
 private:
     T *ptr = nullptr; // Wrapped pointer.
 };
+
+}
+
+static DiffEntryFile makeFileEntry(git_repository *repo,
+                                   const git_diff_file &file,
+                                   bool forceRead);
+static std::string readObj(git_repository *repo, const git_oid &id);
 
 LibGitUser::LibGitUser()
 {
@@ -147,23 +170,6 @@ Repository::listStatus(bool staged)
         throw GitException("Failed to list status of files");
     }
 
-    auto readObj = [&](const git_oid &id) {
-        GitObjPtr<git_blob> blob;
-        if (git_blob_lookup(&blob, repo, &id) != 0) {
-            throw GitException("Failed to read a blob");
-        }
-        return std::string(static_cast<const char *>(git_blob_rawcontent(blob)),
-                           static_cast<std::size_t>(git_blob_rawsize(blob)));
-    };
-
-    std::string workdirPath = git_repository_workdir(repo);
-    auto makeEntry = [&](git_diff_file &file, bool forceRead) {
-        if (git_oid_iszero(&file.id) || forceRead) {
-            return DiffEntryFile(file.path, workdirPath + '/' + file.path);
-        }
-        return DiffEntryFile(file.path, file.path, readObj(file.id));
-    };
-
     std::vector<DiffEntry> entries;
     for (size_t i = 0;
          const git_status_entry *entry = git_status_byindex(statusList, i);
@@ -174,10 +180,89 @@ Repository::listStatus(bool staged)
 
         // TODO: also handle added and removed files.
         if (delta->status == GIT_DELTA_MODIFIED) {
-            entries.push_back({ makeEntry(delta->old_file, false),
-                                makeEntry(delta->new_file, !staged) });
+            entries.push_back({
+                makeFileEntry(repo, delta->old_file, false),
+                makeFileEntry(repo, delta->new_file, !staged)
+            });
         }
     }
-
     return entries;
+}
+
+std::vector<DiffEntry>
+Repository::listCommit(const std::string &ref)
+{
+    GitObjPtr<git_object> obj;
+    if (git_revparse_single(&obj, repo, ref.c_str()) != 0) {
+        throw std::invalid_argument("Failed to resolve ref: " + ref);
+    }
+
+    if (git_object_type(obj) != GIT_OBJ_COMMIT) {
+        throw std::invalid_argument {
+            std::string("Expected commit object, got ") +
+            git_object_type2string(git_object_type(obj))
+        };
+    }
+
+    auto *const commit = obj.as<const git_commit>();
+
+    GitObjPtr<git_commit> parent;
+    if (git_commit_parent(&parent, commit, 0) != 0) {
+        throw std::invalid_argument("Failed to find parent of ref: " + ref);
+    }
+
+    GitObjPtr<git_tree> commitRoot;
+    if (git_tree_lookup(&commitRoot, repo, git_commit_tree_id(commit)) != 0) {
+        throw std::runtime_error("Failed to obtain tree root of a commit");
+    }
+
+    // TODO: handle commits with multiple parents in a special way?
+    GitObjPtr<git_tree> parentRoot;
+    if (git_tree_lookup(&parentRoot, repo, git_commit_tree_id(parent)) != 0) {
+        throw std::runtime_error("Failed to obtain tree root of parent");
+    }
+
+    GitObjPtr<git_diff> diff;
+    if (git_diff_tree_to_tree(&diff, repo, parentRoot, commitRoot,
+                              nullptr) != 0) {
+        throw std::runtime_error("Failed to diff trees");
+    }
+
+    std::vector<DiffEntry> entries;
+    for (size_t i = 0;
+         const git_diff_delta *delta = git_diff_get_delta(diff, i);
+         ++i) {
+        // TODO: also handle added and removed files.
+        if (delta->status == GIT_DELTA_MODIFIED) {
+            entries.push_back({ makeFileEntry(repo, delta->old_file, false),
+                                makeFileEntry(repo, delta->new_file, false) });
+        }
+    }
+    return entries;
+}
+
+// Builds a file entry out of diff data.
+static DiffEntryFile
+makeFileEntry(git_repository *repo, const git_diff_file &file, bool forceRead)
+{
+    if (git_oid_iszero(&file.id) || forceRead) {
+        std::string path = git_repository_workdir(repo);
+        path += '/';
+        path += file.path;
+        return DiffEntryFile(file.path, std::move(path));
+    }
+
+    return DiffEntryFile(file.path, file.path, readObj(repo, file.id));
+}
+
+// Fetches blob's content as a string.
+static std::string
+readObj(git_repository *repo, const git_oid &id)
+{
+    GitObjPtr<git_blob> blob;
+    if (git_blob_lookup(&blob, repo, &id) != 0) {
+        throw GitException("Failed to read a blob");
+    }
+    return std::string(static_cast<const char *>(git_blob_rawcontent(blob)),
+                       static_cast<std::size_t>(git_blob_rawsize(blob)));
 }

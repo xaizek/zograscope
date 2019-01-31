@@ -60,6 +60,7 @@ enum class LaunchMode
     GitExt,
     Staged,
     Unstaged,
+    Commit,
 };
 
 class ZSDiff : public QMainWindow
