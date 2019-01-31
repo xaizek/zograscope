@@ -135,7 +135,10 @@ CodeView::goToFirstStopPosition()
 {
     if (positions.empty()) return false;
 
+    // TODO: might want to preserve horizontal position in more situations.
+    int horizontalPosition = horizontalScrollBar()->sliderPosition();
     setTextCursor(positions.front().toCursor(document()));
+    horizontalScrollBar()->setSliderPosition(horizontalPosition);
     return true;
 }
 
