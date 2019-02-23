@@ -56,6 +56,7 @@
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
         yyextra->lastTokenWasCharLike = false; \
+        yyextra->lastCharOffset = yyextra->offset; \
         return (yylval->text.token = (t)); \
     } while (false)
 
@@ -74,6 +75,7 @@
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
         yyextra->lastTokenWasCharLike = true; \
+        yyextra->lastCharOffset = yyextra->offset; \
         return (yylval->text.token = (t)); \
     } while (false)
 
@@ -228,7 +230,6 @@ NL                      \n|\r|\r\n
     if (shouldInsertFakeWS(yylval, yyextra)) {
         FAKE_TOKEN(WS);
     }
-    yyextra->lastCharOffset = yyextra->offset;
     yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
     TOKEN(CALL_PREFIX);
 }
@@ -237,7 +238,6 @@ $.                             TOKEN(VAR);
     if (shouldInsertFakeWS(yylval, yyextra)) {
         FAKE_TOKEN(WS);
     }
-    yyextra->lastCharOffset = yyextra->offset;
     if (!yyextra->nesting.empty()) {
         yyextra->nesting.push_back(MakeLexerData::ArgumentNesting);
     }
@@ -254,7 +254,6 @@ $.                             TOKEN(VAR);
         }
     }
     yyextra->nesting.pop_back();
-    yyextra->lastCharOffset = yyextra->offset;
     CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 "}" {
@@ -264,7 +263,6 @@ $.                             TOKEN(VAR);
         REJECT;
     }
     yyextra->nesting.pop_back();
-    yyextra->lastCharOffset = yyextra->offset;
     CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
 ","                            TOKEN(',');
@@ -273,7 +271,6 @@ $.                             TOKEN(VAR);
     if (shouldInsertFakeWS(yylval, yyextra)) {
         FAKE_TOKEN(WS);
     }
-    yyextra->lastCharOffset = yyextra->offset;
     CHAR_LIKE_TOKEN(CHARS);
 }
 
