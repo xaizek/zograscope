@@ -88,6 +88,14 @@
 
 using namespace makestypes;
 
+// Checks whether fake WS token should be inserted into the token stream.
+static inline bool
+shouldInsertFakeWS(YYSTYPE *lval, MakeLexerData *extra)
+{
+    return lval->text.from != extra->lastCharOffset
+        && extra->lastTokenWasCharLike;
+}
+
 %}
 
 %X slcomment dslit sslit achar
@@ -209,8 +217,7 @@ NL                      \n|\r|\r\n
 
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$("|"${" {
-    if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->lastTokenWasCharLike) {
+    if (shouldInsertFakeWS(yylval, yyextra)) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
@@ -222,8 +229,7 @@ NL                      \n|\r|\r\n
 }
 $.                             TOKEN(VAR);
 "(" {
-    if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->lastTokenWasCharLike) {
+    if (shouldInsertFakeWS(yylval, yyextra)) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
@@ -262,8 +268,7 @@ $.                             TOKEN(VAR);
 ","                            TOKEN(',');
 ":"                            TOKEN(':');
 .|[-a-zA-Z0-9_/.]+ {
-    if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->lastTokenWasCharLike) {
+    if (shouldInsertFakeWS(yylval, yyextra)) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
