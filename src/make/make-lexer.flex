@@ -55,7 +55,7 @@
         if ((t) != WS) { \
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
-        yyextra->contiguousChars = 0; \
+        yyextra->lastTokenWasCharLike = false; \
         return (yylval->text.token = (t)); \
     } while (false)
 
@@ -64,7 +64,7 @@
         if ((t) != WS) { \
             yyextra->tb->markWithPostponed(yylval->text); \
         } \
-        ++yyextra->contiguousChars; \
+        yyextra->lastTokenWasCharLike = true; \
         return (yylval->text.token = (t)); \
     } while (false)
 
@@ -210,7 +210,7 @@ NL                      \n|\r|\r\n
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$("|"${" {
     if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->contiguousChars != 0) {
+        yyextra->lastTokenWasCharLike) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
@@ -223,7 +223,7 @@ NL                      \n|\r|\r\n
 $.                             TOKEN(VAR);
 "(" {
     if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->contiguousChars != 0) {
+        yyextra->lastTokenWasCharLike) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
@@ -263,7 +263,7 @@ $.                             TOKEN(VAR);
 ":"                            TOKEN(':');
 .|[-a-zA-Z0-9_/.]+ {
     if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->contiguousChars != 0) {
+        yyextra->lastTokenWasCharLike) {
         yyextra->offset -= yyleng;
         yyextra->col -= yyleng;
         yyless(0);
