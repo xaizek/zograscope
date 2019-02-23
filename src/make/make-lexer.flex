@@ -71,9 +71,7 @@
 
 #define CHAR_LIKE_TOKEN(t) \
     do { \
-        if ((t) != WS) { \
-            yyextra->tb->markWithPostponed(yylval->text); \
-        } \
+        yyextra->tb->markWithPostponed(yylval->text); \
         yyextra->lastTokenWasCharLike = true; \
         yyextra->lastCharOffset = yyextra->offset; \
         return (yylval->text.token = (t)); \
