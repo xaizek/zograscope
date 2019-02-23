@@ -59,6 +59,15 @@
         return (yylval->text.token = (t)); \
     } while (false)
 
+// Puts a fake token to the stream.
+#define FAKE_TOKEN(t) \
+    do { \
+        yyextra->offset -= yyleng; \
+        yyextra->col -= yyleng; \
+        yyless(0); \
+        TOKEN(t); \
+    } while (false)
+
 #define CHAR_LIKE_TOKEN(t) \
     do { \
         if ((t) != WS) { \
@@ -218,10 +227,7 @@ NL                      \n|\r|\r\n
 "="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
 "$("|"${" {
     if (shouldInsertFakeWS(yylval, yyextra)) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        yyless(0);
-        TOKEN(WS);
+        FAKE_TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
     yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
@@ -230,10 +236,7 @@ NL                      \n|\r|\r\n
 $.                             TOKEN(VAR);
 "(" {
     if (shouldInsertFakeWS(yylval, yyextra)) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        yyless(0);
-        TOKEN(WS);
+        FAKE_TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
     if (!yyextra->nesting.empty()) {
@@ -269,10 +272,7 @@ $.                             TOKEN(VAR);
 ":"                            TOKEN(':');
 .|[-a-zA-Z0-9_/.]+ {
     if (shouldInsertFakeWS(yylval, yyextra)) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        yyless(0);
-        TOKEN(WS);
+        FAKE_TOKEN(WS);
     }
     yyextra->lastCharOffset = yyextra->offset;
     CHAR_LIKE_TOKEN(CHARS);
