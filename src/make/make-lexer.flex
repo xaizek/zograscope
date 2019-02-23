@@ -92,7 +92,6 @@
     do { \
         ++yyextra->line; \
         yyextra->col = 1U; \
-        yyextra->lineoffset = yyextra->offset; \
     } while (false)
 
 using namespace makestypes;

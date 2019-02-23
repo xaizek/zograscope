@@ -33,7 +33,6 @@ struct MakeLexerData : LexerData
     static constexpr bool ArgumentNesting = true;
 
     std::size_t offset = 0U;
-    std::size_t lineoffset = 0U;
     std::size_t line = 1U;
     std::size_t col = 1U;
 
