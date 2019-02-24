@@ -244,11 +244,10 @@ $.                             return token(VAR, yylval, yyextra);
     return token('(', yylval, yyextra);
 }
 ")" {
-    if (yyextra->nesting.empty() ||
-        yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
-        if (yyextra->nesting.empty()) {
-            return token(')', yylval, yyextra);
-        }
+    if (yyextra->nesting.empty()) {
+        return token(')', yylval, yyextra);
+    }
+    if (yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
         yyextra->nesting.pop_back();
         return token(')', yylval, yyextra, NeedFakeWS);
     }
