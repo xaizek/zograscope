@@ -50,23 +50,13 @@
         yyextra->col += yyleng; \
     }
 
-#define TOKEN(t) \
-    do { \
-        if ((t) != WS) { \
-            yyextra->tb->markWithPostponed(yylval->text); \
-        } \
-        yyextra->lastTokenWasCharLike = false; \
-        yyextra->lastCharOffset = yyextra->offset; \
-        return (yylval->text.token = (t)); \
-    } while (false)
-
 // Puts a fake token to the stream.
 #define FAKE_TOKEN(t) \
     do { \
         yyextra->offset -= yyleng; \
         yyextra->col -= yyleng; \
         yyless(0); \
-        TOKEN(t); \
+        return token(t, yylval, yyextra); \
     } while (false)
 
 #define CHAR_LIKE_TOKEN(t) \
@@ -80,15 +70,27 @@
 #define KW(t) \
     do { \
         if (yyextra->nesting.empty()) { \
-            TOKEN(t); \
-        } else { \
-            yyextra->offset -= yyleng; \
-            yyextra->col -= yyleng; \
-            REJECT; \
+            return token((t), yylval, yyextra); \
         } \
+        yyextra->offset -= yyleng; \
+        yyextra->col -= yyleng; \
+        REJECT; \
     } while (false)
 
 using namespace makestypes;
+
+// Performs additional operations on returning a token.
+static inline int
+token(int tokenId, YYSTYPE *lval, MakeLexerData *extra)
+{
+    if (tokenId != WS) {
+        extra->tb->markWithPostponed(lval->text);
+    }
+    extra->lastTokenWasCharLike = false;
+    extra->lastCharOffset = extra->offset;
+    lval->text.token = tokenId;
+    return tokenId;
+}
 
 // Checks whether fake WS token should be inserted into the token stream.
 static inline bool
@@ -118,14 +120,14 @@ NL                      \n|\r|\r\n
 {NL}\t|^\t {
     advanceLine(yyextra);
     yyextra->col = yyextra->tabWidth + 1;
-    TOKEN(LEADING_TAB);
+    return token(LEADING_TAB, yylval, yyextra);
 }
 \t {
     yyextra->col += yyextra->tabWidth - (yyextra->col - 1)%yyextra->tabWidth;
 }
 {NL} {
     advanceLine(yyextra);
-    TOKEN(NL);
+    return token(NL, yylval, yyextra);
 }
 \\{NL} {
     yylval->text.len = 1;
@@ -151,7 +153,7 @@ NL                      \n|\r|\r\n
     yyextra->col -= yyleng;
     yyless(0);
 
-    TOKEN(COMMENT);
+    return token(COMMENT, yylval, yyextra);
 }
 <slcomment>.            ;
 
@@ -225,15 +227,15 @@ NL                      \n|\r|\r\n
 
 -?"include"                    KW(INCLUDE);
 
-"="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
+"="|"?="|":="|"::="|"+="|"!="  return token(ASSIGN_OP, yylval, yyextra);
 "$("|"${" {
     if (shouldInsertFakeWS(yylval, yyextra)) {
         FAKE_TOKEN(WS);
     }
     yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
-    TOKEN(CALL_PREFIX);
+    return token(CALL_PREFIX, yylval, yyextra);
 }
-$.                             TOKEN(VAR);
+$.                             return token(VAR, yylval, yyextra);
 "(" {
     if (shouldInsertFakeWS(yylval, yyextra)) {
         FAKE_TOKEN(WS);
@@ -241,17 +243,16 @@ $.                             TOKEN(VAR);
     if (!yyextra->nesting.empty()) {
         yyextra->nesting.push_back(MakeLexerData::ArgumentNesting);
     }
-    TOKEN('(');
+    return token('(', yylval, yyextra);
 }
 ")" {
     if (yyextra->nesting.empty() ||
         yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
-        if (!yyextra->nesting.empty()) {
-            yyextra->nesting.pop_back();
-            CHAR_LIKE_TOKEN(')');
-        } else {
-            TOKEN(')');
+        if (yyextra->nesting.empty()) {
+            return token(')', yylval, yyextra);
         }
+        yyextra->nesting.pop_back();
+        CHAR_LIKE_TOKEN(')');
     }
     yyextra->nesting.pop_back();
     CHAR_LIKE_TOKEN(CALL_SUFFIX);
@@ -265,8 +266,8 @@ $.                             TOKEN(VAR);
     yyextra->nesting.pop_back();
     CHAR_LIKE_TOKEN(CALL_SUFFIX);
 }
-","                            TOKEN(',');
-":"                            TOKEN(':');
+","                            return token(',', yylval, yyextra);
+":"                            return token(':', yylval, yyextra);
 .|[-a-zA-Z0-9_/.]+ {
     if (shouldInsertFakeWS(yylval, yyextra)) {
         FAKE_TOKEN(WS);
