@@ -34,9 +34,11 @@
 #include "make/make-parser.hpp"
 #include "TreeBuilder.hpp"
 
+// Custom input function.
 #define YY_INPUT(buf, result, maxSize) \
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
 
+// Piece of code to run at the start of every rule.
 #define YY_USER_ACTION \
     { \
         yylval->text = { }; \
@@ -59,6 +61,7 @@
         token(t, yylval, yyextra); \
     })
 
+// Handles a keyword.
 #define KW(t) \
     do { \
         if (yyextra->nesting.empty()) { \
