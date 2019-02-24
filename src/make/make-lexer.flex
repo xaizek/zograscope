@@ -88,12 +88,6 @@
         } \
     } while (false)
 
-#define ADVANCE_LINE() \
-    do { \
-        ++yyextra->line; \
-        yyextra->col = 1U; \
-    } while (false)
-
 using namespace makestypes;
 
 // Checks whether fake WS token should be inserted into the token stream.
@@ -102,6 +96,14 @@ shouldInsertFakeWS(YYSTYPE *lval, MakeLexerData *extra)
 {
     return lval->text.from != extra->lastCharOffset
         && extra->lastTokenWasCharLike;
+}
+
+// Advances line tracking to the next line.
+static inline void
+advanceLine(MakeLexerData *extra)
+{
+    ++extra->line;
+    extra->col = 1U;
 }
 
 %}
@@ -114,7 +116,7 @@ NL                      \n|\r|\r\n
 
 [ ]                     ;
 {NL}\t|^\t {
-    ADVANCE_LINE();
+    advanceLine(yyextra);
     yyextra->col = yyextra->tabWidth + 1;
     TOKEN(LEADING_TAB);
 }
@@ -122,14 +124,14 @@ NL                      \n|\r|\r\n
     yyextra->col += yyextra->tabWidth - (yyextra->col - 1)%yyextra->tabWidth;
 }
 {NL} {
-    ADVANCE_LINE();
+    advanceLine(yyextra);
     TOKEN(NL);
 }
 \\{NL} {
     yylval->text.len = 1;
     yylloc->last_column = yylloc->first_column + 1;
     yyextra->tb->addPostponed(yylval->text, *yylloc, +MakeSType::LineGlue);
-    ADVANCE_LINE();
+    advanceLine(yyextra);
 }
 
 # {
@@ -137,7 +139,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc = *yylloc;
     BEGIN(slcomment);
 }
-<slcomment>\\{NL}              ADVANCE_LINE();
+<slcomment>\\{NL}              advanceLine(yyextra);
 <slcomment>{NL} {
     yylval->text.from = yyextra->startTok.text.from;
     yylval->text.len = yyextra->offset - yyextra->startTok.text.from - 1;
@@ -198,7 +200,7 @@ NL                      \n|\r|\r\n
 
     BEGIN(achar);
 }
-<dslit,sslit>\\{NL}                  { ADVANCE_LINE(); }
+<dslit,sslit>\\{NL}                  advanceLine(yyextra);
 <dslit,sslit>.                       ;
 
 <achar>. {
