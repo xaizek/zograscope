@@ -40,7 +40,7 @@ struct MakeLexerData : LexerData
     YYLTYPE startLoc = {};
 
     std::size_t lastCharOffset = static_cast<std::size_t>(-1);
-    bool lastTokenWasCharLike = false;
+    bool fakeWSIsNeeded = false;
     std::vector<bool> nesting;
 
     MakeParseData *pd;

@@ -59,14 +59,6 @@
         token(t, yylval, yyextra); \
     })
 
-#define CHAR_LIKE_TOKEN(t) \
-    do { \
-        yyextra->tb->markWithPostponed(yylval->text); \
-        yyextra->lastTokenWasCharLike = true; \
-        yyextra->lastCharOffset = yyextra->offset; \
-        return (yylval->text.token = (t)); \
-    } while (false)
-
 #define KW(t) \
     do { \
         if (yyextra->nesting.empty()) { \
@@ -79,14 +71,17 @@
 
 using namespace makestypes;
 
+// Convenience definition for token() funciton's argument.
+enum { NeedFakeWS = 1 };
+
 // Performs additional operations on returning a token.
 static inline int
-token(int tokenId, YYSTYPE *lval, MakeLexerData *extra)
+token(int tokenId, YYSTYPE *lval, MakeLexerData *extra, bool needFakeWS = false)
 {
     if (tokenId != WS) {
         extra->tb->markWithPostponed(lval->text);
     }
-    extra->lastTokenWasCharLike = false;
+    extra->fakeWSIsNeeded = needFakeWS;
     extra->lastCharOffset = extra->offset;
     lval->text.token = tokenId;
     return tokenId;
@@ -97,7 +92,7 @@ static inline bool
 shouldInsertFakeWS(YYSTYPE *lval, MakeLexerData *extra)
 {
     return lval->text.from != extra->lastCharOffset
-        && extra->lastTokenWasCharLike;
+        && extra->fakeWSIsNeeded;
 }
 
 // Advances line tracking to the next line.
@@ -170,7 +165,7 @@ NL                      \n|\r|\r\n
     *yylloc = yyextra->startLoc;
 
     BEGIN(INITIAL);
-    CHAR_LIKE_TOKEN(yylval->text.token);
+    return token(yylval->text.token, yylval, yyextra, NeedFakeWS);
 }
 
 ' {
@@ -186,7 +181,7 @@ NL                      \n|\r|\r\n
     *yylloc = yyextra->startLoc;
 
     BEGIN(INITIAL);
-    CHAR_LIKE_TOKEN(yylval->text.token);
+    return token(yylval->text.token, yylval, yyextra, NeedFakeWS);
 }
 
 <dslit,sslit>{NL} {
@@ -207,7 +202,7 @@ NL                      \n|\r|\r\n
 
 <achar>. {
     BEGIN(INITIAL);
-    CHAR_LIKE_TOKEN(CHARS);
+    return token(CHARS, yylval, yyextra, NeedFakeWS);
 }
 
 "override"                     KW(OVERRIDE);
@@ -252,10 +247,10 @@ $.                             return token(VAR, yylval, yyextra);
             return token(')', yylval, yyextra);
         }
         yyextra->nesting.pop_back();
-        CHAR_LIKE_TOKEN(')');
+        return token(')', yylval, yyextra, NeedFakeWS);
     }
     yyextra->nesting.pop_back();
-    CHAR_LIKE_TOKEN(CALL_SUFFIX);
+    return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
 "}" {
     if (yyextra->nesting.empty()) {
@@ -264,7 +259,7 @@ $.                             return token(VAR, yylval, yyextra);
         REJECT;
     }
     yyextra->nesting.pop_back();
-    CHAR_LIKE_TOKEN(CALL_SUFFIX);
+    return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
 ","                            return token(',', yylval, yyextra);
 ":"                            return token(':', yylval, yyextra);
@@ -272,7 +267,7 @@ $.                             return token(VAR, yylval, yyextra);
     if (shouldInsertFakeWS(yylval, yyextra)) {
         return FAKE_TOKEN(WS);
     }
-    CHAR_LIKE_TOKEN(CHARS);
+    return token(CHARS, yylval, yyextra, NeedFakeWS);
 }
 
 %%
