@@ -67,6 +67,12 @@
         if (yyextra->nesting.empty()) { \
             return token((t), yylval, yyextra); \
         } \
+        CONTINUE(); \
+    } while (false)
+
+// Stops current rule to try some of the remaining ones.
+#define CONTINUE() \
+    do { \
         yyextra->offset -= yyleng; \
         yyextra->col -= yyleng; \
         REJECT; \
@@ -256,9 +262,7 @@ $.                             return token(VAR, yylval, yyextra);
 }
 "}" {
     if (yyextra->nesting.empty()) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        REJECT;
+        CONTINUE();
     }
     yyextra->nesting.pop_back();
     return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
