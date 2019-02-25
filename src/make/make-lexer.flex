@@ -91,7 +91,7 @@ token(int tokenId, YYSTYPE *lval, MakeLexerData *extra, bool needFakeWS = false)
         extra->tb->markWithPostponed(lval->text);
     }
     extra->fakeWSIsNeeded = needFakeWS;
-    extra->lastCharOffset = extra->offset;
+    extra->lastReturnedOffset = extra->offset;
     lval->text.token = tokenId;
     return tokenId;
 }
@@ -100,7 +100,7 @@ token(int tokenId, YYSTYPE *lval, MakeLexerData *extra, bool needFakeWS = false)
 static inline bool
 shouldInsertFakeWS(YYSTYPE *lval, MakeLexerData *extra)
 {
-    return lval->text.from != extra->lastCharOffset
+    return lval->text.from != extra->lastReturnedOffset
         && extra->fakeWSIsNeeded;
 }
 
@@ -193,6 +193,7 @@ NL                      \n|\r|\r\n
     return token(yylval->text.token, yylval, yyextra, NeedFakeWS);
 }
 
+ /* String literal hit new line, reparse it as something else. */
 <dslit,sslit>{NL} {
     const int length = yyextra->offset - yyextra->startTok.text.from;
     const char *const base = yyextra->contents + yyextra->startTok.text.from;
