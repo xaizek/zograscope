@@ -106,7 +106,7 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %type <node> statement statements statements_opt specifiers export
 %type <node> assignment assignment_prefix
-%type <node> conditionals conditionals_r condition define include
+%type <node> conditional conditional_in_recipe condition define include
 %type <node> expressions expressions_opt
 %type <node> expression expression_text expression_function
 %type <node> pattern_text pattern_function
@@ -156,7 +156,7 @@ statements
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-conditionals
+conditional
     : if_eq_kw condition statements_opt "endif" comment_opt br
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          $2,
@@ -174,7 +174,7 @@ conditionals
                          tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7) },
                        +MakeSType::IfStmt); }
-    | if_eq_kw condition statements_opt "else" conditionals
+    | if_eq_kw condition statements_opt "else" conditional
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          $2,
                          tb->addNode($3, @3),
@@ -198,7 +198,7 @@ conditionals
                          tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7) },
                        +MakeSType::IfStmt); }
-    | if_def_kw identifier statements_opt "else" conditionals
+    | if_def_kw identifier statements_opt "else" conditional
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
@@ -207,7 +207,7 @@ conditionals
                        +MakeSType::IfStmt); }
     ;
 
-conditionals_r
+conditional_in_recipe
     : if_eq_kw condition recipes_opt "endif" comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          $2,
@@ -224,7 +224,7 @@ conditionals_r
                          tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7) },
                        +MakeSType::IfStmt); }
-    | if_eq_kw condition recipes_opt "else" conditionals_r
+    | if_eq_kw condition recipes_opt "else" conditional_in_recipe
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          $2,
                          tb->addNode($3, @3),
@@ -247,7 +247,7 @@ conditionals_r
                          tb->addNode($6, @6, +MakeSType::Separator),
                          tb->addNode($7, @7) },
                        +MakeSType::IfStmt); }
-    | if_def_kw identifier recipes_opt "else" conditionals_r
+    | if_def_kw identifier recipes_opt "else" conditional_in_recipe
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3),
@@ -336,7 +336,7 @@ statement
     | assignment br  { $$ = tb->addNode($1, @1, +MakeSType::AssignmentExpr); }
     | function br
     | rule
-    | conditionals
+    | conditional
     | define
     | include
     | export br
@@ -712,7 +712,7 @@ recipes_opt
 
 recipe
     : LEADING_TAB expressions_v  { $$ = $2; }
-    | NL conditionals_r          { $$ = $2; }
+    | NL conditional_in_recipe   { $$ = $2; }
     | NL COMMENT
     { $$ = tb->addNode($2, @2, +MakeSType::Comment); }
     ;
