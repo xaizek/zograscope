@@ -128,8 +128,9 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 
 %type <node> exprs_in_def first_expr_in_def char_in_def
 
-%type <node> expressions_v expression_v expression_text_v expression_function_v
-%type <node> text_v char_v
+%type <node> exprs_in_recipe expr_in_recipe
+%type <node> expr_text_in_recipe expr_func_in_recipe
+%type <node> text_in_recipe char_in_recipe
 
 %precedence NL
 %precedence COMMENT "ifdef" "ifndef" "ifeq" "ifneq"
@@ -442,16 +443,16 @@ exprs_in_def
     { $$ = $2; }
     | exprs_in_def br
     { $$ = $1; }
-    | exprs_in_def WS expression_v
+    | exprs_in_def WS expr_in_recipe
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     | exprs_in_def br first_expr_in_def
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
 first_expr_in_def
-    : char_in_def expression_v
+    : char_in_def expr_in_recipe
     { $$ = tb->addNode({ $1, $2 }, +MakeSType::TemporaryContainer); }
-    | function expression_v
+    | function expr_in_recipe
     { $$ = tb->addNode({ $1, $2 }, +MakeSType::TemporaryContainer); }
     | char_in_def
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
@@ -459,10 +460,10 @@ first_expr_in_def
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
     ;
 
-expressions_v
-    : expression_v
+exprs_in_recipe
+    : expr_in_recipe
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expressions_v WS expression_v
+    | exprs_in_recipe WS expr_in_recipe
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
@@ -481,9 +482,9 @@ expr_in_assign
     | expr_func_in_assign
     ;
 
-expression_v
-    : expression_text_v
-    | expression_function_v
+expr_in_recipe
+    : expr_text_in_recipe
+    | expr_func_in_recipe
     ;
 
 expression_text
@@ -507,10 +508,10 @@ expr_text_in_assign
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-expression_text_v
-    : text_v
+expr_text_in_recipe
+    : text_in_recipe
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expression_function_v text_v
+    | expr_func_in_recipe text_in_recipe
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -551,12 +552,12 @@ expr_func_in_assign
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-expression_function_v
+expr_func_in_recipe
     : function
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expression_function_v function
+    | expr_func_in_recipe function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | expression_text_v function
+    | expr_text_in_recipe function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -712,8 +713,8 @@ recipes_opt
     ;
 
 recipe
-    : LEADING_TAB expressions_v  { $$ = $2; }
-    | NL conditional_in_recipe   { $$ = $2; }
+    : LEADING_TAB exprs_in_recipe  { $$ = $2; }
+    | NL conditional_in_recipe     { $$ = $2; }
     | NL COMMENT
     { $$ = tb->addNode($2, @2, +MakeSType::Comment); }
     ;
@@ -767,11 +768,11 @@ text_in_assign
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-text_v
-    : char_v
+text_in_recipe
+    : char_in_recipe
     { $$ = tb->addNode({ tb->addNode($1, @1) },
                        +MakeSType::TemporaryContainer); }
-    | text_v char_v
+    | text_in_recipe char_in_recipe
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -814,7 +815,7 @@ char_in_def
     | "undefine" { $$ = tb->addNode($1, @1, 0); }
     ;
 
-char_v
+char_in_recipe
     : char_in_assign
     | COMMENT    { $$ = tb->addNode($1, @1, 0); }
     ;
