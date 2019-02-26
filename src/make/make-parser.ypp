@@ -119,15 +119,19 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> if_def_kw if_eq_kw identifier text char br colon
 %type <node> keywords comment_opt
 
+/* Contents of parenthesised expressions. */
 %type <node> exprs_nested expr_nested expr_text_nested expr_func_nested
 %type <node> text_nested char_nested
 
+/* Expressions in RHS of assignments. */
 %type <node> exprs_in_assign expr_in_assign
 %type <node> expr_text_in_assign expr_func_in_assign
 %type <node> text_in_assign char_in_assign
 
+/* Expressions in definitions. */
 %type <node> exprs_in_def first_expr_in_def char_in_def
 
+/* Expressions in recipes. */
 %type <node> exprs_in_recipe expr_in_recipe
 %type <node> expr_text_in_recipe expr_func_in_recipe
 %type <node> text_in_recipe char_in_recipe
@@ -790,8 +794,8 @@ char_nested
 
 char_in_assign
     : char_nested
-    | '('        { $$ = tb->addNode($1, @1, 0); }
-    | ')'        { $$ = tb->addNode($1, @1, 0); }
+    | '('          { $$ = tb->addNode($1, @1, 0); }
+    | ')'          { $$ = tb->addNode($1, @1, 0); }
     | keywords
     ;
 
@@ -817,7 +821,7 @@ char_in_def
 
 char_in_recipe
     : char_in_assign
-    | COMMENT    { $$ = tb->addNode($1, @1, 0); }
+    | COMMENT         { $$ = tb->addNode($1, @1, 0); }
     ;
 
 keywords
