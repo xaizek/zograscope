@@ -122,8 +122,9 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> expressions_i expression_i expression_text_i expression_function_i
 %type <node> text_i char_i
 
-%type <node> expressions_a expression_a expression_text_a expression_function_a
-%type <node> text_a char_a
+%type <node> exprs_in_assign expr_in_assign
+%type <node> expr_text_in_assign expr_func_in_assign
+%type <node> text_in_assign char_in_assign
 
 %type <node> exprs_in_def first_expr_in_def char_in_def
 
@@ -362,7 +363,7 @@ assignment
                          tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3) },
                        +MakeSType::TemporaryContainer); }
-    | pattern ASSIGN_OP expressions_a comment_opt
+    | pattern ASSIGN_OP exprs_in_assign comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
@@ -373,7 +374,7 @@ assignment
                          tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3) },
                        +MakeSType::TemporaryContainer); }
-    | assignment_prefix ASSIGN_OP expressions_a comment_opt
+    | assignment_prefix ASSIGN_OP exprs_in_assign comment_opt
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2, +MakeSType::Separator),
                          tb->addNode($3, @3),
@@ -426,10 +427,10 @@ expressions_i
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
-expressions_a
-    : expression_a
+exprs_in_assign
+    : expr_in_assign
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expressions_a WS expression_a
+    | exprs_in_assign WS expr_in_assign
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
@@ -475,9 +476,9 @@ expression_i
     | expression_function_i
     ;
 
-expression_a
-    : expression_text_a
-    | expression_function_a
+expr_in_assign
+    : expr_text_in_assign
+    | expr_func_in_assign
     ;
 
 expression_v
@@ -499,10 +500,10 @@ expression_text_i
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-expression_text_a
-    : text_a
+expr_text_in_assign
+    : text_in_assign
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expression_function_a text_a
+    | expr_func_in_assign text_in_assign
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -541,12 +542,12 @@ expression_function_i
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-expression_function_a
+expr_func_in_assign
     : function
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expression_function_a function
+    | expr_func_in_assign function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | expression_text_a function
+    | expr_text_in_assign function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -758,11 +759,11 @@ text_i
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-text_a
-    : char_a
+text_in_assign
+    : char_in_assign
     { $$ = tb->addNode({ tb->addNode($1, @1) },
                        +MakeSType::TemporaryContainer); }
-    | text_a char_a
+    | text_in_assign char_in_assign
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -786,7 +787,7 @@ char_i
     | ','        { $$ = tb->addNode($1, @1, 0); }
     ;
 
-char_a
+char_in_assign
     : char_i
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
@@ -814,7 +815,7 @@ char_in_def
     ;
 
 char_v
-    : char_a
+    : char_in_assign
     | COMMENT    { $$ = tb->addNode($1, @1, 0); }
     ;
 
