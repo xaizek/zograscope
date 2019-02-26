@@ -119,8 +119,8 @@ void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
 %type <node> if_def_kw if_eq_kw identifier text char br colon
 %type <node> keywords comment_opt
 
-%type <node> expressions_i expression_i expression_text_i expression_function_i
-%type <node> text_i char_i
+%type <node> exprs_nested expr_nested expr_text_nested expr_func_nested
+%type <node> text_nested char_nested
 
 %type <node> exprs_in_assign expr_in_assign
 %type <node> expr_text_in_assign expr_func_in_assign
@@ -421,10 +421,10 @@ expressions
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
-expressions_i
-    : expression_i
+exprs_nested
+    : expr_nested
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expressions_i WS expression_i
+    | exprs_nested WS expr_nested
     { $$ = tb->append($1, tb->addNode($3, @3)); }
     ;
 
@@ -472,9 +472,9 @@ expression
     | expression_function
     ;
 
-expression_i
-    : expression_text_i
-    | expression_function_i
+expr_nested
+    : expr_text_nested
+    | expr_func_nested
     ;
 
 expr_in_assign
@@ -494,10 +494,10 @@ expression_text
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-expression_text_i
-    : text_i
+expr_text_nested
+    : text_nested
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | expression_function_i text_i
+    | expr_func_nested text_nested
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -518,7 +518,7 @@ expr_text_in_recipe
 expression_function
     : function
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | '(' expressions_i ')'
+    | '(' exprs_nested ')'
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3) },
@@ -529,17 +529,17 @@ expression_function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-expression_function_i
+expr_func_nested
     : function
     { $$ = tb->addNode($1, @1, +MakeSType::TemporaryContainer); }
-    | '(' expressions_i ')'
+    | '(' exprs_nested ')'
     { $$ = tb->addNode({ tb->addNode($1, @1),
                          tb->addNode($2, @2),
                          tb->addNode($3, @3) },
                        +MakeSType::TemporaryContainer); }
-    | expression_function_i function
+    | expr_func_nested function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
-    | expression_text_i function
+    | expr_text_nested function
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -752,11 +752,11 @@ text
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
-text_i
-    : char_i
+text_nested
+    : char_nested
     { $$ = tb->addNode({ tb->addNode($1, @1) },
                        +MakeSType::TemporaryContainer); }
-    | text_i char_i
+    | text_nested char_nested
     { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
@@ -783,13 +783,13 @@ char
     | ':'        { $$ = tb->addNode($1, @1, 0); }
     ;
 
-char_i
+char_nested
     : char
     | ','        { $$ = tb->addNode($1, @1, 0); }
     ;
 
 char_in_assign
-    : char_i
+    : char_nested
     | '('        { $$ = tb->addNode($1, @1, 0); }
     | ')'        { $$ = tb->addNode($1, @1, 0); }
     | keywords
