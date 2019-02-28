@@ -34,9 +34,11 @@
 #include "make/make-parser.hpp"
 #include "TreeBuilder.hpp"
 
+// Custom input function.
 #define YY_INPUT(buf, result, maxSize) \
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
 
+// Piece of code to run at the start of every rule.
 #define YY_USER_ACTION \
     { \
         yylval->text = { }; \
@@ -50,43 +52,65 @@
         yyextra->col += yyleng; \
     }
 
-#define TOKEN(t) \
-    do { \
-        if ((t) != WS) { \
-            yyextra->tb->markWithPostponed(yylval->text); \
-        } \
-        yyextra->contiguousChars = 0; \
-        return (yylval->text.token = (t)); \
-    } while (false)
+// Puts a fake token to the stream.
+#define FAKE_TOKEN(t) \
+    ({ \
+        yyextra->offset -= yyleng; \
+        yyextra->col -= yyleng; \
+        yyless(0); \
+        token(t, yylval, yyextra); \
+    })
 
-#define CHAR_LIKE_TOKEN(t) \
-    do { \
-        if ((t) != WS) { \
-            yyextra->tb->markWithPostponed(yylval->text); \
-        } \
-        ++yyextra->contiguousChars; \
-        return (yylval->text.token = (t)); \
-    } while (false)
-
+// Handles a keyword.
 #define KW(t) \
     do { \
         if (yyextra->nesting.empty()) { \
-            TOKEN(t); \
-        } else { \
-            yyextra->offset -= yyleng; \
-            yyextra->col -= yyleng; \
-            REJECT; \
+            return token((t), yylval, yyextra); \
         } \
+        CONTINUE(); \
     } while (false)
 
-#define ADVANCE_LINE() \
+// Stops current rule to try some of the remaining ones.
+#define CONTINUE() \
     do { \
-        ++yyextra->line; \
-        yyextra->col = 1U; \
-        yyextra->lineoffset = yyextra->offset; \
+        yyextra->offset -= yyleng; \
+        yyextra->col -= yyleng; \
+        REJECT; \
     } while (false)
 
 using namespace makestypes;
+
+// Convenience definition for token() funciton's argument.
+enum { NeedFakeWS = 1 };
+
+// Performs additional operations on returning a token.
+static inline int
+token(int tokenId, YYSTYPE *lval, MakeLexerData *extra, bool needFakeWS = false)
+{
+    if (tokenId != WS) {
+        extra->tb->markWithPostponed(lval->text);
+    }
+    extra->fakeWSIsNeeded = needFakeWS;
+    extra->lastReturnedOffset = extra->offset;
+    lval->text.token = tokenId;
+    return tokenId;
+}
+
+// Checks whether fake WS token should be inserted into the token stream.
+static inline bool
+shouldInsertFakeWS(YYSTYPE *lval, MakeLexerData *extra)
+{
+    return lval->text.from != extra->lastReturnedOffset
+        && extra->fakeWSIsNeeded;
+}
+
+// Advances line tracking to the next line.
+static inline void
+advanceLine(MakeLexerData *extra)
+{
+    ++extra->line;
+    extra->col = 1U;
+}
 
 %}
 
@@ -98,22 +122,22 @@ NL                      \n|\r|\r\n
 
 [ ]                     ;
 {NL}\t|^\t {
-    ADVANCE_LINE();
+    advanceLine(yyextra);
     yyextra->col = yyextra->tabWidth + 1;
-    TOKEN(LEADING_TAB);
+    return token(LEADING_TAB, yylval, yyextra);
 }
 \t {
     yyextra->col += yyextra->tabWidth - (yyextra->col - 1)%yyextra->tabWidth;
 }
 {NL} {
-    ADVANCE_LINE();
-    TOKEN(NL);
+    advanceLine(yyextra);
+    return token(NL, yylval, yyextra);
 }
 \\{NL} {
     yylval->text.len = 1;
     yylloc->last_column = yylloc->first_column + 1;
     yyextra->tb->addPostponed(yylval->text, *yylloc, +MakeSType::LineGlue);
-    ADVANCE_LINE();
+    advanceLine(yyextra);
 }
 
 # {
@@ -121,7 +145,7 @@ NL                      \n|\r|\r\n
     yyextra->startLoc = *yylloc;
     BEGIN(slcomment);
 }
-<slcomment>\\{NL}              ADVANCE_LINE();
+<slcomment>\\{NL}              advanceLine(yyextra);
 <slcomment>{NL} {
     yylval->text.from = yyextra->startTok.text.from;
     yylval->text.len = yyextra->offset - yyextra->startTok.text.from - 1;
@@ -133,7 +157,7 @@ NL                      \n|\r|\r\n
     yyextra->col -= yyleng;
     yyless(0);
 
-    TOKEN(COMMENT);
+    return token(COMMENT, yylval, yyextra);
 }
 <slcomment>.            ;
 
@@ -150,7 +174,7 @@ NL                      \n|\r|\r\n
     *yylloc = yyextra->startLoc;
 
     BEGIN(INITIAL);
-    CHAR_LIKE_TOKEN(yylval->text.token);
+    return token(yylval->text.token, yylval, yyextra, NeedFakeWS);
 }
 
 ' {
@@ -166,9 +190,10 @@ NL                      \n|\r|\r\n
     *yylloc = yyextra->startLoc;
 
     BEGIN(INITIAL);
-    CHAR_LIKE_TOKEN(yylval->text.token);
+    return token(yylval->text.token, yylval, yyextra, NeedFakeWS);
 }
 
+ /* String literal hit new line, reparse it as something else. */
 <dslit,sslit>{NL} {
     const int length = yyextra->offset - yyextra->startTok.text.from;
     const char *const base = yyextra->contents + yyextra->startTok.text.from;
@@ -182,12 +207,12 @@ NL                      \n|\r|\r\n
 
     BEGIN(achar);
 }
-<dslit,sslit>\\{NL}                  { ADVANCE_LINE(); }
+<dslit,sslit>\\{NL}                  advanceLine(yyextra);
 <dslit,sslit>.                       ;
 
 <achar>. {
     BEGIN(INITIAL);
-    CHAR_LIKE_TOKEN(CHARS);
+    return token(CHARS, yylval, yyextra, NeedFakeWS);
 }
 
 "override"                     KW(OVERRIDE);
@@ -207,70 +232,49 @@ NL                      \n|\r|\r\n
 
 -?"include"                    KW(INCLUDE);
 
-"="|"?="|":="|"::="|"+="|"!="  TOKEN(ASSIGN_OP);
+"="|"?="|":="|"::="|"+="|"!="  return token(ASSIGN_OP, yylval, yyextra);
 "$("|"${" {
-    if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->contiguousChars != 0) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        yyless(0);
-        TOKEN(WS);
+    if (shouldInsertFakeWS(yylval, yyextra)) {
+        return FAKE_TOKEN(WS);
     }
-    yyextra->lastCharOffset = yyextra->offset;
     yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
-    TOKEN(CALL_PREFIX);
+    return token(CALL_PREFIX, yylval, yyextra);
 }
-$.                             TOKEN(VAR);
+$.                             return token(VAR, yylval, yyextra);
 "(" {
-    if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->contiguousChars != 0) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        yyless(0);
-        TOKEN(WS);
+    if (shouldInsertFakeWS(yylval, yyextra)) {
+        return FAKE_TOKEN(WS);
     }
-    yyextra->lastCharOffset = yyextra->offset;
     if (!yyextra->nesting.empty()) {
         yyextra->nesting.push_back(MakeLexerData::ArgumentNesting);
     }
-    TOKEN('(');
+    return token('(', yylval, yyextra);
 }
 ")" {
-    if (yyextra->nesting.empty() ||
-        yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
-        if (!yyextra->nesting.empty()) {
-            yyextra->nesting.pop_back();
-            CHAR_LIKE_TOKEN(')');
-        } else {
-            TOKEN(')');
-        }
+    if (yyextra->nesting.empty()) {
+        return token(')', yylval, yyextra);
+    }
+    if (yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
+        yyextra->nesting.pop_back();
+        return token(')', yylval, yyextra, NeedFakeWS);
     }
     yyextra->nesting.pop_back();
-    yyextra->lastCharOffset = yyextra->offset;
-    CHAR_LIKE_TOKEN(CALL_SUFFIX);
+    return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
 "}" {
     if (yyextra->nesting.empty()) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        REJECT;
+        CONTINUE();
     }
     yyextra->nesting.pop_back();
-    yyextra->lastCharOffset = yyextra->offset;
-    CHAR_LIKE_TOKEN(CALL_SUFFIX);
+    return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
-","                            TOKEN(',');
-":"                            TOKEN(':');
+","                            return token(',', yylval, yyextra);
+":"                            return token(':', yylval, yyextra);
 .|[-a-zA-Z0-9_/.]+ {
-    if (yylval->text.from != yyextra->lastCharOffset &&
-        yyextra->contiguousChars != 0) {
-        yyextra->offset -= yyleng;
-        yyextra->col -= yyleng;
-        yyless(0);
-        TOKEN(WS);
+    if (shouldInsertFakeWS(yylval, yyextra)) {
+        return FAKE_TOKEN(WS);
     }
-    yyextra->lastCharOffset = yyextra->offset;
-    CHAR_LIKE_TOKEN(CHARS);
+    return token(CHARS, yylval, yyextra, NeedFakeWS);
 }
 
 %%
