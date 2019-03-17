@@ -18,6 +18,7 @@
 #include <boost/optional.hpp>
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -41,16 +42,16 @@ main(int argc, char *argv[])
 
         CommonArgs args = env.getCommonArgs();
         if (args.help) {
-            std::cout << "Usage: zs-hi [options...] file\n"
+            std::cout << "Usage: zs-hi [options...] [file|-]\n"
                       << "\n"
                       << "Options:\n";
             env.printOptions();
             return EXIT_SUCCESS;
         }
-        if (args.pos.size() != 1U) {
+        if (args.pos.size() > 1U) {
             env.teardown(true);
             std::cerr << "Wrong positional arguments\n"
-                      << "Expected exactly one\n";
+                      << "Expected at most one\n";
             return EXIT_FAILURE;
         }
 
@@ -71,12 +72,26 @@ run(const CommonArgs &args, TimeReport &tr)
     cpp17::pmr::monolithic mr;
     Tree tree(&mr);
 
-    const std::string &path = args.pos[0];
-    if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
-        tree = *t;
+    if (args.pos.empty() || args.pos[0] == "-") {
+        std::ostringstream oss;
+        oss << std::cin.rdbuf();
+        std::string contents = oss.str();
+
+        if (optional_t<Tree> &&t = buildTreeFromFile("<input>", contents, args,
+                                                     tr, &mr)) {
+            tree = *t;
+        } else {
+            std::cerr << "Failed to parse standard input\n";
+            return EXIT_FAILURE;
+        }
     } else {
-        std::cerr << "Failed to parse: " << path << '\n';
-        return EXIT_FAILURE;
+        const std::string &path = args.pos[0];
+        if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
+            tree = *t;
+        } else {
+            std::cerr << "Failed to parse: " << path << '\n';
+            return EXIT_FAILURE;
+        }
     }
 
     dumpTree(args, tree);
