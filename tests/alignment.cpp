@@ -234,18 +234,18 @@ TEST_CASE("Lines with matching nodes are aligned for multiline tokens",
     )", true));
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1                                                      |   1
-         2  /* This is an example {-file-}. */                  ~   2          /* This {+file+} is an example {+used+}
-         -                                                      >   3           {+*+} {+to+} {+compare+} {+diffs+}. */
-         3  int check({-int-}{- -}{-id-}, const char [inf][]) { ~   4          int check({+pid_t+}{+ +}{+pid+}, const char [inf{+o+}][]{+,+}{+ +}{+time_t+}{+ +}{+start+}) {
-         4      int status;                                     ~   5              int status {+=+}{+ +}{+0+};
-         -                                                      >   6              {+if+}{+ +}{+(+}{+start+}{+ +}{+!=+}{+ +}{+(+}{+time_t+}{+)+}{+-+}{+1+}{+)+}{+ +}{+{+}
-         5      {:waitpid:}{:(:}{:&:}{:status:}{:):}{:;:}       ~   7                  {:waitpid:}{:(:}{:&:}{:status:}{:):}{:;:}
-         -                                                      >   8              {+}+}
-         6      return status;                                  |   9              return status;
-         7  }                                                   |  10          }
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1                                                        |   1
+         2  /* This is an example {-file-}. */                    ~   2          /* This {+file+} is an example {+used+}
+         -                                                        >   3           {+*+} {+to+} {+compare+} {+diffs+}. */
+         3  int check({-int-}{- -}{-id-}, const char {~inf~}[]) { ~   4          int check({+pid_t+}{+ +}{+pid+}, const char {~inf~}{+o+}[]{+,+}{+ +}{+time_t+}{+ +}{+start+}) {
+         4      int status;                                       ~   5              int status {+=+}{+ +}{+0+};
+         -                                                        >   6              {+if+}{+ +}{+(+}{+start+}{+ +}{+!=+}{+ +}{+(+}{+time_t+}{+)+}{+-+}{+1+}{+)+}{+ +}{+{+}
+         5      {:waitpid:}{:(:}{:&:}{:status:}{:):}{:;:}         ~   7                  {:waitpid:}{:(:}{:&:}{:status:}{:):}{:;:}
+         -                                                        >   8              {+}+}
+         6      return status;                                    |   9              return status;
+         7  }                                                     |  10          }
     )");
 
     REQUIRE(printed == expected);
@@ -316,7 +316,7 @@ TEST_CASE("Separators are aligned when subtree separators match",
              3  {:getParent:}(const Node *x)                      ~   3  {+Comparator+}{+:+}{+:+}{:getParent:}(const Node *x)
              4  {                                                 |   4  {
              5      do {                                          |   5      do {
-             6          x = x->[parent];                          ~   6          x = x->[parent{+Node+}];
+             6          x = x->{~parent~};                        ~   6          x = x->{~parent~}{+Node+};
              7      } while (x != nullptr && {:isUnmovable:}(x)); ~   7      } while (x != nullptr &&
              -                                                    >   8               {+lang+}{+.+}{:isUnmovable:}(x));
              8      return x;                                     |   9      return x;

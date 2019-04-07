@@ -171,7 +171,7 @@ Highlighter::Highlighter(const Node &root, const Language &lang, bool original,
                          int lineOffset, int colOffset)
     : lang(lang), line(lineOffset), col(1), colOffset(colOffset),
       colorPicker(new ColorPicker(lang)), original(original), current(nullptr),
-      printReferences(false), printBrackets(true), transparentDiffables(true)
+      printReferences(false), printBrackets(false), transparentDiffables(false)
 {
     toProcess.push({ &root, root.moved, root.state, false, false });
 }
@@ -567,8 +567,9 @@ Highlighter::diffSpelling(const Node &node)
     };
 
     // Unchanged parts are highlighted using this color group.
-    ColorGroup def = transparentDiffables ? ColorGroup::None
-                                          : ColorGroup::PieceUpdated;
+    ColorGroup def = transparentDiffables || !surround
+                   ? ColorGroup::None
+                   : ColorGroup::PieceUpdated;
 
     for (const auto &x : diff.getSes().getSequence()) {
         switch (x.second.type) {

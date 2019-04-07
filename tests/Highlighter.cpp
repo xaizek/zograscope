@@ -92,11 +92,11 @@ TEST_CASE("References are printed", "[highlighter]")
 
     TermHighlighter oldHi(oldTree, true);
     oldHi.setPrintReferences(true);
-    CHECK(oldHi.print() == "int [{-old-}VarName]{1};");
+    CHECK(oldHi.print() == "int {-old-}{~VarName~}{1};");
 
     TermHighlighter newHi(newTree, false);
     newHi.setPrintReferences(true);
-    CHECK(newHi.print() == "int [{+new+}VarName]{1};");
+    CHECK(newHi.print() == "int {+new+}{~VarName~}{1};");
 }
 
 TEST_CASE("Brackets can be disabled", "[highlighter]")
@@ -109,11 +109,11 @@ TEST_CASE("Brackets can be disabled", "[highlighter]")
 
     TermHighlighter oldHi(oldTree, true);
     oldHi.setPrintBrackets(false);
-    CHECK(oldHi.print() == "int {-old-}VarName;");
+    CHECK(oldHi.print() == "int {-old-}{~VarName~};");
 
     TermHighlighter newHi(newTree, false);
     newHi.setPrintBrackets(false);
-    CHECK(newHi.print() == "int {+new+}VarName;");
+    CHECK(newHi.print() == "int {+new+}{~VarName~};");
 }
 
 TEST_CASE("Diffables can be non-transparent", "[highlighter]")
@@ -126,11 +126,11 @@ TEST_CASE("Diffables can be non-transparent", "[highlighter]")
 
     TermHighlighter oldHi(oldTree, true);
     oldHi.setTransparentDiffables(false);
-    CHECK(oldHi.print() == "int [{-old-}{~VarName~}];");
+    CHECK(oldHi.print() == "int {-old-}{~VarName~};");
 
     TermHighlighter newHi(newTree, false);
     newHi.setTransparentDiffables(false);
-    CHECK(newHi.print() == "int [{+new+}{~VarName~}];");
+    CHECK(newHi.print() == "int {+new+}{~VarName~};");
 }
 
 TEST_CASE("Non-transparent diffables have background filled", "[highlighter]")
@@ -143,9 +143,9 @@ TEST_CASE("Non-transparent diffables have background filled", "[highlighter]")
 
     TermHighlighter oldHi(oldTree, true);
     oldHi.setTransparentDiffables(false);
-    CHECK(oldHi.print() == "{~// aa bb ~}{-cc-}");
+    CHECK(oldHi.print() == "// aa bb {-cc-}");
 
     TermHighlighter newHi(newTree, false);
     newHi.setTransparentDiffables(false);
-    CHECK(newHi.print() == "{~// aa bb ~}{+dd+}");
+    CHECK(newHi.print() == "// aa bb {+dd+}");
 }
