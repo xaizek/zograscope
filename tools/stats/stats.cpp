@@ -86,8 +86,7 @@ operator<<(std::ostream &os, const Part &val)
 inline std::ostream &
 operator<<(std::ostream &os, const Count &val)
 {
-    return os << '\t' << std::setfill(' ') << std::setw(countWidth(val.data))
-              << val.data;
+    return os << '\t' << val.data;
 }
 
 class LineAnalyzer
