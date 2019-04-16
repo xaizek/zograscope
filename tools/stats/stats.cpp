@@ -57,7 +57,7 @@ struct Args : CommonArgs
 struct Header { const boost::string_ref data; };
 struct Bullet { const boost::string_ref data; };
 struct Part { const int part; const int whole; };
-struct Total { const int data; };
+struct Count { const int data; };
 
 // Formatted value printers.
 inline std::ostream &
@@ -84,7 +84,7 @@ operator<<(std::ostream &os, const Part &val)
 }
 
 inline std::ostream &
-operator<<(std::ostream &os, const Total &val)
+operator<<(std::ostream &os, const Count &val)
 {
     return os << '\t' << std::setfill(' ') << std::setw(countWidth(val.data))
               << val.data;
@@ -295,7 +295,7 @@ FileProcessor::printReport() const
 
     std::cout << Header { "Totals" }
               << Bullet { "all" }
-                 << Total { lines } << '\n'
+                 << Count { lines } << '\n'
               << Bullet { "all-com" }
                  << Part { lines - comment, lines } << '\n'
               << Bullet { "all-com-st" }
