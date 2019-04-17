@@ -18,6 +18,7 @@
 #include <boost/utility/string_ref.hpp>
 #include <boost/optional.hpp>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <iomanip>
@@ -30,8 +31,11 @@
 #include "utils/optional.hpp"
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
+#include "LeafRange.hpp"
+#include "NodeRange.hpp"
 #include "TermHighlighter.hpp"
 #include "decoration.hpp"
+#include "mtypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"
 
@@ -55,9 +59,10 @@ struct Args : CommonArgs
 
 // Strong typing for output stream overload.
 struct Header { const boost::string_ref data; };
+struct SubHeader { const boost::string_ref data; };
 struct Bullet { const boost::string_ref data; };
 struct Part { const int part; const int whole; };
-struct Total { const int data; };
+struct Count { const int data; };
 
 // Formatted value printers.
 inline std::ostream &
@@ -66,6 +71,11 @@ operator<<(std::ostream &os, const Header &val)
     return os << (decor::bold << val.data) << '\n'
               << (decor::bold << std::setw(val.data.length())
                               << std::setfill('-') << "") << '\n';
+}
+inline std::ostream &
+operator<<(std::ostream &os, const SubHeader &val)
+{
+    return os << " { " << (decor::bold << val.data) << " }\n";
 }
 inline std::ostream &
 operator<<(std::ostream &os, const Bullet &val)
@@ -84,27 +94,53 @@ operator<<(std::ostream &os, const Part &val)
 }
 
 inline std::ostream &
-operator<<(std::ostream &os, const Total &val)
+operator<<(std::ostream &os, const Count &val)
 {
-    return os << '\t' << std::setfill(' ') << std::setw(countWidth(val.data))
-              << val.data;
+    return os << '\t' << val.data;
 }
 
 class LineAnalyzer
 {
 public:
-    explicit LineAnalyzer(const Tree &tree);
+    explicit LineAnalyzer(Language &lang);
 
 public:
+    void countIn(const Node *node);
+
     const std::vector<LineContent> & getMap() const;
 
 private:
     void updateMap(unsigned int line, const Node &node);
-    void visit(const Node &node);
 
 private:
     std::vector<LineContent> map;
     const Language &lang;
+};
+
+class FunctionAnalyzer
+{
+public:
+    int getLineCount(const Node *node) const;
+};
+
+class StatsAggregator
+{
+public:
+    void aggregate(int value);
+
+    bool isEmpty() const;
+
+    int getSampleSize() const;
+    int getMin() const;
+    int getMax() const;
+    int getMedian() const;
+
+private:
+    int sampleSize = 0;
+    int min = 0;
+    int max = 0;
+    mutable std::vector<int> data;
+    mutable bool sorted;
 };
 
 class FileProcessor
@@ -129,14 +165,29 @@ private:
     decor::Decoration structuralHi;
 
     int files = 0, blank = 0, code = 0, comment = 0, structural = 0;
+
+    StatsAggregator funcSizes;
 };
 
 }
 
 inline
-LineAnalyzer::LineAnalyzer(const Tree &tree) : lang(*tree.getLanguage())
+LineAnalyzer::LineAnalyzer(Language &lang) : lang(lang)
+{ }
+
+inline void
+LineAnalyzer::countIn(const Node *node)
 {
-    visit(*tree.getRoot());
+    unsigned int line = node->line - 1;
+    std::vector<boost::string_ref> lines = split(node->label, '\n');
+    updateMap(line, *node);
+    for (std::size_t i = 1U; i < lines.size(); ++i) {
+        updateMap(++line, *node);
+    }
+
+    if (lang.isEolContinuation(node)) {
+        updateMap(line + 1, *node);
+    }
 }
 
 inline const std::vector<LineContent> &
@@ -170,29 +221,80 @@ LineAnalyzer::updateMap(unsigned int line, const Node &node)
     }
 }
 
-inline void
-LineAnalyzer::visit(const Node &node)
+inline int
+FunctionAnalyzer::getLineCount(const Node *node) const
 {
-    if (node.next != nullptr) {
-        return visit(*node.next);
+    LeafRange range(node);
+    auto curr = range.begin();
+    if (curr == range.end()) {
+        return 0;
     }
 
-    if (node.leaf) {
-        unsigned int line = node.line - 1;
-        std::vector<boost::string_ref> lines = split(node.label, '\n');
-        updateMap(line, node);
-        for (std::size_t i = 1U; i < lines.size(); ++i) {
-            updateMap(++line, node);
-        }
+    int startLine = (*curr)->line;
+    int endLine;
+    do {
+        endLine = (*curr)->line;
+    } while (++curr != range.end());
 
-        if (lang.isEolContinuation(&node)) {
-            updateMap(line + 1, node);
-        }
+    return endLine - startLine + 1;
+}
+
+inline void
+StatsAggregator::aggregate(int value)
+{
+    if (sampleSize == 0 || value < min) {
+        min = value;
+    }
+    if (sampleSize == 0 || value > max) {
+        max = value;
     }
 
-    for (Node *child : node.children) {
-        visit(*child);
+    ++sampleSize;
+
+    data.push_back(value);
+    sorted = false;
+}
+
+inline bool
+StatsAggregator::isEmpty() const
+{
+    return (sampleSize == 0);
+}
+
+inline int
+StatsAggregator::getSampleSize() const
+{
+    return sampleSize;
+}
+
+inline int
+StatsAggregator::getMin() const
+{
+    return min;
+}
+
+inline int
+StatsAggregator::getMax() const
+{
+    return max;
+}
+
+inline int
+StatsAggregator::getMedian() const
+{
+    if (data.empty()) {
+        return 0;
     }
+
+    if (!sorted) {
+        std::sort(data.begin(), data.end());
+        sorted = true;
+    }
+
+    if (data.size() % 2 == 1) {
+        return data[data.size()/2];
+    }
+    return (data[data.size()/2 - 1] + data[data.size()/2])/2;
 }
 
 inline
@@ -229,8 +331,19 @@ FileProcessor::operator()(const std::string &path)
         return true;
     }
 
-    LineAnalyzer analyzer(tree);
-    const std::vector<LineContent> &map = analyzer.getMap();
+    Language &lang = *tree.getLanguage();
+
+    LineAnalyzer lineAnalyzer(lang);
+    FunctionAnalyzer functionAnalyzer;
+    for (const Node *node : NodeRange(tree.getRoot())) {
+        if (node->leaf) {
+            lineAnalyzer.countIn(node);
+        } else if (lang.classify(node->stype) == MType::Function) {
+            funcSizes.aggregate(functionAnalyzer.getLineCount(node));
+        }
+    }
+
+    const std::vector<LineContent> &map = lineAnalyzer.getMap();
 
     std::unique_ptr<TermHighlighter> hi;
     if (args.annotate) {
@@ -295,11 +408,31 @@ FileProcessor::printReport() const
 
     std::cout << Header { "Totals" }
               << Bullet { "all" }
-                 << Total { lines } << '\n'
+                 << Count { lines } << '\n'
               << Bullet { "all-com" }
                  << Part { lines - comment, lines } << '\n'
               << Bullet { "all-com-st" }
-                 << Part { lines - comment - structural, lines } << '\n';
+                 << Part { lines - comment - structural, lines } << '\n'
+              << '\n';
+
+    if (!funcSizes.isEmpty()) {
+        std::cout << Header { "Function statistics" }
+                  << Bullet { "count" }
+                     << Count { funcSizes.getSampleSize() } << '\n'
+                  << SubHeader { "Size" }
+                  << Bullet { "min" }
+                     << Count { funcSizes.getMin() } << '\n'
+                  << Bullet { "median" }
+                     << Count { funcSizes.getMedian() } << '\n'
+                  << Bullet { "max" }
+                     << Count { funcSizes.getMax() } << '\n';
+    }
+    // XXX: histograms?
+    // XXX: statements per function?
+    // XXX: parameters per function?
+    // XXX: functions per file?
+    // XXX: depth, complexity?
+    // XXX: remember list of functions to list them on some option?
 }
 
 static boost::program_options::options_description getLocalOpts();

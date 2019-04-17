@@ -4,8 +4,11 @@
 
 ## Description ##
 
-`zs-stats` is a tool for counting lines of code (and possibly other things in
-the future).
+`zs-stats` is a tool for counting:
+ * lines of code
+ * lines of code taken by functions (complete definition)
+ * number of functions
+ * possibly other things in the future
 
 ## Differences ##
 
