@@ -30,6 +30,7 @@
 #include "utils/optional.hpp"
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
+#include "NodeRange.hpp"
 #include "TermHighlighter.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
@@ -92,14 +93,15 @@ operator<<(std::ostream &os, const Count &val)
 class LineAnalyzer
 {
 public:
-    explicit LineAnalyzer(const Tree &tree);
+    explicit LineAnalyzer(Language &lang);
 
 public:
+    void countIn(const Node *node);
+
     const std::vector<LineContent> & getMap() const;
 
 private:
     void updateMap(unsigned int line, const Node &node);
-    void visit(const Node &node);
 
 private:
     std::vector<LineContent> map;
@@ -133,9 +135,22 @@ private:
 }
 
 inline
-LineAnalyzer::LineAnalyzer(const Tree &tree) : lang(*tree.getLanguage())
+LineAnalyzer::LineAnalyzer(Language &lang) : lang(lang)
+{ }
+
+inline void
+LineAnalyzer::countIn(const Node *node)
 {
-    visit(*tree.getRoot());
+    unsigned int line = node->line - 1;
+    std::vector<boost::string_ref> lines = split(node->label, '\n');
+    updateMap(line, *node);
+    for (std::size_t i = 1U; i < lines.size(); ++i) {
+        updateMap(++line, *node);
+    }
+
+    if (lang.isEolContinuation(node)) {
+        updateMap(line + 1, *node);
+    }
 }
 
 inline const std::vector<LineContent> &
@@ -166,31 +181,6 @@ LineAnalyzer::updateMap(unsigned int line, const Node &node)
     } else if (map[line] == LineContent::Code ||
                type == LineContent::Code) {
         map[line] = LineContent::Code;
-    }
-}
-
-inline void
-LineAnalyzer::visit(const Node &node)
-{
-    if (node.next != nullptr) {
-        return visit(*node.next);
-    }
-
-    if (node.leaf) {
-        unsigned int line = node.line - 1;
-        std::vector<boost::string_ref> lines = split(node.label, '\n');
-        updateMap(line, node);
-        for (std::size_t i = 1U; i < lines.size(); ++i) {
-            updateMap(++line, node);
-        }
-
-        if (lang.isEolContinuation(&node)) {
-            updateMap(line + 1, node);
-        }
-    }
-
-    for (Node *child : node.children) {
-        visit(*child);
     }
 }
 
@@ -228,8 +218,16 @@ FileProcessor::operator()(const std::string &path)
         return true;
     }
 
-    LineAnalyzer analyzer(tree);
-    const std::vector<LineContent> &map = analyzer.getMap();
+    Language &lang = *tree.getLanguage();
+
+    LineAnalyzer lineAnalyzer(lang);
+    for (const Node *node : NodeRange(tree.getRoot())) {
+        if (node->leaf) {
+            lineAnalyzer.countIn(node);
+        }
+    }
+
+    const std::vector<LineContent> &map = lineAnalyzer.getMap();
 
     std::unique_ptr<TermHighlighter> hi;
     if (args.annotate) {
