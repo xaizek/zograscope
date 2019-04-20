@@ -25,13 +25,13 @@
 #include <iostream>
 
 #include "pmr/monolithic.hpp"
+#include "tooling/FunctionAnalyzer.hpp"
 #include "tooling/Traverser.hpp"
 #include "tooling/common.hpp"
 #include "utils/nums.hpp"
 #include "utils/optional.hpp"
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
-#include "LeafRange.hpp"
 #include "NodeRange.hpp"
 #include "TermHighlighter.hpp"
 #include "decoration.hpp"
@@ -115,12 +115,6 @@ private:
 private:
     std::vector<LineContent> map;
     const Language &lang;
-};
-
-class FunctionAnalyzer
-{
-public:
-    int getLineCount(const Node *node) const;
 };
 
 class StatsAggregator
@@ -219,24 +213,6 @@ LineAnalyzer::updateMap(unsigned int line, const Node &node)
                type == LineContent::Code) {
         map[line] = LineContent::Code;
     }
-}
-
-inline int
-FunctionAnalyzer::getLineCount(const Node *node) const
-{
-    LeafRange range(node);
-    auto curr = range.begin();
-    if (curr == range.end()) {
-        return 0;
-    }
-
-    int startLine = (*curr)->line;
-    int endLine;
-    do {
-        endLine = (*curr)->line;
-    } while (++curr != range.end());
-
-    return endLine - startLine + 1;
 }
 
 inline void
