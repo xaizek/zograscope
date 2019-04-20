@@ -567,6 +567,9 @@ SrcmlCxxLanguage::classify(SType stype) const
         case SrcmlCxxSType::CppWarning:
             return MType::Directive;
 
+        case SrcmlCxxSType::Statements:
+            return MType::Block;
+
         default:
             return MType::Other;
     }

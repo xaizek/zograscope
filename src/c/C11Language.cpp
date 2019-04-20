@@ -341,6 +341,9 @@ C11Language::classify(SType stype) const
         case C11SType::Directive:
             return MType::Directive;
 
+        case C11SType::Statements:
+            return MType::Block;
+
         default:
             return MType::Other;
     }

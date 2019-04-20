@@ -32,6 +32,7 @@ operator<<(std::ostream &os, MType mtype)
         case MType::Parameter:   return (os << "Parameter");
         case MType::Comment:     return (os << "Comment");
         case MType::Directive:   return (os << "Directive");
+        case MType::Block:       return (os << "Block");
     }
 
     assert(false && "Unhandled enumeration item");
