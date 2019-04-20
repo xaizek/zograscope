@@ -161,6 +161,7 @@ private:
     int files = 0, blank = 0, code = 0, comment = 0, structural = 0;
 
     StatsAggregator funcSizes;
+    StatsAggregator paramCounts;
 };
 
 }
@@ -316,6 +317,7 @@ FileProcessor::operator()(const std::string &path)
             lineAnalyzer.countIn(node);
         } else if (lang.classify(node->stype) == MType::Function) {
             funcSizes.aggregate(functionAnalyzer.getLineCount(node));
+            paramCounts.aggregate(functionAnalyzer.getParamCount(node));
         }
     }
 
@@ -401,7 +403,14 @@ FileProcessor::printReport() const
                   << Bullet { "median" }
                      << Count { funcSizes.getMedian() } << '\n'
                   << Bullet { "max" }
-                     << Count { funcSizes.getMax() } << '\n';
+                     << Count { funcSizes.getMax() } << '\n'
+                  << SubHeader { "Params" }
+                  << Bullet { "min" }
+                     << Count { paramCounts.getMin() } << '\n'
+                  << Bullet { "median" }
+                     << Count { paramCounts.getMedian() } << '\n'
+                  << Bullet { "max" }
+                     << Count { paramCounts.getMax() } << '\n';
     }
     // XXX: histograms?
     // XXX: statements per function?
