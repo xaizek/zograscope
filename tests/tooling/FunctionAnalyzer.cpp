@@ -23,7 +23,7 @@
 
 #include "tests.hpp"
 
-TEST_CASE("Function on one line", "[tooling][function-analyzer]")
+TEST_CASE("Function with no args on one line", "[tooling][function-analyzer]")
 {
     Tree tree = parseC("void f() { }", true);
 
@@ -33,16 +33,17 @@ TEST_CASE("Function on one line", "[tooling][function-analyzer]")
     const Node *func = findNode(tree, test, true);
     REQUIRE(func != nullptr);
 
-    FunctionAnalyzer functionAnalyzer;
+    FunctionAnalyzer functionAnalyzer(*tree.getLanguage());
     CHECK(functionAnalyzer.getLineCount(func) == 1);
+    CHECK(functionAnalyzer.getParamCount(func) == 0);
 }
 
-TEST_CASE("Function on many lines", "[tooling][function-analyzer]")
+TEST_CASE("Function with args on many lines", "[tooling][function-analyzer]")
 {
     Tree tree = parseC(R"(
         void
-        f(
-        )
+        f
+        (int a, int b)
         {
 
         }
@@ -54,6 +55,76 @@ TEST_CASE("Function on many lines", "[tooling][function-analyzer]")
     const Node *func = findNode(tree, test, true);
     REQUIRE(func != nullptr);
 
-    FunctionAnalyzer functionAnalyzer;
+    FunctionAnalyzer functionAnalyzer(*tree.getLanguage());
     CHECK(functionAnalyzer.getLineCount(func) == 6);
+    CHECK(functionAnalyzer.getParamCount(func) == 2);
+}
+
+TEST_CASE("C function with void args", "[tooling][function-analyzer]")
+{
+    Tree tree = parseC("void f(void) { }", true);
+
+    auto test = [&](const Node *node) {
+        return (tree.getLanguage()->classify(node->stype) == MType::Function);
+    };
+    const Node *func = findNode(tree, test, true);
+    REQUIRE(func != nullptr);
+
+    FunctionAnalyzer functionAnalyzer(*tree.getLanguage());
+    CHECK(functionAnalyzer.getLineCount(func) == 1);
+    CHECK(functionAnalyzer.getParamCount(func) == 0);
+}
+
+TEST_CASE("C++ function with void args", "[.srcml][tooling][function-analyzer]")
+{
+    Tree tree = parseCxx("void f(void) { }");
+
+    auto test = [&](const Node *node) {
+        return (tree.getLanguage()->classify(node->stype) == MType::Function);
+    };
+    const Node *func = findNode(tree, test, true);
+    REQUIRE(func != nullptr);
+
+    FunctionAnalyzer functionAnalyzer(*tree.getLanguage());
+    CHECK(functionAnalyzer.getLineCount(func) == 1);
+    CHECK(functionAnalyzer.getParamCount(func) == 0);
+}
+
+TEST_CASE("C function with extern prototype", "[tooling][function-analyzer]")
+{
+    Tree tree = parseC(R"(
+        void f(int a) {
+            extern void anotherOne(float something);
+        }
+    )", true);
+
+    auto test = [&](const Node *node) {
+        return (tree.getLanguage()->classify(node->stype) == MType::Function);
+    };
+    const Node *func = findNode(tree, test, true);
+    REQUIRE(func != nullptr);
+
+    FunctionAnalyzer functionAnalyzer(*tree.getLanguage());
+    CHECK(functionAnalyzer.getLineCount(func) == 3);
+    CHECK(functionAnalyzer.getParamCount(func) == 1);
+}
+
+TEST_CASE("C++ function with a lambda", "[.srcml][tooling][function-analyzer]")
+{
+    Tree tree = parseCxx(R"(
+        void f(int a) {
+            auto func = [](int b, double c) {
+            };
+        }
+    )");
+
+    auto test = [&](const Node *node) {
+        return (tree.getLanguage()->classify(node->stype) == MType::Function);
+    };
+    const Node *func = findNode(tree, test, true);
+    REQUIRE(func != nullptr);
+
+    FunctionAnalyzer functionAnalyzer(*tree.getLanguage());
+    CHECK(functionAnalyzer.getLineCount(func) == 4);
+    CHECK(functionAnalyzer.getParamCount(func) == 1);
 }

@@ -310,7 +310,7 @@ FileProcessor::operator()(const std::string &path)
     Language &lang = *tree.getLanguage();
 
     LineAnalyzer lineAnalyzer(lang);
-    FunctionAnalyzer functionAnalyzer;
+    FunctionAnalyzer functionAnalyzer(lang);
     for (const Node *node : NodeRange(tree.getRoot())) {
         if (node->leaf) {
             lineAnalyzer.countIn(node);

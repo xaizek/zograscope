@@ -18,7 +18,11 @@
 #include "FunctionAnalyzer.hpp"
 
 #include "LeafRange.hpp"
+#include "mtypes.hpp"
 #include "tree.hpp"
+
+FunctionAnalyzer::FunctionAnalyzer(Language &lang) : lang(lang)
+{ }
 
 int
 FunctionAnalyzer::getLineCount(const Node *node) const
@@ -36,4 +40,23 @@ FunctionAnalyzer::getLineCount(const Node *node) const
     } while (++curr != range.end());
 
     return endLine - startLine + 1;
+}
+
+int
+FunctionAnalyzer::getParamCount(const Node *node) const
+{
+    if (node->next != nullptr) {
+        return getParamCount(node->next);
+    }
+
+    int paramCount = 0;
+    for (const Node *child : node->children) {
+        MType mtype = lang.classify(child->stype);
+        if (mtype == MType::Parameter && !lang.isPseudoParamater(child)) {
+            ++paramCount;
+        } else if (mtype == MType::Declaration || mtype == MType::Other) {
+            paramCount += getParamCount(child);
+        }
+    }
+    return paramCount;
 }

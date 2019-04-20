@@ -62,6 +62,9 @@ public:
     virtual bool isEolContinuation(const Node *x) const override;
     // Checks whether a node always matches another node with the same stype.
     virtual bool alwaysMatches(const Node *x) const override;
+    // Checks whether parameter node (as reported by `classify()`) represents a
+    // true parameter and not something like "no argument list".
+    virtual bool isPseudoParamater(const Node *x) const override;
     // Checks whether child node needs to be replaced in its parent with its
     // children.
     virtual bool shouldSplice(SType parent,

@@ -18,15 +18,25 @@
 #ifndef ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
 #define ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
 
+class Language;
 class Node;
 
 // Computes properties of functions.
 class FunctionAnalyzer
 {
 public:
+    // Remembers language, which will be used to analyze nodes.
+    explicit FunctionAnalyzer(Language &lang);
+
+public:
     // Retrieves number of lines taken by the function (includes all of its
     // elements).
     int getLineCount(const Node *node) const;
+    // Retrieves number of parameters that the function accepts.
+    int getParamCount(const Node *node) const;
+
+private:
+    const Language &lang; // Language of the functions being analyzed.
 };
 
 #endif // ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
