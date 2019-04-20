@@ -443,6 +443,12 @@ SrcmlCxxLanguage::alwaysMatches(const Node *x) const
 }
 
 bool
+SrcmlCxxLanguage::isPseudoParamater(const Node *x) const
+{
+    return (x->label == "void");
+}
+
+bool
 SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
 {
     SrcmlCxxSType child = -childNode->stype;
@@ -566,6 +572,9 @@ SrcmlCxxLanguage::classify(SType stype) const
         case SrcmlCxxSType::CppValue:
         case SrcmlCxxSType::CppWarning:
             return MType::Directive;
+
+        case SrcmlCxxSType::Statements:
+            return MType::Block;
 
         default:
             return MType::Other;

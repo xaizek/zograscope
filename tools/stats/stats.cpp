@@ -25,13 +25,13 @@
 #include <iostream>
 
 #include "pmr/monolithic.hpp"
+#include "tooling/FunctionAnalyzer.hpp"
 #include "tooling/Traverser.hpp"
 #include "tooling/common.hpp"
 #include "utils/nums.hpp"
 #include "utils/optional.hpp"
 #include "utils/strings.hpp"
 #include "ColorScheme.hpp"
-#include "LeafRange.hpp"
 #include "NodeRange.hpp"
 #include "TermHighlighter.hpp"
 #include "decoration.hpp"
@@ -117,12 +117,6 @@ private:
     const Language &lang;
 };
 
-class FunctionAnalyzer
-{
-public:
-    int getLineCount(const Node *node) const;
-};
-
 class StatsAggregator
 {
 public:
@@ -167,6 +161,7 @@ private:
     int files = 0, blank = 0, code = 0, comment = 0, structural = 0;
 
     StatsAggregator funcSizes;
+    StatsAggregator paramCounts;
 };
 
 }
@@ -219,24 +214,6 @@ LineAnalyzer::updateMap(unsigned int line, const Node &node)
                type == LineContent::Code) {
         map[line] = LineContent::Code;
     }
-}
-
-inline int
-FunctionAnalyzer::getLineCount(const Node *node) const
-{
-    LeafRange range(node);
-    auto curr = range.begin();
-    if (curr == range.end()) {
-        return 0;
-    }
-
-    int startLine = (*curr)->line;
-    int endLine;
-    do {
-        endLine = (*curr)->line;
-    } while (++curr != range.end());
-
-    return endLine - startLine + 1;
 }
 
 inline void
@@ -334,12 +311,13 @@ FileProcessor::operator()(const std::string &path)
     Language &lang = *tree.getLanguage();
 
     LineAnalyzer lineAnalyzer(lang);
-    FunctionAnalyzer functionAnalyzer;
+    FunctionAnalyzer functionAnalyzer(lang);
     for (const Node *node : NodeRange(tree.getRoot())) {
         if (node->leaf) {
             lineAnalyzer.countIn(node);
         } else if (lang.classify(node->stype) == MType::Function) {
             funcSizes.aggregate(functionAnalyzer.getLineCount(node));
+            paramCounts.aggregate(functionAnalyzer.getParamCount(node));
         }
     }
 
@@ -425,7 +403,14 @@ FileProcessor::printReport() const
                   << Bullet { "median" }
                      << Count { funcSizes.getMedian() } << '\n'
                   << Bullet { "max" }
-                     << Count { funcSizes.getMax() } << '\n';
+                     << Count { funcSizes.getMax() } << '\n'
+                  << SubHeader { "Params" }
+                  << Bullet { "min" }
+                     << Count { paramCounts.getMin() } << '\n'
+                  << Bullet { "median" }
+                     << Count { paramCounts.getMedian() } << '\n'
+                  << Bullet { "max" }
+                     << Count { paramCounts.getMax() } << '\n';
     }
     // XXX: histograms?
     // XXX: statements per function?

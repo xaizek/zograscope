@@ -8,6 +8,7 @@
  * lines of code
  * lines of code taken by functions (complete definition)
  * number of functions
+ * number of parameters of functions
  * possibly other things in the future
 
 ## Differences ##

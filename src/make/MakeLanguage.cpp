@@ -138,6 +138,12 @@ MakeLanguage::alwaysMatches(const Node *x) const
 }
 
 bool
+MakeLanguage::isPseudoParamater(const Node */*x*/) const
+{
+    return false;
+}
+
+bool
 MakeLanguage::shouldSplice(SType parent, const Node *childNode) const
 {
     MakeSType child = -childNode->stype;

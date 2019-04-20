@@ -15,26 +15,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "mtypes.hpp"
+#ifndef ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
+#define ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
 
-#include <cassert>
+class Language;
+class Node;
 
-#include <ostream>
-
-std::ostream &
-operator<<(std::ostream &os, MType mtype)
+// Computes properties of functions.
+class FunctionAnalyzer
 {
-    switch (mtype) {
-        case MType::Other:       return (os << "Other");
-        case MType::Declaration: return (os << "Declaration");
-        case MType::Statement:   return (os << "Statement");
-        case MType::Function:    return (os << "Function");
-        case MType::Parameter:   return (os << "Parameter");
-        case MType::Comment:     return (os << "Comment");
-        case MType::Directive:   return (os << "Directive");
-        case MType::Block:       return (os << "Block");
-    }
+public:
+    // Remembers language, which will be used to analyze nodes.
+    explicit FunctionAnalyzer(Language &lang);
 
-    assert(false && "Unhandled enumeration item");
-    return (os << "<UNKNOWN:" << static_cast<int>(mtype) << '>');
-}
+public:
+    // Retrieves number of lines taken by the function (includes all of its
+    // elements).
+    int getLineCount(const Node *node) const;
+    // Retrieves number of parameters that the function accepts.
+    int getParamCount(const Node *node) const;
+
+private:
+    const Language &lang; // Language of the functions being analyzed.
+};
+
+#endif // ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__

@@ -238,6 +238,12 @@ C11Language::alwaysMatches(const Node *x) const
 }
 
 bool
+C11Language::isPseudoParamater(const Node *x) const
+{
+    return (x->label == "void");
+}
+
+bool
 C11Language::shouldSplice(SType parent, const Node *childNode) const
 {
     C11SType child = -childNode->stype;
@@ -340,6 +346,9 @@ C11Language::classify(SType stype) const
 
         case C11SType::Directive:
             return MType::Directive;
+
+        case C11SType::Statements:
+            return MType::Block;
 
         default:
             return MType::Other;

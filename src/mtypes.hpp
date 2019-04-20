@@ -32,6 +32,7 @@ enum class MType : std::uint8_t
     Parameter,   // Parameter in declaration of a function.
     Comment,     // Comments of any kind.
     Directive,   // Preprocessor-alike directives.
+    Block,       // A container of statements.
 };
 
 // Prints mtype as a string.

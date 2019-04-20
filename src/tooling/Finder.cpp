@@ -68,6 +68,8 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
             return MType::Comment;
         } else if (str == "dir") {
             return MType::Directive;
+        } else if (str == "block") {
+            return MType::Block;
         } else {
             throw std::runtime_error("Unknown type: " + str);
         }

@@ -40,6 +40,7 @@ Available matchers:
    param  Parameter of a function
    comm   Comments of any kind
    dir    Preprocessor-alike directives
+   block  Container of statements
 
 Possible expressions (each of which can match a token):
    x      Matches exactly `x`
