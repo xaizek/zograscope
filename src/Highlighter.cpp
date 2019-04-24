@@ -42,16 +42,6 @@ static bool isDiffable(const Node &node, State state, const Language &lang);
 static std::vector<boost::string_ref> toWords(const std::string &s);
 static std::vector<boost::string_ref> toChars(const std::string &s);
 
-// Single processing entry.
-struct Highlighter::Entry
-{
-    const Node *node;    // Node to be processed.
-    bool moved;          // Move status override for descendants.
-    State state;         // State override for descendants.
-    bool propagateMoved; // Moved field should be passed to all descendants.
-    bool propagateState; // State field should be passed to all descendants.
-};
-
 class Highlighter::ColorPicker
 {
 public:

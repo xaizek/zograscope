@@ -39,7 +39,16 @@ class Tree;
 class Highlighter
 {
     class ColorPicker;
-    class Entry;
+
+    // Single processing entry.
+    struct Entry
+    {
+        const Node *node;    // Node to be processed.
+        bool moved;          // Move status override for descendants.
+        State state;         // State override for descendants.
+        bool propagateMoved; // Moved field should be passed to all descendants.
+        bool propagateState; // State field should be passed to all descendants.
+    };
 
 public:
     // Stores arguments for future reference.  The original flag specifies
