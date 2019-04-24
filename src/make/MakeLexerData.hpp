@@ -30,10 +30,11 @@
 // Make-specific state of the lexer.
 struct MakeLexerData : LexerData
 {
-    // Type nesting: function nesting.
-    static constexpr bool FunctionNesting = false;
-    // Type nesting: function argument nesting.
-    static constexpr bool ArgumentNesting = true;
+    // Type of nesting.
+    enum {
+        FunctionNesting, // Function nesting.
+        ArgumentNesting, // Function argument nesting.
+    };
 
     std::size_t offset = 0U; // Byte offset in the input.
     std::size_t line = 1U;   // Current line number.
