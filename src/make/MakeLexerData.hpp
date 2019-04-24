@@ -40,9 +40,9 @@ struct MakeLexerData : LexerData
     std::size_t col = 1U;    // Current column number.
 
     // Start token for things like comments and literals.
-    YYSTYPE startTok = {};
+    MAKE_STYPE startTok = {};
     // Start location for things like comments and literals.
-    YYLTYPE startLoc = {};
+    MAKE_LTYPE startLoc = {};
 
     // Offset of the last token that was returned by the lexer.
     std::size_t lastReturnedOffset = static_cast<std::size_t>(-1);

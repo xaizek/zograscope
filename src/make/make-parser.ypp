@@ -45,7 +45,7 @@ using namespace makestypes;
 {
 
 #include "TreeBuilder.hpp"
-#define YYLTYPE Location
+#define MAKE_LTYPE Location
 
 namespace cpp17 {
     namespace pmr {
@@ -58,12 +58,12 @@ struct MakeParseData;
 TreeBuilder make_parse(const std::string &contents, const std::string &fileName,
                        bool debug, cpp17::pmr::monolithic &mr);
 
-void make_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, MakeParseData *pd,
-                const char s[]);
+void make_error(MAKE_LTYPE *loc, void *scanner, TreeBuilder *tb,
+                MakeParseData *pd, const char s[]);
 
 }
 
-%name-prefix "make_"
+%define api.prefix {make_}
 %define parse.error verbose
 %define api.pure
 %param {void *scanner}
@@ -884,7 +884,7 @@ make_parse(const std::string &contents, const std::string &fileName, bool debug,
 }
 
 void
-make_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
+make_error(MAKE_LTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
            MakeParseData *pd, const char s[])
 {
     std::cerr << pd->fileName << ':'

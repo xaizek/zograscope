@@ -34,6 +34,9 @@
 #include "make/make-parser.hpp"
 #include "TreeBuilder.hpp"
 
+#define YYSTYPE MAKE_STYPE
+#define YYLTYPE MAKE_LTYPE
+
 // Custom input function.
 #define YY_INPUT(buf, result, maxSize) \
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
