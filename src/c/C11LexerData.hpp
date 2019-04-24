@@ -33,15 +33,14 @@ struct C11LexerData : LexerData
     std::size_t line = 1U;
     std::size_t col = 1U;
 
-    YYSTYPE startTok = {};
-    YYLTYPE startLoc = {};
+    C11_STYPE startTok = {};
+    C11_LTYPE startLoc = {};
 
     C11ParseData *pd;
 
     C11LexerData(const std::string &str, TreeBuilder &tb, C11ParseData &pd)
         : LexerData(str, tb), pd(&pd)
-    {
-    }
+    { }
 };
 
 #endif // ZOGRASCOPE__C__LEXERDATA_HPP__

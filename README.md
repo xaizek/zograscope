@@ -144,7 +144,7 @@ make install
 * [GNU Make][make]
 * C++11-capable compiler (GCC 4.9 has some issues, GCC 5.3 works fine)
 * [flex][flex]
-* [GNU Bison][bison]
+* [GNU Bison][bison] v3+
 * [Boost][boost], tested with 1.59, but older versions might work too
 * (optional, run-time, for C++) [srcml][srcml]
 * (optional, for `gdiff` tool) [qt5][qt5]

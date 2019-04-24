@@ -27,7 +27,7 @@
 
 using namespace makestypes;
 
-MakeLanguage::MakeLanguage() : map()
+MakeLanguage::MakeLanguage() : map(NTOKENS)
 {
     map[COMMENT] = Type::Comments;
     map[ASSIGN_OP] = Type::Assignments;

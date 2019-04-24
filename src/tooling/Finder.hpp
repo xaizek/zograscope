@@ -24,9 +24,9 @@
 #include <string>
 
 #include "Grepper.hpp"
+#include "Matcher.hpp"
 
 class CommonArgs;
-class Matcher;
 class TimeReport;
 
 // Processes files and looks for matches in them.

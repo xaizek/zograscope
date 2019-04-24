@@ -18,7 +18,8 @@
 #ifndef ZOGRASCOPE__C__C11LANGUAGE_HPP__
 #define ZOGRASCOPE__C__C11LANGUAGE_HPP__
 
-#include "c/c11-parser.hpp"
+#include <vector>
+
 #include "Language.hpp"
 
 // C11-specific routines.
@@ -83,7 +84,7 @@ public:
     virtual const char * toString(SType stype) const override;
 
 private:
-    Type map[NTOKENS]; // Static token-type to Type map.
+    std::vector<Type> map; // Static token-type to Type map.
 };
 
 #endif // ZOGRASCOPE__C__C11LANGUAGE_HPP__

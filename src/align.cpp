@@ -95,7 +95,7 @@ DiffSource::DiffSource(const Node &root)
                         buffer.clear();
                     }
                     lines.emplace_back(spell[i], leafN, leafRelative);
-                    modified.emplace_back(changed);
+                    modified.push_back(changed);
                 }
             }
 

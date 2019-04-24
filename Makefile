@@ -63,7 +63,7 @@ else
             EXTRA_CXXFLAGS += --coverage
             EXTRA_LDFLAGS  += --coverage
         else
-            EXTRA_CXXFLAGS := -Og -g
+            EXTRA_CXXFLAGS := -g
             out_dir := .
         endif
     endif
@@ -139,6 +139,9 @@ $(foreach tool, $(tools), $(eval $(call pull_tool_template,$(tool))))
 $(foreach tool, $(tools), $(eval $(call tool_template,$(tool))))
 
 out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))
+# this is for gmake 3, which has troubles creating these directories in the
+# processs of running other rules
+$(shell mkdir -p $(out_dirs))
 
 .PHONY: all check clean debug release sanitize-basic
 .PHONY: coverage reset-coverage

@@ -18,7 +18,8 @@
 #ifndef ZOGRASCOPE__MAKE__MAKELANGUAGE_HPP__
 #define ZOGRASCOPE__MAKE__MAKELANGUAGE_HPP__
 
-#include "make/make-parser.hpp"
+#include <vector>
+
 #include "Language.hpp"
 
 // Make-specific routines.
@@ -83,7 +84,7 @@ public:
     virtual const char * toString(SType stype) const override;
 
 private:
-    Type map[NTOKENS]; // Static token-type to Type map.
+    std::vector<Type> map; // Static token-type to Type map.
 };
 
 #endif // ZOGRASCOPE__MAKE__MAKELANGUAGE_HPP__

@@ -34,6 +34,9 @@
 #include "c/c11-parser.hpp"
 #include "TreeBuilder.hpp"
 
+#define YYSTYPE C11_STYPE
+#define YYLTYPE C11_LTYPE
+
 #define YY_INPUT(buf, result, maxSize) \
     do { (result) = yyextra->readInput((buf), (maxSize)); } while (false)
 
@@ -63,7 +66,7 @@
 
 using namespace c11stypes;
 
-static void reportError(YYLTYPE *loc, const char text[], std::size_t len,
+static void reportError(C11_LTYPE *loc, const char text[], std::size_t len,
                         C11LexerData *data);
 
 %}
@@ -455,7 +458,7 @@ NL                      \n|\r|\r\n
 %%
 
 static void
-reportError(YYLTYPE *loc, const char text[], std::size_t len,
+reportError(C11_LTYPE *loc, const char text[], std::size_t len,
             C11LexerData *data)
 {
     std::string error;
@@ -468,7 +471,7 @@ reportError(YYLTYPE *loc, const char text[], std::size_t len,
         error = std::string("Unknown token: <") + std::to_string(text[0]) + '>';
     }
 
-    YYLTYPE changedLoc = *loc;
+    C11_LTYPE changedLoc = *loc;
     changedLoc.first_column = data->offset - data->lineoffset;
     c11_error(&changedLoc, nullptr, data->tb, data->pd, error.c_str());
 }

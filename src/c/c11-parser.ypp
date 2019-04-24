@@ -114,7 +114,7 @@ suckIn(PNode *node, PNode *child)
 {
 
 #include "TreeBuilder.hpp"
-#define YYLTYPE Location
+#define C11_LTYPE Location
 
 namespace cpp17 {
     namespace pmr {
@@ -127,12 +127,12 @@ struct C11ParseData;
 TreeBuilder c11_parse(const std::string &contents, const std::string &fileName,
                       bool debug, cpp17::pmr::monolithic &mr);
 
-void c11_error(YYLTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
+void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
                const char s[]);
 
 }
 
-%name-prefix "c11_"
+%define api.prefix {c11_}
 %glr-parser
 %define parse.error verbose
 %define api.pure
@@ -1823,7 +1823,7 @@ c11_parse(const std::string &contents, const std::string &fileName, bool debug,
 }
 
 void
-c11_error(YYLTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
+c11_error(C11_LTYPE *loc, void */*scanner*/, TreeBuilder */*tb*/,
           C11ParseData *pd, const char s[])
 {
     std::cerr << pd->fileName << ':'
