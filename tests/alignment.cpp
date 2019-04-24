@@ -21,7 +21,7 @@
 
 #include "tests.hpp"
 
-TEST_CASE("Lines with matching nodes are aligned", "[alignment]")
+TEST_CASE("Lines with matching nodes are aligned", "[.srcml][alignment]")
 {
     std::string printed = compareAndPrint(parseCxx(R"(
         // Bad alignment
@@ -252,7 +252,7 @@ TEST_CASE("Lines with matching nodes are aligned for multiline tokens",
 }
 
 TEST_CASE("Separators are aligned when subtree separators match",
-          "[alignment]")
+          "[.srcml][alignment]")
 {
     SECTION("Simplified")
     {
