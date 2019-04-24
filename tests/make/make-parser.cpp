@@ -565,6 +565,13 @@ TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed("am__test_logs1 = $(TESTS:=.log)"));
 }
 
+TEST_CASE("Arguments are not treated as substitutions", "[make][parser]")
+{
+    CHECK(makeIsParsed("$(a :)"));
+    CHECK(makeIsParsed("$(subst :,,$(VPATH))"));
+    CHECK(makeIsParsed("$(subst :,:,$(VPATH))"));
+}
+
 TEST_CASE("Makefile keywords are not found inside text/ids", "[make][parser]")
 {
     CHECK(makeIsParsed("EXTRA_CXXFLAGS += -fsanitize=undefined"));

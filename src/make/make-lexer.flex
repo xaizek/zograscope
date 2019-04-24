@@ -272,6 +272,12 @@ $.                             return token(VAR, yylval, yyextra);
     return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
 ","                            return token(',', yylval, yyextra);
+[ ]+":" {
+    if (yyextra->nesting.empty()) {
+        CONTINUE();
+    }
+    return token(WSCOLON, yylval, yyextra);
+}
 ":"                            return token(':', yylval, yyextra);
 .|[-a-zA-Z0-9_/.]+ {
     if (shouldInsertFakeWS(yylval, yyextra)) {
