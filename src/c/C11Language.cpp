@@ -25,7 +25,7 @@
 
 using namespace c11stypes;
 
-C11Language::C11Language() : map()
+C11Language::C11Language() : map(NTOKENS)
 {
     map[FUNCTION] = Type::Functions;
 
