@@ -248,6 +248,13 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
     }
 }
 
+TEST_CASE("Static pattern rules are parsed", "[make][parser]")
+{
+    CHECK(makeIsParsed("target: target-pattern: prereq"));
+    CHECK(makeIsParsed("$(AOBJS) $(UAOBJS) $(HEAD_OBJ): %$(OBJEXT): %.S"));
+    CHECK(makeIsParsed("$(COBJS) $(UCOBJS): %$(OBJEXT): CFLAGS+=-O0"));
+}
+
 TEST_CASE("Recipes are parsed in a Makefile", "[make][parser]")
 {
     const char *const singleLine = R"(
@@ -289,6 +296,12 @@ target: prereq
         $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses
     )";
     CHECK(makeIsParsed(assignment));
+
+    const char *const withStaticPattern = R"(
+targets: target: prereq
+	$a$b
+    )";
+    CHECK(makeIsParsed(withStaticPattern ));
 }
 
 TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")

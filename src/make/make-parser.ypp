@@ -671,6 +671,27 @@ rule
                          tb->addNode($2, @2),
                          tb->addNode($3, @3) },
                        +MakeSType::Rule); }
+    | targets colon targets colon prerequisites NL
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4) },
+                       +MakeSType::Rule); }
+    | targets colon targets colon prerequisites recipes NL
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5),
+                         tb->addNode($6, @6) },
+                       +MakeSType::Rule); }
+    | targets colon targets colon assignment NL
+    { $$ = tb->addNode({ tb->addNode($1, @1),
+                         tb->addNode($2, @2),
+                         tb->addNode($3, @3),
+                         tb->addNode($4, @4),
+                         tb->addNode($5, @5) },
+                       +MakeSType::Rule); }
     ;
 
 target
