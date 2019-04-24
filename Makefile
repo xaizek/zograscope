@@ -63,7 +63,7 @@ else
             EXTRA_CXXFLAGS += --coverage
             EXTRA_LDFLAGS  += --coverage
         else
-            EXTRA_CXXFLAGS := -Og -g
+            EXTRA_CXXFLAGS := -g
             out_dir := .
         endif
     endif
