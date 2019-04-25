@@ -213,6 +213,11 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed("$(info (b), ( (a) ) (c), ( $(substr $(a),$(b),$(c)) ) )"));
         CHECK(makeIsParsed("$(foreach src, $(stmmac-srcs), ifeq ($(shell test $(R) -gt $(REV); echo $$?),0) )"));
     }
+    SECTION("String literals in the arguments") {
+        CHECK(makeIsParsed(R"($(patsubst "%",%,$(VAR)))"));
+        CHECK(makeIsParsed(R"_(${shell "$(CC)"})_"));
+        CHECK(makeIsParsed(R"($(error "str"))"));
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
@@ -233,6 +238,8 @@ TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
     }
     SECTION("Double-colon") {
         CHECK(makeIsParsed("debug:: all"));
+        CHECK(makeIsParsed("debug :: all"));
+        CHECK(makeIsParsed("debug ::all"));
     }
     SECTION("Keywords in targets") {
         CHECK(makeIsParsed("include.b: all"));
@@ -419,6 +426,15 @@ endif                 # endif-comment
         endif
         ifneq "a" "b"
         endif
+
+        ifneq 'a''b'
+        endif
+        ifeq 'a'"b"
+        endif
+        ifneq "a"'b'
+        endif
+        ifneq "a""b"
+        endif
     )";
     CHECK(makeIsParsed(alternativeForm));
 }
@@ -581,6 +597,9 @@ TEST_CASE("Substitutions are parsed in a Makefile", "[make][parser]")
 TEST_CASE("Arguments are not treated as substitutions", "[make][parser]")
 {
     CHECK(makeIsParsed("$(a :)"));
+    CHECK(makeIsParsed("$(a ::)"));
+    CHECK(makeIsParsed("$(a ::,:)"));
+    CHECK(makeIsParsed("$(a ::, :)"));
     CHECK(makeIsParsed("$(subst :,,$(VPATH))"));
     CHECK(makeIsParsed("$(subst :,:,$(VPATH))"));
 }

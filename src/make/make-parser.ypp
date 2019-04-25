@@ -77,7 +77,7 @@ void make_error(MAKE_LTYPE *loc, void *scanner, TreeBuilder *tb,
 
 %token END 0 "end of file"
 %token <text> ',' ':' '(' ')'
-%token <text> COMMENT ASSIGN_OP CHARS WS NL VAR SLIT WSCOLON
+%token <text> COMMENT ASSIGN_OP CHARS WS NL VAR SLIT
 %token <text> CALL_PREFIX "$("
 %token <text> CALL_SUFFIX ")"
 %token <text> OVERRIDE "override"
@@ -579,13 +579,6 @@ function
                          tb->addNode($4, @4),
                          tb->addNode($5, @5, +MakeSType::Separator) },
                        +MakeSType::CallExpr); }
-    | "$(" function_name WSCOLON arguments ")"
-    { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
-                         tb->addNode($2, @2),
-                         tb->addNode($3, @3),
-                         tb->addNode($4, @4),
-                         tb->addNode($5, @5, +MakeSType::Separator) },
-                       +MakeSType::CallExpr); }
     | "$(" function_name ',' arguments ")"
     { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2),
@@ -810,7 +803,6 @@ text_in_recipe
 
 char
     : CHARS      { $$ = tb->addNode($1, @1); }
-    | WSCOLON    { $$ = tb->addNode($1, @1); }
     | SLIT       { $$ = tb->addNode($1, @1); }
     | ASSIGN_OP  { $$ = tb->addNode($1, @1, 0); }
     | ':'        { $$ = tb->addNode($1, @1, 0); }
@@ -877,9 +869,14 @@ br
 colon
     : ':'
     { $$ = tb->addNode($1, @1, +MakeSType::Separator); }
+    | WS ':'
+    { $$ = tb->addNode($2, @2, +MakeSType::Separator); }
     | ':' ':'
     { $$ = tb->addNode({ tb->addNode($1, @1, +MakeSType::Separator),
                          tb->addNode($2, @2, +MakeSType::Separator) }); }
+    | WS ':' ':'
+    { $$ = tb->addNode({ tb->addNode($2, @2, +MakeSType::Separator),
+                         tb->addNode($3, @3, +MakeSType::Separator) }); }
     ;
 
 comment_opt

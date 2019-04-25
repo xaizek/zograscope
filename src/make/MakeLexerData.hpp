@@ -47,6 +47,8 @@ struct MakeLexerData : LexerData
 
     // Offset of the last token that was returned by the lexer.
     std::size_t lastReturnedOffset = static_cast<std::size_t>(-1);
+    // Id of the last token that was returned by the lexer
+    int lastToken = 0;
     // Whether whitespace token might be needed before the next token.
     bool fakeWSIsNeeded = false;
     // Keeps track of function nesting (where keywords stop being keywords).

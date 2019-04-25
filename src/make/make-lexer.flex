@@ -95,6 +95,7 @@ token(int tokenId, YYSTYPE *lval, MakeLexerData *extra, bool needFakeWS = false)
     }
     extra->fakeWSIsNeeded = needFakeWS;
     extra->lastReturnedOffset = extra->offset;
+    extra->lastToken = tokenId;
     lval->text.token = tokenId;
     return tokenId;
 }
@@ -165,6 +166,10 @@ NL                      \n|\r|\r\n
 <slcomment>.            ;
 
 \" {
+    if (shouldInsertFakeWS(yylval, yyextra) && yyextra->lastToken != SLIT) {
+        return FAKE_TOKEN(WS);
+    }
+
     yyextra->startTok = *yylval;
     yyextra->startTok.text.token = SLIT;
     yyextra->startLoc = *yylloc;
@@ -181,6 +186,10 @@ NL                      \n|\r|\r\n
 }
 
 ' {
+    if (shouldInsertFakeWS(yylval, yyextra) && yyextra->lastToken != SLIT) {
+        return FAKE_TOKEN(WS);
+    }
+
     yyextra->startTok = *yylval;
     yyextra->startTok.text.token = SLIT;
     yyextra->startLoc = *yylloc;
@@ -272,13 +281,12 @@ $.                             return token(VAR, yylval, yyextra);
     return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
 ","                            return token(',', yylval, yyextra);
-[ ]+":" {
-    if (yyextra->nesting.empty()) {
-        CONTINUE();
+":" {
+    if (shouldInsertFakeWS(yylval, yyextra)) {
+        return FAKE_TOKEN(WS);
     }
-    return token(WSCOLON, yylval, yyextra);
+    return token(':', yylval, yyextra);
 }
-":"                            return token(':', yylval, yyextra);
 .|[-a-zA-Z0-9_/.]+ {
     if (shouldInsertFakeWS(yylval, yyextra)) {
         return FAKE_TOKEN(WS);
