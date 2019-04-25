@@ -242,7 +242,7 @@ NL                      \n|\r|\r\n
 "endef"                        KW(ENDEF);
 "undefine"                     KW(UNDEFINE);
 
--?"include"                    KW(INCLUDE);
+^\s*-?"include"                KW(INCLUDE);
 
 "="|"?="|":="|"::="|"+="|"!="  return token(ASSIGN_OP, yylval, yyextra);
 "$("|"${" {

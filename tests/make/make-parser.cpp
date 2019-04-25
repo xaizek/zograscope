@@ -614,6 +614,7 @@ TEST_CASE("Includes are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed("include $(wildcard *.d)"));
     CHECK(makeIsParsed("include config.mk"));
     CHECK(makeIsParsed("-include config.mk"));
+    CHECK(makeIsParsed("include include"));
 }
 
 TEST_CASE("Leading tabs are allowed not only for recipes in Makefiles",
