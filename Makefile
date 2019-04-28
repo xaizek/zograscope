@@ -199,7 +199,7 @@ $(out_dir)/src/c/c11-parser.gen.cpp: src/c/c11-parser.ypp
 
 $(out_dir)/src/make/make-parser.hpp: $(out_dir)/src/make/make-parser.gen.cpp
 $(out_dir)/src/make/make-parser.gen.cpp: src/make/make-parser.ypp
-	bison -Werror --defines=$(out_dir)/src/make/make-parser.hpp \
+	bison --defines=$(out_dir)/src/make/make-parser.hpp \
 	      --output=$(out_dir)/src/make/make-parser.gen.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet

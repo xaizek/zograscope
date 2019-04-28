@@ -311,6 +311,57 @@ targets: target: prereq
     CHECK(makeIsParsed(withStaticPattern ));
 }
 
+TEST_CASE("Recipes with breaks", "[make][parser]")
+{
+    const char *const withTab = R"(
+rule:
+	@echo hi
+	
+	@echo there
+    )";
+    CHECK(makeIsParsed(withTab ));
+
+    const char *const commands = R"(
+rule:
+	@echo hi
+
+	@echo there
+    )";
+    CHECK(makeIsParsed(commands));
+
+    const char *const comments = R"(
+rule:
+	#asdf
+
+	#asdf
+    )";
+    CHECK(makeIsParsed(comments));
+
+    const char *const conditonalsInRecipe = R"(
+rule:
+ifeq 'a' 'a'
+	adf agdf
+endif
+
+ifeq 'a' 'a'
+    a=10
+endif
+    )";
+    CHECK(makeIsParsed(conditonalsInRecipe));
+
+    const char *const conditionalsInAndAfterRecipe = R"(
+rule:
+ifeq 'a' 'a'
+	adf agdf
+endif
+
+ifeq 'a' 'a'
+    a=10
+endif
+    )";
+    CHECK(makeIsParsed(conditionalsInAndAfterRecipe ));
+}
+
 TEST_CASE("Conditionals are parsed in a Makefile", "[make][parser]")
 {
     const char *const withBody_withoutElse = R"(
