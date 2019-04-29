@@ -1,0 +1,48 @@
+language: cpp
+sudo: false
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      dist: xenial
+    - os: linux
+      compiler: clang
+      dist: xenial
+    - os: osx
+      compiler: gcc
+      before_script:
+        - export PATH="/usr/local/opt/bison/bin:$PATH"
+      env:
+        - CC="gcc-5"
+        - CXX="g++-5"
+      addons:
+        homebrew:
+          packages:
+            - bison
+            - gcc5
+    - os: osx
+      compiler: clang
+      before_script:
+        - export PATH="/usr/local/opt/bison/bin:$PATH"
+
+addons:
+  apt:
+    packages:
+      - libboost-filesystem-dev
+      - libboost-iostreams-dev
+      - libboost-program-options-dev
+      - libboost-system-dev
+  homebrew:
+    packages:
+      - bison
+      - gcc5
+
+script:
+  - make -j4
+  - make -j4 check
+
+notifications:
+  email:
+    recipients:
+      - xaizek@posteo.net
