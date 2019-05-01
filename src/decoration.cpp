@@ -52,7 +52,7 @@ public:
 
     const char * bold () { return isAscii ? "\033[1m" : ""; }
     const char * inv  () { return isAscii ? "\033[7m" : ""; }
-    const char * def  () { return isAscii ? "\033[1m\033[0m" : ""; }
+    const char * def  () { return isAscii ? "\033[0m" : ""; }
 
     const char * black_fg   () { return isAscii ? "\033[30m" : ""; }
     const char * red_fg     () { return isAscii ? "\033[31m" : ""; }
