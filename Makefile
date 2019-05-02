@@ -102,7 +102,7 @@ tests_objects += $(lib)
 
 all:
 
-# includes tool-specific configuration
+# includes tool-specific configuration that disables linking rule
 define pull_tool_template
 -include tools/$1/tool.mk
 endef
@@ -136,9 +136,15 @@ endif
 
 endef
 
+# includes ammending tool-specific configuration
+define pull_tool_config_template
+-include tools/$1/tool.cfg.mk
+endef
+
 tools := $(patsubst tools/%/,%,$(sort $(dir $(wildcard tools/*/*.cpp))))
 $(foreach tool, $(tools), $(eval $(call pull_tool_template,$(tool))))
 $(foreach tool, $(tools), $(eval $(call tool_template,$(tool))))
+$(foreach tool, $(tools), $(eval $(call pull_tool_config_template,$(tool))))
 
 out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))
 # this is for gmake 3, which has troubles creating these directories in the
