@@ -112,8 +112,10 @@ define tool_template
 
 $1.bin := $(out_dir)/zs-$1$(bin_suffix)
 $1.sources := $$(filter-out tools/$1/data/%, \
-                            $$(call rwildcard, tools/$1/, *.cpp))
-$1.objects := $$(sort $$($1.sources:%.cpp=$$(out_dir)/%.o))
+                            $$(call rwildcard, tools/$1/, *.cpp) \
+                            $$(call rwildcard, tools/$1/, *.c))
+$1.objects := $$($1.sources:%.cpp=$$(out_dir)/%.o)
+$1.objects := $$(sort $$($1.objects:%.c=$$(out_dir)/%.o))
 $1.depends := $$($1.objects:.o=.d)
 $1.objects += $(lib)
 
@@ -217,6 +219,9 @@ $(out_dir)/%.gen.o: $(out_dir)/%.gen.cpp | $(out_dirs)
 
 $(out_dir)/%.o: %.cpp | $(out_dirs)
 	$(CXX) -c $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
+
+$(out_dir)/%.o: %.c | $(out_dirs)
+	$(CC) -c $(CFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 $(out_dirs):
 	mkdir -p $@
