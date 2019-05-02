@@ -434,7 +434,6 @@ assumed.
 int
 main(int argc, char *argv[])
 {
-    Args args;
     int result;
 
     try {
