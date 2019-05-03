@@ -12,6 +12,7 @@ config.mk
 /zs-find
 /zs-gdiff
 /zs-stats
+/zs-tui
 /libzograscope.a
 *.o
 *.d
