@@ -57,7 +57,9 @@ DumpView::update()
 
     std::vector<cursed::ColorTree> lines;
     for (std::string line; std::getline(oss, line); ) {
-        lines.push_back(cursed::toWide(line));
+        lines.push_back(
+            cursed::ColorTree::fromEscapeCodes(cursed::toWide(line))
+        );
     }
     text.setLines(std::move(lines));
 }

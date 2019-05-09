@@ -26,7 +26,8 @@
 
 #include "vle/Mode.hpp"
 
-#include "Highlighter.hpp"
+#include "utils/strings.hpp"
+#include "TermHighlighter.hpp"
 #include "tree.hpp"
 
 #include "../ViewManager.hpp"
@@ -53,15 +54,15 @@ CodeView::buildMode()
 void
 CodeView::update()
 {
-    Highlighter hi(*context.node, *context.lang, true, context.node->line);
+    TermHighlighter hi(*context.node, *context.lang, true, context.node->line);
+
+    std::string printed = hi.print();
 
     std::vector<cursed::ColorTree> lines;
-    for (const ColorCane &cc : hi.print().splitIntoLines()) {
-        std::string line;
-        for (const ColorCanePiece &piece : cc) {
-            line += piece.text;
-        }
-        lines.push_back(cursed::toWide(line));
+    for (const boost::string_ref &sr : split(printed, '\n')) {
+        lines.push_back(
+            cursed::ColorTree::fromEscapeCodes(cursed::toWide(sr.to_string()))
+        );
     }
     text.setLines(std::move(lines));
 }

@@ -34,7 +34,6 @@
 #include "tooling/Traverser.hpp"
 #include "tooling/common.hpp"
 #include "Highlighter.hpp"
-#include "decoration.hpp"
 #include "tree.hpp"
 
 #include "FileRegistry.hpp"
@@ -87,8 +86,6 @@ main(int argc, char *argv[])
 static int
 run(const CommonArgs &args, TimeReport &tr)
 {
-    decor::disableDecorations();
-
     std::vector<std::string> paths = args.pos;
     if (paths.empty()) {
         paths.emplace_back(".");
