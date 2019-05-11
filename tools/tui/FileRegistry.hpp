@@ -53,6 +53,7 @@ public:
     bool addFile(const std::string &path);
 
     const std::vector<FuncInfo> & getFuncInfos() const;
+    std::vector<std::string> listFileNames() const;
     const Tree & getTree(const std::string &path) const;
 
 private:

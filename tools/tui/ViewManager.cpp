@@ -27,6 +27,7 @@
 
 #include "views/CodeView.hpp"
 #include "views/DumpView.hpp"
+#include "views/FilesView.hpp"
 #include "views/FunctionsView.hpp"
 
 View::View(ViewManager &manager, std::string name)
@@ -48,6 +49,8 @@ View::getTrack()
 ViewManager::ViewManager(ViewContext &context, cursed::Placeholder &placeholder)
     : context(context), placeholder(placeholder)
 {
+    auto filesView = std::unique_ptr<View>(new FilesView(*this));
+    views.emplace(filesView->getName(), std::move(filesView));
     auto functionsView = std::unique_ptr<View>(new FunctionsView(*this));
     views.emplace(functionsView->getName(), std::move(functionsView));
     auto dumpView = std::unique_ptr<View>(new DumpView(*this));

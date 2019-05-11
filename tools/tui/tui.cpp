@@ -50,8 +50,20 @@ assumed.
 Supported Vim-like shortcuts: G, gg, j and k.
 
 Other shortcuts:
- - c -- enter/leave code view
- - d -- enter/leave dump view
+ * files view:
+    - c -- enter code view
+    - d -- enter dump view
+    - f -- switch to functions view
+    - q -- quit the application
+ * functions view:
+    - c -- enter code view
+    - d -- enter dump view
+    - f -- switch to files view
+    - q -- quit the application
+ * code view:
+    - c/q -- leave code view
+ * dump view:
+    - d/q -- leave dump view
 )";
 
 int
@@ -130,7 +142,7 @@ run(const CommonArgs &args, TimeReport &tr)
         .node = nullptr,
     };
     ViewManager viewManager(viewContext, viewPlaceholder);
-    viewManager.push("functions");
+    viewManager.push("files");
     title.setText(L"[" + cursed::toWide(viewManager.getViewName()) + L"]");
 
     cursed::Screen screen;

@@ -76,6 +76,19 @@ FileRegistry::getFuncInfos() const
     return infos;
 }
 
+std::vector<std::string>
+FileRegistry::listFileNames() const
+{
+    std::vector<std::string> files;
+    files.reserve(trees.size());
+
+    for (const auto &entry : trees) {
+        files.push_back(entry.first);
+    }
+
+    return files;
+}
+
 const Tree &
 FileRegistry::getTree(const std::string &path) const
 {

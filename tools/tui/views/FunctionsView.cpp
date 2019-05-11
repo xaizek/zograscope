@@ -17,7 +17,6 @@
 
 #include "FunctionsView.hpp"
 
-#include "cursed/ListLike.hpp"
 #include "cursed/Table.hpp"
 #include "cursed/utils.hpp"
 
@@ -51,6 +50,10 @@ FunctionsView::buildMode()
     mode.addShortcut({ L"q", [&]() {
         context.quit = true;
     }, "quit the application" });
+
+    mode.addShortcut({ L"f", [&]() {
+        manager.push("files");
+    }, "show files view" });
 
     mode.addShortcut({ L"d", [&]() {
         goToInfoMode("dump");
