@@ -116,21 +116,21 @@ run(const CommonArgs &args, TimeReport &tr)
     cursed::Init init;
     cursed::Input input(cursed::Keypad::Enabled);
 
-    cursed::Format titleBg;
-    titleBg.setBackground(cursed::Color::Black);
-    titleBg.setForeground(cursed::Color::Cyan);
-    titleBg.setBold(true);
-    titleBg.setReversed(true);
+    cursed::Format barBg;
+    barBg.setBackground(cursed::Color::White);
+    barBg.setForeground(60);
+    barBg.setBold(true);
+    barBg.setReversed(true);
 
     cursed::Format helpBg;
     helpBg.setBackground(239);
 
     cursed::Label title;
-    title.setBackground(titleBg);
+    title.setBackground(barBg);
     cursed::Label helpLine;
     helpLine.setBackground(helpBg);
     cursed::Label inputBuf;
-    inputBuf.setBackground(titleBg);
+    inputBuf.setBackground(barBg);
 
     cursed::Placeholder viewPlaceholder;
 
