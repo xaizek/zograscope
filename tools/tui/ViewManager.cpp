@@ -32,7 +32,11 @@
 
 View::View(ViewManager &manager, std::string name)
     : manager(manager), context(manager.getContext()), name(std::move(name))
-{ }
+{
+    shortcutLabel.setForeground(cursed::Color::Yellow);
+    shortcutLabel.setReversed(true);
+    shortcutLabel.setBold(true);
+}
 
 const std::string &
 View::getName() const
@@ -40,10 +44,23 @@ View::getName() const
     return name;
 }
 
+const cursed::ColorTree &
+View::getHelpLine() const
+{
+    return helpLine;
+}
+
 cursed::Track &
 View::getTrack()
 {
     return track;
+}
+
+cursed::ColorTree
+View::buildShortcut(const wchar_t label[], const wchar_t descr[])
+{
+    return shortcutLabel(L" ") + shortcutLabel(label) + shortcutLabel(L" ")
+         + L" " + shortcutDescr(descr) + L" ";
 }
 
 ViewManager::ViewManager(ViewContext &context, cursed::Placeholder &placeholder)
@@ -113,4 +130,12 @@ std::string
 ViewManager::getViewName()
 {
     return (stack.empty() ? std::string() : stack.back()->getName());
+}
+
+cursed::ColorTree
+ViewManager::getViewHelpLine()
+{
+    return stack.empty()
+         ? cursed::ColorTree()
+         : L" " + cursed::ColorTree(stack.back()->getHelpLine());
 }

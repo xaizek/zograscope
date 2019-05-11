@@ -30,6 +30,11 @@
 FilesView::FilesView(ViewManager &manager) : View(manager, "files")
 {
     track.addItem(&list);
+
+    helpLine = buildShortcut(L"f", L"list functions")
+             + buildShortcut(L"c", L"show as code")
+             + buildShortcut(L"d", L"show as dump")
+             + buildShortcut(L"q", L"quit");
 }
 
 vle::Mode

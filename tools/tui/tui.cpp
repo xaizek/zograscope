@@ -122,8 +122,13 @@ run(const CommonArgs &args, TimeReport &tr)
     titleBg.setBold(true);
     titleBg.setReversed(true);
 
+    cursed::Format helpBg;
+    helpBg.setBackground(239);
+
     cursed::Label title;
     title.setBackground(titleBg);
+    cursed::Label helpLine;
+    helpLine.setBackground(helpBg);
     cursed::Label inputBuf;
     inputBuf.setBackground(titleBg);
 
@@ -132,6 +137,7 @@ run(const CommonArgs &args, TimeReport &tr)
     cursed::Track track;
     track.addItem(&title);
     track.addItem(&viewPlaceholder);
+    track.addItem(&helpLine);
     track.addItem(&inputBuf);
 
     ViewContext viewContext = {
@@ -143,7 +149,14 @@ run(const CommonArgs &args, TimeReport &tr)
     };
     ViewManager viewManager(viewContext, viewPlaceholder);
     viewManager.push("files");
-    title.setText(L"[" + cursed::toWide(viewManager.getViewName()) + L"]");
+
+    auto viewChanged = [&]() {
+        title.setText(L"[" + cursed::toWide(viewManager.getViewName()) + L"]");
+        helpLine.setText(viewManager.getViewHelpLine());
+        viewContext.viewChanged = false;
+    };
+
+    viewChanged();
 
     cursed::Screen screen;
     screen.replaceTopWidget(&track);
@@ -165,10 +178,8 @@ run(const CommonArgs &args, TimeReport &tr)
             }
 
             if (viewContext.viewChanged) {
-                title.setText(L"[" + cursed::toWide(viewManager.getViewName()) +
-                              L"]");
+                viewChanged();
                 screen.resize();
-                viewContext.viewChanged = false;
             }
         }
 

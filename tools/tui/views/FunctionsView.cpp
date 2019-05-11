@@ -37,6 +37,11 @@ FunctionsView::FunctionsView(ViewManager &manager) : View(manager, "functions")
     table.addColumn({ header(L" PARAMS "), cursed::Align::Right });
 
     track.addItem(&table);
+
+    helpLine = buildShortcut(L"f", L"list files")
+             + buildShortcut(L"c", L"show as code")
+             + buildShortcut(L"d", L"show as dump")
+             + buildShortcut(L"q", L"quit");
 }
 
 vle::Mode

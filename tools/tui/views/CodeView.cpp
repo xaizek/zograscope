@@ -36,6 +36,8 @@
 CodeView::CodeView(ViewManager &manager) : View(manager, "code")
 {
     track.addItem(&text);
+
+    helpLine = buildShortcut(L"c/q", L"quit");
 }
 
 vle::Mode

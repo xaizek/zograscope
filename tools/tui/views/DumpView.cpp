@@ -34,6 +34,8 @@
 DumpView::DumpView(ViewManager &manager) : View(manager, "dump")
 {
     track.addItem(&text);
+
+    helpLine = buildShortcut(L"d/q", L"quit");
 }
 
 vle::Mode

@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "cursed/ColorTree.hpp"
 #include "cursed/Placeholder.hpp"
 #include "cursed/Track.hpp"
 
@@ -52,15 +53,24 @@ public:
 
 public:
     const std::string & getName() const;
+    const cursed::ColorTree & getHelpLine() const;
     cursed::Track & getTrack();
 
     virtual vle::Mode buildMode() = 0;
     virtual void update() = 0;
 
 protected:
+    cursed::ColorTree buildShortcut(const wchar_t label[],
+                                    const wchar_t descr[]);
+
+protected:
     ViewManager &manager;
     ViewContext &context;
     cursed::Track track;
+    cursed::ColorTree helpLine;
+
+    cursed::Format shortcutLabel;
+    cursed::Format shortcutDescr;
 
 private:
     std::string name;
@@ -78,6 +88,7 @@ public:
     void pop();
 
     std::string getViewName();
+    cursed::ColorTree getViewHelpLine();
 
 private:
     void setupView(View &view);
