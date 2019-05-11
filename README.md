@@ -2,6 +2,12 @@
 
 ![Screenshot](data/examples/c/screenshot.png)
 
+**Clone recursively, there are submodules:**
+
+```bash
+git clone --recursive https://github.com/xaizek/zograscope.git
+```
+
 1. [Description](#description)
 2. [Tools](#tools)
 3. [Building and Installing](#building-and-installing)
@@ -115,6 +121,10 @@ Simple syntax highlighter for xterm-256color palette.
 
 Counter of lines of code.
 
+### [zs-tui](tools/tui/README.md) ###
+
+TUI interface with underdefined scope of functionality.
+
 ## Building and Installing ##
 
 ```bash
@@ -122,6 +132,8 @@ Counter of lines of code.
 echo 'QT5_PROG := qmake-qt5' >> config.mk
 # if libgit2 is present
 echo 'HAVE_LIBGIT2 := yes'   >> config.mk
+# if cursesw is present
+echo 'HAVE_CURSESW := yes'   >> config.mk
 
 make release check
 ```
@@ -149,6 +161,7 @@ make install
 * (optional, run-time, for C++) [srcml][srcml]
 * (optional, for `gdiff` tool) [qt5][qt5]
 * (optional, for `gdiff` tool) [libgit2][libgit2]
+* (optional, for `tui` tool) [curses][curses] with support of wide characters
 
 ## Documentation ##
 
@@ -196,6 +209,7 @@ Kaizhong Zhang and Dennis Shasha.
 [srcml]: http://www.srcml.org/
 [qt5]: https://www.qt.io/
 [libgit2]: https://libgit2.org/
+[curses]: https://en.wikipedia.org/wiki/Curses_(programming_library)
 
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code

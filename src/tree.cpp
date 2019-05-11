@@ -429,9 +429,15 @@ void
 Tree::dump() const
 {
     if (root != nullptr) {
-        std::vector<bool> trace;
-        dumpTree(std::cout, root, lang.get(), trace, 0);
+        dumpTree(std::cout, root, lang.get());
     }
+}
+
+void
+dumpTree(std::ostream &os, const Node *node, const Language *lang)
+{
+    std::vector<bool> trace;
+    dumpTree(os, node, lang, trace, 0);
 }
 
 // Dumps subtree onto standard output.

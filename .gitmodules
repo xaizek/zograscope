@@ -1,0 +1,6 @@
+[submodule "tools/tui/libs/vle"]
+	path = tools/tui/libs/vle
+	url = https://code.reversed.top/user/xaizek/libvle
+[submodule "tools/tui/libs/cursed"]
+	path = tools/tui/libs/cursed
+	url = https://code.reversed.top/user/xaizek/libcursed

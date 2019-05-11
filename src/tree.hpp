@@ -191,4 +191,7 @@ std::string printSubTree(const Node &root, bool withComments);
 
 bool canForceLeafMatch(const Node *x, const Node *y);
 
+// Dumps tree defined by the node into specified stream for debugging purposes.
+void dumpTree(std::ostream &os, const Node *node, const Language *lang);
+
 #endif // ZOGRASCOPE__TREE_HPP__
