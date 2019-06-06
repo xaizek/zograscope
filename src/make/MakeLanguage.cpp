@@ -138,7 +138,7 @@ MakeLanguage::alwaysMatches(const Node *x) const
 }
 
 bool
-MakeLanguage::isPseudoParamater(const Node */*x*/) const
+MakeLanguage::isPseudoParameter(const Node */*x*/) const
 {
     return false;
 }

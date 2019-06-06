@@ -238,7 +238,7 @@ C11Language::alwaysMatches(const Node *x) const
 }
 
 bool
-C11Language::isPseudoParamater(const Node *x) const
+C11Language::isPseudoParameter(const Node *x) const
 {
     return (x->label == "void");
 }

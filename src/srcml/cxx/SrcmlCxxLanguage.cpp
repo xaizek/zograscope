@@ -443,7 +443,7 @@ SrcmlCxxLanguage::alwaysMatches(const Node *x) const
 }
 
 bool
-SrcmlCxxLanguage::isPseudoParamater(const Node *x) const
+SrcmlCxxLanguage::isPseudoParameter(const Node *x) const
 {
     return (x->label == "void");
 }

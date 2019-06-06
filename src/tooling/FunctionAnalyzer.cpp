@@ -52,7 +52,7 @@ FunctionAnalyzer::getParamCount(const Node *node) const
     int paramCount = 0;
     for (const Node *child : node->children) {
         MType mtype = lang.classify(child->stype);
-        if (mtype == MType::Parameter && !lang.isPseudoParamater(child)) {
+        if (mtype == MType::Parameter && !lang.isPseudoParameter(child)) {
             ++paramCount;
         } else if (mtype == MType::Declaration || mtype == MType::Other) {
             paramCount += getParamCount(child);
