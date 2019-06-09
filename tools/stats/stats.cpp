@@ -89,7 +89,8 @@ operator<<(std::ostream &os, const Part &val)
     float percent = (val.whole == 0 ? 1.0f : 1.0f*val.part/val.whole);
     return os << '\t' << std::setfill(' ') << std::setw(countWidth(val.whole))
               << val.part << " ("
-              << std::fixed << std::setprecision(4) << percent*100.0f
+              << std::fixed << std::setw(7) << std::setprecision(4)
+              << percent*100.0f
               << "%)";
 }
 
