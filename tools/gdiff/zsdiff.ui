@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ZSDiff</string>
+   <string>Zograscope::GDiff</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
