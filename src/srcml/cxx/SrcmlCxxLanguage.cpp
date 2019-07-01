@@ -38,7 +38,8 @@ static void postProcessBlock(PNode *node, TreeBuilder &tb,
 static void postProcessParameterList(PNode *node, TreeBuilder &tb,
                                      const std::string &contents);
 static bool breakLeaf(PNode *node, TreeBuilder &tb,
-                      const std::string &contents, char left, char right);
+                      const std::string &contents, char left, char right,
+                      SrcmlCxxSType newChild);
 static void dropLeadingWS(PNode *node, const std::string &contents);
 static void postProcessConditional(PNode *node, TreeBuilder &tb,
                                    const std::string &contents);
@@ -266,7 +267,7 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     }
 
     // Children: `{}` (with any whitespace in between).
-    if (breakLeaf(node, tb, contents, '{', '}')) {
+    if (breakLeaf(node, tb, contents, '{', '}', SrcmlCxxSType::Statements)) {
         return;
     }
 
@@ -284,7 +285,7 @@ postProcessParameterList(PNode *node, TreeBuilder &tb,
                          const std::string &contents)
 {
     // Children: `()` (with any whitespace in between).
-    if (breakLeaf(node, tb, contents, '(', ')')) {
+    if (breakLeaf(node, tb, contents, '(', ')', SrcmlCxxSType::None)) {
         return;
     }
 }
@@ -293,7 +294,7 @@ postProcessParameterList(PNode *node, TreeBuilder &tb,
 // rewritten.
 static bool
 breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
-          char left, char right)
+          char left, char right, SrcmlCxxSType newChild)
 {
     // Children: `<left><right>` (with any whitespace in between).
     if (node->children.size() == 1 &&
@@ -319,10 +320,14 @@ breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
         right->value.token = static_cast<int>(Type::RightBrackets);
         dropLeadingWS(right, contents);
 
-        PNode *stmts = tb.addNode();
-        stmts->stype = +SrcmlCxxSType::Statements;
+        if (newChild == SrcmlCxxSType::None) {
+            node->children.assign({ left, right });
+        } else {
+            PNode *stmts = tb.addNode();
+            stmts->stype = +newChild;
 
-        node->children.assign({ left, stmts, right });
+            node->children.assign({ left, stmts, right });
+        }
         return true;
     }
     return false;
