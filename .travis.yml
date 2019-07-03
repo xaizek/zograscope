@@ -10,21 +10,14 @@ matrix:
       compiler: clang
       dist: xenial
     - os: osx
-      compiler: gcc
-      before_script:
-        - export PATH="/usr/local/opt/bison/bin:$PATH"
-      env:
-        - CC="gcc-5"
-        - CXX="g++-5"
-      addons:
-        homebrew:
-          packages:
-            - bison
-            - gcc5
-    - os: osx
       compiler: clang
       before_script:
         - export PATH="/usr/local/opt/bison/bin:$PATH"
+      addons:
+        homebrew:
+          update: true
+          packages:
+            - bison
 
 addons:
   apt:
@@ -33,10 +26,6 @@ addons:
       - libboost-iostreams-dev
       - libboost-program-options-dev
       - libboost-system-dev
-  homebrew:
-    packages:
-      - bison
-      - gcc5
 
 script:
   - make -j4
