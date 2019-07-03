@@ -38,4 +38,11 @@ List all statements containing uses of `exec()` family of functions:
 zs-find : stmt : '//^(execl[pe]?|execvp?e?)$/'
 ```
 
+List all invocations of `snprintf` which have single token as the first
+argument:
+
+```
+zs-find ../src : call : snprintf '(' // ,
+```
+
 [zograscope]: ../../README.md
