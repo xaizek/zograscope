@@ -29,6 +29,7 @@ operator<<(std::ostream &os, MType mtype)
         case MType::Declaration: return (os << "Declaration");
         case MType::Statement:   return (os << "Statement");
         case MType::Function:    return (os << "Function");
+        case MType::Call:        return (os << "Call");
         case MType::Parameter:   return (os << "Parameter");
         case MType::Comment:     return (os << "Comment");
         case MType::Directive:   return (os << "Directive");
@@ -37,4 +38,25 @@ operator<<(std::ostream &os, MType mtype)
 
     assert(false && "Unhandled enumeration item");
     return (os << "<UNKNOWN:" << static_cast<int>(mtype) << '>');
+}
+
+bool
+canNest(MType mtype)
+{
+    switch (mtype) {
+        case MType::Call:
+        case MType::Block:
+            return true;
+        case MType::Other:
+        case MType::Declaration:
+        case MType::Statement:
+        case MType::Function:
+        case MType::Parameter:
+        case MType::Comment:
+        case MType::Directive:
+            return false;
+    }
+
+    assert(false && "Unhandled enumeration item");
+    return false;
 }

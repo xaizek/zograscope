@@ -23,9 +23,8 @@
 #include <utility>
 
 #include "Language.hpp"
+#include "mtypes.hpp"
 #include "tree.hpp"
-
-enum class MType : std::uint8_t;
 
 // Finds a node of specified type that matches another matcher.
 class Matcher
@@ -87,6 +86,10 @@ Matcher::match(const Node *node, Language &lang, F &&handler)
 
             if (nested == nullptr) {
                 handler(child);
+            }
+
+            if (canNest(mtype)) {
+                match(child, lang, std::forward<F>(handler));
             }
         }
     }

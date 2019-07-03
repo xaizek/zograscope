@@ -29,6 +29,7 @@ enum class MType : std::uint8_t
     Declaration, // Any sort of declaration.
     Statement,   // Statement.
     Function,    // Functions (their definitions only).
+    Call,        // Function invocation.
     Parameter,   // Parameter in declaration of a function.
     Comment,     // Comments of any kind.
     Directive,   // Preprocessor-alike directives.
@@ -37,5 +38,8 @@ enum class MType : std::uint8_t
 
 // Prints mtype as a string.
 std::ostream & operator<<(std::ostream &os, MType mtype);
+
+// Checks whether nodes of the meta-type can nest.
+bool canNest(MType mtype);
 
 #endif // ZOGRASCOPE__MTYPES_HPP__

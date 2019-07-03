@@ -37,6 +37,7 @@ Available matchers:
    decl   Any sort of declaration
    stmt   Statement
    func   Functions (their definitions only)
+   call   Function invocation
    param  Parameter of a function
    comm   Comments of any kind
    dir    Preprocessor-alike directives

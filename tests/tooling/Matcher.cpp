@@ -23,6 +23,60 @@
 
 #include "tests.hpp"
 
+TEST_CASE("Comment matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Comment, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In Make") {
+        Tree tree = parseMake("# this is # a comment");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 1);
+    }
+    SECTION("In C") {
+        Tree tree = parseC("/* a */ /* b // b */ // c", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("/* a */ /* b // b */ // c");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
+}
+
+TEST_CASE("Directive matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Directive, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In Make") {
+        Tree tree = parseMake("-include config.mk");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 1);
+    }
+    SECTION("In C") {
+        Tree tree = parseC("#include <stdio.h>\n#define a \\b", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("#include <iostream>\n#define a \\b");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
+    }
+}
+
 TEST_CASE("Statement matcher works", "[tooling][matcher][.srcml]")
 {
     Matcher matcher(MType::Statement, nullptr);
@@ -40,6 +94,55 @@ TEST_CASE("Statement matcher works", "[tooling][matcher][.srcml]")
     }
     SECTION("In C++") {
         Tree tree = parseCxx("void f() { stmt1(); stmt2(); stmt3(); }");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
+}
+
+TEST_CASE("Block matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Block, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In C") {
+        Tree tree = parseC("void f() { { } { { } } }", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("void f() { { } { { } } }");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+}
+
+TEST_CASE("Call matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Call, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In Make") {
+        Tree tree = parseMake("$(info $(addprefix bla,bla))");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
+    }
+    SECTION("In C") {
+        Tree tree = parseC("void f() { call1(nested()); call2(); }", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("void f() { call1(); call2(nested()); }");
         CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
         CHECK(nMatches == 3);
     }

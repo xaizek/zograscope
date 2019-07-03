@@ -195,6 +195,9 @@ MakeLanguage::classify(SType stype) const
         case MakeSType::Comment:
             return MType::Comment;
 
+        case MakeSType::CallExpr:
+            return MType::Call;
+
         case MakeSType::Directive:
         case MakeSType::Include:
             return MType::Directive;

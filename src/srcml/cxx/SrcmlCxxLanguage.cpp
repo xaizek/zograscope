@@ -552,6 +552,9 @@ SrcmlCxxLanguage::classify(SType stype) const
         case SrcmlCxxSType::Destructor:
             return MType::Function;
 
+        case SrcmlCxxSType::Call:
+            return MType::Call;
+
         case SrcmlCxxSType::Parameter:
             return MType::Parameter;
 
