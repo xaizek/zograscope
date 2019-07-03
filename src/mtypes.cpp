@@ -29,6 +29,7 @@ operator<<(std::ostream &os, MType mtype)
         case MType::Declaration: return (os << "Declaration");
         case MType::Statement:   return (os << "Statement");
         case MType::Function:    return (os << "Function");
+        case MType::Call:        return (os << "Call");
         case MType::Parameter:   return (os << "Parameter");
         case MType::Comment:     return (os << "Comment");
         case MType::Directive:   return (os << "Directive");
@@ -43,6 +44,7 @@ bool
 canNest(MType mtype)
 {
     switch (mtype) {
+        case MType::Call:
         case MType::Block:
             return true;
         case MType::Other:

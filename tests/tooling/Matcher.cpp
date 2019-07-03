@@ -120,3 +120,30 @@ TEST_CASE("Block matcher works", "[tooling][matcher][.srcml]")
         CHECK(nMatches == 4);
     }
 }
+
+TEST_CASE("Call matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Call, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In Make") {
+        Tree tree = parseMake("$(info $(addprefix bla,bla))");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
+    }
+    SECTION("In C") {
+        Tree tree = parseC("void f() { call1(nested()); call2(); }", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("void f() { call1(); call2(nested()); }");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
+}

@@ -62,6 +62,8 @@ Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
             return MType::Statement;
         } else if (str == "func") {
             return MType::Function;
+        } else if (str == "call") {
+            return MType::Call;
         } else if (str == "param") {
             return MType::Parameter;
         } else if (str == "comm") {
