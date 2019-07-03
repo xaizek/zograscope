@@ -98,3 +98,25 @@ TEST_CASE("Statement matcher works", "[tooling][matcher][.srcml]")
         CHECK(nMatches == 3);
     }
 }
+
+TEST_CASE("Block matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Block, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In C") {
+        Tree tree = parseC("void f() { { } { { } } }", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("void f() { { } { { } } }");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+}

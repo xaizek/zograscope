@@ -38,3 +38,23 @@ operator<<(std::ostream &os, MType mtype)
     assert(false && "Unhandled enumeration item");
     return (os << "<UNKNOWN:" << static_cast<int>(mtype) << '>');
 }
+
+bool
+canNest(MType mtype)
+{
+    switch (mtype) {
+        case MType::Block:
+            return true;
+        case MType::Other:
+        case MType::Declaration:
+        case MType::Statement:
+        case MType::Function:
+        case MType::Parameter:
+        case MType::Comment:
+        case MType::Directive:
+            return false;
+    }
+
+    assert(false && "Unhandled enumeration item");
+    return false;
+}
