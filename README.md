@@ -169,9 +169,9 @@ At the moment there is only `--help` option.
 
 ## License ##
 
-![AGPLv3+](data/agplv3.png)
+![AGPLv3](data/agplv3.png)
 
-GNU Affero General Public License, version 3 or later.
+Version 3 of the GNU Affero General Public License.
 
 ## Credits ##
 
