@@ -251,13 +251,8 @@ TEST_CASE("asm directive", "[parser]")
 
 TEST_CASE("extern C", "[parser]")
 {
-    const char *const str = R"(
-        void f() {
-            __asm__ __volatile__("" ::: "memory");
-        }
-    )";
-
     CHECK(cIsParsed(R"(extern "C" { void f(); })"));
+    CHECK(cIsParsed(R"(extern "C" { void f(); };)"));
 }
 
 TEST_CASE("asm volatile directive", "[parser]")
