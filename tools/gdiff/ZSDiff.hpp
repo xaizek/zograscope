@@ -39,7 +39,6 @@ class ZSDiff;
 }
 
 class QPlainTextEdit;
-class QTextCharFormat;
 
 class Node;
 class TimeReport;
