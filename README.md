@@ -1,4 +1,4 @@
-**zograscope**, _2017 - 2019_
+**zograscope**, _2017 - 2020_
 
 ![Screenshot](data/examples/c/screenshot.png)
 
