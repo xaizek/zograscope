@@ -96,6 +96,8 @@ struct PNode
     SType stype = {};
     bool postponed = false;
 
+    // Skips empty nodes at the beginning of a chain of nodes (those containing
+    // only one child, effectively being a linked list).
     static PNode * contract(PNode *node);
 };
 

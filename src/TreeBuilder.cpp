@@ -61,6 +61,8 @@ TreeBuilder::addNode(const std::initializer_list<PNode *> &ini, SType stype)
 {
     cpp17::pmr::vector<PNode *> children(ini, alloc);
 
+    // Lifts postponed nodes from children inserting them right before them in
+    // children's list of their future parent.
     for (unsigned int i = children.size(); i != 0U; --i) {
         movePostponed(children[i - 1U], children, children.cbegin() + (i - 1U));
     }
@@ -71,7 +73,6 @@ TreeBuilder::addNode(const std::initializer_list<PNode *> &ini, SType stype)
         return PNode::contract(children[0]);
     }
 
-    ;
     return pool.make(std::move(children), stype);
 }
 
@@ -118,16 +119,9 @@ TreeBuilder::movePostponed(PNode *&node, cpp17::pmr::vector<PNode *> &nodes,
         return;
     }
 
-    // Save the value, because it's modified below.
+    node->movedChildren = pos - node->children.begin();
     PNode *n = node;
+    node = PNode::contract(n);
 
-    if (node->children.end() - pos == 1U && (*pos)->empty() &&
-        (*pos)->children.empty()) {
-        (*pos)->stype = node->stype;
-        node = *pos;
-    }
-
-    // Inserting elements here to avoid invalidating pos iterator.
     nodes.insert(insertPos, n->children.begin(), pos);
-    n->movedChildren = pos - n->children.begin();
 }
