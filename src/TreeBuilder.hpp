@@ -64,8 +64,8 @@ struct PNode
     PNode(Text value, const Location &loc, SType stype = {},
           bool postponed = false,
           allocator_type al = {})
-        : value(value), children(al), line(loc.first_line),
-          col(loc.first_column), postponed(postponed), stype(stype)
+        : children(al), value(value), line(loc.first_line),
+          col(loc.first_column), stype(stype), postponed(postponed)
     {
     }
 
@@ -89,12 +89,12 @@ struct PNode
         return node;
     }
 
-    Text value = { 0U, 0U, 0U, 0U, 0 };
     cpp17::pmr::vector<PNode *> children;
+    Text value = { 0U, 0U, 0U, 0U, 0 };
     int line = 0, col = 0;
-    bool postponed = false;
+    short movedChildren = 0;
     SType stype = {};
-    int movedChildren = 0;
+    bool postponed = false;
 
     static PNode * contract(PNode *node);
 };
