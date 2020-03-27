@@ -36,6 +36,10 @@
 #include "decoration.hpp"
 #include "types.hpp"
 
+// XXX: lexer also has such variable and they need to be synchronized
+//      (actually we should pass this to lexer).
+constexpr int tabWidth = 4;
+
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
 static std::string stringifyPTree(const std::string &contents,
                                   const PNode *node, const Language *lang);
@@ -214,10 +218,6 @@ static void
 stringifyPNode(const std::string &contents, const PNode *node, bool spelling,
                const Language *lang, std::string &str)
 {
-    // XXX: lexer also has such variable and they need to be synchronized
-    //      (actually we should pass this to lexer).
-    enum { tabWidth = 4 };
-
     str.reserve(str.size() + node->value.len);
 
     bool leadingWhitespace = false;
