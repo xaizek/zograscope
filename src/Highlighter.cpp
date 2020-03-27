@@ -498,8 +498,8 @@ Highlighter::diffSpelling(const Node &node)
     // XXX: some kind of caching would be nice since we're doing the same thing
     //      for both original and updated nodes.
 
-    const std::string &l = (original ? node.spelling : node.relative->spelling);
-    const std::string &r = (original ? node.relative->spelling : node.spelling);
+    boost::string_ref l = (original ? node.spelling : node.relative->spelling);
+    boost::string_ref r = (original ? node.relative->spelling : node.spelling);
 
     std::vector<boost::string_ref> lWords = toWords(l);
     std::vector<boost::string_ref> rWords = toWords(r);
@@ -582,7 +582,11 @@ Highlighter::diffSpelling(const Node &node)
         }
     }
 
-    cc.append(original ? lastL : lastR, &node, def);
+    if (original) {
+        cc.append(boost::string_ref(lastL, lastL - l.end()), &node, def);
+    } else {
+        cc.append(boost::string_ref(lastR, lastR - r.end()), &node, def);
+    }
     if (surround && printBrackets) {
         cc.append(']', ColorGroup::UpdatedSurroundings);
     }
