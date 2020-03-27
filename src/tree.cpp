@@ -502,8 +502,14 @@ dumpNode(std::ostream &os, const Node *node, const Language *lang)
     Decoration typeHi = 51_fg;
     Decoration stypeHi = 222_fg;
 
-    auto l = [](const std::string &s) {
-        return '`' + boost::replace_all_copy(s, "\n", "<NL>") + '`';
+    auto label = [](boost::string_ref sr) {
+        std::string str;
+        str.reserve(1 + sr.size() + 1);
+        str += '`';
+        str.append(sr.begin(), sr.end());
+        str += '`';
+        boost::replace_all(str, "\n", "<NL>");
+        return str;
     };
 
     if (node->moved) {
@@ -517,7 +523,7 @@ dumpNode(std::ostream &os, const Node *node, const Language *lang)
         case State::Updated:  os << (updHi << '~'); break;
     }
 
-    os << (labelHi << l(node->label))
+    os << (labelHi << label(node->label))
        << (idHi << " #" << node->poID);
 
     os << (node->satellite ? ", Satellite" : "") << ", "
@@ -525,7 +531,7 @@ dumpNode(std::ostream &os, const Node *node, const Language *lang)
        << (stypeHi << lang->toString(node->stype));
 
     if (node->relative != nullptr) {
-        os << (relHi << " -> ") << (relLabelHi << l(node->relative->label))
+        os << (relHi << " -> ") << (relLabelHi << label(node->relative->label))
            << (idHi << " #" << node->relative->poID);
     }
 
