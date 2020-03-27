@@ -36,13 +36,9 @@
 #include "decoration.hpp"
 #include "types.hpp"
 
-static Node * materializeSNode(Tree &tree, const std::string &contents,
-                               const SNode *node, const SNode *parent);
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
 static std::string stringifyPTree(const std::string &contents,
                                   const PNode *node, const Language *lang);
-static Node * materializePNode(Tree &tree, const std::string &contents,
-                               const PNode *node);
 static void stringifyPNode(const std::string &contents, const PNode *node,
                            bool spelling, const Language *lang,
                            std::string &str);
@@ -58,34 +54,31 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
     : lang(std::move(lang)), nodes(al)
 {
-    root = materializePNode(*this, contents, node);
+    root = materializePNode(contents, node);
 }
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const SNode *node, allocator_type al)
     : lang(std::move(lang)), nodes(al)
 {
-    root = materializeSNode(*this, contents, node, nullptr);
+    root = materializeSNode(contents, node, nullptr);
 }
 
-// Turns SNode-subtree into a corresponding Node-subtree.
-static Node *
-materializeSNode(Tree &tree, const std::string &contents, const SNode *node,
-                 const SNode *parent)
+Node *
+Tree::materializeSNode(const std::string &contents, const SNode *node,
+                       const SNode *parent)
 {
-    const Language *const lang = tree.getLanguage();
-
-    Node &n = tree.makeNode();
+    Node &n = makeNode();
     n.stype = node->value->stype;
-    n.satellite = tree.getLanguage()->isSatellite(n.stype);
+    n.satellite = lang->isSatellite(n.stype);
 
     if (node->children.empty()) {
         const PNode *leftmostLeaf = node->value->leftmostChild();
 
-        n.label = stringifyPTree(contents, node->value, lang);
+        n.label = stringifyPTree(contents, node->value, lang.get());
         n.line = leftmostLeaf->line;
         n.col = leftmostLeaf->col;
-        n.next = materializePNode(tree, contents, node->value);
+        n.next = materializePNode(contents, node->value);
         n.next->last = true;
         n.type = n.next->type;
         n.leaf = (n.line != 0 && n.col != 0);
@@ -94,8 +87,8 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node,
 
     n.children.reserve(node->children.size());
     for (SNode *child : node->children) {
-        Node *newChild = materializeSNode(tree, contents, child, node);
-        putNodeChild(n, newChild, lang);
+        Node *newChild = materializeSNode(contents, child, node);
+        putNodeChild(n, newChild, lang.get());
     }
 
     // The check below can be true if putNodeChild() decided to not add any
@@ -106,12 +99,12 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node,
     }
 
     auto valueChild = std::find_if(node->children.begin(), node->children.end(),
-                                   [lang](const SNode *node) {
+                                   [this](const SNode *node) {
                                        const SType stype = node->value->stype;
                                        return lang->isValueNode(stype);
                                    });
     if (valueChild != node->children.end()) {
-        n.label = stringifyPTree(contents, (*valueChild)->value, lang);
+        n.label = stringifyPTree(contents, (*valueChild)->value, lang.get());
         n.valueChild = valueChild - node->children.begin();
     } else {
         n.valueChild = -1;
@@ -120,7 +113,7 @@ materializeSNode(Tree &tree, const std::string &contents, const SNode *node,
     // Move certain nodes onto the next layer.
     SType parentSType = (parent == nullptr ? SType{} : parent->value->stype);
     if (lang->isLayerBreak(parentSType, n.stype)) {
-        Node &nextLevel = tree.makeNode();
+        Node &nextLevel = makeNode();
         nextLevel.next = &n;
         nextLevel.stype = n.stype;
         nextLevel.label = n.label.empty() ? printSubTree(n, false) : n.label;
@@ -186,21 +179,19 @@ stringifyPTree(const std::string &contents, const PNode *node,
     return visitor.out;
 }
 
-// Turns PNode-subtree into a corresponding Node-subtree.
-static Node *
-materializePNode(Tree &tree, const std::string &contents, const PNode *node)
+Node *
+Tree::materializePNode(const std::string &contents, const PNode *node)
 {
-    const Language *const lang = tree.getLanguage();
     const Type type = lang->mapToken(node->value.token);
 
     if (type == Type::Virtual && node->children.size() == 1U) {
-        return materializePNode(tree, contents, node->children[0]);
+        return materializePNode(contents, node->children[0]);
     }
 
-    Node &n = tree.makeNode();
-    stringifyPNode(contents, node, false, lang, n.label);
-    if (tree.getLanguage()->shouldDropLeadingWS(node->stype)) {
-        stringifyPNode(contents, node, true, lang, n.spelling);
+    Node &n = makeNode();
+    stringifyPNode(contents, node, false, lang.get(), n.label);
+    if (lang->shouldDropLeadingWS(node->stype)) {
+        stringifyPNode(contents, node, true, lang.get(), n.spelling);
     } else {
         n.spelling = n.label;
     }
@@ -212,7 +203,7 @@ materializePNode(Tree &tree, const std::string &contents, const PNode *node)
 
     n.children.reserve(node->children.size());
     for (const PNode *child : node->children) {
-        n.children.push_back(materializePNode(tree, contents, child));
+        n.children.push_back(materializePNode(contents, child));
     }
 
     return &n;

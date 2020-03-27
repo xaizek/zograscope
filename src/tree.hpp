@@ -148,12 +148,6 @@ public:
         return root;
     }
 
-    Node & makeNode()
-    {
-        nodes.emplace_back();
-        return nodes.back();
-    }
-
     // Retrieves language associated with this tree.
     Language * getLanguage()
     {
@@ -175,6 +169,19 @@ public:
     // Propagates states (both added/deleted and moved flags) across layers of
     // the tree.
     void propagateStates();
+
+private:
+    Node & makeNode()
+    {
+        nodes.emplace_back();
+        return nodes.back();
+    }
+
+    // Turns SNode-subtree into a corresponding Node-subtree.
+    Node * materializeSNode(const std::string &contents,
+                            const SNode *node, const SNode *parent);
+    // Turns PNode-subtree into a corresponding Node-subtree.
+    Node * materializePNode(const std::string &contents, const PNode *node);
 
 private:
     std::unique_ptr<Language> lang;
