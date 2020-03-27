@@ -38,7 +38,7 @@ static int leftShift(const Node *node);
 static ColorGroup getHighlight(const Node &node, int moved, State state,
                                const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
-static std::vector<boost::string_ref> toWords(const std::string &s);
+static std::vector<boost::string_ref> toWords(boost::string_ref s);
 static std::vector<boost::string_ref> toChars(boost::string_ref s);
 
 class Highlighter::ColorPicker
@@ -590,23 +590,15 @@ Highlighter::diffSpelling(const Node &node)
     return cc;
 }
 
-/**
- * @brief Breaks a string into words.
- *
- * @param s Initial multi-word string.
- *
- * @returns Collection of words.
- */
+// Breaks a multi-word string into collection of words.
 static std::vector<boost::string_ref>
-toWords(const std::string &s)
+toWords(boost::string_ref s)
 {
     std::vector<boost::string_ref> words;
-    boost::string_ref sr(s);
 
     enum State { Start, WhiteSpace, Word, Punctuation, End };
 
     auto classify = [](char c) {
-        if (c == '\0')                      return End;
         if (std::ispunct(c, std::locale())) return Punctuation;
         if (std::isspace(c, std::locale())) return WhiteSpace;
         return Word;
@@ -615,11 +607,11 @@ toWords(const std::string &s)
     State currentState = Start;
     std::size_t wordStart = 0U;
     for (std::size_t i = 0U; i <= s.size(); ++i) {
-        const State newState = classify(s[i]);
+        const State newState = (i == s.size() ? End : classify(s[i]));
         // Each punctuation character is treated as a separate "word".
         if (currentState != newState || currentState == Punctuation) {
             if (currentState == Punctuation || currentState == Word) {
-                words.emplace_back(sr.substr(wordStart, i - wordStart));
+                words.emplace_back(s.substr(wordStart, i - wordStart));
             }
             if (newState == Punctuation || newState == Word) {
                 wordStart = i;
