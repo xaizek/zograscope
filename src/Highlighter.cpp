@@ -39,7 +39,7 @@ static ColorGroup getHighlight(const Node &node, int moved, State state,
                                const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
 static std::vector<boost::string_ref> toWords(const std::string &s);
-static std::vector<boost::string_ref> toChars(const std::string &s);
+static std::vector<boost::string_ref> toChars(boost::string_ref s);
 
 class Highlighter::ColorPicker
 {
@@ -631,14 +631,15 @@ toWords(const std::string &s)
     return words;
 }
 
+// Turns string into a bunch of single character strings.
 static std::vector<boost::string_ref>
-toChars(const std::string &s)
+toChars(boost::string_ref s)
 {
     std::vector<boost::string_ref> chars;
-    boost::string_ref sr(s);
+    chars.reserve(s.size());
 
     for (std::size_t i = 0U; i < s.size(); ++i) {
-        chars.emplace_back(sr.substr(i, 1));
+        chars.emplace_back(s.substr(i, 1));
     }
 
     return chars;
