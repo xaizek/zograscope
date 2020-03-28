@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <iosfwd>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -62,6 +63,22 @@ class TimeReport
     };
 
 public:
+    TimeReport() = default;
+    // Constructs nested time report object that moves its children to the
+    // `parent` in destructor or in `commit()`.
+    explicit TimeReport(TimeReport &parent)
+        : parent(parent.current), parentIndex(parent.current->children.size())
+    { }
+    // For nested time report, moves measurements into linked parent time
+    // report.
+    ~TimeReport() try
+    {
+        commit();
+    } catch (...) {
+        // Do not throw from a destructor.
+    }
+
+public:
     ProxyTimer measure(const std::string &stage);
 
     void start(std::string stage)
@@ -78,9 +95,26 @@ public:
         }
     }
 
+    // Moves measurements into linked parent time report, if any.
+    void commit()
+    {
+        if (parent != nullptr) {
+            parent->children.insert(
+                parent->children.cbegin() + parentIndex,
+                std::make_move_iterator(root.children.begin()),
+                std::make_move_iterator(root.children.end())
+            );
+            parent = nullptr;
+        }
+    }
+
 private:
     Measure root {"Overall", nullptr};
     Measure *current {&root};
+
+    // For nested time report object.
+    Measure *parent = nullptr;
+    int parentIndex = 0;
 };
 
 class TimeReport::ProxyTimer
