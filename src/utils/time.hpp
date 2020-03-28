@@ -38,6 +38,7 @@ class TimeReport
     struct Measure
     {
         bool measuring;
+        bool foreign; // The measurement came from nested report.
         std::string stage;
         clock::time_point start;
         clock::time_point end;
@@ -46,8 +47,8 @@ class TimeReport
         std::vector<Measure> children;
 
         Measure(std::string &&stage, Measure *parent)
-            : measuring(true), stage(std::move(stage)), start(clock::now()),
-              parent(parent)
+            : measuring(true), foreign(false), stage(std::move(stage)),
+              start(clock::now()), parent(parent)
         {
         }
 
@@ -95,10 +96,14 @@ public:
         }
     }
 
-    // Moves measurements into linked parent time report, if any.
+    // Moves measurements into linked parent time report, if any.  The moved
+    // measurements are marked as foreign.
     void commit()
     {
         if (parent != nullptr) {
+            for (Measure &measure : root.children) {
+                measure.foreign = true;
+            }
             parent->children.insert(
                 parent->children.cbegin() + parentIndex,
                 std::make_move_iterator(root.children.begin()),
