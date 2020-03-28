@@ -29,6 +29,7 @@
 #include "pmr/pmr_string.hpp"
 #include "pmr/pmr_vector.hpp"
 
+#include "utils/Pool.hpp"
 #include "Language.hpp"
 #include "types.hpp"
 
@@ -173,12 +174,6 @@ public:
     void propagateStates();
 
 private:
-    Node & makeNode()
-    {
-        nodes.emplace_back();
-        return nodes.back();
-    }
-
     // Turns SNode-subtree into a corresponding Node-subtree.
     Node * materializeSNode(const std::string &contents,
                             const SNode *node, const SNode *parent);
@@ -190,7 +185,7 @@ private:
 
 private:
     std::unique_ptr<Language> lang;
-    cpp17::pmr::deque<Node> nodes;
+    Pool<Node> nodes; // Storage of all nodes managed by this unit.
     Node *root = nullptr;
     cpp17::pmr::string stringified; // Storage of most labels and spelling.
     cpp17::pmr::deque<std::string> internPool; // Storage for interned strings.

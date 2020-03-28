@@ -96,7 +96,7 @@ Node *
 Tree::materializeSNode(const std::string &contents, const SNode *node,
                        const SNode *parent)
 {
-    Node &n = makeNode();
+    Node &n = *nodes.make();
     n.stype = node->value->stype;
     n.satellite = lang->isSatellite(n.stype);
 
@@ -141,7 +141,7 @@ Tree::materializeSNode(const std::string &contents, const SNode *node,
     // Move certain nodes onto the next layer.
     SType parentSType = (parent == nullptr ? SType{} : parent->value->stype);
     if (lang->isLayerBreak(parentSType, n.stype)) {
-        Node &nextLevel = makeNode();
+        Node &nextLevel = *nodes.make();
         nextLevel.next = &n;
         nextLevel.stype = n.stype;
         nextLevel.line = n.line;
@@ -225,7 +225,7 @@ Tree::materializePNode(const std::string &contents, const PNode *node)
         return materializePNode(contents, node->children[0]);
     }
 
-    Node &n = makeNode();
+    Node &n = *nodes.make();
     n.label = stringifyPNode(stringified, node);
     if (lang->shouldDropLeadingWS(node->stype)) {
         n.spelling = intern(stringifyPNodeSpelling(contents, node));
