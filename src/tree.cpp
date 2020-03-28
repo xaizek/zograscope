@@ -18,6 +18,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -56,14 +57,14 @@ static void dumpNode(std::ostream &os, const Node *node, const Language *lang);
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
-    : lang(std::move(lang)), nodes(al)
+    : lang(std::move(lang)), nodes(al), internPool(al)
 {
     root = materializePNode(contents, node);
 }
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const SNode *node, allocator_type al)
-    : lang(std::move(lang)), nodes(al)
+    : lang(std::move(lang)), nodes(al), internPool(al)
 {
     root = materializeSNode(contents, node, nullptr);
 }
@@ -558,4 +559,11 @@ Tree::propagateStates()
         }
     };
     visit(*getRoot());
+}
+
+boost::string_ref
+Tree::intern(std::string &&str)
+{
+    internPool.push_back(std::move(str));
+    return internPool.back();
 }

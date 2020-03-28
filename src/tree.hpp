@@ -17,6 +17,8 @@
 #ifndef ZOGRASCOPE__TREE_HPP__
 #define ZOGRASCOPE__TREE_HPP__
 
+#include <boost/utility/string_ref.hpp>
+
 #include <cstdint>
 
 #include <memory>
@@ -118,9 +120,8 @@ class Tree
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
 public:
-    Tree(allocator_type al = {}) : nodes(al)
-    {
-    }
+    Tree(allocator_type al = {}) : nodes(al), internPool(al)
+    { }
     Tree(const Tree &rhs) = delete;
     Tree(Tree &&rhs) = default;
     Tree(std::unique_ptr<Language> lang, const std::string &contents,
@@ -183,10 +184,14 @@ private:
     // Turns PNode-subtree into a corresponding Node-subtree.
     Node * materializePNode(const std::string &contents, const PNode *node);
 
+    // Interns a string.
+    boost::string_ref intern(std::string &&str);
+
 private:
     std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;
     Node *root = nullptr;
+    cpp17::pmr::deque<std::string> internPool; // Storage for interned strings.
 };
 
 std::vector<Node *> postOrder(Node &root);
