@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "pmr/pmr_deque.hpp"
+#include "pmr/pmr_string.hpp"
 #include "pmr/pmr_vector.hpp"
 
 #include "Language.hpp"
@@ -48,8 +49,8 @@ struct Node
 {
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
-    std::string label;
-    std::string spelling;
+    boost::string_ref label;
+    boost::string_ref spelling;
     cpp17::pmr::vector<Node *> children;
     Node *relative = nullptr;
     Node *parent = nullptr;
@@ -120,7 +121,7 @@ class Tree
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
 public:
-    Tree(allocator_type al = {}) : nodes(al), internPool(al)
+    Tree(allocator_type al = {}) : nodes(al), stringified(al), internPool(al)
     { }
     Tree(const Tree &rhs) = delete;
     Tree(Tree &&rhs) = default;
@@ -191,6 +192,7 @@ private:
     std::unique_ptr<Language> lang;
     cpp17::pmr::deque<Node> nodes;
     Node *root = nullptr;
+    cpp17::pmr::string stringified; // Storage of most labels and spelling.
     cpp17::pmr::deque<std::string> internPool; // Storage for interned strings.
 };
 

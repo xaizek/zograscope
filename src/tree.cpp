@@ -20,6 +20,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/utility/string_ref.hpp>
 
+#include <cassert>
+
 #include <algorithm>
 #include <functional>
 #include <iomanip>
@@ -42,11 +44,17 @@
 constexpr int tabWidth = 4;
 
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
-static std::string stringifyPTree(const std::string &contents,
-                                  const PNode *node, const Language *lang);
-static void stringifyPNode(const std::string &contents, const PNode *node,
-                           bool spelling, const Language *lang,
-                           std::string &str);
+static void preStringifyPTree(const std::string &contents,
+                              PNode *node, const Language *lang,
+                              cpp17::pmr::string &stringified);
+static boost::string_ref stringifyPNode(const cpp17::pmr::string &stringified,
+                                        const PNode *node);
+static void preStringifyPNode(const std::string &contents, PNode *node,
+                              const Language *lang,
+                              cpp17::pmr::string &stringified);
+static std::string stringifyPNodeSpelling(const std::string &contents,
+                                          const PNode *node);
+static int maxStringifiedSize(boost::string_ref contents);
 static void postOrder(Node &node, std::vector<Node *> &v);
 static std::vector<std::size_t> hashChildren(const Node &node);
 static std::size_t hashNode(const Node *node);
@@ -57,16 +65,31 @@ static void dumpNode(std::ostream &os, const Node *node, const Language *lang);
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
-    : lang(std::move(lang)), nodes(al), internPool(al)
+    : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
 {
+    stringified.reserve(maxStringifiedSize(contents));
+    const char *buf = stringified.c_str();
+
+    preStringifyPTree(contents, const_cast<PNode *>(node), this->lang.get(),
+                      stringified);
     root = materializePNode(contents, node);
+
+    assert(stringified.c_str() == buf && "Stringified buffer got relocated!");
+    (void)buf;
 }
 
 Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const SNode *node, allocator_type al)
-    : lang(std::move(lang)), nodes(al), internPool(al)
+    : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
 {
+    stringified.reserve(maxStringifiedSize(contents));
+    const char *buf = stringified.c_str();
+
+    preStringifyPTree(contents, node->value, this->lang.get(), stringified);
     root = materializeSNode(contents, node, nullptr);
+
+    assert(stringified.c_str() == buf && "Stringified buffer got relocated!");
+    (void)buf;
 }
 
 Node *
@@ -80,7 +103,7 @@ Tree::materializeSNode(const std::string &contents, const SNode *node,
     if (node->children.empty()) {
         const PNode *leftmostLeaf = node->value->leftmostChild();
 
-        n.label = stringifyPTree(contents, node->value, lang.get());
+        n.label = stringifyPNode(stringified, node->value);
         n.line = leftmostLeaf->line;
         n.col = leftmostLeaf->col;
         n.next = materializePNode(contents, node->value);
@@ -109,7 +132,7 @@ Tree::materializeSNode(const std::string &contents, const SNode *node,
                                        return lang->isValueNode(stype);
                                    });
     if (valueChild != node->children.end()) {
-        n.label = stringifyPTree(contents, (*valueChild)->value, lang.get());
+        n.label = stringifyPNode(stringified, (*valueChild)->value);
         n.valueChild = valueChild - node->children.begin();
     } else {
         n.valueChild = -1;
@@ -121,9 +144,12 @@ Tree::materializeSNode(const std::string &contents, const SNode *node,
         Node &nextLevel = makeNode();
         nextLevel.next = &n;
         nextLevel.stype = n.stype;
-        nextLevel.label = n.label.empty() ? printSubTree(n, false) : n.label;
         nextLevel.line = n.line;
         nextLevel.col = n.col;
+
+        int len = node->value->value.postponedTo;
+        nextLevel.label = n.label.empty() ? intern(printSubTree(n, false, len))
+                                          : n.label;
         return &nextLevel;
     }
 
@@ -158,30 +184,36 @@ putNodeChild(Node &parent, Node *child, const Language *lang)
     }
 }
 
-// Turns PNode-subtree into a string.
-static std::string
-stringifyPTree(const std::string &contents, const PNode *node,
-               const Language *lang)
+// Turns tree into a string.  Stores boundaries of nodes label in
+// value.postponedFrom (start index) and value.postponedTo (length).
+static void
+preStringifyPTree(const std::string &contents, PNode *node,
+                  const Language *lang, cpp17::pmr::string &stringified)
 {
     struct {
         const std::string &contents;
         const Language *lang;
-        std::string out;
-        void run(const PNode *node)
+        cpp17::pmr::string &out;
+        void run(PNode *node)
         {
+            node->value.postponedFrom = out.size();
+
             if (node->line != 0 && node->col != 0) {
-                stringifyPNode(contents, node, false, lang, out);
+                preStringifyPNode(contents, node, lang, out);
             }
 
-            for (const PNode *child : node->children) {
+            for (PNode *child : node->children) {
                 run(child);
             }
+
+            if (node->line == 0 || node->col == 0) {
+                node->value.postponedTo = out.size()
+                                        - node->value.postponedFrom;
+            }
         }
-    } visitor { contents, lang, {} };
+    } visitor { contents, lang, stringified };
 
     visitor.run(node);
-
-    return visitor.out;
 }
 
 Node *
@@ -194,9 +226,9 @@ Tree::materializePNode(const std::string &contents, const PNode *node)
     }
 
     Node &n = makeNode();
-    stringifyPNode(contents, node, false, lang.get(), n.label);
+    n.label = stringifyPNode(stringified, node);
     if (lang->shouldDropLeadingWS(node->stype)) {
-        stringifyPNode(contents, node, true, lang.get(), n.spelling);
+        n.spelling = intern(stringifyPNodeSpelling(contents, node));
     } else {
         n.spelling = n.label;
     }
@@ -215,11 +247,20 @@ Tree::materializePNode(const std::string &contents, const PNode *node)
 }
 
 // Turns PNode into a string.
-static void
-stringifyPNode(const std::string &contents, const PNode *node, bool spelling,
-               const Language *lang, std::string &str)
+static boost::string_ref
+stringifyPNode(const cpp17::pmr::string &stringified, const PNode *node)
 {
-    str.reserve(str.size() + node->value.len);
+    return boost::string_ref(stringified.c_str() + node->value.postponedFrom,
+                             node->value.postponedTo);
+}
+
+// Turns node into a string.  Stores boundaries of this node's label in
+// value.postponedFrom (start index) and value.postponedTo (length).
+static void
+preStringifyPNode(const std::string &contents, PNode *node,
+                  const Language *lang, cpp17::pmr::string &stringified)
+{
+    node->value.postponedFrom = stringified.size();
 
     bool leadingWhitespace = false;
     int col = node->col;
@@ -230,31 +271,75 @@ stringifyPNode(const std::string &contents, const PNode *node, bool spelling,
 
             case '\n':
                 col = 1;
-                str += '\n';
-                leadingWhitespace = !spelling
-                                 && lang->shouldDropLeadingWS(node->stype);
+                stringified += '\n';
+                leadingWhitespace = lang->shouldDropLeadingWS(node->stype);
                 break;
             case '\t':
                 width = tabWidth - (col - 1)%tabWidth;
                 col += width;
                 if (!leadingWhitespace) {
-                    str.append(width, ' ');
+                    stringified.append(width, ' ');
                 }
                 break;
             case ' ':
                 ++col;
                 if (!leadingWhitespace) {
-                    str += ' ';
+                    stringified += ' ';
                 }
                 break;
 
             default:
                 ++col;
-                str += c;
+                stringified += c;
                 leadingWhitespace = false;
                 break;
         }
     }
+
+    node->value.postponedTo = stringified.size() - node->value.postponedFrom;
+}
+
+// Computes node label only expanding tabs in it.
+static std::string
+stringifyPNodeSpelling(const std::string &contents, const PNode *node)
+{
+    boost::string_ref sr(contents.c_str() + node->value.from, node->value.len);
+
+    std::string str;
+    str.reserve(maxStringifiedSize(sr));
+
+    int col = node->col;
+    for (char c : sr) {
+        switch (c) {
+            int width;
+
+            case '\n':
+                col = 1;
+                str += '\n';
+                break;
+            case '\t':
+                width = tabWidth - (col - 1)%tabWidth;
+                col += width;
+                str.append(width, ' ');
+                break;
+
+            default:
+                ++col;
+                str += c;
+                break;
+        }
+    }
+    return str;
+}
+
+// Computes maximum length of stringified buffer.
+static int
+maxStringifiedSize(boost::string_ref contents)
+{
+    static_assert(tabWidth > 0, "Tabulation can't have zero width.");
+
+    int nTabs = std::count(contents.cbegin(), contents.cend(), '\t');
+    return contents.size() + nTabs*(tabWidth - 1);
 }
 
 std::vector<Node *>
@@ -347,7 +432,8 @@ hashNode(const Node *node)
         return hashNode(node->next);
     }
 
-    std::size_t hash = std::hash<std::string>()(node->label);
+    std::size_t hash = boost::hash_range(node->label.begin(),
+                                         node->label.end());
     for (const Node *child : node->children) {
         boost::hash_combine(hash, hashNode(child));
     }
