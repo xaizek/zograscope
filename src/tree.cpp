@@ -354,7 +354,7 @@ hashNode(const Node *node)
 }
 
 std::string
-printSubTree(const Node &root, bool withComments)
+printSubTree(const Node &root, bool withComments, int size_hint)
 {
     struct {
         bool withComments;
@@ -366,7 +366,7 @@ printSubTree(const Node &root, bool withComments)
             }
 
             if (node.leaf && (node.type != Type::Comments || withComments)) {
-                out += node.label;
+                out.append(node.label.cbegin(), node.label.cend());
             }
 
             for (const Node *child : node.children) {
@@ -375,6 +375,9 @@ printSubTree(const Node &root, bool withComments)
         }
     } visitor { withComments, {} };
 
+    if (size_hint > 0) {
+        visitor.out.reserve(size_hint);
+    }
     visitor.run(root);
 
     return visitor.out;

@@ -193,7 +193,9 @@ std::vector<Node *> postOrder(Node &root);
 
 void reduceTreesCoarse(Node *T1, Node *T2);
 
-std::string printSubTree(const Node &root, bool withComments);
+// Turns tree defined by the node into a string.
+std::string printSubTree(const Node &root, bool withComments,
+                         int size_hint = -1);
 
 bool canForceLeafMatch(const Node *x, const Node *y);
 
