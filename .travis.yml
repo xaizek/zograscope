@@ -5,10 +5,10 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-      dist: xenial
+      dist: bionic
     - os: linux
       compiler: clang
-      dist: xenial
+      dist: bionic
     - os: osx
       compiler: clang
       before_script:
