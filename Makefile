@@ -1,8 +1,9 @@
 NAME := zograscope
 
 CXXFLAGS += -std=c++11 -Wall -Wextra -MMD -Isrc/ -Ithird-party/ -DYYDEBUG
+CXXFLAGS += -pthread
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
-LDFLAGS  += -lboost_system
+LDFLAGS  += -lboost_system -pthread
 
 INSTALL := install
 DESTDIR :=

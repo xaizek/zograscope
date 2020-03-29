@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <iosfwd>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -37,6 +38,7 @@ class TimeReport
     struct Measure
     {
         bool measuring;
+        bool foreign; // The measurement came from nested report.
         std::string stage;
         clock::time_point start;
         clock::time_point end;
@@ -45,8 +47,8 @@ class TimeReport
         std::vector<Measure> children;
 
         Measure(std::string &&stage, Measure *parent)
-            : measuring(true), stage(std::move(stage)), start(clock::now()),
-              parent(parent)
+            : measuring(true), foreign(false), stage(std::move(stage)),
+              start(clock::now()), parent(parent)
         {
         }
 
@@ -60,6 +62,22 @@ class TimeReport
             measuring = false;
         }
     };
+
+public:
+    TimeReport() = default;
+    // Constructs nested time report object that moves its children to the
+    // `parent` in destructor or in `commit()`.
+    explicit TimeReport(TimeReport &parent)
+        : parent(parent.current), parentIndex(parent.current->children.size())
+    { }
+    // For nested time report, moves measurements into linked parent time
+    // report.
+    ~TimeReport() try
+    {
+        commit();
+    } catch (...) {
+        // Do not throw from a destructor.
+    }
 
 public:
     ProxyTimer measure(const std::string &stage);
@@ -78,9 +96,30 @@ public:
         }
     }
 
+    // Moves measurements into linked parent time report, if any.  The moved
+    // measurements are marked as foreign.
+    void commit()
+    {
+        if (parent != nullptr) {
+            for (Measure &measure : root.children) {
+                measure.foreign = true;
+            }
+            parent->children.insert(
+                parent->children.cbegin() + parentIndex,
+                std::make_move_iterator(root.children.begin()),
+                std::make_move_iterator(root.children.end())
+            );
+            parent = nullptr;
+        }
+    }
+
 private:
     Measure root {"Overall", nullptr};
     Measure *current {&root};
+
+    // For nested time report object.
+    Measure *parent = nullptr;
+    int parentIndex = 0;
 };
 
 class TimeReport::ProxyTimer

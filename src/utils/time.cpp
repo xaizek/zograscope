@@ -49,6 +49,9 @@ operator<<(std::ostream &os, const TimeReport &tr)
     trees::printSetTraits<MeasureTraits>(os, &tr.root,
                  [](std::ostream &os, const Measure *m) {
                      msf duration = m->end - m->start;
+                     if (m->foreign) {
+                         os << "+ ";
+                     }
                      os << m->stage << " -- " << duration.count() << "ms";
 
                      if (m->children.empty()) {
@@ -57,11 +60,20 @@ operator<<(std::ostream &os, const TimeReport &tr)
                      }
 
                      msf accounted = {};
+                     msf foreign = {};
                      for (const Measure &child : m->children) {
-                         accounted += child.end - child.start;
+                         if (child.foreign) {
+                             foreign += child.end - child.start;
+                         } else {
+                            accounted += child.end - child.start;
+                         }
                      }
                      msf unaccounted = duration - accounted;
-                     os << " (-" << unaccounted.count() << "ms)\n";
+                     os << " (-" << unaccounted.count() << "ms";
+                     if (foreign.count()) {
+                        os << ", +" << foreign.count() << "ms";
+                     }
+                     os << ")\n";
                  });
 
     return os;

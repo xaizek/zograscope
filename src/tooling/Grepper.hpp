@@ -18,6 +18,7 @@
 #define ZOGRASCOPE__TOOLING__GREPPER_HPP__
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include <cassert>
 
@@ -92,7 +93,7 @@ public:
 
 public:
     // Checks whether given string matches the expression.
-    bool matches(const std::string &str) const;
+    bool matches(boost::string_ref str) const;
 
 private:
     std::string text;  // Text to match against (if not a regexp).
@@ -131,14 +132,15 @@ Grepper::Expr::Expr(std::string expr) : text(std::move(expr))
 }
 
 inline bool
-Grepper::Expr::matches(const std::string &str) const
+Grepper::Expr::matches(boost::string_ref str) const
 {
     switch (type) {
         case Type::Exact:     return (str == text);
         case Type::Prefix:    return boost::starts_with(str, text);
         case Type::Suffix:    return boost::ends_with(str, text);
         case Type::Substring: return boost::contains(str, text);
-        case Type::Regexp:    return std::regex_match(str, regexp);
+        case Type::Regexp:    return std::regex_match(str.begin(), str.end(),
+                                                      regexp);
         case Type::Wildcard:  return true;
     }
     assert(false && "Type has impossible value.");

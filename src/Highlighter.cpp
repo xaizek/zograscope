@@ -38,8 +38,8 @@ static int leftShift(const Node *node);
 static ColorGroup getHighlight(const Node &node, int moved, State state,
                                const Language &lang);
 static bool isDiffable(const Node &node, State state, const Language &lang);
-static std::vector<boost::string_ref> toWords(const std::string &s);
-static std::vector<boost::string_ref> toChars(const std::string &s);
+static std::vector<boost::string_ref> toWords(boost::string_ref s);
+static std::vector<boost::string_ref> toChars(boost::string_ref s);
 
 class Highlighter::ColorPicker
 {
@@ -498,8 +498,8 @@ Highlighter::diffSpelling(const Node &node)
     // XXX: some kind of caching would be nice since we're doing the same thing
     //      for both original and updated nodes.
 
-    const std::string &l = (original ? node.spelling : node.relative->spelling);
-    const std::string &r = (original ? node.relative->spelling : node.spelling);
+    boost::string_ref l = (original ? node.spelling : node.relative->spelling);
+    boost::string_ref r = (original ? node.relative->spelling : node.spelling);
 
     std::vector<boost::string_ref> lWords = toWords(l);
     std::vector<boost::string_ref> rWords = toWords(r);
@@ -582,7 +582,11 @@ Highlighter::diffSpelling(const Node &node)
         }
     }
 
-    cc.append(original ? lastL : lastR, &node, def);
+    if (original) {
+        cc.append(boost::string_ref(lastL, lastL - l.end()), &node, def);
+    } else {
+        cc.append(boost::string_ref(lastR, lastR - r.end()), &node, def);
+    }
     if (surround && printBrackets) {
         cc.append(']', ColorGroup::UpdatedSurroundings);
     }
@@ -590,23 +594,15 @@ Highlighter::diffSpelling(const Node &node)
     return cc;
 }
 
-/**
- * @brief Breaks a string into words.
- *
- * @param s Initial multi-word string.
- *
- * @returns Collection of words.
- */
+// Breaks a multi-word string into collection of words.
 static std::vector<boost::string_ref>
-toWords(const std::string &s)
+toWords(boost::string_ref s)
 {
     std::vector<boost::string_ref> words;
-    boost::string_ref sr(s);
 
     enum State { Start, WhiteSpace, Word, Punctuation, End };
 
     auto classify = [](char c) {
-        if (c == '\0')                      return End;
         if (std::ispunct(c, std::locale())) return Punctuation;
         if (std::isspace(c, std::locale())) return WhiteSpace;
         return Word;
@@ -615,11 +611,11 @@ toWords(const std::string &s)
     State currentState = Start;
     std::size_t wordStart = 0U;
     for (std::size_t i = 0U; i <= s.size(); ++i) {
-        const State newState = classify(s[i]);
+        const State newState = (i == s.size() ? End : classify(s[i]));
         // Each punctuation character is treated as a separate "word".
         if (currentState != newState || currentState == Punctuation) {
             if (currentState == Punctuation || currentState == Word) {
-                words.emplace_back(sr.substr(wordStart, i - wordStart));
+                words.emplace_back(s.substr(wordStart, i - wordStart));
             }
             if (newState == Punctuation || newState == Word) {
                 wordStart = i;
@@ -631,14 +627,15 @@ toWords(const std::string &s)
     return words;
 }
 
+// Turns string into a bunch of single character strings.
 static std::vector<boost::string_ref>
-toChars(const std::string &s)
+toChars(boost::string_ref s)
 {
     std::vector<boost::string_ref> chars;
-    boost::string_ref sr(s);
+    chars.reserve(s.size());
 
     for (std::size_t i = 0U; i < s.size(); ++i) {
-        chars.emplace_back(sr.substr(i, 1));
+        chars.emplace_back(s.substr(i, 1));
     }
 
     return chars;

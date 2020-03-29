@@ -19,6 +19,8 @@
 #include <boost/program_options/variables_map.hpp>
 
 #include <algorithm>
+#include <functional>
+#include <future>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -131,19 +133,33 @@ run(const Args &args, TimeReport &tr)
         return EXIT_SUCCESS;
     }
 
-    cpp17::pmr::monolithic mr;
-    Tree treeA(&mr), treeB(&mr);
+    cpp17::pmr::monolithic mrA, mrB;
+    Tree treeA(&mrA), treeB(&mrB);
+
+    using overload = optional_t<Tree> (*)(const std::string &,
+                                          const CommonArgs &, TimeReport &,
+                                          cpp17::pmr::memory_resource *);
+    overload func = &buildTreeFromFile;
 
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
-    if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr, &mr)) {
+    const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
+
+    TimeReport nestedTr(tr);
+    std::future<optional_t<Tree>> newTreeFuture =
+        std::async(std::launch::async, func, newFile,
+                   std::ref(args), std::ref(nestedTr), &mrB);
+
+    if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr, &mrA)) {
         treeA = *tree;
     } else {
+        // Wait the other thread to finish to avoid data races.
+        newTreeFuture.wait();
+
         std::cerr << "Failed to parse: " << oldFile << '\n';
         return EXIT_FAILURE;
     }
 
-    const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
-    if (optional_t<Tree> &&tree = buildTreeFromFile(newFile, args, tr, &mr)) {
+    if (optional_t<Tree> &&tree = newTreeFuture.get()) {
         treeB = *tree;
     } else {
         std::cerr << "Failed to parse: " << newFile << '\n';

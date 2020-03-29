@@ -17,6 +17,8 @@
 #ifndef ZOGRASCOPE__TREE_HPP__
 #define ZOGRASCOPE__TREE_HPP__
 
+#include <boost/utility/string_ref.hpp>
+
 #include <cstdint>
 
 #include <memory>
@@ -24,8 +26,10 @@
 #include <vector>
 
 #include "pmr/pmr_deque.hpp"
+#include "pmr/pmr_string.hpp"
 #include "pmr/pmr_vector.hpp"
 
+#include "utils/Pool.hpp"
 #include "Language.hpp"
 #include "types.hpp"
 
@@ -46,8 +50,8 @@ struct Node
 {
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
-    std::string label;
-    std::string spelling;
+    boost::string_ref label;
+    boost::string_ref spelling;
     cpp17::pmr::vector<Node *> children;
     Node *relative = nullptr;
     Node *parent = nullptr;
@@ -118,9 +122,8 @@ class Tree
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
 public:
-    Tree(allocator_type al = {}) : nodes(al)
-    {
-    }
+    Tree(allocator_type al = {}) : nodes(al), stringified(al), internPool(al)
+    { }
     Tree(const Tree &rhs) = delete;
     Tree(Tree &&rhs) = default;
     Tree(std::unique_ptr<Language> lang, const std::string &contents,
@@ -148,12 +151,6 @@ public:
         return root;
     }
 
-    Node & makeNode()
-    {
-        nodes.emplace_back();
-        return nodes.back();
-    }
-
     // Retrieves language associated with this tree.
     Language * getLanguage()
     {
@@ -177,16 +174,30 @@ public:
     void propagateStates();
 
 private:
+    // Turns SNode-subtree into a corresponding Node-subtree.
+    Node * materializeSNode(const std::string &contents,
+                            const SNode *node, const SNode *parent);
+    // Turns PNode-subtree into a corresponding Node-subtree.
+    Node * materializePNode(const std::string &contents, const PNode *node);
+
+    // Interns a string.
+    boost::string_ref intern(std::string &&str);
+
+private:
     std::unique_ptr<Language> lang;
-    cpp17::pmr::deque<Node> nodes;
+    Pool<Node> nodes; // Storage of all nodes managed by this unit.
     Node *root = nullptr;
+    cpp17::pmr::string stringified; // Storage of most labels and spelling.
+    cpp17::pmr::deque<std::string> internPool; // Storage for interned strings.
 };
 
 std::vector<Node *> postOrder(Node &root);
 
 void reduceTreesCoarse(Node *T1, Node *T2);
 
-std::string printSubTree(const Node &root, bool withComments);
+// Turns tree defined by the node into a string.
+std::string printSubTree(const Node &root, bool withComments,
+                         int size_hint = -1);
 
 bool canForceLeafMatch(const Node *x, const Node *y);
 
