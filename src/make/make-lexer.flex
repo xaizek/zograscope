@@ -128,6 +128,9 @@ NL                      \n|\r|\r\n
     advanceLine(yyextra);
     yyextra->col = yyextra->tabWidth + 1;
     return token(LEADING_TAB, yylval, yyextra);
+
+    // Make flex aware that we're using this macro (inside CONTINUE macro);
+    REJECT;
 }
 \t {
     yyextra->col += yyextra->tabWidth - (yyextra->col - 1)%yyextra->tabWidth;
