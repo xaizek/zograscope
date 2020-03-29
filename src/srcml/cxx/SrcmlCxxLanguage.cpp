@@ -86,6 +86,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["assert"]           = +SrcmlCxxSType::Assert;
     map["attribute"]        = +SrcmlCxxSType::Attribute;
     map["block"]            = +SrcmlCxxSType::Block;
+    map["block_content"]    = +SrcmlCxxSType::BlockContent;
     map["break"]            = +SrcmlCxxSType::Break;
     map["call"]             = +SrcmlCxxSType::Call;
     map["capture"]          = +SrcmlCxxSType::Capture;
@@ -118,6 +119,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["function_decl"]    = +SrcmlCxxSType::FunctionDecl;
     map["goto"]             = +SrcmlCxxSType::Goto;
     map["if"]               = +SrcmlCxxSType::If;
+    map["if_stmt"]          = +SrcmlCxxSType::IfStmt;
     map["index"]            = +SrcmlCxxSType::Index;
     map["init"]             = +SrcmlCxxSType::Init;
     map["label"]            = +SrcmlCxxSType::Label;
@@ -143,6 +145,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["struct"]           = +SrcmlCxxSType::Struct;
     map["struct_decl"]      = +SrcmlCxxSType::StructDecl;
     map["super"]            = +SrcmlCxxSType::Super;
+    map["super_list"]       = +SrcmlCxxSType::SuperList;
     map["switch"]           = +SrcmlCxxSType::Switch;
     map["template"]         = +SrcmlCxxSType::Template;
     map["ternary"]          = +SrcmlCxxSType::Ternary;
@@ -635,6 +638,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::Assert:          return "SrcmlCxxSType::Assert";
         case SrcmlCxxSType::Attribute:       return "SrcmlCxxSType::Attribute";
         case SrcmlCxxSType::Block:           return "SrcmlCxxSType::Block";
+        case SrcmlCxxSType::BlockContent:    return "SrcmlCxxSType::BlockContent";
         case SrcmlCxxSType::Break:           return "SrcmlCxxSType::Break";
         case SrcmlCxxSType::Call:            return "SrcmlCxxSType::Call";
         case SrcmlCxxSType::Capture:         return "SrcmlCxxSType::Capture";
@@ -667,6 +671,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::FunctionDecl:    return "SrcmlCxxSType::FunctionDecl";
         case SrcmlCxxSType::Goto:            return "SrcmlCxxSType::Goto";
         case SrcmlCxxSType::If:              return "SrcmlCxxSType::If";
+        case SrcmlCxxSType::IfStmt:          return "SrcmlCxxSType::IfStmt";
         case SrcmlCxxSType::Index:           return "SrcmlCxxSType::Index";
         case SrcmlCxxSType::Init:            return "SrcmlCxxSType::Init";
         case SrcmlCxxSType::Label:           return "SrcmlCxxSType::Label";
@@ -692,6 +697,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::Struct:          return "SrcmlCxxSType::Struct";
         case SrcmlCxxSType::StructDecl:      return "SrcmlCxxSType::StructDecl";
         case SrcmlCxxSType::Super:           return "SrcmlCxxSType::Super";
+        case SrcmlCxxSType::SuperList:       return "SrcmlCxxSType::SuperList";
         case SrcmlCxxSType::Switch:          return "SrcmlCxxSType::Switch";
         case SrcmlCxxSType::Template:        return "SrcmlCxxSType::Template";
         case SrcmlCxxSType::Ternary:         return "SrcmlCxxSType::Ternary";
