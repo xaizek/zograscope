@@ -12,6 +12,10 @@ matrix:
     - os: linux
       compiler: clang
       dist: bionic
+      before_script:
+        - wget http://131.123.42.38/lmcrs/v1.0.0/srcml_1.0.0-1_ubuntu18.04.deb && sudo apt install ./srcml_1.0.0-1_ubuntu18.04.deb
+        - srcml --version
+        - echo "TESTS := '*'" > config.mk
     - os: osx
       compiler: clang
       before_script:
