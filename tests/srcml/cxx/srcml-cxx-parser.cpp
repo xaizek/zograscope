@@ -144,6 +144,22 @@ TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Keywords, "switch")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "default")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "break")) != nullptr);
+
+    tree = parseCxx(R"(
+        void f() {
+            if (0) {
+            } else if (this) {
+            }
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "else")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "this")) != nullptr);
+    auto test = [](const Node *node) {
+        return node->label == "if"
+            && node->type == Type::Keywords
+            && node->line == 4;
+    };
+    CHECK(findNode(tree, test) != nullptr);
 }
 
 TEST_CASE("this is recognized as a keyword", "[.srcml][srcml-cxx][parser]")
