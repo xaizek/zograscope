@@ -32,6 +32,8 @@ static void postProcessTree(PNode *node, TreeBuilder &tb,
 static bool isConditional(SType stype);
 static void postProcessIf(PNode *node, TreeBuilder &tb,
                           const std::string &contents);
+static void postProcessIfStmt(PNode *node, TreeBuilder &tb,
+                              const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
 static void postProcessParameterList(PNode *node, TreeBuilder &tb,
@@ -204,6 +206,10 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
         postProcessIf(node, tb, contents);
     }
 
+    if (node->stype == +SrcmlCxxSType::IfStmt) {
+        postProcessIfStmt(node, tb, contents);
+    }
+
     if (node->stype == +SrcmlCxxSType::Block) {
         postProcessBlock(node, tb, contents);
     }
@@ -251,11 +257,80 @@ postProcessIf(PNode *node, TreeBuilder &/*tb*/, const std::string &/*contents*/)
     }
 }
 
+// Rewrites if statement nodes to be more diff-friendly.
+static void
+postProcessIfStmt(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    // Move else or else-if nodes to respective if-statement splitting "else-if"
+    // into else and if parts.
+    while (node->children.size() > 1) {
+        auto n = node->children.size();
+        PNode *prev = node->children[n - 2U];
+        PNode *tailNode = node->children[n - 1U];
+        node->children.pop_back();
+
+        if (tailNode->stype == +SrcmlCxxSType::Else) {
+            // Else nodes just need to be moved.
+            prev->children.push_back(tailNode);
+            continue;
+        }
+
+        PNode *elseIfKw = tailNode->children[0];
+
+        PNode *elseKw = tb.addNode();
+        elseKw->stype = +SrcmlCxxSType::Separator;
+        elseKw->value.token = static_cast<int>(Type::Keywords);
+        // Take "else" part.
+        elseKw->value.from = elseIfKw->value.from;
+        elseKw->value.len = 4;
+        elseKw->line = elseIfKw->line;
+        elseKw->col = elseIfKw->col;
+
+        // Drop "else" prefix and whitespace that follows it.
+        elseIfKw->value.token = static_cast<int>(Type::Keywords);
+        elseIfKw->value.from += 4;
+        elseIfKw->value.len -= 4;
+        elseIfKw->col += 4;
+        dropLeadingWS(elseIfKw, contents);
+
+        PNode *newNode = tb.addNode();
+        newNode->stype = +SrcmlCxxSType::Elseif;
+        newNode->children = { elseKw, tailNode };
+        prev->children.push_back(newNode);
+    }
+
+    // Replace if-statement node with the if node.
+    PNode *ifNode = node->children[0];
+    node->children.erase(node->children.cbegin());
+    node->children.insert(node->children.cbegin(),
+                          ifNode->children.cbegin(), ifNode->children.cend());
+    node->stype = ifNode->stype;
+}
+
 // Rewrites block nodes to be more diff-friendly.
 static void
 postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
 {
-    // Children: `{` statement* `}`.
+    // Children: `{` block-content `}`
+    if (node->children.size() == 3 &&
+        node->children[1]->stype == +SrcmlCxxSType::BlockContent) {
+        PNode *content = node->children[1];
+
+        // Empty block-content gets replaces with empty statements node.
+        if (content->children.empty()) {
+            node->children[1] = tb.addNode();
+            node->children[1]->stype = +SrcmlCxxSType::Statements;
+            return;
+        }
+
+        // Splice children of block-content in its place.
+        node->children.erase(++node->children.cbegin());
+        node->children.insert(++node->children.cbegin(),
+                              content->children.cbegin(),
+                              content->children.cend());
+    }
+
+    // Children: `{` statement+ `}`.
     if (node->children.size() > 2) {
         PNode *stmts = tb.addNode();
         stmts->stype = +SrcmlCxxSType::Statements;
@@ -474,6 +549,7 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
             -parent == SrcmlCxxSType::Class ||
             -parent == SrcmlCxxSType::Union ||
             -parent == SrcmlCxxSType::Enum ||
+            -parent == SrcmlCxxSType::If ||
             -parent == SrcmlCxxSType::Then ||
             -parent == SrcmlCxxSType::Else ||
             -parent == SrcmlCxxSType::For ||
@@ -490,7 +566,8 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
         child == SrcmlCxxSType::ArgumentList) {
         return true;
     }
-    if (child == SrcmlCxxSType::ParameterList) {
+    if (child == SrcmlCxxSType::ParameterList ||
+        child == SrcmlCxxSType::BlockContent) {
         return true;
     }
     return false;
