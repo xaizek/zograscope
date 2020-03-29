@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "pmr/pmr_deque.hpp"
-#include "pmr/pmr_string.hpp"
 #include "pmr/pmr_vector.hpp"
 
 #include "utils/Pool.hpp"
@@ -185,10 +184,13 @@ private:
 
 private:
     std::unique_ptr<Language> lang;
-    Pool<Node> nodes; // Storage of all nodes managed by this unit.
+    // Storage of all nodes managed by this unit.
+    Pool<Node> nodes;
     Node *root = nullptr;
-    cpp17::pmr::string stringified; // Storage of most labels and spelling.
-    cpp17::pmr::deque<std::string> internPool; // Storage for interned strings.
+    // Storage of most labels and spelling.
+    cpp17::pmr::vector<char> stringified;
+    // Storage for interned strings.
+    cpp17::pmr::deque<std::string> internPool;
 };
 
 std::vector<Node *> postOrder(Node &root);

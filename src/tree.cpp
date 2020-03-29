@@ -46,12 +46,12 @@ constexpr int tabWidth = 4;
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
 static void preStringifyPTree(const std::string &contents,
                               PNode *node, const Language *lang,
-                              cpp17::pmr::string &stringified);
-static boost::string_ref stringifyPNode(const cpp17::pmr::string &stringified,
-                                        const PNode *node);
+                              cpp17::pmr::vector<char> &stringified);
+static boost::string_ref
+stringifyPNode(const cpp17::pmr::vector<char> &stringified, const PNode *node);
 static void preStringifyPNode(const std::string &contents, PNode *node,
                               const Language *lang,
-                              cpp17::pmr::string &stringified);
+                              cpp17::pmr::vector<char> &stringified);
 static std::string stringifyPNodeSpelling(const std::string &contents,
                                           const PNode *node);
 static int maxStringifiedSize(boost::string_ref contents);
@@ -68,13 +68,13 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
     : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
 {
     stringified.reserve(maxStringifiedSize(contents));
-    const char *buf = stringified.c_str();
+    const char *buf = stringified.data();
 
     preStringifyPTree(contents, const_cast<PNode *>(node), this->lang.get(),
                       stringified);
     root = materializePNode(contents, node);
 
-    assert(stringified.c_str() == buf && "Stringified buffer got relocated!");
+    assert(stringified.data() == buf && "Stringified buffer got relocated!");
     (void)buf;
 }
 
@@ -83,12 +83,12 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
     : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
 {
     stringified.reserve(maxStringifiedSize(contents));
-    const char *buf = stringified.c_str();
+    const char *buf = stringified.data();
 
     preStringifyPTree(contents, node->value, this->lang.get(), stringified);
     root = materializeSNode(contents, node, nullptr);
 
-    assert(stringified.c_str() == buf && "Stringified buffer got relocated!");
+    assert(stringified.data() == buf && "Stringified buffer got relocated!");
     (void)buf;
 }
 
@@ -188,12 +188,12 @@ putNodeChild(Node &parent, Node *child, const Language *lang)
 // value.postponedFrom (start index) and value.postponedTo (length).
 static void
 preStringifyPTree(const std::string &contents, PNode *node,
-                  const Language *lang, cpp17::pmr::string &stringified)
+                  const Language *lang, cpp17::pmr::vector<char> &stringified)
 {
     struct {
         const std::string &contents;
         const Language *lang;
-        cpp17::pmr::string &out;
+        cpp17::pmr::vector<char> &out;
         void run(PNode *node)
         {
             node->value.postponedFrom = out.size();
@@ -248,9 +248,9 @@ Tree::materializePNode(const std::string &contents, const PNode *node)
 
 // Turns PNode into a string.
 static boost::string_ref
-stringifyPNode(const cpp17::pmr::string &stringified, const PNode *node)
+stringifyPNode(const cpp17::pmr::vector<char> &stringified, const PNode *node)
 {
-    return boost::string_ref(stringified.c_str() + node->value.postponedFrom,
+    return boost::string_ref(stringified.data() + node->value.postponedFrom,
                              node->value.postponedTo);
 }
 
@@ -258,7 +258,7 @@ stringifyPNode(const cpp17::pmr::string &stringified, const PNode *node)
 // value.postponedFrom (start index) and value.postponedTo (length).
 static void
 preStringifyPNode(const std::string &contents, PNode *node,
-                  const Language *lang, cpp17::pmr::string &stringified)
+                  const Language *lang, cpp17::pmr::vector<char> &stringified)
 {
     node->value.postponedFrom = stringified.size();
 
@@ -271,26 +271,26 @@ preStringifyPNode(const std::string &contents, PNode *node,
 
             case '\n':
                 col = 1;
-                stringified += '\n';
+                stringified.push_back('\n');
                 leadingWhitespace = lang->shouldDropLeadingWS(node->stype);
                 break;
             case '\t':
                 width = tabWidth - (col - 1)%tabWidth;
                 col += width;
                 if (!leadingWhitespace) {
-                    stringified.append(width, ' ');
+                    stringified.insert(stringified.cend(), width, ' ');
                 }
                 break;
             case ' ':
                 ++col;
                 if (!leadingWhitespace) {
-                    stringified += ' ';
+                    stringified.push_back(' ');
                 }
                 break;
 
             default:
                 ++col;
-                stringified += c;
+                stringified.push_back(c);
                 leadingWhitespace = false;
                 break;
         }
