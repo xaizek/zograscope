@@ -32,13 +32,24 @@ static void postProcessTree(PNode *node, TreeBuilder &tb,
 static bool isConditional(SType stype);
 static void postProcessIf(PNode *node, TreeBuilder &tb,
                           const std::string &contents);
+static void postProcessIfStmt(PNode *node, TreeBuilder &tb,
+                              const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
+static void postProcessEnumDecl(PNode *node, TreeBuilder &tb,
+                                const std::string &contents);
+static void postProcessEnum(PNode *node, TreeBuilder &tb,
+                            const std::string &contents);
+static void postProcessEnumClass(PNode *node, TreeBuilder &tb,
+                                 const std::string &contents);
 static void postProcessParameterList(PNode *node, TreeBuilder &tb,
                                      const std::string &contents);
 static bool breakLeaf(PNode *node, TreeBuilder &tb,
                       const std::string &contents, char left, char right,
                       SrcmlCxxSType newChild);
+static void takeWord(PNode *node, const PNode *of, int len);
+static void skipWord(PNode *node, const PNode *of, int len,
+                     const std::string &contents);
 static void dropLeadingWS(PNode *node, const std::string &contents);
 static void postProcessConditional(PNode *node, TreeBuilder &tb,
                                    const std::string &contents);
@@ -86,6 +97,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["assert"]           = +SrcmlCxxSType::Assert;
     map["attribute"]        = +SrcmlCxxSType::Attribute;
     map["block"]            = +SrcmlCxxSType::Block;
+    map["block_content"]    = +SrcmlCxxSType::BlockContent;
     map["break"]            = +SrcmlCxxSType::Break;
     map["call"]             = +SrcmlCxxSType::Call;
     map["capture"]          = +SrcmlCxxSType::Capture;
@@ -118,6 +130,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["function_decl"]    = +SrcmlCxxSType::FunctionDecl;
     map["goto"]             = +SrcmlCxxSType::Goto;
     map["if"]               = +SrcmlCxxSType::If;
+    map["if_stmt"]          = +SrcmlCxxSType::IfStmt;
     map["index"]            = +SrcmlCxxSType::Index;
     map["init"]             = +SrcmlCxxSType::Init;
     map["label"]            = +SrcmlCxxSType::Label;
@@ -143,6 +156,7 @@ SrcmlCxxLanguage::SrcmlCxxLanguage()
     map["struct"]           = +SrcmlCxxSType::Struct;
     map["struct_decl"]      = +SrcmlCxxSType::StructDecl;
     map["super"]            = +SrcmlCxxSType::Super;
+    map["super_list"]       = +SrcmlCxxSType::SuperList;
     map["switch"]           = +SrcmlCxxSType::Switch;
     map["template"]         = +SrcmlCxxSType::Template;
     map["ternary"]          = +SrcmlCxxSType::Ternary;
@@ -201,8 +215,21 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
         postProcessIf(node, tb, contents);
     }
 
+    if (node->stype == +SrcmlCxxSType::IfStmt) {
+        postProcessIfStmt(node, tb, contents);
+    }
+
     if (node->stype == +SrcmlCxxSType::Block) {
         postProcessBlock(node, tb, contents);
+    }
+
+    if (node->stype == +SrcmlCxxSType::EnumDecl) {
+        postProcessEnumDecl(node, tb, contents);
+    }
+
+    if (node->stype == +SrcmlCxxSType::Enum) {
+        postProcessEnum(node, tb, contents);
+        postProcessEnumClass(node, tb, contents);
     }
 
     if (node->stype == +SrcmlCxxSType::ParameterList) {
@@ -248,11 +275,74 @@ postProcessIf(PNode *node, TreeBuilder &/*tb*/, const std::string &/*contents*/)
     }
 }
 
+// Rewrites if statement nodes to be more diff-friendly.
+static void
+postProcessIfStmt(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    // Move else or else-if nodes to respective if-statement splitting "else-if"
+    // into else and if parts.
+    while (node->children.size() > 1) {
+        auto n = node->children.size();
+        PNode *prev = node->children[n - 2U];
+        PNode *tailNode = node->children[n - 1U];
+        node->children.pop_back();
+
+        if (tailNode->stype == +SrcmlCxxSType::Else) {
+            // Else nodes just need to be moved.
+            prev->children.push_back(tailNode);
+            continue;
+        }
+
+        PNode *elseIfKw = tailNode->children[0];
+
+        PNode *elseKw = tb.addNode();
+        elseKw->stype = +SrcmlCxxSType::Separator;
+        elseKw->value.token = static_cast<int>(Type::Keywords);
+        // Take "else" part.
+        takeWord(elseKw, elseIfKw, 4);
+
+        // Drop "else" prefix and whitespace that follows it.
+        elseIfKw->value.token = static_cast<int>(Type::Keywords);
+        skipWord(elseIfKw, elseIfKw, 4, contents);
+
+        PNode *newNode = tb.addNode();
+        newNode->stype = +SrcmlCxxSType::Elseif;
+        newNode->children = { elseKw, tailNode };
+        prev->children.push_back(newNode);
+    }
+
+    // Replace if-statement node with the if node.
+    PNode *ifNode = node->children[0];
+    node->children.erase(node->children.cbegin());
+    node->children.insert(node->children.cbegin(),
+                          ifNode->children.cbegin(), ifNode->children.cend());
+    node->stype = ifNode->stype;
+}
+
 // Rewrites block nodes to be more diff-friendly.
 static void
 postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
 {
-    // Children: `{` statement* `}`.
+    // Children: `{` block-content `}`
+    if (node->children.size() == 3 &&
+        node->children[1]->stype == +SrcmlCxxSType::BlockContent) {
+        PNode *content = node->children[1];
+
+        // Empty block-content gets replaces with empty statements node.
+        if (content->children.empty()) {
+            node->children[1] = tb.addNode();
+            node->children[1]->stype = +SrcmlCxxSType::Statements;
+            return;
+        }
+
+        // Splice children of block-content in its place.
+        node->children.erase(++node->children.cbegin());
+        node->children.insert(++node->children.cbegin(),
+                              content->children.cbegin(),
+                              content->children.cend());
+    }
+
+    // Children: `{` statement+ `}`.
     if (node->children.size() > 2) {
         PNode *stmts = tb.addNode();
         stmts->stype = +SrcmlCxxSType::Statements;
@@ -276,6 +366,77 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     stmts->children = node->children;
 
     node->children.assign({ stmts });
+}
+
+// Rewrites enumeration class declaration nodes to be more diff-friendly.  This
+// breaks "enum\s+class" into two separate keyword tokens.
+static void
+postProcessEnumDecl(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    // Processing here is the same.
+    postProcessEnumClass(node, tb, contents);
+}
+
+// Rewrites enumeration nodes to be more diff-friendly.  This turns ",\s*}" into
+// two separate tokens.
+static void
+postProcessEnum(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    if (node->children.size() < 2) {
+        return;
+    }
+
+    PNode *block = node->children[node->children.size() - 2];
+    if (block->stype != +SrcmlCxxSType::Block) {
+        return;
+    }
+
+    if (block->children.empty()) {
+        return;
+    }
+
+    PNode *tail = block->children.back();
+    if (contents[tail->value.from] != ',' ||
+        contents[tail->value.from + tail->value.len - 1] != '}') {
+        return;
+    }
+
+    PNode *comma = tb.addNode();
+    comma->stype = +SrcmlCxxSType::Separator;
+
+    // Take "," part.
+    takeWord(comma, tail, 1);
+    // Drop "," prefix and whitespace that follows it.
+    skipWord(tail, tail, 1, contents);
+
+    block->children.insert(block->children.cend() - 1, comma);
+
+    comma->value.token = static_cast<int>(Type::Other);
+    tail->value.token = static_cast<int>(Type::RightBrackets);
+}
+
+// Rewrites enumeration class nodes to be more diff-friendly.  This breaks
+// "enum\s+class" into two separate keyword tokens.
+static void
+postProcessEnumClass(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    PNode *originalKw = node->children.front();
+    if (originalKw->value.len <= 4) {
+        return;
+    }
+
+    PNode *enumKw = tb.addNode();
+    enumKw->stype = +SrcmlCxxSType::Separator;
+
+    // Take "enum" part.
+    takeWord(enumKw, originalKw, 4);
+    // Drop "enum" prefix and whitespace that follows it.
+    skipWord(originalKw, originalKw, 4, contents);
+
+    node->children.insert(node->children.cbegin(), enumKw);
+
+    enumKw->value.token = static_cast<int>(Type::Keywords);
+    originalKw->value.token = static_cast<int>(Type::Keywords);
 }
 
 // Rewrites parameter list nodes to be more diff-friendly.
@@ -304,20 +465,13 @@ breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
 
         PNode *left = tb.addNode();
         left->stype = +SrcmlCxxSType::Separator;
-        left->value.from = child->value.from;
-        left->value.len = 1;
-        left->line = child->line;
-        left->col = child->col;
         left->value.token = static_cast<int>(Type::LeftBrackets);
+        takeWord(left, child, 1);
 
         PNode *right = tb.addNode();
         right->stype = +SrcmlCxxSType::Separator;
-        right->value.from = child->value.from + 1;
-        right->value.len = child->value.len - 1;
-        right->line = child->line;
-        right->col = child->col + 1;
         right->value.token = static_cast<int>(Type::RightBrackets);
-        dropLeadingWS(right, contents);
+        skipWord(right, child, 1, contents);
 
         if (newChild == SrcmlCxxSType::None) {
             node->children.assign({ left, right });
@@ -330,6 +484,34 @@ breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
         return true;
     }
     return false;
+}
+
+// Sets node label to prefix of different node's label.
+static void
+takeWord(PNode *node, const PNode *of, int len)
+{
+    assert(static_cast<int>(of->value.len) > len &&
+           "Word length is too large.");
+
+    node->value.from = of->value.from;
+    node->value.len = len;
+    node->line = of->line;
+    node->col = of->col;
+}
+
+// Sets node label to label of a different node after dropping prefix from it.
+static void
+skipWord(PNode *node, const PNode *of, int len, const std::string &contents)
+{
+    assert(static_cast<int>(of->value.len) > len &&
+           "Word length is too large.");
+
+    node->value.from = of->value.from + len;
+    node->value.len = of->value.len - len;
+    node->line = of->line;
+    node->col = of->col + len;
+
+    dropLeadingWS(node, contents);
 }
 
 // Corrects node data to exclude leading whitespace.
@@ -471,6 +653,7 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
             -parent == SrcmlCxxSType::Class ||
             -parent == SrcmlCxxSType::Union ||
             -parent == SrcmlCxxSType::Enum ||
+            -parent == SrcmlCxxSType::If ||
             -parent == SrcmlCxxSType::Then ||
             -parent == SrcmlCxxSType::Else ||
             -parent == SrcmlCxxSType::For ||
@@ -487,7 +670,8 @@ SrcmlCxxLanguage::shouldSplice(SType parent, const Node *childNode) const
         child == SrcmlCxxSType::ArgumentList) {
         return true;
     }
-    if (child == SrcmlCxxSType::ParameterList) {
+    if (child == SrcmlCxxSType::ParameterList ||
+        child == SrcmlCxxSType::BlockContent) {
         return true;
     }
     return false;
@@ -635,6 +819,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::Assert:          return "SrcmlCxxSType::Assert";
         case SrcmlCxxSType::Attribute:       return "SrcmlCxxSType::Attribute";
         case SrcmlCxxSType::Block:           return "SrcmlCxxSType::Block";
+        case SrcmlCxxSType::BlockContent:    return "SrcmlCxxSType::BlockContent";
         case SrcmlCxxSType::Break:           return "SrcmlCxxSType::Break";
         case SrcmlCxxSType::Call:            return "SrcmlCxxSType::Call";
         case SrcmlCxxSType::Capture:         return "SrcmlCxxSType::Capture";
@@ -667,6 +852,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::FunctionDecl:    return "SrcmlCxxSType::FunctionDecl";
         case SrcmlCxxSType::Goto:            return "SrcmlCxxSType::Goto";
         case SrcmlCxxSType::If:              return "SrcmlCxxSType::If";
+        case SrcmlCxxSType::IfStmt:          return "SrcmlCxxSType::IfStmt";
         case SrcmlCxxSType::Index:           return "SrcmlCxxSType::Index";
         case SrcmlCxxSType::Init:            return "SrcmlCxxSType::Init";
         case SrcmlCxxSType::Label:           return "SrcmlCxxSType::Label";
@@ -692,6 +878,7 @@ SrcmlCxxLanguage::toString(SType stype) const
         case SrcmlCxxSType::Struct:          return "SrcmlCxxSType::Struct";
         case SrcmlCxxSType::StructDecl:      return "SrcmlCxxSType::StructDecl";
         case SrcmlCxxSType::Super:           return "SrcmlCxxSType::Super";
+        case SrcmlCxxSType::SuperList:       return "SrcmlCxxSType::SuperList";
         case SrcmlCxxSType::Switch:          return "SrcmlCxxSType::Switch";
         case SrcmlCxxSType::Template:        return "SrcmlCxxSType::Template";
         case SrcmlCxxSType::Ternary:         return "SrcmlCxxSType::Ternary";

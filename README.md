@@ -158,7 +158,7 @@ make install
 * [flex][flex]
 * [GNU Bison][bison] v3+
 * [Boost][boost], tested with 1.59, but older versions might work too
-* (optional, run-time, for C++) [srcml][srcml]
+* (optional, run-time, for C++) [srcml][srcml] (v0.9.5 and v1.0.0 were tested)
 * (optional, for `gdiff` tool) [qt5][qt5]
 * (optional, for `gdiff` tool) [libgit2][libgit2]
 * (optional, for `tui` tool) [curses][curses] with support of wide characters

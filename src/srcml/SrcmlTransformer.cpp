@@ -94,8 +94,7 @@ SrcmlTransformer::SrcmlTransformer(const std::string &contents,
                                 const std::unordered_set<std::string> &keywords)
     : contents(contents), path(path), tb(tb), language(language),
       map(map), keywords(keywords)
-{
-}
+{ }
 
 void
 SrcmlTransformer::transform()
@@ -117,7 +116,18 @@ SrcmlTransformer::transform()
     std::string xml = readCommandOutput(cmd, std::string());
 
     ti::XMLDocument doc;
-    doc.Parse(xml.data(), xml.size());
+    if (doc.Parse(xml.data(), xml.size()) == ti::XML_SUCCESS &&
+        doc.RootElement() == nullptr) {
+
+        // Work around srcml's issues with parsing files.  Sometimes it can't
+        // read them from file (when extension is ".z" it thinks it's an
+        // archive) and sometimes from stdin (bugs of previous versions), so try
+        // both ways.
+        cmd.pop_back();
+        xml = readCommandOutput(cmd, contents);
+        doc.Parse(xml.data(), xml.size());
+    }
+
     if (doc.Error()) {
         throw std::runtime_error("Failed to parse: " +
                                  std::string(doc.ErrorStr()));
@@ -134,6 +144,10 @@ SrcmlTransformer::transform()
 PNode *
 SrcmlTransformer::visit(ti::XMLNode *node, int level)
 {
+    if (node == nullptr) {
+        return tb.addNode();
+    }
+
     SType stype = {};
     auto it = map.find(node->Value());
     if (it != map.end()) {

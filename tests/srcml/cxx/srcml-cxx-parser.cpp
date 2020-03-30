@@ -144,6 +144,22 @@ TEST_CASE("Keywords are marked with types", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Keywords, "switch")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "default")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Keywords, "break")) != nullptr);
+
+    tree = parseCxx(R"(
+        void f() {
+            if (0) {
+            } else if (this) {
+            }
+        }
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "else")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "this")) != nullptr);
+    auto test = [](const Node *node) {
+        return node->label == "if"
+            && node->type == Type::Keywords
+            && node->line == 4;
+    };
+    CHECK(findNode(tree, test) != nullptr);
 }
 
 TEST_CASE("this is recognized as a keyword", "[.srcml][srcml-cxx][parser]")
@@ -380,4 +396,33 @@ TEST_CASE("EOL continuation is identified in C++",
                                 });
     REQUIRE(node != nullptr);
     CHECK(tree.getLanguage()->isEolContinuation(node));
+}
+
+TEST_CASE("Enum classes are properly handled", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        enum     class C : int {
+            item,
+        };
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "enum")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "class")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "C")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ":")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "int")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::LeftBrackets, "{")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "item")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ",")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::RightBrackets, "}")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ";")) != nullptr);
+
+    tree = parseCxx("enum class SType : std::uint8_t;");
+    CHECK(findNode(tree, makePred(Type::Keywords, "enum")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "class")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "SType")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ":")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::UserTypes, "std")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Virtual, "::")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::UserTypes, "uint8_t")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ";")) != nullptr);
 }
