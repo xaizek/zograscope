@@ -36,6 +36,10 @@ static void postProcessIfStmt(PNode *node, TreeBuilder &tb,
                               const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
+static void postProcessEnum(PNode *node, TreeBuilder &tb,
+                            const std::string &contents);
+static void postProcessEnumClass(PNode *node, TreeBuilder &tb,
+                                 const std::string &contents);
 static void postProcessParameterList(PNode *node, TreeBuilder &tb,
                                      const std::string &contents);
 static bool breakLeaf(PNode *node, TreeBuilder &tb,
@@ -217,6 +221,11 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
         postProcessBlock(node, tb, contents);
     }
 
+    if (node->stype == +SrcmlCxxSType::Enum) {
+        postProcessEnum(node, tb, contents);
+        postProcessEnumClass(node, tb, contents);
+    }
+
     if (node->stype == +SrcmlCxxSType::ParameterList) {
         postProcessParameterList(node, tb, contents);
     }
@@ -351,6 +360,68 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     stmts->children = node->children;
 
     node->children.assign({ stmts });
+}
+
+// Rewrites enumeration nodes to be more diff-friendly.  This turns ",\s*}" into
+// two separate tokens.
+static void
+postProcessEnum(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    if (node->children.size() < 2) {
+        return;
+    }
+
+    PNode *block = node->children[node->children.size() - 2];
+    if (block->stype != +SrcmlCxxSType::Block) {
+        return;
+    }
+
+    if (block->children.empty()) {
+        return;
+    }
+
+    PNode *tail = block->children.back();
+    if (contents[tail->value.from] != ',' ||
+        contents[tail->value.from + tail->value.len - 1] != '}') {
+        return;
+    }
+
+    PNode *comma = tb.addNode();
+    comma->stype = +SrcmlCxxSType::Separator;
+
+    // Take "," part.
+    takeWord(comma, tail, 1);
+    // Drop "," prefix and whitespace that follows it.
+    skipWord(tail, tail, 1, contents);
+
+    block->children.insert(block->children.cend() - 1, comma);
+
+    comma->value.token = static_cast<int>(Type::Other);
+    tail->value.token = static_cast<int>(Type::RightBrackets);
+}
+
+// Rewrites enumeration class nodes to be more diff-friendly.  This breaks
+// "enum\s+class" into two separate keyword tokens.
+static void
+postProcessEnumClass(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    PNode *originalKw = node->children.front();
+    if (originalKw->value.len <= 4) {
+        return;
+    }
+
+    PNode *enumKw = tb.addNode();
+    enumKw->stype = +SrcmlCxxSType::Separator;
+
+    // Take "enum" part.
+    takeWord(enumKw, originalKw, 4);
+    // Drop "enum" prefix and whitespace that follows it.
+    skipWord(originalKw, originalKw, 4, contents);
+
+    node->children.insert(node->children.cbegin(), enumKw);
+
+    enumKw->value.token = static_cast<int>(Type::Keywords);
+    originalKw->value.token = static_cast<int>(Type::Keywords);
 }
 
 // Rewrites parameter list nodes to be more diff-friendly.

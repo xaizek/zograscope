@@ -397,3 +397,22 @@ TEST_CASE("EOL continuation is identified in C++",
     REQUIRE(node != nullptr);
     CHECK(tree.getLanguage()->isEolContinuation(node));
 }
+
+TEST_CASE("Enum classes are properly handled", "[.srcml][srcml-cxx][parser]")
+{
+    Tree tree = parseCxx(R"(
+        enum     class C : int {
+            item,
+        };
+    )");
+    CHECK(findNode(tree, makePred(Type::Keywords, "enum")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "class")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "C")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ":")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "int")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::LeftBrackets, "{")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "item")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ",")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::RightBrackets, "}")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ";")) != nullptr);
+}
