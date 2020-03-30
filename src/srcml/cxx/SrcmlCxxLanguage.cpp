@@ -41,6 +41,9 @@ static void postProcessParameterList(PNode *node, TreeBuilder &tb,
 static bool breakLeaf(PNode *node, TreeBuilder &tb,
                       const std::string &contents, char left, char right,
                       SrcmlCxxSType newChild);
+static void takeWord(PNode *node, const PNode *of, int len);
+static void skipWord(PNode *node, const PNode *of, int len,
+                     const std::string &contents);
 static void dropLeadingWS(PNode *node, const std::string &contents);
 static void postProcessConditional(PNode *node, TreeBuilder &tb,
                                    const std::string &contents);
@@ -281,17 +284,11 @@ postProcessIfStmt(PNode *node, TreeBuilder &tb, const std::string &contents)
         elseKw->stype = +SrcmlCxxSType::Separator;
         elseKw->value.token = static_cast<int>(Type::Keywords);
         // Take "else" part.
-        elseKw->value.from = elseIfKw->value.from;
-        elseKw->value.len = 4;
-        elseKw->line = elseIfKw->line;
-        elseKw->col = elseIfKw->col;
+        takeWord(elseKw, elseIfKw, 4);
 
         // Drop "else" prefix and whitespace that follows it.
         elseIfKw->value.token = static_cast<int>(Type::Keywords);
-        elseIfKw->value.from += 4;
-        elseIfKw->value.len -= 4;
-        elseIfKw->col += 4;
-        dropLeadingWS(elseIfKw, contents);
+        skipWord(elseIfKw, elseIfKw, 4, contents);
 
         PNode *newNode = tb.addNode();
         newNode->stype = +SrcmlCxxSType::Elseif;
@@ -382,20 +379,13 @@ breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
 
         PNode *left = tb.addNode();
         left->stype = +SrcmlCxxSType::Separator;
-        left->value.from = child->value.from;
-        left->value.len = 1;
-        left->line = child->line;
-        left->col = child->col;
         left->value.token = static_cast<int>(Type::LeftBrackets);
+        takeWord(left, child, 1);
 
         PNode *right = tb.addNode();
         right->stype = +SrcmlCxxSType::Separator;
-        right->value.from = child->value.from + 1;
-        right->value.len = child->value.len - 1;
-        right->line = child->line;
-        right->col = child->col + 1;
         right->value.token = static_cast<int>(Type::RightBrackets);
-        dropLeadingWS(right, contents);
+        skipWord(right, child, 1, contents);
 
         if (newChild == SrcmlCxxSType::None) {
             node->children.assign({ left, right });
@@ -408,6 +398,34 @@ breakLeaf(PNode *node, TreeBuilder &tb, const std::string &contents,
         return true;
     }
     return false;
+}
+
+// Sets node label to prefix of different node's label.
+static void
+takeWord(PNode *node, const PNode *of, int len)
+{
+    assert(static_cast<int>(of->value.len) > len &&
+           "Word length is too large.");
+
+    node->value.from = of->value.from;
+    node->value.len = len;
+    node->line = of->line;
+    node->col = of->col;
+}
+
+// Sets node label to label of a different node after dropping prefix from it.
+static void
+skipWord(PNode *node, const PNode *of, int len, const std::string &contents)
+{
+    assert(static_cast<int>(of->value.len) > len &&
+           "Word length is too large.");
+
+    node->value.from = of->value.from + len;
+    node->value.len = of->value.len - len;
+    node->line = of->line;
+    node->col = of->col + len;
+
+    dropLeadingWS(node, contents);
 }
 
 // Corrects node data to exclude leading whitespace.
