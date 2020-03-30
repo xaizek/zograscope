@@ -36,6 +36,8 @@ static void postProcessIfStmt(PNode *node, TreeBuilder &tb,
                               const std::string &contents);
 static void postProcessBlock(PNode *node, TreeBuilder &tb,
                              const std::string &contents);
+static void postProcessEnumDecl(PNode *node, TreeBuilder &tb,
+                                const std::string &contents);
 static void postProcessEnum(PNode *node, TreeBuilder &tb,
                             const std::string &contents);
 static void postProcessEnumClass(PNode *node, TreeBuilder &tb,
@@ -221,6 +223,10 @@ postProcessTree(PNode *node, TreeBuilder &tb, const std::string &contents)
         postProcessBlock(node, tb, contents);
     }
 
+    if (node->stype == +SrcmlCxxSType::EnumDecl) {
+        postProcessEnumDecl(node, tb, contents);
+    }
+
     if (node->stype == +SrcmlCxxSType::Enum) {
         postProcessEnum(node, tb, contents);
         postProcessEnumClass(node, tb, contents);
@@ -360,6 +366,15 @@ postProcessBlock(PNode *node, TreeBuilder &tb, const std::string &contents)
     stmts->children = node->children;
 
     node->children.assign({ stmts });
+}
+
+// Rewrites enumeration class declaration nodes to be more diff-friendly.  This
+// breaks "enum\s+class" into two separate keyword tokens.
+static void
+postProcessEnumDecl(PNode *node, TreeBuilder &tb, const std::string &contents)
+{
+    // Processing here is the same.
+    postProcessEnumClass(node, tb, contents);
 }
 
 // Rewrites enumeration nodes to be more diff-friendly.  This turns ",\s*}" into

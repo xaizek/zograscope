@@ -415,4 +415,14 @@ TEST_CASE("Enum classes are properly handled", "[.srcml][srcml-cxx][parser]")
     CHECK(findNode(tree, makePred(Type::Other, ",")) != nullptr);
     CHECK(findNode(tree, makePred(Type::RightBrackets, "}")) != nullptr);
     CHECK(findNode(tree, makePred(Type::Other, ";")) != nullptr);
+
+    tree = parseCxx("enum class SType : std::uint8_t;");
+    CHECK(findNode(tree, makePred(Type::Keywords, "enum")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Keywords, "class")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Identifiers, "SType")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ":")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::UserTypes, "std")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Virtual, "::")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::UserTypes, "uint8_t")) != nullptr);
+    CHECK(findNode(tree, makePred(Type::Other, ";")) != nullptr);
 }
