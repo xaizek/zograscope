@@ -60,7 +60,7 @@ inline byte *
 monolithic::Block::allocate(size_t n, size_t alignment)
 {
     byte *ret = aligned(alignment);
-    if (static_cast<size_t>(start + size - ret) < n) {
+    if (ret > start + size || static_cast<size_t>(start + size - ret) < n) {
         return nullptr;
     }
 
@@ -70,8 +70,7 @@ monolithic::Block::allocate(size_t n, size_t alignment)
 
 inline
 monolithic::monolithic(memory_resource *parent) : parent(parent), blocks(parent)
-{
-}
+{ }
 
 inline
 monolithic::~monolithic()
