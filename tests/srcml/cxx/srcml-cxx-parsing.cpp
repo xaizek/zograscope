@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-// These are tests of comparison and all of its phases.
+// These are tests of more advanced properties of a parser, which are much
+// easier and reliable to test by performing comparison.
 
 #include "Catch/catch.hpp"
 
