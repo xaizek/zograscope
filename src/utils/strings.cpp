@@ -92,3 +92,17 @@ DiceString::getBigrams()
 
     return bigrams;
 }
+
+std::string &&
+normalizeEols(std::string &&str)
+{
+    for (std::size_t pos = str.find('\r');
+         pos != std::string::npos;
+         pos = str.find('\r', pos)) {
+        if (pos < str.size() - 1 && str[pos + 1] == '\n') {
+            str.erase(pos, 1U);
+        }
+    }
+
+    return std::move(str);
+}

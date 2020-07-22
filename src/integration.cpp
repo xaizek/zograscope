@@ -37,6 +37,8 @@
 #include <utility>
 #include <vector>
 
+#include "utils/strings.hpp"
+
 namespace io = boost::iostreams;
 
 /**
@@ -349,5 +351,5 @@ readCommandOutput(std::vector<std::string> cmd, const std::string &input)
         throw std::runtime_error("Invocation failed for " + cmd[0]);
     }
 
-    return iss.str();
+    return normalizeEols(iss.str());
 }

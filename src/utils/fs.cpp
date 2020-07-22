@@ -23,6 +23,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "utils/strings.hpp"
+
 std::string
 readFile(const std::string &path)
 {
@@ -37,5 +39,5 @@ readFile(const std::string &path)
 
     std::ostringstream iss;
     iss << ifile.rdbuf();
-    return iss.str();
+    return normalizeEols(iss.str());
 }

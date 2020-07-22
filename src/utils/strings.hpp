@@ -74,4 +74,8 @@ split(boost::string_ref str, char with)
     return results;
 }
 
+// Normalizes line endings in the string by turning DOS line endings into UNIX
+// line endings.
+std::string && normalizeEols(std::string &&str);
+
 #endif // ZOGRASCOPE__UTILS__STRINGS__HPP__
