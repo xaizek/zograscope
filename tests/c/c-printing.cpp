@@ -32,7 +32,7 @@ TEST_CASE("Directives are diffed", "[printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1  #define DEFINE (1 + 2 + 3) ~  1  #define DEFINE (1 + 2 + 3 {+++} {+4+})
+         1  #define DEFINE (1 + 2 + 3) {#~#}  1  #define DEFINE (1 + 2 + 3 {+++} {+4+})
     )");
 
     REQUIRE(printed == expected);

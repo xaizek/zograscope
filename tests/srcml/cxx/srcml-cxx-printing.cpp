@@ -30,7 +30,7 @@ TEST_CASE("Comment contents is compared in C++", "[.srcml][srcml-cxx][printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1  // This is {-that-} comment. ~  1  // This is {+this+} comment.
+         1  // This is {-that-} comment. {#~#}  1  // This is {+this+} comment.
     )");
 
     REQUIRE(printed == expected);

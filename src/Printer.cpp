@@ -360,12 +360,12 @@ public:
     }
 
     // Prints marker between two parts.
-    void printMarker(char marker)
+    void printMarker(char marker, ColorGroup color)
     {
         if (layout.isLeftVisible()) {
             os << ' ';
         }
-        os << marker;
+        os << (cs[color] << marker);
         if (layout.isRightVisible()) {
             os << ' ';
         }
@@ -410,8 +410,10 @@ private:
     std::string leftMarker;  // Left marker for headers.
     std::string rightMarker; // Right marker for headers.
 
+    // Color scheme.
+    ColorScheme cs;
     // Line number style.
-    decor::Decoration lineNo = ColorScheme()[ColorGroup::LineNo];
+    decor::Decoration lineNo = cs[ColorGroup::LineNo];
     // Next line index of the left part (needed to correct maximum width).
     int leftWidthIndex = 0;
 };
@@ -509,12 +511,19 @@ Printer::print(TimeReport &tr)
     for (DiffLine d : diff) {
         boost::string_ref ll, rl;
         char marker = '?';
+        ColorGroup markerColor = ColorGroup::None;
 
         switch (d.type) {
-            case Diff::Left:      ll = l[i++];              marker = '<'; break;
-            case Diff::Right:                  rl = r[j++]; marker = '>'; break;
+            case Diff::Left:      ll = l[i++];              marker = '-';
+                                  markerColor = ColorGroup::Deleted;
+                                  break;
+            case Diff::Right:                  rl = r[j++]; marker = '+';
+                                  markerColor = ColorGroup::Inserted;
+                                  break;
             case Diff::Identical: ll = l[i++]; rl = r[j++]; marker = '|'; break;
-            case Diff::Different: ll = l[i++]; rl = r[j++]; marker = '~'; break;
+            case Diff::Different: ll = l[i++]; rl = r[j++]; marker = '~';
+                                  markerColor = ColorGroup::Updated;
+                                  break;
 
             case Diff::Fold:
                 i += d.data;
@@ -539,7 +548,7 @@ Printer::print(TimeReport &tr)
             }
         }
 
-        outliner.printMarker(marker);
+        outliner.printMarker(marker, markerColor);
 
         if (layout.isRightVisible()) {
             if (d.type == Diff::Left) {

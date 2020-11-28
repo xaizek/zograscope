@@ -75,7 +75,7 @@ TEST_CASE("Comment contents is compared", "[printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1  // This is {-that-} comment. ~  1  // This is {+this+} comment.
+         1  // This is {-that-} comment. {#~#}  1  // This is {+this+} comment.
     )");
 
     REQUIRE(printed == expected);
@@ -97,9 +97,9 @@ TEST_CASE("String literal contents is compared", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                |  1
-         2          char str[] = "this is ~  2          char str[] = "this is
-         3          {-a-}                 ~  3          {+the+}
-         4          string";              ~  4          string";
+         2          char str[] = "this is {#~#}  2          char str[] = "this is
+         3          {-a-}                 {#~#}  3          {+the+}
+         4          string";              {#~#}  4          string";
     )");
 
     REQUIRE(printed == expected);
@@ -117,7 +117,7 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                |  1
-         2  format_str("{-...-}%s", str); ~  2  format_str("%s{+%s+}"{+,+}{+ +}{+ell+}, str);
+         2  format_str("{-...-}%s", str); {#~#}  2  format_str("%s{+%s+}"{+,+}{+ +}{+ell+}, str);
     )");
 
     REQUIRE(printed == expected);
@@ -141,9 +141,9 @@ R"(void f() {
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1  void f() {                 |  1  void f() {
-         -                             >  2      {+{+}
-         2      /* {-This-} is bad. */ ~  3          /* {+Failure+} is bad. */
-         -                             >  4      {+}+}
+         -                             {+++}  2      {+{+}
+         2      /* {-This-} is bad. */ {#~#}  3          /* {+Failure+} is bad. */
+         -                             {+++}  4      {+}+}
          3  }                          |  5  }
     )");
 
@@ -186,23 +186,23 @@ TEST_CASE("Lines with moves aren't folded", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
           1                                         |   1
-          2  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:} <   -
-          3  {:}:}                                  <   -
-          -                                         >   2  void h() {
-          -                                         >   3  }
+          2  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:} {---}   -
+          3  {:}:}                                  {---}   -
+          -                                         {+++}   2  void h() {
+          -                                         {+++}   3  }
           4                                         |   4
-          5  {:void:}{: :}{:g:}{:(:}{:):}           ~   5  {:void:}{: :}{:g:}{:(:}{:):}
-          6  {:{:}                                  ~   6  {:{:}
-          7      {:movedStuff:}{:;:}                ~   7      {:movedStuff:}{:;:}
-          8      {:movedStuff:}{:;:}                ~   8      {:movedStuff:}{:;:}
-          9      {:movedStuff:}{:;:}                ~   9      {:movedStuff:}{:;:}
-         10      {:movedStuff:}{:;:}                ~  10      {:movedStuff:}{:;:}
-         11  {:}:}                                  ~  11  {:}:}
+          5  {:void:}{: :}{:g:}{:(:}{:):}           {#~#}   5  {:void:}{: :}{:g:}{:(:}{:):}
+          6  {:{:}                                  {#~#}   6  {:{:}
+          7      {:movedStuff:}{:;:}                {#~#}   7      {:movedStuff:}{:;:}
+          8      {:movedStuff:}{:;:}                {#~#}   8      {:movedStuff:}{:;:}
+          9      {:movedStuff:}{:;:}                {#~#}   9      {:movedStuff:}{:;:}
+         10      {:movedStuff:}{:;:}                {#~#}  10      {:movedStuff:}{:;:}
+         11  {:}:}                                  {#~#}  11  {:}:}
          12                                         |  12
-         13  void h() {                             <  --
-         14  }                                      <  --
-         --                                         >  13  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:}
-         --                                         >  14  {:}:}
+         13  void h() {                             {---}  --
+         14  }                                      {---}  --
+         --                                         {+++}  13  {:void:}{: :}{:f:}{:(:}{:):}{: :}{:{:}
+         --                                         {+++}  14  {:}:}
     )");
 
     REQUIRE(printed == expected);
@@ -250,28 +250,28 @@ TEST_CASE("Lines with additions/deletions aren't folded", "[printer]")
          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
            1                                         |   1
-           2  int array[] = {-{-}                    ~   2  int array[] = {+{+}
-           3      {-somethingOldThatWontMatch-}{-,-} <   -
-           4      {-somethingOldThatWontMatch-}{-,-} <   -
-           5      {-somethingOldThatWontMatch-}{-,-} <   -
-           -                                         >   3      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-           -                                         >   4      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-           -                                         >   5      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+           2  int array[] = {-{-}                    {#~#}   2  int array[] = {+{+}
+           3      {-somethingOldThatWontMatch-}{-,-} {---}   -
+           4      {-somethingOldThatWontMatch-}{-,-} {---}   -
+           5      {-somethingOldThatWontMatch-}{-,-} {---}   -
+           -                                         {+++}   3      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+           -                                         {+++}   4      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+           -                                         {+++}   5      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
            6                                         |   6
-           7      {-somethingCommon-}{-,-}           ~   7      {+somethingCommon+}{+,+}
-           8      {-somethingCommon-}{-,-}           ~   8      {+somethingCommon+}{+,+}
-           9      {-somethingCommon-}{-,-}           ~   9      {+somethingCommon+}{+,+}
-          10      {-somethingCommon-}{-,-}           ~  10      {+somethingCommon+}{+,+}
-          11      {-somethingCommon-}{-,-}           ~  11      {+somethingCommon+}{+,+}
-          12      {-somethingCommon-}{-,-}           ~  12      {+somethingCommon+}{+,+}
+           7      {-somethingCommon-}{-,-}           {#~#}   7      {+somethingCommon+}{+,+}
+           8      {-somethingCommon-}{-,-}           {#~#}   8      {+somethingCommon+}{+,+}
+           9      {-somethingCommon-}{-,-}           {#~#}   9      {+somethingCommon+}{+,+}
+          10      {-somethingCommon-}{-,-}           {#~#}  10      {+somethingCommon+}{+,+}
+          11      {-somethingCommon-}{-,-}           {#~#}  11      {+somethingCommon+}{+,+}
+          12      {-somethingCommon-}{-,-}           {#~#}  12      {+somethingCommon+}{+,+}
           13                                         |  13
-          14      {-somethingOldThatWontMatch-}{-,-} <  --
-          15      {-somethingOldThatWontMatch-}{-,-} <  --
-          16      {-somethingOldThatWontMatch-}{-,-} <  --
-          --                                         >  14      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          --                                         >  15      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          --                                         >  16      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
-          17  {-}-};                                 ~  17  {+}+};
+          14      {-somethingOldThatWontMatch-}{-,-} {---}  --
+          15      {-somethingOldThatWontMatch-}{-,-} {---}  --
+          16      {-somethingOldThatWontMatch-}{-,-} {---}  --
+          --                                         {+++}  14      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          --                                         {+++}  15      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          --                                         {+++}  16      {+aNewThingThatHasNothingInCommonWithTheOldOne+}{+,+}
+          17  {-}-};                                 {#~#}  17  {+}+};
     )");
 
     REQUIRE(printed == expected);
@@ -289,11 +289,11 @@ TEST_CASE("Highlighting skips leading whitespace", "[printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
-        >  1
-        >  2          {+/* This+}
-        >  3           {+* is+}
-        >  4           {+* a+}
-        >  5           {+* comment */+}
+        {+++}  1
+        {+++}  2          {+/* This+}
+        {+++}  3           {+* is+}
+        {+++}  4           {+* a+}
+        {+++}  5           {+* comment */+}
     )");
 
     REQUIRE(printed == expected);
@@ -315,10 +315,10 @@ TEST_CASE("Highlighting fills background in a meaningful way", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                                              |  1
-         2  {:void:}{: :}{#func_proto#}{:(:}{:int:}{: :}{:a:}{:):}{:;:} <  -
+         2  {:void:}{: :}{#func_proto#}{:(:}{:int:}{: :}{:a:}{:):}{:;:} {---}  -
          3  int a;                                                      |  2  int a;
          4  int b;                                                      |  3  int b;
-         -                                                              >  4  {:void:}{: :}{#func_prototype#}{:(:}{:int:}{: :}{:a:}{:):}{:;:}
+         -                                                              {+++}  4  {:void:}{: :}{#func_prototype#}{:(:}{:int:}{: :}{:a:}{:):}{:;:}
     )");
 
     REQUIRE(printed == expected);
@@ -341,7 +341,7 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 1", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                   |  1
          2  void f() {                       |  2  void f() {
-         3      some_function({:argument:}); ~  3      some_function({:argument:} {+++}{+ +}{+1+});
+         3      some_function({:argument:}); {#~#}  3      some_function({:argument:} {+++}{+ +}{+1+});
          4  }                                |  4  }
     )");
 
@@ -375,13 +375,13 @@ TEST_CASE("Highlighting doesn't fill background where shouldn't 2", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                                                                              |   1
          2  void f() {                                                                                  |   2  void f() {
-         -                                                                                              >   3      {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
-         -                                                                                              >   4          {+cfg+}{+.+}{+short_term_mux_titles+}{+ +}{+=+}{+ +}{+1+}{+;+}
-         3      {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        ~   5      {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
-         4          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}                       ~   6          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}
-         5      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:} ~   7      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:}
-         6          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}                        ~   8          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}
-         7      {:}:}                                                                                   ~   9      {:}:}
+         -                                                                                              {+++}   3      {+if+}{+ +}{+(+}{+*+}{+p+}{+ +}{+==+}{+ +}{+'M'+}{+)+}{+ +}{+{+}
+         -                                                                                              {+++}   4          {+cfg+}{+.+}{+short_term_mux_titles+}{+ +}{+=+}{+ +}{+1+}{+;+}
+         3      {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}                        {#~#}   5      {+}+}{+ +}{+else+} {:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'T':}{:):}{: :}{:{:}
+         4          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}                       {#~#}   6          {:cfg:}{:.:}{:trunc_normal_sb_msgs:}{: :}{:=:}{: :}{:1:}{:;:}
+         5      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:} {#~#}   7      {:}:}{: :}{:else:}{: :}{:if:}{: :}{:(:}{:*:}{:p:}{: :}{:==:}{: :}{:'p':}{:):}{: :}{:{:}
+         6          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}                        {#~#}   8          {:cfg:}{:.:}{:shorten_title_paths:}{: :}{:=:}{: :}{:1:}{:;:}
+         7      {:}:}                                                                                   {#~#}   9      {:}:}
          8  }                                                                                           |  10  }
     )");
 
@@ -409,7 +409,7 @@ TEST_CASE("Widths is adjusted correctly on long headers", "[printer]")
         ~~~~~~~~~~~~!~~~~~~~~~~~~~~~
          -  left    !  +  right
         ~~~~~~~~~~~~!~~~~~~~~~~~~~~~
-        >  1  {+int+}{+ +}{+a+}{+;+}
+        {+++}  1  {+int+}{+ +}{+a+}{+;+}
     )");
     CHECK(normalizeText(oss.str()) == expected);
 
@@ -421,7 +421,7 @@ TEST_CASE("Widths is adjusted correctly on long headers", "[printer]")
          -  left     !  +  right
          -  longleft !  +  right
         ~~~~~~~~~~~~~!~~~~~~~~~~~~~~
-        >  1  {+int+}{+ +}{+a+}{+;+}
+        {+++}  1  {+int+}{+ +}{+a+}{+;+}
     )");
     CHECK(normalizeText(oss.str()) == expected);
 
@@ -434,7 +434,7 @@ TEST_CASE("Widths is adjusted correctly on long headers", "[printer]")
          -  longleft !  +  right
          -  left     !  +  verylongright
         ~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~
-        >  1  {+int+}{+ +}{+a+}{+;+}
+        {+++}  1  {+int+}{+ +}{+a+}{+;+}
     )");
     CHECK(normalizeText(oss.str()) == expected);
 }
@@ -451,11 +451,11 @@ TEST_CASE("Deletions only leave only one side", "[printer]")
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
         ~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~
-         1                            <
-         2          {-/* This-}       <
-         3           {-* is-}         <
-         4           {-* a-}          <
-         5           {-* comment */-} <
+         1                            {---}
+         2          {-/* This-}       {---}
+         3           {-* is-}         {---}
+         4           {-* a-}          {---}
+         5           {-* comment */-} {---}
     )");
 
     CHECK(printed == expected);
@@ -484,10 +484,10 @@ TEST_CASE("Single side view doesn't contain blanks", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         |  1
         |  2  struct Args {
-        ~  3      bool noRefine;      {+// Don't run TED on updated nodes.+}
-        ~  4      bool gitDiff;       {+// Invoked by git and file was changed.+}
-        ~  5      bool gitRename;     {+// File was renamed and possibly changed too.+}
-        ~  6      bool gitRenameOnly; {+// File was renamed without changing it.+}
+        {#~#}  3      bool noRefine;      {+// Don't run TED on updated nodes.+}
+        {#~#}  4      bool gitDiff;       {+// Invoked by git and file was changed.+}
+        {#~#}  5      bool gitRename;     {+// File was renamed and possibly changed too.+}
+        {#~#}  6      bool gitRenameOnly; {+// File was renamed without changing it.+}
         |  7  };
     )");
 
@@ -513,7 +513,7 @@ TEST_CASE("Adjacent updates aren't merged with background", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                               |  1
          2  void f() {                                   |  2  void f() {
-         3      if (someLongVariableName {#==#} {#0#}) { ~  3      if (someLongVariableName {#!=#} {#1#}) {
+         3      if (someLongVariableName {#==#} {#0#}) { {#~#}  3      if (someLongVariableName {#!=#} {#1#}) {
          4      }                                        |  4      }
          5  }                                            |  5  }
     )");
@@ -538,7 +538,7 @@ TEST_CASE("Separators in diffable tokens are handled separately", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                              |  1
          2  void f() {                                  |  2  void f() {
-         3      something("Destination doesn't exist"); ~  3      something("Destination doesn't exist {+or+} {+not+} {+a+} {+directory+}");
+         3      something("Destination doesn't exist"); {#~#}  3      something("Destination doesn't exist {+or+} {+not+} {+a+} {+directory+}");
          4  }                                           |  4  }
     )");
 
@@ -562,7 +562,7 @@ TEST_CASE("Diffable identifiers are surrounded with brackets", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                        |  1
          2  void f() {                            |  2  void f() {
-         3      {-cmd-}{~_group_open~}(undo_msg); ~  3      {+un+}{~_group_open~}(undo_msg);
+         3      {-cmd-}{~_group_open~}(undo_msg); {#~#}  3      {+un+}{~_group_open~}(undo_msg);
          4  }                                     |  4  }
     )");
 
@@ -587,7 +587,7 @@ TEST_CASE("Diffable identifiers that are too different aren't detailed",
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                     |  1
          2  void f() {                         |  2  void f() {
-         3      {#cmd_group_begin#}(undo_msg); ~  3      {#un_group_open#}(undo_msg);
+         3      {#cmd_group_begin#}(undo_msg); {#~#}  3      {#un_group_open#}(undo_msg);
          4  }                                  |  4  }
     )");
 
@@ -611,7 +611,7 @@ TEST_CASE("Diffing by characters", "[printer]")
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          1                                                       |  1
          2  void f() {                                           |  2  void f() {
-         3      {-cmd-}{~Group~}{-B-}{~e~}{-gi-}{~n~}(undo_msg); ~  3      {+un+}{~Group~}{+Op+}{~en~}(undo_msg);
+         3      {-cmd-}{~Group~}{-B-}{~e~}{-gi-}{~n~}(undo_msg); {#~#}  3      {+un+}{~Group~}{+Op+}{~en~}(undo_msg);
          4  }                                                    |  4  }
     )");
 
