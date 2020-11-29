@@ -762,3 +762,17 @@ TEST_CASE("EOL continuation is identified in GNU Make", "[make][parser]")
     REQUIRE(node != nullptr);
     CHECK(tree.getLanguage()->isEolContinuation(node));
 }
+
+TEST_CASE("New line node does not appear in the tree", "[make][parser]")
+{
+    Tree tree = parseMake(R"(
+        define suite_template
+           a
+
+        endef
+    )");
+    const Node *node = findNode(tree, [](const Node *node) {
+                                    return node->label == "\n";
+                                });
+    REQUIRE(node == nullptr);
+}

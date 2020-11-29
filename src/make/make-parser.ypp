@@ -310,7 +310,7 @@ definition
     : comment_opt br
     { $$ = $1; }
     | comment_opt br exprs_in_def br
-    { $$ = tb->addNode({ $1, $3, $4 }, +MakeSType::TemporaryContainer); }
+    { $$ = tb->addNode({ $1, $3 }, +MakeSType::TemporaryContainer); }
     ;
 
 include
