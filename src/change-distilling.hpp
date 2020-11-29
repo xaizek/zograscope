@@ -54,9 +54,9 @@ private:
                              const std::vector<Node *> &po1,
                              const Node *y,
                              const std::vector<Node *> &po2) const;
-    // Computes rating of a match, which is to be compared with ratings of other
-    // matches.
-    int rateMatch(const Node *x, const Node *y) const;
+    // Computes rating of a match of terminals, which is to be compared with
+    // ratings of other matches.
+    int rateTerminalsMatch(const Node *x, const Node *y) const;
     // Retrieves parent of the node possibly skipping container parents.  Might
     // return `nullptr`.
     const Node * getParent(const Node *n) const;

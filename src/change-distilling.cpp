@@ -120,7 +120,7 @@ struct Distiller::TerminalMatch
 };
 
 int
-Distiller::rateMatch(const Node *x, const Node *y) const
+Distiller::rateTerminalsMatch(const Node *x, const Node *y) const
 {
     const Node *xParent = getParent(x);
     const Node *yParent = getParent(y);
@@ -186,7 +186,8 @@ Distiller::distill(Node &T1, Node &T2)
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const TerminalMatch &a, const TerminalMatch &b) {
                          if (std::fabs(a.similarity - b.similarity) < 0.01f) {
-                             return rateMatch(b.x, b.y) < rateMatch(a.x, a.y);
+                             return rateTerminalsMatch(b.x, b.y)
+                                  < rateTerminalsMatch(a.x, a.y);
                          }
                          return b.similarity < a.similarity;
                      });
