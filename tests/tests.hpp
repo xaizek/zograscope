@@ -187,7 +187,7 @@ std::string diffSrcmlCxx(const std::string &left, const std::string &right);
         reportDiffFailure(difference); \
     } while (false)
 
-// Prints report.  This function is needed to make out custom output appear
+// Prints report.  This function is needed to make our custom output appear
 // after Catch's failure report.
 void reportDiffFailure(const std::string &report);
 
