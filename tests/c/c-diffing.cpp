@@ -1797,3 +1797,72 @@ TEST_CASE("Call arguments are on separate layers", "[comparison]")
         }
     )", false);
 }
+
+TEST_CASE("Terminals tie resolution in C", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            switch(*p) {
+                default:
+                    assert(0 && "Unhandled tuioptions flag.");
+                    break;
+            }
+        }
+    )", R"(
+        void f() {
+            switch(*p) {
+                case 'u':                                       /// Additions
+                    cfg.use_unicode_characters = 1;             /// Additions
+                    break;                                      /// Additions
+
+                default:
+                    assert(0 && "Unhandled tuioptions flag.");
+                    break;
+            }
+        }
+    )", false);
+
+    diffC(R"(
+        void f() {
+        #if HAVE_DECL_MAGIC_MIME_TYPE                 /// Moves
+            magic = magic_open(MAGIC_MIME_TYPE);      /// Moves
+        #endif                                        /// Moves
+
+        #if !HAVE_DECL_MAGIC_MIME_TYPE
+        #endif
+        }
+    )", R"(
+        void f() {
+            {                                         /// Additions
+        #if HAVE_DECL_MAGIC_MIME_TYPE                 /// Moves
+                magic = magic_open(MAGIC_MIME_TYPE);  /// Moves
+        #endif                                        /// Moves
+            }                                         /// Additions
+
+        #if !HAVE_DECL_MAGIC_MIME_TYPE
+        #endif
+        }
+    )", false);
+
+    diffC(R"(
+        void g() {
+        #if HAVE_DECL_MAGIC_MIME_TYPE                 /// Moves
+            magic = magic_open(MAGIC_MIME_TYPE);      /// Moves
+        #endif                                        /// Moves
+
+        #if HAVE_DECL_MAGIC_MIME_TYPE
+        #endif
+        }
+    )", R"(
+        void g() {
+            {                                         /// Additions
+        #if HAVE_DECL_MAGIC_MIME_TYPE                 /// Moves
+                magic = magic_open(MAGIC_MIME_TYPE);  /// Moves
+        #endif                                        /// Moves
+            }                                         /// Additions
+
+        #if HAVE_DECL_MAGIC_MIME_TYPE
+        #endif
+        }
+    )", false);
+}

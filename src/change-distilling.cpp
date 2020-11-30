@@ -18,6 +18,7 @@
 
 #include <cmath>
 
+#include <algorithm>
 #include <vector>
 
 #include "utils/strings.hpp"
@@ -33,6 +34,9 @@ static bool unmatchedInternal(const Node *node);
 static bool canMatch(const Node *x, const Node *y);
 static bool isTerminal(const Node *n);
 static void markNode(Node &node, State state);
+
+// How many neighbours to consider on each side when computing overlap.
+static const int TerminalOverlapSize = 3;
 
 namespace {
 
@@ -119,6 +123,34 @@ struct Distiller::TerminalMatch
     float similarity;   // How similar labels of two nodes are in [0.0, 1.0].
 };
 
+// Computes number of neighbouring nodes of `x` that match corresponding (by
+// offset) nodes of `y`.  This heuristics glues unmatched nodes to their already
+// matched neighbours and resolves ties quite well.
+static int
+computeOverlap(const Node *x, const std::vector<Node *> &po1,
+               const Node *y, const std::vector<Node *> &po2)
+{
+    int overlap = 0;
+
+    int maxLeftOffset = std::min({ x->poID, y->poID, TerminalOverlapSize });
+    for (int i = 1; i <= maxLeftOffset; ++i) {
+        int xi = x->poID - i;
+        int yi = y->poID - i;
+        overlap += (po1[xi]->relative == po2[yi]);
+    }
+
+    int maxRightOffset = std::min({ static_cast<int>(po1.size()) - 1 - x->poID,
+                                    static_cast<int>(po2.size()) - 1 - y->poID,
+                                    TerminalOverlapSize });
+    for (int i = 1; i <= maxRightOffset; ++i) {
+        int xi = x->poID + i;
+        int yi = y->poID + i;
+        overlap += (po1[xi]->relative == po2[yi]);
+    }
+
+    return overlap;
+}
+
 int
 Distiller::rateTerminalsMatch(const Node *x, const Node *y) const
 {
@@ -126,7 +158,7 @@ Distiller::rateTerminalsMatch(const Node *x, const Node *y) const
     const Node *yParent = getParent(y);
 
     if (xParent && xParent->relative && xParent->relative == yParent) {
-        return 4;
+        return 4 + computeOverlap(x, po1, y, po2);
     }
 
     if (haveValues(xParent, yParent)) {

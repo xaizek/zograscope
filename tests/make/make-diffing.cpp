@@ -133,3 +133,49 @@ self-coverage: check self-coverage-release                           ## Addition
 	                        --capture-worktree $(out_dir)            ## Additions
     )");
 }
+
+TEST_CASE("Terminals tie resolution in Make", "[make][comparison]")
+{
+    diffMake(R"(
+define suite_template
+ifeq ($(SANDBOX_PATH),sandbox)  ## Moves
+$(SANDBOX_PATH)/$1:
+	$(AT)mkdir -p $(B)$$@
+else
+$(SANDBOX_PATH)/$1:             ## Deletions
+	$(AT)mkdir -p $$@
+endif
+
+$1: $$($1.bin)
+
+.PHONY: $$($1.fixtures)
+$$($1.fixtures): $$($1.bin)
+
+build: $$($1.bin)
+
+ifneq ($1,fuzz)
+check: $1
+endif
+endef
+    )", R"(
+define suite_template
+$(SANDBOX_PATH)/$1:
+ifeq ($(SANDBOX_PATH),sandbox)  ## Moves
+	$(AT)mkdir -p $(B)$$@
+else
+	$(AT)mkdir -p $$@
+endif
+
+$1: $$($1.bin)
+
+.PHONY: $$($1.fixtures)
+$$($1.fixtures): $$($1.bin)
+
+build: $$($1.bin)
+
+ifneq ($1,fuzz)
+check: $1
+endif
+endef
+    )");
+}
