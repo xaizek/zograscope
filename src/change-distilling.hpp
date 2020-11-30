@@ -72,6 +72,8 @@ private:
     // This pass matches nodes, whose direct children (ignoring comments) are
     // already matched with each other.
     void matchFirstLevelMatchedInternal();
+    // Applies matching to terminals.
+    void applyTerminalMatches(const std::vector<TerminalMatch> &matches);
     // Changes state of two nodes and connects them.
     void match(Node *x, Node *y, State state);
 

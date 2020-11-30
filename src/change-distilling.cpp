@@ -152,16 +152,6 @@ Distiller::distill(Node &T1, Node &T2)
     initialize(T1, T2);
 
     std::vector<TerminalMatch> matches;
-    auto matchTerminals = [&]() {
-        for (const TerminalMatch &m : matches) {
-            if (m.x->relative == nullptr && m.y->relative == nullptr) {
-                match(m.x, m.y, (m.similarity == 1.0f &&
-                                 m.y->label == m.x->label)
-                                ? State::Unchanged
-                                : State::Updated);
-            }
-        }
-    };
 
     // First round.
 
@@ -171,7 +161,7 @@ Distiller::distill(Node &T1, Node &T2)
                      [&](const TerminalMatch &a, const TerminalMatch &b) {
                          return b.similarity < a.similarity;
                      });
-    matchTerminals();
+    applyTerminalMatches(matches);
 
     distillInternal();
     // First time around we don't want to use values as our guide because they
@@ -193,7 +183,7 @@ Distiller::distill(Node &T1, Node &T2)
                      });
     clear(&T1);
     clear(&T2);
-    matchTerminals();
+    applyTerminalMatches(matches);
 
     distillInternal();
     matchPartiallyMatchedInternal(false);
@@ -672,6 +662,18 @@ isTerminal(const Node *n)
     // XXX: children here might include satellites, is this OK?
     // XXX: should we check for isTravellingNode() instead of just comments?
     return (n->children.empty() && n->type != Type::Comments);
+}
+
+void
+Distiller::applyTerminalMatches(const std::vector<TerminalMatch> &matches)
+{
+    for (const TerminalMatch &m : matches) {
+        if (m.x->relative == nullptr && m.y->relative == nullptr) {
+            match(m.x, m.y, (m.similarity == 1.0f && m.y->label == m.x->label)
+                            ? State::Unchanged
+                            : State::Updated);
+        }
+    }
 }
 
 void
