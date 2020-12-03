@@ -49,7 +49,7 @@ TEST_CASE("C++ functions are matched",
 }
 
 TEST_CASE("Function body changes don't cause everything to be moved",
-          "[.srcml][srcml-cxx][parsing]")
+          "[.srcml][srcml-cxx][comparison]")
 {
     diffSrcmlCxx(R"(
         void setEntry(const Entry *entry) {
@@ -71,6 +71,29 @@ TEST_CASE("Function body changes don't cause everything to be moved",
             prevHighlight = currHighlight;
             currHighlight = &getHighlight(*currNode, entry.moved, entry.state,
                                           lang);
+        }
+    )");
+}
+
+TEST_CASE("Terminals tie resolution in C++", "[.srcml][srcml-cxx][comparison]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            switch (id) {
+                case This: return anything;
+                case That: return anything;
+                case Final: return anything;
+            }
+        }
+    )", R"(
+        void f() {
+            switch (id) {
+                case This: return anything;
+                case NewThing: return anything;  /// Additions
+                case OneMore: return anything;   /// Additions
+                case That: return anything;
+                case Final: return anything;
+            }
         }
     )");
 }

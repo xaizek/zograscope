@@ -123,12 +123,14 @@ struct Distiller::TerminalMatch
     float similarity;   // How similar labels of two nodes are in [0.0, 1.0].
 };
 
-// Computes number of neighbouring nodes of `x` that match corresponding (by
-// offset) nodes of `y`.  This heuristics glues unmatched nodes to their already
-// matched neighbours and resolves ties quite well.
+// Computes rate that depends on number and position of neighbouring nodes of
+// `x` that match corresponding (by offset) nodes of `y`.  This heuristics glues
+// unmatched nodes to their already matched neighbours and resolves ties quite
+// well.  Matched nodes that are closer to the one being analyzed contribute
+// more to the rate.
 static int
-computeOverlap(const Node *x, const std::vector<Node *> &po1,
-               const Node *y, const std::vector<Node *> &po2)
+rateOverlap(const Node *x, const std::vector<Node *> &po1,
+            const Node *y, const std::vector<Node *> &po2)
 {
     int overlap = 0;
 
@@ -136,7 +138,7 @@ computeOverlap(const Node *x, const std::vector<Node *> &po1,
     for (int i = 1; i <= maxLeftOffset; ++i) {
         int xi = x->poID - i;
         int yi = y->poID - i;
-        overlap += (po1[xi]->relative == po2[yi]);
+        overlap += (po1[xi]->relative == po2[yi] ? maxLeftOffset - i + 1 : 0);
     }
 
     int maxRightOffset = std::min({ static_cast<int>(po1.size()) - 1 - x->poID,
@@ -145,7 +147,7 @@ computeOverlap(const Node *x, const std::vector<Node *> &po1,
     for (int i = 1; i <= maxRightOffset; ++i) {
         int xi = x->poID + i;
         int yi = y->poID + i;
-        overlap += (po1[xi]->relative == po2[yi]);
+        overlap += (po1[xi]->relative == po2[yi] ? maxRightOffset - i + 1 : 0);
     }
 
     return overlap;
@@ -158,7 +160,7 @@ Distiller::rateTerminalsMatch(const Node *x, const Node *y) const
     const Node *yParent = getParent(y);
 
     if (xParent && xParent->relative && xParent->relative == yParent) {
-        return 4 + computeOverlap(x, po1, y, po2);
+        return 4 + rateOverlap(x, po1, y, po2);
     }
 
     if (haveValues(xParent, yParent)) {
