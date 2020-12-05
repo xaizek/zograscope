@@ -554,7 +554,10 @@ rateChildOverlap(int xi, const cpp17::pmr::vector<Node *> &c1,
 std::string
 printSubTree(const Node &root, bool withComments, int size_hint)
 {
-    // TODO: somehow avoid allocations on building tree
+    // Reminder: making a separate version for use with custom allocator reduces
+    //           number of allocations, but doesn't impact neither performance
+    //           nor parallelism.
+
     struct {
         bool withComments;
         std::string out;
