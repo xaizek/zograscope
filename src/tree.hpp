@@ -56,13 +56,13 @@ struct Node
     Node *parent = nullptr;
     Node *next = nullptr;
     int valueChild = -1;
-    int poID = -1; // post-order ID
+    int poID = -1; // Post-order ID.
     int line = 0;
     int col = 0;
     Type type : 8;
     SType stype : 8;
     State state : 8;
-    bool satellite : 1;
+    bool satellite : 1; // Decorative element or node whose match was finalized.
     bool moved : 1;
     bool last : 1;
     bool leaf : 1;
