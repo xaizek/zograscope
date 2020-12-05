@@ -178,4 +178,52 @@ check: $1
 endif
 endef
     )");
+
+    diffMake(R"(
+        VAR = line2 \
+              line3
+    )", R"(
+        VAR = line1 \  ## Mixed
+              line2 \
+              line3
+    )");
+
+    diffMake(R"(
+        VAR = \
+              line1 \
+              line2 \
+              line3
+    )", R"(
+        VAR = \
+              line0 \  ## Additions
+              line1 \
+              line2 \
+              line3
+    )");
+
+    diffMake(R"(
+        VAR = line0 \
+              line2 \
+              line3
+    )", R"(
+        VAR = line0 \
+              line1 \  ## Additions
+              line2 \
+              line3
+    )");
+
+    diffMake(R"(
+        VAR = \
+              line0 \
+              line2 \
+              line3 \
+              line4
+    )", R"(
+        VAR = \
+              line0 \
+              line1 \  ## Additions
+              line2 \
+              line3 \
+              line4
+    )");
 }

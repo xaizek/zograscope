@@ -28,6 +28,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -43,6 +44,9 @@
 //      (actually we should pass this to lexer).
 constexpr int tabWidth = 4;
 
+// How many neighbours to consider on each side when computing overlap.
+constexpr int subtreeOverlapSize = 3;
+
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
 static void preStringifyPTree(const std::string &contents,
                               PNode *node, const Language *lang,
@@ -56,9 +60,12 @@ static std::string stringifyPNodeSpelling(const std::string &contents,
                                           const PNode *node);
 static int maxStringifiedSize(boost::string_ref contents);
 static void postOrder(Node &node, std::vector<Node *> &v);
-static std::vector<std::size_t> hashChildren(const Node &node);
+static std::unordered_map<std::size_t, std::vector<int>>
+hashChildren(Node &node);
 static std::size_t hashNode(const Node *node);
 static void matchTrees(Node *x, Node *y);
+static int rateChildOverlap(int xi, const cpp17::pmr::vector<Node *> &c1,
+                            int yi, const cpp17::pmr::vector<Node *> &c2);
 static void markAsMoved(Node *node, Language &lang);
 static void dumpTree(std::ostream &os, const Node *node, const Language *lang,
                      std::vector<bool> &trace, int depth);
@@ -370,35 +377,98 @@ postOrder(Node &node, std::vector<Node *> &v)
 void
 reduceTreesCoarse(Node *T1, Node *T2)
 {
-    const std::vector<std::size_t> children1 = hashChildren(*T1);
-    const std::vector<std::size_t> children2 = hashChildren(*T2);
+    std::unordered_map<std::size_t, std::vector<int>> hashed1 =
+        hashChildren(*T1);
+    std::unordered_map<std::size_t, std::vector<int>> hashed2 =
+        hashChildren(*T2);
 
-    for (unsigned int i = 0U, n = children1.size(); i < n; ++i) {
-        const std::size_t hash1 = children1[i];
-        for (unsigned int j = 0U, n = children2.size(); j < n; ++j) {
-            if (T2->children[j]->satellite) {
-                continue;
+    struct Pair {
+        Pair(std::vector<int> *from, std::vector<int> *to) :
+            from(from), to(to)
+        { }
+
+        std::vector<int> *from;
+        std::vector<int> *to;
+    };
+
+    std::vector<Pair> pairs;
+    pairs.reserve(std::min(hashed1.size(), hashed2.size()));
+    for (auto &entry : hashed1) {
+        auto it = hashed2.find(entry.first);
+        if (it != hashed2.cend()) {
+            pairs.emplace_back(&entry.second, &it->second);
+        }
+    }
+
+    // We want to match nodes from less frequent (no ambiguity for 1-1) to most
+    // frequent.  Stable sorting is for reproducible results.
+    std::stable_sort(pairs.begin(), pairs.end(),
+                     [](const Pair &a, const Pair &b) {
+                         auto n = a.from->size(), m = b.from->size();
+                         return (n < m)
+                             || (n == m && a.to->size() < b.to->size());
+                     });
+
+    for (Pair &pair : pairs) {
+        int n = pair.from->size();
+        int m = pair.to->size();
+
+        // Having larger set as "to" allows to explore more options.
+        bool swap = (n > m);
+        if (swap) {
+            std::swap(pair.from, pair.to);
+            std::swap(n, m);
+        }
+        const cpp17::pmr::vector<Node *> &ci = (swap ? T2 : T1)->children;
+        const cpp17::pmr::vector<Node *> &cj = (swap ? T1 : T2)->children;
+
+        // Match here is obvious, skip computing the overlap.
+        if (n == 1 && m == 1) {
+            Node *x = ci[pair.from->front()];
+            Node *y = cj[pair.to->front()];
+
+            matchTrees(x, y);
+            x->satellite = true;
+            y->satellite = true;
+            continue;
+        }
+
+        for (int i : *pair.from) {
+            int bestI = -1;
+            int bestJ = -1;
+            int bestOverlap = -1;
+
+            for (int j : *pair.to) {
+                if (cj[j]->satellite) {
+                    continue;
+                }
+
+                int overlap = rateChildOverlap(i, ci, j, cj);
+                if (overlap > bestOverlap) {
+                    bestOverlap = overlap;
+                    bestI = i;
+                    bestJ = j;
+                }
             }
 
-            const std::size_t hash2 = children2[j];
-            if (hash1 == hash2) {
-                matchTrees(T1->children[i], T2->children[j]);
-                T1->children[i]->satellite = true;
-                T2->children[j]->satellite = true;
-                break;
-            }
+            // There must always be a match because of `n <= m` precondition.
+            matchTrees(ci[bestI], cj[bestJ]);
+            ci[bestI]->satellite = true;
+            cj[bestJ]->satellite = true;
         }
     }
 }
 
-// Hashes direct children of the node individually.
-static std::vector<std::size_t>
-hashChildren(const Node &node)
+// Hashes direct non-satellite children of the node individually.
+static std::unordered_map<std::size_t, std::vector<int>>
+hashChildren(Node &node)
 {
-    std::vector<std::size_t> hashes;
-    hashes.reserve(node.children.size());
-    for (const Node *child : node.children) {
-        hashes.push_back(hashNode(child));
+    std::unordered_map<std::size_t, std::vector<int>> hashes;
+    for (int i = 0, n = node.children.size(); i < n; ++i) {
+        Node *child = node.children[i];
+        if (!child->satellite) {
+            hashes[hashNode(child)].push_back(i);
+        }
     }
     return hashes;
 }
@@ -440,9 +510,51 @@ matchTrees(Node *x, Node *y)
     }
 }
 
+// Computes rate that depends on number and position of neighbouring nodes of
+// `c1[xi]` that match corresponding (by offset) nodes of `c2[yi]`.  This
+// heuristics glues unmatched nodes to their already matched neighbours and
+// resolves ties quite well.  Holes at the ends (too far left or right) of both
+// arguments are considered a match to match border nodes to border nodes.
+static int
+rateChildOverlap(int xi, const cpp17::pmr::vector<Node *> &c1,
+                 int yi, const cpp17::pmr::vector<Node *> &c2)
+{
+    // TODO: maybe try matching true satellitels (separators) with each other by
+    //       value
+
+    int overlap = 0;
+
+    int maxLeftOffset = std::min({ xi, yi, subtreeOverlapSize });
+    for (int i = 1; i <= maxLeftOffset; ++i) {
+        overlap += (c1[xi - i]->relative == c2[yi - i]);
+    }
+    for (int i = maxLeftOffset + 1; i <= subtreeOverlapSize; ++i) {
+        if (xi - i < 0 && yi - i < 0) {
+            overlap += subtreeOverlapSize - i + 1;
+        }
+    }
+
+    int n = c1.size();
+    int m = c2.size();
+    int maxRightOffset = std::min({ n - 1 - xi,
+                                    m - 1 - yi,
+                                    subtreeOverlapSize });
+    for (int i = 1; i <= maxRightOffset; ++i) {
+        overlap += (c1[xi + i]->relative == c2[yi + i]);
+    }
+    for (int i = maxRightOffset + 1; i <= subtreeOverlapSize; ++i) {
+        if (xi + i >= n && yi + i >= m) {
+            overlap += subtreeOverlapSize - i + 1;
+        }
+    }
+
+    return overlap;
+}
+
 std::string
 printSubTree(const Node &root, bool withComments, int size_hint)
 {
+    // TODO: somehow avoid allocations on building tree
     struct {
         bool withComments;
         std::string out;

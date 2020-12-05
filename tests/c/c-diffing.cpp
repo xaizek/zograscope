@@ -1801,6 +1801,15 @@ TEST_CASE("Call arguments are on separate layers", "[comparison]")
 TEST_CASE("Terminals tie resolution in C", "[comparison]")
 {
     diffC(R"(
+        int int2; void f();
+        int int3; void f();
+    )", R"(
+        int int2; void f();
+        int int0; void f();  /// Additions
+        int int3; void f();
+    )", false);
+
+    diffC(R"(
         void f() {
             switch(*p) {
                 default:
