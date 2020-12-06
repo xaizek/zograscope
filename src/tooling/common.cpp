@@ -178,6 +178,9 @@ dumpTrees(const CommonArgs &args, Tree &treeA, Tree &treeB)
         return;
     }
 
+    treeA.markInPreOrder();
+    treeB.markInPreOrder();
+
     if (!treeA.isEmpty()) {
         std::cout << "Old tree:\n";
         treeA.dump();

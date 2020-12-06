@@ -165,6 +165,9 @@ public:
     // Marks nodes of the subtree as moved if that makes sense for them.
     void markTreeAsMoved(Node *node);
 
+    // Marks all nodes with their positions on pre-order traversal.
+    void markInPreOrder();
+
     // Dumps tree on standard output for debugging purposes.
     void dump() const;
 

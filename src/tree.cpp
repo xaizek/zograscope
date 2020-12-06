@@ -602,6 +602,30 @@ canForceLeafMatch(const Node *x, const Node *y)
 }
 
 void
+Tree::markInPreOrder()
+{
+    struct {
+        int id = 1;
+        void markInPreOrder(Node &node) {
+            node.poID = id++;
+            if (node.next != nullptr) {
+                if (!node.next->leaf) {
+                    markInPreOrder(*node.next);
+                }
+            } else {
+                for (Node *child : node.children) {
+                    markInPreOrder(*child);
+                }
+            }
+        }
+    } visitor;
+
+    if (root != nullptr) {
+        visitor.markInPreOrder(*root);
+    }
+}
+
+void
 Tree::markTreeAsMoved(Node *node)
 {
     if (lang->hasMoveableItems(node)) {
