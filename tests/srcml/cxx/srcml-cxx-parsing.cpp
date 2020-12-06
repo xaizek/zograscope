@@ -605,7 +605,7 @@ TEST_CASE("Unions are moved to a separate layer",
     )");
 }
 
-TEST_CASE("Curly initializers", "[.srcml][srcml-cxx][parsing]")
+TEST_CASE("Curly initializers", "[.srcml][srcml095-broken][srcml-cxx][parsing]")
 {
     diffSrcmlCxx(R"(
         void f()

@@ -98,7 +98,8 @@ TEST_CASE("Terminals tie resolution in C++", "[.srcml][srcml-cxx][comparison]")
     )");
 }
 
-TEST_CASE("Complete replacement", "[.srcml][srcml-cxx][comparison]")
+TEST_CASE("Complete replacement",
+          "[.srcml][srcml095-broken][srcml-cxx][comparison]")
 {
     diffSrcmlCxx(R"(
         int something;  /// Deletions

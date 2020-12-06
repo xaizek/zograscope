@@ -8,7 +8,7 @@ matrix:
       before_script:
         - wget http://131.123.42.38/lmcrs/beta/srcML-Ubuntu18.04.deb && sudo apt install ./srcML-Ubuntu18.04.deb
         - srcml --version
-        - echo "TESTS := '*'" > config.mk
+        - echo "TESTS := '~[srcml095-broken]'" > config.mk
     - os: linux
       compiler: clang
       dist: bionic
