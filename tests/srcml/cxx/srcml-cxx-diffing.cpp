@@ -97,3 +97,33 @@ TEST_CASE("Terminals tie resolution in C++", "[.srcml][srcml-cxx][comparison]")
         }
     )");
 }
+
+TEST_CASE("Complete replacement", "[.srcml][srcml-cxx][comparison]")
+{
+    diffSrcmlCxx(R"(
+        int something;  /// Deletions
+    )", R"123(
+        void f() {      /// Additions
+            R"(         /// Additions
+            )";         /// Additions
+            makePred;   /// Additions
+        }               /// Additions
+    )123");
+}
+
+TEST_CASE("Condition removal", "[.srcml][srcml-cxx][comparison]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            if (
+                -parent == SrcmlCxxSType::Function &&  /// Deletions
+                child == SrcmlCxxSType::Block) {
+            }
+        }
+    )", R"123(
+        void f() {
+            if (child == SrcmlCxxSType::Block) {
+            }
+        }
+    )123");
+}

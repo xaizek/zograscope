@@ -604,3 +604,21 @@ TEST_CASE("Unions are moved to a separate layer",
         };
     )");
 }
+
+TEST_CASE("Curly initializers", "[.srcml][srcml-cxx][parsing]")
+{
+    diffSrcmlCxx(R"(
+        void f()
+        {
+        }
+    )", R"(
+        void f()
+        {
+            helpMode.addShortcut({ L"q", [&modes, &screen, &track]() {     /// Additions
+                                            modes.switchTo("normal");      /// Additions
+                                            screen.setMainWidget(&track);  /// Additions
+                                        },                                 /// Additions
+                                "display help" });                         /// Additions
+        }
+    )");
+}

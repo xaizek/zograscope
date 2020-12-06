@@ -1875,3 +1875,31 @@ TEST_CASE("Terminals tie resolution in C", "[comparison]")
         }
     )", false);
 }
+
+TEST_CASE("Number change", "[comparison]")
+{
+    diffC(R"(
+        int x =
+              3         /// Updates
+              - 2 + 1;
+    )", R"(
+        int x =
+              1         /// Updates
+              - 2 + 1;
+    )", false);
+}
+
+TEST_CASE("Condition addition", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            if (!cloned);
+        }
+    )", R"(
+        void f() {
+            if (
+                !error &&  /// Additions
+                !cloned);
+        }
+    )", false);
+}
