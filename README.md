@@ -163,19 +163,26 @@ make install
 * (optional, for `gdiff` tool) [libgit2][libgit2]
 * (optional, for `tui` tool) [curses][curses] with support of wide characters
 
-If you are using Ubuntu/Debian, you can install the dependencies as follows:
+#### For Debian-based distributions ####
+
+If you are using Debian or one of its derivatives, you can install the
+dependencies as follows:
 
 ```bash
 # install make and build tools
 sudo apt install -y build-essential
 # installing dependencies
-sudo apt install -y libboost-filesystem-dev libboost-iostreams-dev libboost-program-options-dev libboost-system-dev libarchive13
+sudo apt install -y libboost-filesystem-dev libboost-iostreams-dev
+sudo apt install -y libboost-program-options-dev libboost-system-dev
+sudo apt install -y libarchive13
 sudo apt install -y bison flex
 # installing srcml
-wget http://131.123.42.38/lmcrs/beta/srcML-Ubuntu18.04.deb && sudo apt install ./srcML-Ubuntu18.04.deb
+wget http://131.123.42.38/lmcrs/beta/srcML-Ubuntu18.04.deb
+sudo apt install ./srcML-Ubuntu18.04.deb
 ```
 
-You can also check out the [travis config](https://github.com/xaizek/zograscope/blob/master/.travis.yml) in case dependencies change in the future.
+You can also check out the [travis config](.travis.yml) (`.travis.yml`) in
+case dependencies change in the future.
 
 ## Documentation ##
 
