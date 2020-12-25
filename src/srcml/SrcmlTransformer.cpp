@@ -23,10 +23,10 @@
 #include <string>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/utility/string_ref.hpp>
 #include "tinyxml2/tinyxml2.h"
 
+#include "utils/fs.hpp"
 #include "TreeBuilder.hpp"
 #include "integration.hpp"
 #include "types.hpp"
@@ -35,54 +35,6 @@ namespace ti = tinyxml2;
 
 // XXX: hard-coded width of a tabulation character.
 const int tabWidth = 4;
-
-namespace {
-
-// Temporary file in RAII-style.
-class TempFile
-{
-public:
-    // Makes temporary file whose name is a mangled version of an input name.
-    // The file is removed in destructor.
-    explicit TempFile(boost::filesystem::path baseName)
-    {
-        namespace fs = boost::filesystem;
-
-        path = (
-            fs::temp_directory_path()
-         /  fs::unique_path(baseName.stem().string() + '-' +
-                            "-%%%%-%%%%" + baseName.extension().string())
-        ).string();
-    }
-
-    // Make sure temporary file is deleted only once.
-    TempFile(const TempFile &rhs) = delete;
-    TempFile & operator=(const TempFile &rhs) = delete;
-
-    // Removes temporary file, if it still exists.
-    ~TempFile()
-    {
-        static_cast<void>(std::remove(path.c_str()));
-    }
-
-public:
-    // Provides implicit conversion to a file path string.
-    operator std::string() const
-    {
-        return path;
-    }
-
-    // Explicit conversion to a file path string.
-    const std::string & str() const
-    {
-        return path;
-    }
-
-private:
-    std::string path; // Path to the temporary file.
-};
-
-}
 
 static boost::string_ref processValue(boost::string_ref str);
 static void updatePosition(boost::string_ref str, int &line, int &col);
