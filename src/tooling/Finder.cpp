@@ -16,7 +16,6 @@
 
 #include "Finder.hpp"
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/optional.hpp>
 
@@ -33,8 +32,6 @@
 #include "Traverser.hpp"
 #include "common.hpp"
 #include "mtypes.hpp"
-
-namespace fs = boost::filesystem;
 
 namespace {
 

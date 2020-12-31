@@ -17,8 +17,6 @@
 #ifndef ZOGRASCOPE__TOOLING__FINDER_HPP__
 #define ZOGRASCOPE__TOOLING__FINDER_HPP__
 
-#include <boost/filesystem/path.hpp>
-
 #include <deque>
 #include <string>
 
