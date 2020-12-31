@@ -22,7 +22,7 @@
 
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
-static int run(const Args &args, TimeReport &tr);
+static int run(const Args &args, Environment &env);
 
 const char *const usage =
 R"(Usage: zs-find [options...] [paths...] : matchers...
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        result = run(args, env.getTimeKeeper());
+        result = run(args, env);
 
         env.teardown();
     } catch (const std::exception &e) {
@@ -113,10 +113,11 @@ parseLocalArgs(const Environment &env)
 
 // Runs the tool.  Returns exit code of the application.
 static int
-run(const Args &args, TimeReport &tr)
+run(const Args &args, Environment &env)
 {
     int foundSomething = false;
     if (!args.dryRun) {
+        TimeReport &tr = env.getTimeKeeper();
         foundSomething = Finder(args, tr, args.count).search();
     }
     return (foundSomething ? EXIT_SUCCESS : EXIT_FAILURE);

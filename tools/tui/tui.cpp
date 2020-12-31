@@ -38,7 +38,7 @@
 #include "FileRegistry.hpp"
 #include "ViewManager.hpp"
 
-static int run(const CommonArgs &args, TimeReport &tr);
+static int run(const CommonArgs &args, Environment &env);
 
 const char *const usage =
 R"(Usage: zs-tui [options...] [paths...]
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
             env.printOptions();
             return EXIT_SUCCESS;
         }
-        result = run(args, env.getTimeKeeper());
+        result = run(args, env);
 
         env.teardown();
     } catch (const std::exception &e) {
@@ -95,13 +95,14 @@ main(int argc, char *argv[])
 
 // Runs the tool.  Returns exit code of the application.
 static int
-run(const CommonArgs &args, TimeReport &tr)
+run(const CommonArgs &args, Environment &env)
 {
     std::vector<std::string> paths = args.pos;
     if (paths.empty()) {
         paths.emplace_back(".");
     }
 
+    TimeReport &tr = env.getTimeKeeper();
     FileRegistry registry(args, tr);
 
     if (!Traverser(paths, args.lang,
