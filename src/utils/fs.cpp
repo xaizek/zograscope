@@ -27,6 +27,8 @@
 
 namespace fs = boost::filesystem;
 
+static const char AppPrefix[] = "zs-";
+
 TempFile::TempFile(const std::string &prefix)
 {
     fs::path baseName = prefix;
@@ -35,7 +37,7 @@ TempFile::TempFile(const std::string &prefix)
 
     path = (
        fs::temp_directory_path()
-     / fs::unique_path("zs-" + stem + "-%%%%-%%%%" + extension)
+     / fs::unique_path(AppPrefix + stem + "-%%%%-%%%%" + extension)
     ).string();
 }
 
