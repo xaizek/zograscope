@@ -1,4 +1,4 @@
-**zograscope**, _2017 - 2020_
+**zograscope**, _2017 - 2021_
 
 ![Screenshot](data/examples/c/screenshot.png)
 
@@ -8,12 +8,15 @@
 git clone --recursive https://github.com/xaizek/zograscope.git
 ```
 
-1. [Description](#description)
+1. [Description](#description) ([Status](#status);
+                                [Supported languages](#supported-languages))
 2. [Tools](#tools)
 3. [Building and Installing](#building-and-installing)
+   ([Dependencies](#dependencies))
 4. [Documentation](#documentation)
 5. [License](#license)
 6. [Credits](#credits)
+   ([References](#references))
 
 ## Name ##
 
