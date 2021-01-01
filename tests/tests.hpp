@@ -74,6 +74,33 @@ private:
     std::streambuf *rdbuf;  //!< Original output buffer of the stream.
 };
 
+// Temporary directory in RAII-style.
+class TempDir
+{
+public:
+    // Makes temporary directory, which is removed in destructor.
+    explicit TempDir(const std::string &prefix);
+
+    // Make sure temporary directory is deleted only once.
+    TempDir(const TempDir &rhs) = delete;
+    TempDir & operator=(const TempDir &rhs) = delete;
+
+    // Removes temporary directory and all its content, if it still exists.
+    ~TempDir();
+
+public:
+    // Provides implicit conversion to a directory path string.
+    operator std::string() const
+    { return path; }
+
+    // Explicit conversion to a directory path string.
+    const std::string & str() const
+    { return path; }
+
+private:
+    std::string path; // Path to the temporary directory.
+};
+
 // Checks whether C source can be parsed or not.
 bool cIsParsed(const std::string &str);
 
