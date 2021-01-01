@@ -494,9 +494,10 @@ run(const Args &args, Environment &env)
     }
 
     TimeReport &tr = env.getTimeKeeper();
+    Config &config = env.getConfig();
     FileProcessor processor(args, tr);
 
-    if (!Traverser(paths, args.lang, std::ref(processor)).search()) {
+    if (!Traverser(paths, args.lang, config, std::ref(processor)).search()) {
         std::cerr << "No matching files were discovered.\n";
         return EXIT_FAILURE;
     }

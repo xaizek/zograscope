@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 
+#include <boost/filesystem/operations.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -40,6 +41,10 @@ namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args,
                                       po::options_description &options);
+
+Environment::Environment(const po::options_description &extraOpts)
+    : options(extraOpts), config(boost::filesystem::current_path())
+{ }
 
 void
 Environment::setup(const std::vector<std::string> &argv)

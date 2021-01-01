@@ -103,9 +103,10 @@ run(const CommonArgs &args, Environment &env)
     }
 
     TimeReport &tr = env.getTimeKeeper();
+    Config &config = env.getConfig();
     FileRegistry registry(args, tr);
 
-    if (!Traverser(paths, args.lang,
+    if (!Traverser(paths, args.lang, config,
                    [&](const std::string &path) {
                        return registry.addFile(path);
                    }).search()) {

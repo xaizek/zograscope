@@ -9,7 +9,8 @@ git clone --recursive https://github.com/xaizek/zograscope.git
 ```
 
 1. [Description](#description) ([Status](#status);
-                                [Supported languages](#supported-languages))
+                                [Supported languages](#supported-languages);
+                                [Configuration](#configuration))
 2. [Tools](#tools)
 3. [Building and Installing](#building-and-installing)
    ([Dependencies](#dependencies))
@@ -101,6 +102,38 @@ Note the following:
 
 More languages should be added in the future, maybe with external parsers that
 are capable of preserving all information about the source code.
+
+### Configuration ###
+
+Configuration is done per directory tree ("root") which is the closes parent (or
+current directory) that contains `.zs/` directory.  The `.zs/` directory
+contains files which define how contents of the root is to be processed.
+Settings from multiple nested roots are not combined.
+
+#### `.zs/exclude` file ####
+
+A `.gitignore`-like (or `.git/info/exclude`-like) file that lists paths relative
+to the root.  The purpose is to exclude uninteresting files (automatically
+generated, third-party or otherwise).  `.zs/exclude` is used by tools that
+search for files automatically and doesn't prevent the use of the same files
+when they are specified explicitly.
+
+The following kinds of entries are recognized:
+
+* empty lines, which are ignored
+* lines that start with a `#` (comments), which are ignored
+* file paths relative to the root (no leading `/`) whose processing should be
+  skipped
+
+No way to escape leading `#` or a newline at the moment.  No globs either.
+
+Example:
+
+```gitignore
+# .zs/exclude
+src/c/c11-lexer.gen.cpp
+src/c/c11-parser.gen.cpp
+```
 
 ## Tools ##
 

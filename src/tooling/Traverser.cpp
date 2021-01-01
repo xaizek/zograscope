@@ -25,16 +25,20 @@
 #include <utility>
 #include <vector>
 
+#include "tooling/Config.hpp"
 #include "Language.hpp"
 
 namespace fs = boost::filesystem;
 
 Traverser::Traverser(const std::vector<std::string> &paths,
                      const std::string &language,
+                     const Config &config,
                      std::function<callbackPrototype> callback)
-    : paths(paths), language(language), callback(std::move(callback))
-{
-}
+    : paths(paths),
+      language(language),
+      config(config),
+      callback(std::move(callback))
+{ }
 
 bool
 Traverser::search()
@@ -50,6 +54,9 @@ bool
 Traverser::search(const boost::filesystem::path &path)
 {
     auto match = [this](const std::string &file) {
+        if (!config.shouldProcessFile(file)) {
+            return false;
+        }
         if (Language::matches(file, language)) {
             return callback(file);
         }
