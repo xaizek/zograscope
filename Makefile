@@ -161,11 +161,9 @@ all: $(lib)
 debug release sanitize-basic: all
 
 coverage: check $(all)
-	find $(out_dir)/ -name '*.o' -exec gcov -p {} + > $(out_dir)/gcov.out \
-	|| (cat $(out_dir)/gcov.out && false)
-	uncov-gcov --root . --no-gcov --capture-worktree --exclude tests \
-	    --exclude third-party | uncov new
-	find . -name '*.gcov' -delete
+	uncov new-gcovi --capture-worktree --exclude tests \
+	                                   --exclude third-party \
+	                                   --exclude tools/tui/libs
 
 reset-coverage:
 ifeq ($(with_cov),1)
