@@ -20,15 +20,20 @@
 #include <boost/filesystem/path.hpp>
 
 #include <string>
-#include <unordered_set>
+#include <vector>
 
 // Encapsulates configuration information.
 class Config
 {
+    class ExcludeExpr;
+
 public:
     // Discovers configuration files and root by visiting parents of the
     // specified path.
     explicit Config(const boost::filesystem::path &currDir);
+
+    // Destroys `excluded` with full type.
+    ~Config();
 
 public:
     // Checks whether specific file should be processed.
@@ -45,7 +50,7 @@ private:
     boost::filesystem::path rootDir; // Root for the configuration.
     boost::filesystem::path currDir; // Current directory for relative paths.
 
-    std::unordered_set<std::string> excluded; // List of excluded file paths.
+    std::vector<ExcludeExpr> excluded; // List of excluded file paths.
 };
 
 #endif // ZOGRASCOPE__TOOLING__CONFIG_HPP__

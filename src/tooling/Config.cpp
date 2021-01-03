@@ -17,20 +17,76 @@
 #include "Config.hpp"
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/utility/string_ref.hpp>
+
+#include <cassert>
 
 #include <algorithm>
 #include <fstream>
 #include <iterator>
+#include <regex>
 #include <string>
+#include <utility>
 
 namespace fs = boost::filesystem;
 
 static bool pathIsInSubtree(const fs::path &root, const fs::path &path);
 static fs::path normalizePath(const fs::path &path);
 static fs::path makeRelativePath(fs::path base, fs::path path);
+static bool isGlob(const std::string &expr);
+static std::string globToRegex(boost::string_ref glob);
 
 static const char ConfigDirName[] = ".zs";
 static const char ExcludeFileName[] = "exclude";
+
+// Type of exlude expression.
+enum class ExcludeType
+{
+    Exact, // Exact path match.
+    Glob,  // Glob expression on a path (implemented as a regexp).
+};
+
+// Single exclude expression.
+class Config::ExcludeExpr
+{
+public:
+    // Recognizes expression and prepares for matching against it.
+    explicit ExcludeExpr(std::string expr);
+
+public:
+    // Checks for a match.
+    bool matches(const std::string &str) const;
+
+private:
+    std::regex regexp; // Regular-expression match.
+    std::string exact; // String to match against exactly.
+    ExcludeType type;  // Type of the expression.
+};
+
+Config::ExcludeExpr::ExcludeExpr(std::string expr)
+{
+    if (isGlob(expr)) {
+        regexp = globToRegex(expr);
+        type = ExcludeType::Glob;
+    } else {
+        exact = std::move(expr);
+        type = ExcludeType::Exact;
+    }
+}
+
+bool
+Config::ExcludeExpr::matches(const std::string &str) const
+{
+    switch (type) {
+        case ExcludeType::Exact:
+            return (str == exact);
+        case ExcludeType::Glob:
+            return std::regex_match(str.begin(), str.end(), regexp);
+    }
+
+    assert(false && "Unhandled type.");
+    return false;
+}
 
 Config::Config(const boost::filesystem::path &currDir) : currDir(currDir)
 {
@@ -39,6 +95,8 @@ Config::Config(const boost::filesystem::path &currDir) : currDir(currDir)
         loadConfigDir(configDir);
     }
 }
+
+Config::~Config() = default;
 
 fs::path
 Config::discoverRoot()
@@ -63,7 +121,7 @@ Config::loadConfigDir(const fs::path &configDir)
     std::ifstream excludeFile(excludeFilePath.string());
     for (std::string line; std::getline(excludeFile, line); ) {
         if (!line.empty() && line.front() != '#') {
-            excluded.insert(normalizePath(line).string());
+            excluded.emplace_back(normalizePath(line).string());
         }
     }
 }
@@ -77,8 +135,13 @@ Config::shouldProcessFile(const std::string &path) const
         return true;
     }
 
-    fs::path relPath = makeRelativePath(rootDir, canonicPath);
-    return (excluded.find(relPath.string()) == excluded.end());
+    std::string relPath = makeRelativePath(rootDir, canonicPath).string();
+    for (const ExcludeExpr &expr : excluded) {
+        if (expr.matches(relPath)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // Checks that a path is somewhere under specified root (root is considered to
@@ -138,4 +201,59 @@ makeRelativePath(fs::path base, fs::path path)
     }
 
     return finalPath;
+}
+
+// Checks whether expression is a glob.
+static bool
+isGlob(const std::string &expr)
+{
+    return (expr.find_first_of("[?*") != std::string::npos);
+}
+
+// Converts the glob into equivalent regular expression.
+static std::string
+globToRegex(boost::string_ref glob)
+{
+    boost::string_ref charsToEscape = "^.$()|+{";
+
+    std::string regexp = "^";
+
+    auto toChar = [&regexp, &glob](char ch) {
+        regexp += ch;
+        glob.remove_prefix(1U);
+    };
+    auto toStr = [&regexp, &glob](const char str[]) {
+        regexp += str;
+        glob.remove_prefix(1U);
+    };
+
+    bool startedCharClass = false;
+
+    while (!glob.empty()) {
+        bool newCharClass = startedCharClass;
+        startedCharClass = false;
+
+        char ch = glob.front();
+        if (newCharClass && (ch == '!' || ch == '^')) {
+            toChar('^');
+        } else if (ch == '\\') {
+            toChar('\\');
+            if (!glob.empty()) {
+                toChar(glob.front());
+            }
+        } else if (ch == '?') {
+            toStr("[^/]");
+        } else if (ch == '*') {
+            toStr("[^/]*");
+        } else {
+            startedCharClass = (ch == '[');
+            if (charsToEscape.find(ch) != boost::string_ref::npos) {
+                regexp += '\\';
+            }
+            toChar(ch);
+        }
+    }
+
+    regexp += '$';
+    return regexp;
 }

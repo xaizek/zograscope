@@ -122,10 +122,15 @@ The following kinds of entries are recognized:
 
 * empty lines, which are ignored
 * lines that start with a `#` (comments), which are ignored
-* file paths relative to the root (no leading `/`) whose processing should be
-  skipped
+* shell-like globs against paths relative to the root (no leading `/`) which
+  define paths processing should be skipped
 
-No way to escape leading `#` or a newline at the moment.  No globs either.
+No way to escape leading `#` or a newline at the moment.
+
+Globs support the following: `[{char-class}]`, `[!{char-class}]`,
+`[^{char-class}]`, `?` (doesn't match `/`), `*` (matches any (including zero)
+number of characters, doesn't match `/`) and `\{char}` (matches literal
+`{char}`).
 
 Example:
 
@@ -133,6 +138,7 @@ Example:
 # .zs/exclude
 src/c/c11-lexer.gen.cpp
 src/c/c11-parser.gen.cpp
+src/make/*.gen.*
 ```
 
 ## Tools ##

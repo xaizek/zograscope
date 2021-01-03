@@ -75,6 +75,48 @@ TEST_CASE("Exclude file", "[tooling][config]")
     }
 }
 
+TEST_CASE("Globs in exclude file", "[tooling][config]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/.zs/exclude", {
+        "sub1/ignored.*",
+        "sub2/*ignored",
+        "sub3/ignored.?",
+        "sub4/ignored.[ch]",
+        "sub5/ignored.[^C]",
+        "sub6/ignored.\\[",
+    });
+
+    Config config(tempDir.str());
+
+    CHECK(config.shouldProcessFile("sub1/notignored.c"));
+    CHECK(config.shouldProcessFile("sub1/ignored.c/file"));
+    CHECK(!config.shouldProcessFile("sub1/ignored."));
+    CHECK(!config.shouldProcessFile("sub1/ignored.c"));
+
+    CHECK(config.shouldProcessFile("sub2/ignored.not"));
+    CHECK(!config.shouldProcessFile("sub2/ignored"));
+    CHECK(!config.shouldProcessFile("sub2/.ignored"));
+
+    CHECK(config.shouldProcessFile("sub3/ignored."));
+    CHECK(config.shouldProcessFile("sub3/ignored.ab"));
+    CHECK(!config.shouldProcessFile("sub3/ignored.c"));
+    CHECK(!config.shouldProcessFile("sub3/ignored.h"));
+
+    CHECK(config.shouldProcessFile("sub4/ignored.ch"));
+    CHECK(config.shouldProcessFile("sub4/ignored."));
+    CHECK(config.shouldProcessFile("sub4/ignored.x"));
+    CHECK(!config.shouldProcessFile("sub4/ignored.c"));
+    CHECK(!config.shouldProcessFile("sub4/ignored.h"));
+
+    CHECK(config.shouldProcessFile("sub5/ignored.C"));
+    CHECK(!config.shouldProcessFile("sub5/ignored.c"));
+
+    CHECK(config.shouldProcessFile("sub6/ignored.]"));
+    CHECK(!config.shouldProcessFile("sub6/ignored.["));
+}
+
 // Creates a file with specified contents.
 static void
 makeFile(const std::string &path, const std::vector<std::string> &lines)
