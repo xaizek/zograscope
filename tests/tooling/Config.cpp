@@ -57,9 +57,9 @@ TEST_CASE("Exclude file", "[tooling][config]")
         CHECK(config.shouldProcessFile("# a comment"));
         CHECK(config.shouldProcessFile(""));
 
-        CHECK(config.shouldProcessFile("not/ignored.cpp"));
-        CHECK(config.shouldProcessFile("./not/to/be/../../ignored.cpp"));
         CHECK(config.shouldProcessFile("../../ignored.cpp"));
+        CHECK(!config.shouldProcessFile("not/ignored.cpp"));
+        CHECK(!config.shouldProcessFile("./not/to/be/../../ignored.cpp"));
 
         CHECK(!config.shouldProcessFile("ignored.cpp"));
         CHECK(!config.shouldProcessFile("sub/ignored.cpp"));
@@ -80,6 +80,7 @@ TEST_CASE("Globs in exclude file", "[tooling][config]")
     TempDir tempDir("config");
     REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
     makeFile(tempDir.str() + "/.zs/exclude", {
+        "ignored-everywhere.*",
         "sub1/ignored.*",
         "sub2/*ignored",
         "sub3/ignored.?",
@@ -89,6 +90,10 @@ TEST_CASE("Globs in exclude file", "[tooling][config]")
     });
 
     Config config(tempDir.str());
+
+    CHECK(!config.shouldProcessFile("ignored-everywhere.c"));
+    CHECK(!config.shouldProcessFile("sub1/ignored-everywhere.c"));
+    CHECK(!config.shouldProcessFile("sub/sub/ignored-everywhere.c"));
 
     CHECK(config.shouldProcessFile("sub1/notignored.c"));
     CHECK(config.shouldProcessFile("sub1/ignored.c/file"));

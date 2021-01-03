@@ -17,6 +17,7 @@
 #include "Config.hpp"
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/utility/string_ref.hpp>
 
 #include <cassert>
@@ -33,17 +34,18 @@ namespace fs = boost::filesystem;
 static bool pathIsInSubtree(const fs::path &root, const fs::path &path);
 static fs::path normalizePath(const fs::path &path);
 static fs::path makeRelativePath(fs::path base, fs::path path);
+static bool isFilenameExpr(const std::string &expr);
 static bool isGlob(const std::string &expr);
 static std::string globToRegex(boost::string_ref glob);
 
 static const char ConfigDirName[] = ".zs";
 static const char ExcludeFileName[] = "exclude";
 
-// Type of exlude expression.
+// Type of exclude expression.
 enum class ExcludeType
 {
-    Exact, // Exact path match.
-    Glob,  // Glob expression on a path (implemented as a regexp).
+    Exact, // Exact match.
+    Glob,  // Glob expression (implemented as a regexp).
 };
 
 // Single exclude expression.
@@ -55,16 +57,20 @@ public:
 
 public:
     // Checks for a match.
-    bool matches(const std::string &str) const;
+    bool matches(const std::string &relative,
+                 const std::string &filename) const;
 
 private:
     std::regex regexp; // Regular-expression match.
     std::string exact; // String to match against exactly.
     ExcludeType type;  // Type of the expression.
+    bool filenameOnly; // Matches only against tail entry of a path.
 };
 
 Config::ExcludeExpr::ExcludeExpr(std::string expr)
 {
+    filenameOnly = isFilenameExpr(expr);
+
     if (isGlob(expr)) {
         regexp = globToRegex(expr);
         type = ExcludeType::Glob;
@@ -75,8 +81,11 @@ Config::ExcludeExpr::ExcludeExpr(std::string expr)
 }
 
 bool
-Config::ExcludeExpr::matches(const std::string &str) const
+Config::ExcludeExpr::matches(const std::string &relative,
+                             const std::string &filename) const
 {
+    const std::string &str = (filenameOnly ? filename : relative);
+
     switch (type) {
         case ExcludeType::Exact:
             return (str == exact);
@@ -135,9 +144,11 @@ Config::shouldProcessFile(const std::string &path) const
         return true;
     }
 
-    std::string relPath = makeRelativePath(rootDir, canonicPath).string();
+    fs::path relPath = makeRelativePath(rootDir, canonicPath);
+    std::string relative = relPath.string();
+    std::string filename = relPath.filename().string();
     for (const ExcludeExpr &expr : excluded) {
-        if (expr.matches(relPath)) {
+        if (expr.matches(relative, filename)) {
             return false;
         }
     }
@@ -201,6 +212,13 @@ makeRelativePath(fs::path base, fs::path path)
     }
 
     return finalPath;
+}
+
+// Checks whether expression is a filename glob as opposed to a path glob.
+static bool
+isFilenameExpr(const std::string &expr)
+{
+    return (expr.find('/') == std::string::npos);
 }
 
 // Checks whether expression is a glob.

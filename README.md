@@ -122,23 +122,31 @@ The following kinds of entries are recognized:
 
 * empty lines, which are ignored
 * lines that start with a `#` (comments), which are ignored
-* shell-like globs against paths relative to the root (no leading `/`) which
-  define paths processing should be skipped
+* lines without `/` are treated as shell-like globs against filename which apply
+  at any directory level and define paths whose processing should be skipped
+* other lines are treated as shell-like globs against paths relative to the
+  root (no leading `/`) which define paths whose processing should be skipped
 
 No way to escape leading `#` or a newline at the moment.
 
 Globs support the following: `[{char-class}]`, `[!{char-class}]`,
 `[^{char-class}]`, `?` (doesn't match `/`), `*` (matches any (including zero)
-number of characters, doesn't match `/`) and `\{char}` (matches literal
-`{char}`).
+number of characters except for `/`) and `\{char}` (matches literal `{char}`).
 
 Example:
 
 ```gitignore
 # .zs/exclude
+
+# automatically generated sources
 src/c/c11-lexer.gen.cpp
 src/c/c11-parser.gen.cpp
 src/make/*.gen.*
+
+# Qt-produced sources
+ui_*.h
+moc_*.cpp
+moc_*.h
 ```
 
 ## Tools ##
