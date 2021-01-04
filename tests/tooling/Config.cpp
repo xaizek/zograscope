@@ -122,6 +122,29 @@ TEST_CASE("Globs in exclude file", "[tooling][config]")
     CHECK(!config.shouldProcessFile("sub6/ignored.["));
 }
 
+TEST_CASE("Root-only matching in exclude file", "[tooling][config]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/.zs/exclude", {
+        "ignore-all*",
+        "/ignore-in-root",
+        "/dir/file",
+    });
+
+    Config config(tempDir.str());
+
+    CHECK(!config.shouldProcessFile("ignore-all"));
+    CHECK(!config.shouldProcessFile("sub/ignore-all"));
+    CHECK(!config.shouldProcessFile("sub/sub/ignore-all"));
+
+    CHECK(config.shouldProcessFile("sub/ignore-in-root"));
+    CHECK(config.shouldProcessFile("sub/sub/ignore-in-root"));
+    CHECK(!config.shouldProcessFile("ignore-in-root"));
+
+    CHECK(!config.shouldProcessFile("dir/file"));
+}
+
 // Creates a file with specified contents.
 static void
 makeFile(const std::string &path, const std::vector<std::string> &lines)

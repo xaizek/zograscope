@@ -34,7 +34,6 @@ namespace fs = boost::filesystem;
 static bool pathIsInSubtree(const fs::path &root, const fs::path &path);
 static fs::path normalizePath(const fs::path &path);
 static fs::path makeRelativePath(fs::path base, fs::path path);
-static bool isFilenameExpr(const std::string &expr);
 static bool isGlob(const std::string &expr);
 static std::string globToRegex(boost::string_ref glob);
 
@@ -69,7 +68,14 @@ private:
 
 Config::ExcludeExpr::ExcludeExpr(std::string expr)
 {
-    filenameOnly = isFilenameExpr(expr);
+    filenameOnly = (expr.find('/') == std::string::npos);
+
+    // We don't need a special flag for this syntax, `filenameOnly` being
+    // `false` is enough.
+    bool rootOnly = (expr.front() == '/');
+    if (rootOnly) {
+        expr.erase(expr.begin());
+    }
 
     if (isGlob(expr)) {
         regexp = globToRegex(expr);
@@ -212,13 +218,6 @@ makeRelativePath(fs::path base, fs::path path)
     }
 
     return finalPath;
-}
-
-// Checks whether expression is a filename glob as opposed to a path glob.
-static bool
-isFilenameExpr(const std::string &expr)
-{
-    return (expr.find('/') == std::string::npos);
 }
 
 // Checks whether expression is a glob.

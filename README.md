@@ -124,8 +124,11 @@ The following kinds of entries are recognized:
 * lines that start with a `#` (comments), which are ignored
 * lines without `/` are treated as shell-like globs against filename which apply
   at any directory level and define paths whose processing should be skipped
+* lines that start with `/` always match paths instead of filename and provide a
+  way to specify files to be ignored only in the root
 * other lines are treated as shell-like globs against paths relative to the
-  root (no leading `/`) which define paths whose processing should be skipped
+  root (leading `/` is allowed, but has no effect other than changing type of a
+  match) which define paths whose processing should be skipped
 
 No way to escape leading `#` or a newline at the moment.
 
@@ -147,6 +150,9 @@ src/make/*.gen.*
 ui_*.h
 moc_*.cpp
 moc_*.h
+
+# file in root
+/config.h
 ```
 
 ## Tools ##
