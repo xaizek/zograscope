@@ -58,17 +58,26 @@ public:
     // Checks for a match.
     bool matches(const std::string &relative,
                  const std::string &filename) const;
+    // Checks whether this is an exception from other rules.
+    bool isException() const
+    { return exception; }
 
 private:
     std::regex regexp; // Regular-expression match.
     std::string exact; // String to match against exactly.
     ExcludeType type;  // Type of the expression.
     bool filenameOnly; // Matches only against tail entry of a path.
+    bool exception;    // Whether this rule defines exception.
 };
 
 Config::ExcludeExpr::ExcludeExpr(std::string expr)
 {
     filenameOnly = (expr.find('/') == std::string::npos);
+
+    exception = (expr.front() == '!');
+    if (exception) {
+        expr.erase(expr.begin());
+    }
 
     // We don't need a special flag for this syntax, `filenameOnly` being
     // `false` is enough.
@@ -159,12 +168,20 @@ Config::shouldProcessFile(const std::string &path) const
     fs::path relPath = makeRelativePath(rootDir, canonicPath);
     std::string relative = relPath.string();
     std::string filename = relPath.filename().string();
-    for (const ExcludeExpr &expr : excluded) {
-        if (expr.matches(relative, filename)) {
-            return false;
-        }
+
+    auto it = std::find_if(excluded.cbegin(), excluded.cend(),
+                           [&relative, &filename] (const ExcludeExpr &expr) {
+        return !expr.isException() && expr.matches(relative, filename);
+    });
+    if (it == excluded.cend()) {
+        return true;
     }
-    return true;
+
+    it = std::find_if(it, excluded.cend(),
+                      [&relative, &filename] (const ExcludeExpr &expr) {
+        return expr.isException() && expr.matches(relative, filename);
+    });
+    return (it != excluded.cend());
 }
 
 // Checks that a path is somewhere under specified root (root is considered to

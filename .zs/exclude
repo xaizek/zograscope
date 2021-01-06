@@ -1,3 +1,8 @@
+# there are only two generally interesting directories
+/*
+!/src
+!/tools
+
 # automatically generated sources
 *.gen.*
 
