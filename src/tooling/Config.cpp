@@ -239,7 +239,7 @@ globToRegex(boost::string_ref glob)
 {
     boost::string_ref charsToEscape = "^.$()|+{";
 
-    std::string regexp = "^";
+    std::string regexp;
 
     auto toChar = [&regexp, &glob](char ch) {
         regexp += ch;
@@ -277,6 +277,5 @@ globToRegex(boost::string_ref glob)
         }
     }
 
-    regexp += '$';
     return regexp;
 }
