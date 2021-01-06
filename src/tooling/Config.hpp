@@ -36,6 +36,8 @@ public:
     ~Config();
 
 public:
+    // Checks whether contents of specific directory should be looked at.
+    bool shouldVisitDirectory(const std::string &path) const;
     // Checks whether specific file should be processed.
     bool shouldProcessFile(const std::string &path) const;
 

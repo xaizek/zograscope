@@ -71,10 +71,13 @@ Traverser::search(const boost::filesystem::path &path)
 
     bool found = false;
     for (fs::directory_entry &e : boost::make_iterator_range(it(path), it())) {
-        if (fs::is_directory(e.path())) {
-            found |= search(e.path());
+        const fs::path &path = e.path();
+        if (fs::is_directory(path)) {
+            if (config.shouldVisitDirectory(path.string())) {
+                found |= search(path);
+            }
         } else {
-            found |= match(e.path().string());
+            found |= match(path.string());
         }
     }
     return found;

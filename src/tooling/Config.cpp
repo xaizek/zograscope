@@ -142,6 +142,12 @@ Config::loadConfigDir(const fs::path &configDir)
 }
 
 bool
+Config::shouldVisitDirectory(const std::string &path) const
+{
+    return shouldProcessFile(path);
+}
+
+bool
 Config::shouldProcessFile(const std::string &path) const
 {
     fs::path canonicPath = normalizePath(fs::absolute(path, currDir));

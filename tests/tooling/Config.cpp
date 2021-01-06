@@ -95,8 +95,10 @@ TEST_CASE("Globs in exclude file", "[tooling][config]")
     CHECK(!config.shouldProcessFile("sub1/ignored-everywhere.c"));
     CHECK(!config.shouldProcessFile("sub/sub/ignored-everywhere.c"));
 
-    CHECK(config.shouldProcessFile("sub1/notignored.c"));
+    // The first one passing is OK, because we wouldn't even check for it on
+    // real traversal (directory would be skipped).
     CHECK(config.shouldProcessFile("sub1/ignored.c/file"));
+    CHECK(config.shouldProcessFile("sub1/notignored.c"));
     CHECK(!config.shouldProcessFile("sub1/ignored."));
     CHECK(!config.shouldProcessFile("sub1/ignored.c"));
 
@@ -137,6 +139,7 @@ TEST_CASE("Root-only matching in exclude file", "[tooling][config]")
     CHECK(!config.shouldProcessFile("ignore-all"));
     CHECK(!config.shouldProcessFile("sub/ignore-all"));
     CHECK(!config.shouldProcessFile("sub/sub/ignore-all"));
+    CHECK(!config.shouldVisitDirectory("ignore-all"));
 
     CHECK(config.shouldProcessFile("sub/ignore-in-root"));
     CHECK(config.shouldProcessFile("sub/sub/ignore-in-root"));
