@@ -52,25 +52,28 @@ class Config::ExcludeExpr
 {
 public:
     // Recognizes expression and prepares for matching against it.
-    explicit ExcludeExpr(std::string expr);
+    ExcludeExpr(std::string expr, bool directoryOnly);
 
 public:
     // Checks for a match.
     bool matches(const std::string &relative,
-                 const std::string &filename) const;
+                 const std::string &filename,
+                 bool isDir) const;
     // Checks whether this is an exception from other rules.
     bool isException() const
     { return exception; }
 
 private:
-    std::regex regexp; // Regular-expression match.
-    std::string exact; // String to match against exactly.
-    ExcludeType type;  // Type of the expression.
-    bool filenameOnly; // Matches only against tail entry of a path.
-    bool exception;    // Whether this rule defines exception.
+    std::regex regexp;  // Regular-expression match.
+    std::string exact;  // String to match against exactly.
+    ExcludeType type;   // Type of the expression.
+    bool filenameOnly;  // Matches only against tail entry of a path.
+    bool directoryOnly; // Matches only directories.
+    bool exception;     // Whether this rule defines exception.
 };
 
-Config::ExcludeExpr::ExcludeExpr(std::string expr)
+Config::ExcludeExpr::ExcludeExpr(std::string expr, bool directoryOnly) :
+    directoryOnly(directoryOnly)
 {
     filenameOnly = (expr.find('/') == std::string::npos);
 
@@ -97,8 +100,13 @@ Config::ExcludeExpr::ExcludeExpr(std::string expr)
 
 bool
 Config::ExcludeExpr::matches(const std::string &relative,
-                             const std::string &filename) const
+                             const std::string &filename,
+                             bool isDir) const
 {
+    if (directoryOnly && !isDir) {
+        return false;
+    }
+
     const std::string &str = (filenameOnly ? filename : relative);
 
     switch (type) {
@@ -145,7 +153,8 @@ Config::loadConfigDir(const fs::path &configDir)
     std::ifstream excludeFile(excludeFilePath.string());
     for (std::string line; std::getline(excludeFile, line); ) {
         if (!line.empty() && line.front() != '#') {
-            excluded.emplace_back(normalizePath(line).string());
+            bool directoryOnly = (line.back() == '/');
+            excluded.emplace_back(normalizePath(line).string(), directoryOnly);
         }
     }
 }
@@ -153,11 +162,17 @@ Config::loadConfigDir(const fs::path &configDir)
 bool
 Config::shouldVisitDirectory(const std::string &path) const
 {
-    return shouldProcessFile(path);
+    return isAllowed(path, /*isDir=*/true);
 }
 
 bool
 Config::shouldProcessFile(const std::string &path) const
+{
+    return isAllowed(path, /*isDir=*/false);
+}
+
+bool
+Config::isAllowed(const std::string &path, bool isDir) const
 {
     fs::path canonicPath = normalizePath(fs::absolute(path, currDir));
 
@@ -170,16 +185,15 @@ Config::shouldProcessFile(const std::string &path) const
     std::string filename = relPath.filename().string();
 
     auto it = std::find_if(excluded.cbegin(), excluded.cend(),
-                           [&relative, &filename] (const ExcludeExpr &expr) {
-        return !expr.isException() && expr.matches(relative, filename);
+                           [&] (const ExcludeExpr &expr) {
+        return !expr.isException() && expr.matches(relative, filename, isDir);
     });
     if (it == excluded.cend()) {
         return true;
     }
 
-    it = std::find_if(it, excluded.cend(),
-                      [&relative, &filename] (const ExcludeExpr &expr) {
-        return expr.isException() && expr.matches(relative, filename);
+    it = std::find_if(it, excluded.cend(), [&] (const ExcludeExpr &expr) {
+        return expr.isException() && expr.matches(relative, filename, isDir);
     });
     return (it != excluded.cend());
 }

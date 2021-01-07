@@ -122,6 +122,8 @@ The following kinds of entries are recognized:
 
 * empty lines, which are ignored
 * lines that start with a `#` (comments), which are ignored
+* lines that end with `/` match only directories, the `/` is stripped and line
+  processing continues
 * lines without `/` are treated as shell-like globs against filename which apply
   at any directory level and define paths whose processing should be skipped
 * lines that start with `!` define exception from rules that precede them, you

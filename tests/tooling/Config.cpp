@@ -170,6 +170,31 @@ TEST_CASE("Whitelisting", "[tooling][config]")
     CHECK(!config.shouldProcessFile("install"));
 }
 
+TEST_CASE("Directory-only matching in exclude file", "[tooling][config]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/.zs/exclude", {
+        "/*/",
+        "!/src/",
+        "dir/",
+    });
+
+    Config config(tempDir.str());
+
+    CHECK(config.shouldVisitDirectory("src"));
+    CHECK(!config.shouldVisitDirectory("readme"));
+    CHECK(!config.shouldVisitDirectory("install"));
+    CHECK(!config.shouldVisitDirectory("dir"));
+    CHECK(!config.shouldVisitDirectory("sub/dir"));
+
+    CHECK(config.shouldProcessFile("src"));
+    CHECK(config.shouldProcessFile("readme"));
+    CHECK(config.shouldProcessFile("install"));
+    CHECK(config.shouldProcessFile("dir"));
+    CHECK(config.shouldProcessFile("sub/dir"));
+}
+
 // Creates a file with specified contents.
 static void
 makeFile(const std::string &path, const std::vector<std::string> &lines)

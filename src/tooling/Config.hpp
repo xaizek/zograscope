@@ -47,6 +47,8 @@ private:
     boost::filesystem::path discoverRoot();
     // Loads data from configuration directory.
     void loadConfigDir(const boost::filesystem::path &configDir);
+    // Checks whether specific path should be processed.
+    bool isAllowed(const std::string &path, bool isDir) const;
 
 private:
     boost::filesystem::path rootDir; // Root for the configuration.
