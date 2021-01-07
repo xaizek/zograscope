@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "srcml/cxx/SrcmlCxxSType.hpp"
+#include "utils/fs.hpp"
 #include "utils/strings.hpp"
 #include "TermHighlighter.hpp"
 #include "TreeBuilder.hpp"

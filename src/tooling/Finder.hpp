@@ -17,8 +17,6 @@
 #ifndef ZOGRASCOPE__TOOLING__FINDER_HPP__
 #define ZOGRASCOPE__TOOLING__FINDER_HPP__
 
-#include <boost/filesystem/path.hpp>
-
 #include <deque>
 #include <string>
 
@@ -26,6 +24,7 @@
 #include "Matcher.hpp"
 
 class CommonArgs;
+class Config;
 class TimeReport;
 
 // Processes files and looks for matches in them.
@@ -33,7 +32,10 @@ class Finder
 {
 public:
     // Parses arguments and records for future use.
-    Finder(const CommonArgs &args, TimeReport &tr, bool countOnly);
+    Finder(const CommonArgs &args,
+           TimeReport &tr,
+           const Config &config,
+           bool countOnly);
     // To destruct `matchers` field with complete type.
     ~Finder();
 
@@ -50,6 +52,7 @@ private:
 private:
     const CommonArgs &args;         // Arguments of a tool.
     TimeReport &tr;                 // Time reporter.
+    const Config &config;           // Configuration.
     bool countOnly;                 // Only print statistics about results.
     std::vector<std::string> paths; // List of paths to process.
     std::deque<Matcher> matchers;   // Storage of matchers.

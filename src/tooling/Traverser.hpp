@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+class Config;
+
 // Discovers files matching specified arguments and invokes callback on them.
 class Traverser
 {
@@ -33,6 +35,7 @@ public:
     // Records arguments for future use.
     Traverser(const std::vector<std::string> &paths,
               const std::string &language,
+              const Config &config,
               std::function<callbackPrototype> callback);
 
 public:
@@ -47,6 +50,7 @@ private:
 private:
     std::vector<std::string> paths;            // List of paths to process.
     std::string language;                      // Language to accept.
+    const Config &config;                      // Configuration.
     std::function<callbackPrototype> callback; // Invoked per file.
 };
 

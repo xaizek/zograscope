@@ -19,6 +19,34 @@
 
 #include <string>
 
+// Temporary file in RAII-style.
+class TempFile
+{
+public:
+    // Makes temporary file whose name is a mangled version of an input name.
+    // The file is removed in destructor.
+    explicit TempFile(const std::string &prefix);
+
+    // Make sure temporary file is deleted only once.
+    TempFile(const TempFile &rhs) = delete;
+    TempFile & operator=(const TempFile &rhs) = delete;
+
+    // Removes temporary file, if it still exists.
+    ~TempFile();
+
+public:
+    // Provides implicit conversion to a file path string.
+    operator std::string() const
+    { return path; }
+
+    // Explicit conversion to a file path string.
+    const std::string & str() const
+    { return path; }
+
+private:
+    std::string path; // Path to the temporary file.
+};
+
 // Reads file into a string.  Throws `std::runtime_error` if `path` parameter
 // specifies a directory or file reading has failed.
 std::string readFile(const std::string &path);

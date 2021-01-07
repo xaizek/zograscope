@@ -1,4 +1,4 @@
-**zograscope**, _2017 - 2020_
+**zograscope**, _2017 - 2021_
 
 ![Screenshot](data/examples/c/screenshot.png)
 
@@ -8,12 +8,16 @@
 git clone --recursive https://github.com/xaizek/zograscope.git
 ```
 
-1. [Description](#description)
+1. [Description](#description) ([Status](#status);
+                                [Supported languages](#supported-languages);
+                                [Configuration](#configuration))
 2. [Tools](#tools)
 3. [Building and Installing](#building-and-installing)
+   ([Dependencies](#dependencies))
 4. [Documentation](#documentation)
 5. [License](#license)
 6. [Credits](#credits)
+   ([References](#references))
 
 ## Name ##
 
@@ -98,6 +102,64 @@ Note the following:
 
 More languages should be added in the future, maybe with external parsers that
 are capable of preserving all information about the source code.
+
+### Configuration ###
+
+Configuration is done per directory tree ("root") which is the closes parent (or
+current directory) that contains `.zs/` directory.  The `.zs/` directory
+contains files which define how contents of the root is to be processed.
+Settings from multiple nested roots are not combined.
+
+#### `.zs/exclude` file ####
+
+A `.gitignore`-like (or `.git/info/exclude`-like) file that lists paths relative
+to the root.  The purpose is to exclude uninteresting files (automatically
+generated, third-party or otherwise).  `.zs/exclude` is used by tools that
+search for files automatically and doesn't prevent the use of the same files
+when they are specified explicitly.
+
+The following kinds of entries are recognized:
+
+* empty lines, which are ignored
+* lines that start with a `#` (comments), which are ignored
+* lines that end with `/` match only directories, the `/` is stripped and line
+  processing continues
+* lines without `/` are treated as shell-like globs against filename which apply
+  at any directory level and define paths whose processing should be skipped
+* lines that start with `!` define exception from rules that precede them, you
+  can't undo exclusion of files in excluded directories, for the purpose of this
+  discussion the `!` is stripped and line processing continues
+* lines that start with `/` always match paths instead of filename and provide a
+  way to specify files to be ignored only in the root, otherwise they are
+  processed as specified in the next item
+* other lines are treated as shell-like globs against paths relative to the
+  root (leading `/` is allowed, but has no effect other than changing type of a
+  match) which define paths whose processing should be skipped
+
+No way to escape leading `#` and `!` or a newline at the moment.
+
+Globs support the following: `[{char-class}]`, `[!{char-class}]`,
+`[^{char-class}]`, `?` (doesn't match `/`), `*` (matches any (including zero)
+number of characters except for `/`) and `\{char}` (matches literal `{char}`).
+
+Example:
+
+```gitignore
+# .zs/exclude
+
+# automatically generated sources
+src/c/c11-lexer.gen.cpp
+src/c/c11-parser.gen.cpp
+src/make/*.gen.*
+
+# Qt-produced sources
+ui_*.h
+moc_*.cpp
+moc_*.h
+
+# file in root
+/config.h
+```
 
 ## Tools ##
 

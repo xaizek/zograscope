@@ -25,6 +25,7 @@
 
 #include "utils/optional.hpp"
 #include "utils/time.hpp"
+#include "Config.hpp"
 #include "integration.hpp"
 
 class Tree;
@@ -57,10 +58,7 @@ class Environment
     using variables_map = boost::program_options::variables_map;
 
 public:
-    explicit Environment(const options_description &extraOpts = {})
-        : options(extraOpts)
-    {
-    }
+    Environment(const options_description &extraOpts = {});
 
 public:
     void setup(const std::vector<std::string> &argv);
@@ -70,19 +68,16 @@ public:
     void printOptions();
 
     TimeReport & getTimeKeeper()
-    {
-        return tr;
-    }
+    { return tr; }
+
+    Config & getConfig()
+    { return config; }
 
     const CommonArgs & getCommonArgs() const
-    {
-        return args;
-    }
+    { return args; }
 
     const variables_map & getVarMap() const
-    {
-        return varMap;
-    }
+    { return varMap; }
 
 private:
     options_description options;
@@ -91,6 +86,7 @@ private:
 
     RedirectToPager redirectToPager;
     TimeReport tr;
+    Config config;
 };
 
 // Reads and parses a file to build its tree.

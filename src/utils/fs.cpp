@@ -25,10 +25,31 @@
 
 #include "utils/strings.hpp"
 
+namespace fs = boost::filesystem;
+
+static const char AppPrefix[] = "zs-";
+
+TempFile::TempFile(const std::string &prefix)
+{
+    fs::path baseName = prefix;
+    std::string stem = baseName.stem().string();
+    std::string extension = baseName.extension().string();
+
+    path = (
+       fs::temp_directory_path()
+     / fs::unique_path(AppPrefix + stem + "-%%%%-%%%%" + extension)
+    ).string();
+}
+
+TempFile::~TempFile()
+{
+    static_cast<void>(std::remove(path.c_str()));
+}
+
 std::string
 readFile(const std::string &path)
 {
-    if (boost::filesystem::is_directory(path)) {
+    if (fs::is_directory(path)) {
         throw std::runtime_error("Not a regular file: " + path);
     }
 

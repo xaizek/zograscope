@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/utility/string_ref.hpp>
 #include "pmr/monolithic.hpp"
 
@@ -40,6 +41,8 @@
 #include "compare.hpp"
 #include "decoration.hpp"
 #include "tree.hpp"
+
+namespace fs = boost::filesystem;
 
 enum class Changes
 {
@@ -68,6 +71,22 @@ static std::vector<Changes> makeChangeMap(Tree &tree);
 static std::vector<std::string> annotate(const std::vector<Changes> &expected,
                                          const std::vector<Changes> &actual);
 static std::ostream & operator<<(std::ostream &os, Changes changes);
+
+static const char AppPrefix[] = "zs-tests-";
+
+TempDir::TempDir(const std::string &prefix)
+{
+    path = (
+       fs::temp_directory_path()
+     / fs::unique_path(AppPrefix + prefix + "-%%%%-%%%%")
+    ).string();
+    fs::create_directories(path);
+}
+
+TempDir::~TempDir()
+{
+    static_cast<void>(fs::remove_all(path));
+}
 
 bool
 cIsParsed(const std::string &str)

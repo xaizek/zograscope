@@ -16,7 +16,6 @@
 
 #include "Finder.hpp"
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/optional.hpp>
 
@@ -34,8 +33,6 @@
 #include "common.hpp"
 #include "mtypes.hpp"
 
-namespace fs = boost::filesystem;
-
 namespace {
 
 // Strong typing of string with value for output stream overload.
@@ -51,8 +48,11 @@ operator<<(std::ostream &os, const AutoNL &val)
 
 }
 
-Finder::Finder(const CommonArgs &args, TimeReport &tr, bool countOnly)
-    : args(args), tr(tr), countOnly(countOnly)
+Finder::Finder(const CommonArgs &args,
+               TimeReport &tr,
+               const Config &config,
+               bool countOnly)
+    : args(args), tr(tr), config(config), countOnly(countOnly)
 {
     auto convert = [](const std::string &str) {
         if (str == "decl") {
@@ -124,7 +124,8 @@ Finder::~Finder() = default;
 bool
 Finder::search()
 {
-    bool found = Traverser(paths, args.lang, [this](const std::string &path) {
+    bool found = Traverser(paths, args.lang, config,
+                           [this](const std::string &path) {
                                return process(path);
                            }).search();
     report();

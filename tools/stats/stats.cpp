@@ -422,7 +422,7 @@ FileProcessor::printReport() const
 
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
-static int run(const Args &args, TimeReport &tr);
+static int run(const Args &args, Environment &env);
 
 const char *const usage =
 R"(Usage: zs-stats [options...] [paths...]
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
             env.printOptions();
             return EXIT_SUCCESS;
         }
-        result = run(args, env.getTimeKeeper());
+        result = run(args, env);
 
         env.teardown();
     } catch (const std::exception &e) {
@@ -486,16 +486,18 @@ parseLocalArgs(const Environment &env)
 
 // Runs the tool.  Returns exit code of the application.
 static int
-run(const Args &args, TimeReport &tr)
+run(const Args &args, Environment &env)
 {
     std::vector<std::string> paths = args.pos;
     if (paths.empty()) {
         paths.emplace_back(".");
     }
 
+    TimeReport &tr = env.getTimeKeeper();
+    Config &config = env.getConfig();
     FileProcessor processor(args, tr);
 
-    if (!Traverser(paths, args.lang, std::ref(processor)).search()) {
+    if (!Traverser(paths, args.lang, config, std::ref(processor)).search()) {
         std::cerr << "No matching files were discovered.\n";
         return EXIT_FAILURE;
     }

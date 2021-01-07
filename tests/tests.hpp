@@ -25,8 +25,6 @@
 #include <sstream>
 #include <string>
 
-#include <boost/filesystem/operations.hpp>
-
 class Node;
 class Tree;
 
@@ -76,49 +74,31 @@ private:
     std::streambuf *rdbuf;  //!< Original output buffer of the stream.
 };
 
-/**
- * @brief Temporary file in RAII-style.
- */
-class TempFile
+// Temporary directory in RAII-style.
+class TempDir
 {
 public:
-    /**
-     * @brief Makes temporary file, which is removed in destructor.
-     *
-     * @param prefix File name prefix.
-     */
-    explicit TempFile(const std::string &prefix)
-    {
-        namespace fs = boost::filesystem;
+    // Makes temporary directory, which is removed in destructor.
+    explicit TempDir(const std::string &prefix);
 
-        path = (fs::temp_directory_path()
-             /  fs::unique_path("dit-" + prefix + "-%%%%-%%%%")).string();
-    }
+    // Make sure temporary directory is deleted only once.
+    TempDir(const TempDir &rhs) = delete;
+    TempDir & operator=(const TempDir &rhs) = delete;
 
-    /**
-     * @brief Removes temporary file, if it still exists.
-     */
-    ~TempFile()
-    {
-        static_cast<void>(std::remove(path.c_str()));
-    }
+    // Removes temporary directory and all its content, if it still exists.
+    ~TempDir();
 
 public:
-    /**
-     * @brief Provides implicit convertion to a file path string.
-     *
-     * @returns The path.
-     */
+    // Provides implicit conversion to a directory path string.
     operator std::string() const
-    {
-        return path;
-    }
+    { return path; }
+
+    // Explicit conversion to a directory path string.
+    const std::string & str() const
+    { return path; }
 
 private:
-    /**
-     * @brief Path to the temporary file.
-     */
-    std::string path;
+    std::string path; // Path to the temporary directory.
 };
 
 // Checks whether C source can be parsed or not.
