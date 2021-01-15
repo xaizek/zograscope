@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "make/make-parser.hpp"
+#include "make/make-parser.gen.hpp"
 #include "LexerData.hpp"
 
 // Make-specific state of the lexer.

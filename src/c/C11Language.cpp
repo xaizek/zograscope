@@ -17,7 +17,7 @@
 #include "C11Language.hpp"
 
 #include "c/C11SType.hpp"
-#include "c/c11-parser.hpp"
+#include "c/c11-parser.gen.hpp"
 #include "mtypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"

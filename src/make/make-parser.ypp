@@ -17,7 +17,7 @@
 
 %{
 
-#include "make/make-parser.hpp"
+#include "make/make-parser.gen.hpp"
 
 #include <cstdio>
 
@@ -26,7 +26,7 @@
 
 #include "make/MakeLexerData.hpp"
 #include "make/MakeSType.hpp"
-#include "make/make-lexer.hpp"
+#include "make/make-lexer.gen.hpp"
 #include "TreeBuilder.hpp"
 
 struct MakeParseData

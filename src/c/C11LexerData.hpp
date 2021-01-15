@@ -22,7 +22,7 @@
 
 #include <string>
 
-#include "c/c11-parser.hpp"
+#include "c/c11-parser.gen.hpp"
 #include "LexerData.hpp"
 
 struct C11LexerData : LexerData

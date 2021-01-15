@@ -30,7 +30,7 @@
 
 #include "c/C11LexerData.hpp"
 #include "c/C11SType.hpp"
-#include "c/c11-parser.hpp"
+#include "c/c11-parser.gen.hpp"
 #include "TreeBuilder.hpp"
 
 #define YYSTYPE C11_STYPE

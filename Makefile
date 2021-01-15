@@ -89,8 +89,10 @@ lib_autocpp := $(addprefix $(out_dir)/src/c/, \
                            c11-lexer.gen.cpp c11-parser.gen.cpp)
 lib_autocpp += $(addprefix $(out_dir)/src/make/, \
                            make-lexer.gen.cpp make-parser.gen.cpp)
-lib_autohpp := $(addprefix $(out_dir)/src/c/, c11-lexer.hpp c11-parser.hpp)
-lib_autohpp += $(addprefix $(out_dir)/src/make/, make-lexer.hpp make-parser.hpp)
+lib_autohpp := $(addprefix $(out_dir)/src/c/, \
+                           c11-lexer.gen.hpp c11-parser.gen.hpp)
+lib_autohpp += $(addprefix $(out_dir)/src/make/, \
+                           make-lexer.gen.hpp make-parser.gen.hpp)
 
 lib_objects := $(sort $(lib_sources:%.cpp=$(out_dir)/%.o) \
                       $(lib_autocpp:%.cpp=%.o))
@@ -185,28 +187,28 @@ install: release
 uninstall:
 	$(RM) $(addprefix $(DESTDIR)$(PREFIX)/bin/,$(notdir $(tools_bins)))
 
-$(out_dir)/src/c/c11-lexer.hpp: $(out_dir)/src/c/c11-lexer.gen.cpp
+$(out_dir)/src/c/c11-lexer.gen.hpp: $(out_dir)/src/c/c11-lexer.gen.cpp
 $(out_dir)/src/c/c11-lexer.gen.cpp: src/c/c11-lexer.flex \
                                 | $(out_dir)/src/c/c11-parser.gen.cpp \
-                                  $(out_dir)/src/c/c11-parser.hpp
-	flex --header-file=$(out_dir)/src/c/c11-lexer.hpp \
+                                  $(out_dir)/src/c/c11-parser.gen.hpp
+	flex --header-file=$(out_dir)/src/c/c11-lexer.gen.hpp \
 	     --outfile=$(out_dir)/src/c/c11-lexer.gen.cpp $<
 
-$(out_dir)/src/make/make-lexer.hpp: $(out_dir)/src/make/make-lexer.gen.cpp
+$(out_dir)/src/make/make-lexer.gen.hpp: $(out_dir)/src/make/make-lexer.gen.cpp
 $(out_dir)/src/make/make-lexer.gen.cpp: src/make/make-lexer.flex \
                                 | $(out_dir)/src/make/make-parser.gen.cpp \
-                                  $(out_dir)/src/make/make-parser.hpp
-	flex --header-file=$(out_dir)/src/make/make-lexer.hpp \
+                                  $(out_dir)/src/make/make-parser.gen.hpp
+	flex --header-file=$(out_dir)/src/make/make-lexer.gen.hpp \
 	     --outfile=$(out_dir)/src/make/make-lexer.gen.cpp $<
 
-$(out_dir)/src/c/c11-parser.hpp: $(out_dir)/src/c/c11-parser.gen.cpp
+$(out_dir)/src/c/c11-parser.gen.hpp: $(out_dir)/src/c/c11-parser.gen.cpp
 $(out_dir)/src/c/c11-parser.gen.cpp: src/c/c11-parser.ypp
-	bison --defines=$(out_dir)/src/c/c11-parser.hpp \
+	bison --defines=$(out_dir)/src/c/c11-parser.gen.hpp \
 	      --output=$(out_dir)/src/c/c11-parser.gen.cpp $<
 
-$(out_dir)/src/make/make-parser.hpp: $(out_dir)/src/make/make-parser.gen.cpp
+$(out_dir)/src/make/make-parser.gen.hpp: $(out_dir)/src/make/make-parser.gen.cpp
 $(out_dir)/src/make/make-parser.gen.cpp: src/make/make-parser.ypp
-	bison --defines=$(out_dir)/src/make/make-parser.hpp \
+	bison --defines=$(out_dir)/src/make/make-parser.gen.hpp \
 	      --output=$(out_dir)/src/make/make-parser.gen.cpp $<
 
 # to make build possible the first time, when dependency files aren't there yet
@@ -215,7 +217,8 @@ $(lib_objects): | $(lib_autohpp)
 # work around parenthesis warning in tests somehow caused by ccache
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Itests/
-$(out_dir)/tests/tests: EXTRA_CXXFLAGS += -DCATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH=999
+$(out_dir)/tests/tests: \
+    EXTRA_CXXFLAGS += -DCATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH=999
 $(out_dir)/tests/tests: $(tests_objects) tests/. | $(out_dirs)
 	$(CXX) $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@
 

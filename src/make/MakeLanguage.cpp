@@ -19,7 +19,7 @@
 #include <cassert>
 
 #include "make/MakeSType.hpp"
-#include "make/make-parser.hpp"
+#include "make/make-parser.gen.hpp"
 #include "mtypes.hpp"
 #include "tree.hpp"
 #include "types.hpp"

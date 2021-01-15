@@ -30,7 +30,7 @@
 
 #include "make/MakeLexerData.hpp"
 #include "make/MakeSType.hpp"
-#include "make/make-parser.hpp"
+#include "make/make-parser.gen.hpp"
 #include "TreeBuilder.hpp"
 
 #define YYSTYPE MAKE_STYPE
