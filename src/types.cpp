@@ -20,8 +20,6 @@
 
 #include <ostream>
 
-#include "c/c11-parser.hpp"
-
 std::ostream &
 operator<<(std::ostream &os, Type type)
 {
