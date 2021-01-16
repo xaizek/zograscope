@@ -6,7 +6,7 @@
 
 `zs-stats` is a tool for counting:
  * lines of code
- * lines of code taken by functions (complete definition)
+ * size of functions (complete definition)
  * number of functions
  * number of parameters of functions
  * possibly other things in the future

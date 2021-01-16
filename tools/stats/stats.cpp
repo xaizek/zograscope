@@ -74,7 +74,7 @@ operator<<(std::ostream &os, const Header &val)
 inline std::ostream &
 operator<<(std::ostream &os, const SubHeader &val)
 {
-    return os << " { " << (decor::bold << val.data) << " }\n";
+    return os << " * " << (decor::bold << val.data) << '\n';
 }
 inline std::ostream &
 operator<<(std::ostream &os, const Bullet &val)
@@ -376,21 +376,26 @@ FileProcessor::printReport() const
     std::cout << Header { "Input information" }
               << Bullet { "files" } << files << "\n\n";
 
-    int lines = blank + comment + code + structural;
+    int nonBlank = comment + code + structural;
+    int lines = blank + nonBlank;
     std::cout << Header { "Line statistics" }
-              << Bullet { "blank" }      << Part { blank, lines }      << '\n'
-              << Bullet { "comment" }    << Part { comment, lines }    << '\n'
-              << Bullet { "code" }       << Part { code, lines }       << '\n'
-              << Bullet { "structural" } << Part { structural, lines } << '\n'
-              << '\n';
-
-    std::cout << Header { "Totals" }
-              << Bullet { "all" }
+              << Bullet { "blank      (B)" }
+                 << Part { blank, lines } << '\n'
+              << Bullet { "comment    (T)" }
+                 << Part { comment, lines } << '\n'
+              << Bullet { "code       (C)" }
+                 << Part { code, lines } << '\n'
+              << Bullet { "structural (S)" }
+                 << Part { structural, lines } << '\n'
+              << Bullet { "all        (A)" }
                  << Count { lines } << '\n'
-              << Bullet { "all-com" }
-                 << Part { lines - comment, lines } << '\n'
-              << Bullet { "all-com-st" }
-                 << Part { lines - comment - structural, lines } << '\n'
+              << SubHeader { "Interesting subsets" }
+              << "  " << Bullet { "A-B" }
+                 << Part { nonBlank, lines } << '\n'
+              << "  " << Bullet { "B+T" }
+                 << Part { blank + comment, lines } << '\n'
+              << "  " << Bullet { "C+S" }
+                 << Part { nonBlank - comment, lines } << '\n'
               << '\n';
 
     if (!funcSizes.isEmpty()) {
@@ -398,18 +403,18 @@ FileProcessor::printReport() const
                   << Bullet { "count" }
                      << Count { funcSizes.getSampleSize() } << '\n'
                   << SubHeader { "Size" }
-                  << Bullet { "min" }
+                  << "  " << Bullet { "min" }
                      << Count { funcSizes.getMin() } << '\n'
-                  << Bullet { "median" }
+                  << "  " << Bullet { "median" }
                      << Count { funcSizes.getMedian() } << '\n'
-                  << Bullet { "max" }
+                  << "  " << Bullet { "max" }
                      << Count { funcSizes.getMax() } << '\n'
                   << SubHeader { "Params" }
-                  << Bullet { "min" }
+                  << "  " << Bullet { "min" }
                      << Count { paramCounts.getMin() } << '\n'
-                  << Bullet { "median" }
+                  << "  " << Bullet { "median" }
                      << Count { paramCounts.getMedian() } << '\n'
-                  << Bullet { "max" }
+                  << "  " << Bullet { "max" }
                      << Count { paramCounts.getMax() } << '\n';
     }
     // XXX: histograms?
