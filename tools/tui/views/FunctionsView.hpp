@@ -17,12 +17,18 @@
 #ifndef ZOGRASCOPE__TOOLS__TUI__VIEWS__FUNCTIONSVIEW_HPP__
 #define ZOGRASCOPE__TOOLS__TUI__VIEWS__FUNCTIONSVIEW_HPP__
 
+#include <vector>
+
 #include "cursed/Table.hpp"
 
 #include "../ViewManager.hpp"
 
+class FuncInfo;
+
 class FunctionsView : public View
 {
+    enum class Sorting;
+
 public:
     explicit FunctionsView(ViewManager &manager);
 
@@ -32,9 +38,12 @@ public:
 
 private:
     void goToInfoMode(const std::string &mode);
+    void setSorting(Sorting newSorting);
 
 private:
     cursed::Table table;
+    std::vector<const FuncInfo *> sorted;
+    Sorting sorting;
 };
 
 #endif // ZOGRASCOPE__TOOLS__TUI__VIEWS__FUNCTIONSVIEW_HPP__

@@ -16,6 +16,8 @@
 
 #include "FunctionsView.hpp"
 
+#include <algorithm>
+
 #include "cursed/Table.hpp"
 #include "cursed/utils.hpp"
 
@@ -25,7 +27,16 @@
 #include "../ViewManager.hpp"
 #include "../common.hpp"
 
-FunctionsView::FunctionsView(ViewManager &manager) : View(manager, "functions")
+// Sorting variants.
+enum class FunctionsView::Sorting
+{
+    None,  // Unsorted.
+    Size,  // Sorted by size.
+    Params // Sorted by number of parameters.
+};
+
+FunctionsView::FunctionsView(ViewManager &manager) : View(manager, "functions"),
+                                                     sorting(Sorting::None)
 {
     cursed::Format header;
     header.setBold(true);
@@ -40,6 +51,9 @@ FunctionsView::FunctionsView(ViewManager &manager) : View(manager, "functions")
     helpLine = buildShortcut(L"f", L"list files")
              + buildShortcut(L"c", L"show as code")
              + buildShortcut(L"d", L"show as dump")
+             + buildShortcut(L"u", L"unsorted")
+             + buildShortcut(L"s", L"sort by size")
+             + buildShortcut(L"p", L"sort by params")
              + buildShortcut(L"q", L"quit");
 }
 
@@ -67,17 +81,36 @@ FunctionsView::buildMode()
         goToInfoMode("code");
     }, "show code view" });
 
+    mode.addShortcut({ L"u", [&]() {
+        setSorting(Sorting::None);
+    }, "do sorting" });
+    mode.addShortcut({ L"s", [&]() {
+        setSorting(Sorting::Size);
+    }, "sort by size" });
+    mode.addShortcut({ L"p", [&]() {
+        setSorting(Sorting::Params);
+    }, "sort by params" });
+
     return mode;
 }
 
 void
 FunctionsView::goToInfoMode(const std::string &mode)
 {
-    const std::vector<FuncInfo> &infos = context.registry.getFuncInfos();
-    const FuncInfo &fi = infos[table.getPos()];
-    context.node = fi.node;
-    context.lang = context.registry.getTree(fi.loc.path).getLanguage();
+    const FuncInfo *fi = sorted[table.getPos()];
+    context.node = fi->node;
+    context.lang = context.registry.getTree(fi->loc.path).getLanguage();
     manager.push(mode);
+}
+
+void
+FunctionsView::setSorting(Sorting newSorting)
+{
+    if (sorting != newSorting) {
+        sorting = newSorting;
+        table.removeAll();
+        update();
+    }
 }
 
 void
@@ -89,12 +122,31 @@ FunctionsView::update()
     cursed::Format colNo;
 
     const std::vector<FuncInfo> &infos = context.registry.getFuncInfos();
+
+    sorted.clear();
+    sorted.reserve(infos.size());
     for (const FuncInfo &info : infos) {
-        const Location &loc = info.loc;
+        sorted.push_back(&info);
+    }
+
+    if (sorting == Sorting::Size) {
+        std::stable_sort(sorted.begin(), sorted.end(),
+                         [](const FuncInfo *a, const FuncInfo *b) {
+                             return b->size < a->size;
+                         });
+    } else if (sorting == Sorting::Params) {
+        std::stable_sort(sorted.begin(), sorted.end(),
+                         [](const FuncInfo *a, const FuncInfo *b) {
+                             return b->params < a->params;
+                         });
+    }
+
+    for (const FuncInfo *info : sorted) {
+        const Location &loc = info->loc;
         table.append({ path(cursed::toWide(loc.path)) +
                        L":" + lineNo(std::to_wstring(loc.line)) +
                        L":" + colNo(std::to_wstring(loc.col)),
-                       std::to_wstring(info.size),
-                       std::to_wstring(info.params) });
+                       std::to_wstring(info->size),
+                       std::to_wstring(info->params) });
     }
 }
