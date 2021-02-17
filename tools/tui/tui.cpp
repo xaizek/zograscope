@@ -18,6 +18,7 @@
 #include <sstream>
 #include <vector>
 
+#include "cursed/Expander.hpp"
 #include "cursed/Init.hpp"
 #include "cursed/Input.hpp"
 #include "cursed/Label.hpp"
@@ -64,6 +65,8 @@ Other shortcuts:
  * dump view:
     - d/q -- leave dump view
 )";
+
+const int InputBufferWidth = 10;
 
 int
 main(int argc, char *argv[])
@@ -132,6 +135,12 @@ run(const CommonArgs &args, Environment &env)
     helpLine.setBackground(helpBg);
     cursed::Label inputBuf;
     inputBuf.setBackground(barBg);
+    inputBuf.setFixedSize(InputBufferWidth, 1);
+
+    cursed::Track bottomTrack(cursed::Orientation::Horizontal);
+    cursed::Expander bottomTrackExpander;
+    bottomTrack.addItem(&bottomTrackExpander);
+    bottomTrack.addItem(&inputBuf);
 
     cursed::Placeholder viewPlaceholder;
 
@@ -139,7 +148,7 @@ run(const CommonArgs &args, Environment &env)
     track.addItem(&title);
     track.addItem(&viewPlaceholder);
     track.addItem(&helpLine);
-    track.addItem(&inputBuf);
+    track.addItem(&bottomTrack);
 
     ViewContext viewContext = {
         .registry = registry,
@@ -184,7 +193,13 @@ run(const CommonArgs &args, Environment &env)
             }
         }
 
-        inputBuf.setText(dispatcher.getPendingInput());
+        std::wstring pendingInput = dispatcher.getPendingInput();
+        int excess = pendingInput.size() - InputBufferWidth;
+        if (excess > 0) {
+            pendingInput.erase(0, excess);
+        }
+        inputBuf.setText(pendingInput);
+
         screen.draw();
     }
     return EXIT_SUCCESS;
