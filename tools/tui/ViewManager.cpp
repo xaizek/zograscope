@@ -21,6 +21,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "cursed/Placeholder.hpp"
 
@@ -49,6 +50,12 @@ View::getHelpLine() const
     return helpLine;
 }
 
+const cursed::ColorTree &
+View::getStatusLine() const
+{
+    return statusLine;
+}
+
 cursed::Track &
 View::getTrack()
 {
@@ -60,6 +67,12 @@ View::buildShortcut(const wchar_t label[], const wchar_t descr[])
 {
     return shortcutLabel(L" ") + shortcutLabel(label) + shortcutLabel(L" ")
          + L" " + shortcutDescr(descr) + L" ";
+}
+
+void
+View::setStatusLine(cursed::ColorTree newStatusLine)
+{
+    statusLine = std::move(newStatusLine);
 }
 
 ViewManager::ViewManager(ViewContext &context, cursed::Placeholder &placeholder)
@@ -137,4 +150,12 @@ ViewManager::getViewHelpLine()
     return stack.empty()
          ? cursed::ColorTree()
          : L" " + cursed::ColorTree(stack.back()->getHelpLine());
+}
+
+cursed::ColorTree
+ViewManager::getViewStatusLine()
+{
+    return stack.empty()
+         ? cursed::ColorTree()
+         : stack.back()->getStatusLine();
 }

@@ -18,7 +18,6 @@
 #include <sstream>
 #include <vector>
 
-#include "cursed/Expander.hpp"
 #include "cursed/Init.hpp"
 #include "cursed/Input.hpp"
 #include "cursed/Label.hpp"
@@ -133,13 +132,15 @@ run(const CommonArgs &args, Environment &env)
     title.setBackground(barBg);
     cursed::Label helpLine;
     helpLine.setBackground(helpBg);
+
+    cursed::Label statusLine;
+    statusLine.setBackground(barBg);
     cursed::Label inputBuf;
     inputBuf.setBackground(barBg);
     inputBuf.setFixedSize(InputBufferWidth, 1);
 
     cursed::Track bottomTrack(cursed::Orientation::Horizontal);
-    cursed::Expander bottomTrackExpander;
-    bottomTrack.addItem(&bottomTrackExpander);
+    bottomTrack.addItem(&statusLine);
     bottomTrack.addItem(&inputBuf);
 
     cursed::Placeholder viewPlaceholder;
@@ -163,6 +164,7 @@ run(const CommonArgs &args, Environment &env)
     auto viewChanged = [&]() {
         title.setText(L"[" + cursed::toWide(viewManager.getViewName()) + L"]");
         helpLine.setText(viewManager.getViewHelpLine());
+        statusLine.setText(viewManager.getViewStatusLine());
         viewContext.viewChanged = false;
     };
 
@@ -192,6 +194,8 @@ run(const CommonArgs &args, Environment &env)
                 screen.resize();
             }
         }
+
+        statusLine.setText(viewManager.getViewStatusLine());
 
         std::wstring pendingInput = dispatcher.getPendingInput();
         int excess = pendingInput.size() - InputBufferWidth;

@@ -53,6 +53,7 @@ public:
 public:
     const std::string & getName() const;
     const cursed::ColorTree & getHelpLine() const;
+    const cursed::ColorTree & getStatusLine() const;
     cursed::Track & getTrack();
 
     virtual vle::Mode buildMode() = 0;
@@ -61,12 +62,14 @@ public:
 protected:
     cursed::ColorTree buildShortcut(const wchar_t label[],
                                     const wchar_t descr[]);
+    void setStatusLine(cursed::ColorTree newStatusLine);
 
 protected:
     ViewManager &manager;
     ViewContext &context;
     cursed::Track track;
     cursed::ColorTree helpLine;
+    cursed::ColorTree statusLine;
 
     cursed::Format shortcutLabel;
     cursed::Format shortcutDescr;
@@ -88,6 +91,7 @@ public:
 
     std::string getViewName();
     cursed::ColorTree getViewHelpLine();
+    cursed::ColorTree getViewStatusLine();
 
 private:
     void setupView(View &view);
