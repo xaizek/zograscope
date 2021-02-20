@@ -35,6 +35,7 @@ public:
 
 private:
     void goToInfoMode(const std::string &mode);
+    void updateStatus();
 
 private:
     cursed::List list;

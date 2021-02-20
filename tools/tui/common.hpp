@@ -17,13 +17,17 @@
 #ifndef ZOGRASCOPE__TOOLS__TUI__COMMON_HPP__
 #define ZOGRASCOPE__TOOLS__TUI__COMMON_HPP__
 
+#include <functional>
+
 #include "cursed/ListLike.hpp"
 #include "cursed/Text.hpp"
 
 #include "vle/Mode.hpp"
 
-// Populates mode with typical list operations.
-void addListOperations(vle::Mode &mode, cursed::ListLike &list);
+// Populates mode with typical list operations allowing to specify callback to
+// be invoked on cursor position update.
+void addListOperations(vle::Mode &mode, cursed::ListLike &list,
+                       std::function<void(cursed::ListLike &)> onPosUpdated);
 
 // Populates mode with typical text operations.
 void addTextOperations(vle::Mode &mode, cursed::Text &text);

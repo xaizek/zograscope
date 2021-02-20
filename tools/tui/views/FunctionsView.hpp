@@ -39,6 +39,7 @@ public:
 private:
     void goToInfoMode(const std::string &mode);
     void setSorting(Sorting newSorting);
+    void updateStatus();
 
 private:
     cursed::Table table;

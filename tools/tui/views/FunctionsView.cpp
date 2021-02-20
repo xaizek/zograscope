@@ -17,6 +17,7 @@
 #include "FunctionsView.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 #include "cursed/Table.hpp"
 #include "cursed/utils.hpp"
@@ -63,7 +64,8 @@ FunctionsView::buildMode()
     vle::Mode mode(getName());
     mode.setUsesCount(true);
 
-    addListOperations(mode, table);
+    auto onPosUpdated = [this](cursed::ListLike &) { updateStatus(); };
+    addListOperations(mode, table, onPosUpdated);
 
     mode.addShortcut({ L"q", [&]() {
         context.quit = true;
@@ -149,4 +151,14 @@ FunctionsView::update()
                        std::to_wstring(info->size),
                        std::to_wstring(info->params) });
     }
+
+    updateStatus();
+}
+
+void
+FunctionsView::updateStatus()
+{
+    std::wostringstream oss;
+    oss << (table.getPos() + 1) << '/' << table.getSize();
+    setStatusLine(oss.str());
 }

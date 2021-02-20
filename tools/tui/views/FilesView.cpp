@@ -17,6 +17,7 @@
 #include "FilesView.hpp"
 
 #include <algorithm>
+#include <sstream>
 #include <utility>
 
 #include "cursed/List.hpp"
@@ -42,7 +43,8 @@ FilesView::buildMode()
     vle::Mode mode(getName());
     mode.setUsesCount(true);
 
-    addListOperations(mode, list);
+    auto onPosUpdated = [this](cursed::ListLike &) { updateStatus(); };
+    addListOperations(mode, list, onPosUpdated);
 
     mode.addShortcut({ L"q", [&]() {
         context.quit = true;
@@ -90,4 +92,14 @@ FilesView::update()
     }
 
     list.setItems(std::move(lines));
+
+    updateStatus();
+}
+
+void
+FilesView::updateStatus()
+{
+    std::wostringstream oss;
+    oss << (list.getPos() + 1) << '/' << list.getSize();
+    setStatusLine(oss.str());
 }

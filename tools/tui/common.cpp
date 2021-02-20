@@ -22,27 +22,32 @@
 #include "vle/Mode.hpp"
 
 void
-addListOperations(vle::Mode &mode, cursed::ListLike &list)
+addListOperations(vle::Mode &mode, cursed::ListLike &list,
+                  std::function<void(cursed::ListLike &)> onPosUpdated)
 {
-    mode.addShortcut({ L"G", [&](int count) {
+    mode.addShortcut({ L"G", [&,onPosUpdated](int count) {
         if (count < 0) {
             list.moveToLast();
         } else {
             list.moveToPos(count - 1);
         }
+        onPosUpdated(list);
     }, "go to the last or [count]-th item" });
-    mode.addShortcut({ L"gg", [&](int count) {
+    mode.addShortcut({ L"gg", [&,onPosUpdated](int count) {
         if (count < 0) {
             list.moveToFirst();
         } else {
             list.moveToPos(count - 1);
         }
+        onPosUpdated(list);
     }, "go to the first or [count]-th item" });
-    mode.addShortcut({ L"j", [&](int count) {
+    mode.addShortcut({ L"j", [&,onPosUpdated](int count) {
         list.moveDown(count < 0 ? 1 : count);
+        onPosUpdated(list);
     }, "go [count] items below" });
-    mode.addShortcut({ L"k", [&](int count) {
+    mode.addShortcut({ L"k", [&,onPosUpdated](int count) {
         list.moveUp(count < 0 ? 1 : count);
+        onPosUpdated(list);
     }, "go [count] items above" });
 }
 
