@@ -17,6 +17,7 @@ matrix:
         - srcml --version
         - echo "TESTS := '*'" > config.mk
     - os: osx
+      osx_image: xcode10.2
       compiler: clang
       before_script:
         - export PATH="/usr/local/opt/bison/bin:$PATH"
