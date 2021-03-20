@@ -265,6 +265,8 @@ custom allocators.
 
 [TinyXML2][tinyxml2] is used for parsing XML.
 
+[tree-sitter][tree-sitter] is used for parsing of some languages.
+
 [Catch2][catch] is used for tests.
 
 ### References ###
@@ -297,6 +299,7 @@ Kaizhong Zhang and Dennis Shasha.
 [dtl]: https://github.com/cubicdaiya/dtl
 [pmr]: https://github.com/phalpern/CppCon2017Code
 [tinyxml2]: https://github.com/leethomason/tinyxml2
+[tree-sitter]: https://tree-sitter.github.io/
 [catch]: https://github.com/catchorg/Catch2
 
 [cd]: http://www.merlin.uzh.ch/publication/show/2531
