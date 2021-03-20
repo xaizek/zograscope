@@ -1,7 +1,9 @@
 NAME := zograscope
 
-CXXFLAGS += -std=c++11 -Wall -Wextra -MMD -MP -Isrc/ -Ithird-party/ -DYYDEBUG
-CXXFLAGS += -pthread
+CFLAGS += -MMD -MP
+CFLAGS += -Ithird-party/tree-sitter/include/ -Ithird-party/tree-sitter/src/
+CXXFLAGS += -std=c++11 -Wall -Wextra -DYYDEBUG -pthread
+CXXFLAGS += -Isrc/ -Ithird-party/ $(CFLAGS)
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
 LDFLAGS  += -lboost_system -pthread
 
@@ -81,9 +83,10 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
 
 lib := $(out_dir)/lib$(NAME).a
 
-lib_sources := $(call rwildcard, src/, *.cpp) \
-               $(call rwildcard, third-party/, *.cpp)
-lib_sources := $(filter-out %.gen.cpp,$(lib_sources))
+lib_sources_cpp := $(call rwildcard, src/, *.cpp) \
+                   $(call rwildcard, third-party/, *.cpp)
+lib_sources_cpp := $(filter-out %.gen.cpp,$(lib_sources_cpp))
+lib_sources_c := $(call rwildcard, third-party/, *.c)
 
 lib_autocpp := $(addprefix $(out_dir)/src/c/, \
                            c11-lexer.gen.cpp c11-parser.gen.cpp)
@@ -94,7 +97,8 @@ lib_autohpp := $(addprefix $(out_dir)/src/c/, \
 lib_autohpp += $(addprefix $(out_dir)/src/make/, \
                            make-lexer.gen.hpp make-parser.gen.hpp)
 
-lib_objects := $(sort $(lib_sources:%.cpp=$(out_dir)/%.o) \
+lib_objects := $(sort $(lib_sources_cpp:%.cpp=$(out_dir)/%.o) \
+                      $(lib_sources_c:%.c=$(out_dir)/%.o) \
                       $(lib_autocpp:%.cpp=%.o))
 lib_depends := $(lib_objects:.o=.d)
 
