@@ -64,8 +64,8 @@ struct Node
     State state : 8;
     bool satellite : 1; // Decorative element or node whose match was finalized.
     bool moved : 1;
-    bool last : 1;
-    bool leaf : 1;
+    bool last : 1; // This is root of a tree from the last layer.
+    bool leaf : 1; // This node corresponds to something in the source.
 
     Node(allocator_type al = {})
         : children(al),

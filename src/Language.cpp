@@ -30,6 +30,7 @@
 #include "c/C11Language.hpp"
 #include "make/MakeLanguage.hpp"
 #include "srcml/cxx/SrcmlCxxLanguage.hpp"
+#include "ts/lua/TSLuaLanguage.hpp"
 #include "tree.hpp"
 
 namespace fs = boost::filesystem;
@@ -60,6 +61,9 @@ Language::create(const std::string &fileName, const std::string &l)
     }
     if (lang == "cxx" || lang == "srcml:cxx") {
         return std::unique_ptr<SrcmlCxxLanguage>(new SrcmlCxxLanguage());
+    }
+    if (lang == "lua" || lang == "ts:lua") {
+        return std::unique_ptr<TsLuaLanguage>(new TsLuaLanguage());
     }
     if (lang == "make") {
         return std::unique_ptr<MakeLanguage>(new MakeLanguage());
@@ -97,6 +101,10 @@ detectLanguage(const std::string &stem, const std::string &ext)
     if (ext == ".cpp" || ext == ".cxx" || ext == ".cc" ||
         ext == ".hpp" || ext == ".hxx" || ext == ".hh") {
         return "cxx";
+    }
+
+    if (ext == ".lua") {
+        return "lua";
     }
 
     using boost::algorithm::ends_with;

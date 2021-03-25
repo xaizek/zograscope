@@ -59,13 +59,16 @@ print(const PNode *node, const std::string &contents, Language &lang)
 
     Decoration labelHi = 78_fg + bold;
     Decoration stypeHi = 222_fg;
+    Decoration badStypeHi = 88_bg;
 
     trees::print(std::cout, node, [&](std::ostream &os, const PNode *node) {
+        bool badSType = (node->stype == SType{} && !node->children.empty());
+
         os << (labelHi << '`'
                        << contents.substr(node->value.from, node->value.len)
                        << '`')
            << ", "
-           << (stypeHi << lang.toString(node->stype))
+           << ((badSType ? badStypeHi : stypeHi) << lang.toString(node->stype))
            << '\n';
     });
 }

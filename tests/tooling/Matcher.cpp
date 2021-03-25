@@ -47,6 +47,11 @@ TEST_CASE("Comment matcher works", "[tooling][matcher][.srcml]")
         CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
         CHECK(nMatches == 3);
     }
+    SECTION("In Lua") {
+        Tree tree = parseLua("--[[a]] --[[b]]");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
+    }
 }
 
 TEST_CASE("Directive matcher works", "[tooling][matcher][.srcml]")
@@ -96,6 +101,11 @@ TEST_CASE("Statement matcher works", "[tooling][matcher][.srcml]")
         CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
         CHECK(nMatches == 3);
     }
+    SECTION("In Lua") {
+        Tree tree = parseLua("function f() a() v = b() c() end");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 3);
+    }
 }
 
 TEST_CASE("Block matcher works", "[tooling][matcher][.srcml]")
@@ -117,6 +127,11 @@ TEST_CASE("Block matcher works", "[tooling][matcher][.srcml]")
         Tree tree = parseCxx("void f() { { } { { } } }");
         CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
         CHECK(nMatches == 4);
+    }
+    SECTION("In Lua") {
+        Tree tree = parseLua("function f() do end end");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
     }
 }
 
@@ -144,5 +159,64 @@ TEST_CASE("Call matcher works", "[tooling][matcher][.srcml]")
         Tree tree = parseCxx("void f() { call1(); call2(nested()); }");
         CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
         CHECK(nMatches == 3);
+    }
+    SECTION("In Lua") {
+        Tree tree = parseLua("call1() call2()");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 2);
+    }
+}
+
+TEST_CASE("Parameter matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Parameter, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In C") {
+        Tree tree = parseC("void f(int a1, int a2, int a3, int a4) { }", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("void f(int a1, int a2, int a3, int a4) { }");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+    SECTION("In Lua") {
+        Tree tree = parseLua("function f(a1, a2, a3, a4) ; end");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+}
+
+TEST_CASE("Declaration matcher works", "[tooling][matcher][.srcml]")
+{
+    Matcher matcher(MType::Declaration, nullptr);
+
+    int nMatches = 0;
+
+    auto matchHandler = [&](Node */*node*/) {
+        ++nMatches;
+    };
+
+    SECTION("In C") {
+        Tree tree = parseC("int a1; int a2; int a3; int a4;", true);
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+    SECTION("In C++") {
+        Tree tree = parseCxx("int a1; int a2; int a3; int a4;");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
+    }
+    SECTION("In Lua") {
+        Tree tree = parseLua("a1 = 1; a2 = 2; a3 = 3; a4 = 4");
+        CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
+        CHECK(nMatches == 4);
     }
 }

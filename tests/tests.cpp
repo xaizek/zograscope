@@ -127,6 +127,12 @@ parseCxx(const std::string &str)
     return parse("test-input.cpp", str, true);
 }
 
+Tree
+parseLua(const std::string &str)
+{
+    return parse("test-input.lua", str, true);
+}
+
 // Parses source into a tree.
 static Tree
 parse(const std::string &fileName, const std::string &str, bool coarse)
@@ -283,6 +289,13 @@ std::string
 diffSrcmlCxx(const std::string &left, const std::string &right)
 {
     return diffSources(left, right, true, "test-input.cpp", "/// ");
+}
+
+#undef diffTsLua
+std::string
+diffTsLua(const std::string &left, const std::string &right)
+{
+    return diffSources(left, right, true, "test-input.lua", "--- ");
 }
 
 // Compares two sources with expectation being embedded in them in form of

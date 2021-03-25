@@ -42,6 +42,12 @@ static std::string makeFile = R"(
     all: $(target1) target2
 )";
 
+static std::string luaFile = R"(
+    local function func(arg, ...)
+        return arg
+    end
+)";
+
 TEST_CASE("Language can be forced", "[language]")
 {
     cpp17::pmr::monolithic mr;
@@ -136,6 +142,13 @@ TEST_CASE("Make is detected", "[language]")
     CHECK_FALSE(lang->parse(makeFile, "<input>", false, mr).hasFailed());
 }
 
+TEST_CASE("Lua is detected", "[language]")
+{
+    cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create("file.lua");
+    CHECK_FALSE(lang->parse(luaFile, "<input>", false, mr).hasFailed());
+}
+
 TEST_CASE("Language matching", "[language]")
 {
     SECTION("Matching against any supported language")
@@ -144,6 +157,7 @@ TEST_CASE("Language matching", "[language]")
         CHECK(Language::matches("file.c", ""));
         CHECK(Language::matches("file.h", ""));
         CHECK(Language::matches("file.cpp", ""));
+        CHECK(Language::matches("file.lua", ""));
     }
 
     SECTION("Matching against any specific languages")
@@ -151,16 +165,20 @@ TEST_CASE("Language matching", "[language]")
         CHECK(Language::matches("Makefile", "make"));
         CHECK(Language::matches("file.c", "c"));
         CHECK(Language::matches("file.cpp", "cxx"));
+        CHECK(Language::matches("file.lua", "lua"));
 
         CHECK_FALSE(Language::matches("Makefile", "cxx"));
         CHECK_FALSE(Language::matches("file.c", "make"));
         CHECK_FALSE(Language::matches("file.cpp", "c"));
+        CHECK_FALSE(Language::matches("file.h", "lua"));
     }
 
     SECTION("Headers")
     {
         CHECK(Language::matches("file.h", "c"));
         CHECK(Language::matches("file.h", "cxx"));
+
         CHECK_FALSE(Language::matches("file.h", "make"));
+        CHECK_FALSE(Language::matches("file.h", "lua"));
     }
 }

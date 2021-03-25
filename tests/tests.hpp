@@ -116,6 +116,9 @@ Tree parseMake(const std::string &str);
 // Parses C++ source into a tree.
 Tree parseCxx(const std::string &str);
 
+// Parses Lua source into a tree.
+Tree parseLua(const std::string &str);
+
 // Finds the first node of specified type which has a matching value of its
 // label (or any label if `label` is an empty string).
 const Node * findNode(const Tree &tree, Type type,
@@ -163,6 +166,16 @@ std::string diffSrcmlCxx(const std::string &left, const std::string &right);
 // This is a wrapper that makes reported failure point be somewhere in the test.
 #define diffSrcmlCxx(left, right) do { \
         std::string difference = diffSrcmlCxx((left), (right)); \
+        CHECK(difference.empty()); \
+        reportDiffFailure(difference); \
+    } while (false)
+
+// Compares two Lua sources with expectation being embedded in them in form of
+// trailing `--- <expectation>` markers.  Returns difference report.
+std::string diffTsLua(const std::string &left, const std::string &right);
+// This is a wrapper that makes reported failure point be somewhere in the test.
+#define diffTsLua(left, right) do { \
+        std::string difference = diffTsLua((left), (right)); \
         CHECK(difference.empty()); \
         reportDiffFailure(difference); \
     } while (false)

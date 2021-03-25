@@ -126,6 +126,8 @@ Then configure which files it should be used for (`.git/info/attributes`):
 Makefile      diff=zs-diff
 Makefile.am   diff=zs-diff
 Makefile.win  diff=zs-diff
+
+*.lua         diff=zs-diff
 ```
 
 This will make it work for `git diff`, but `git show`, `git log` or other
