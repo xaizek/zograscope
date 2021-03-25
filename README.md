@@ -51,6 +51,7 @@ of an experiment, but this situation gets better.
 |  C        |  C11 and earlier with common extensions, but without K&R syntax  |
 |  C++      |  C++14 and earlier with common extensions                        |
 |  GNU Make |  Most of the syntax                                              |
+|  Lua      |  Version 5.3                                                     |
 
 #### C ####
 
@@ -97,6 +98,14 @@ Note the following:
  * the comparison might not produce best results on Makefiles as it needs
    some tuning, this should happen over time (Makefiles aren't changed that
    often)
+
+#### Lua ####
+
+Newly added (March 2021) with very little testing so far.  However, the
+language is small and simple enough to not pose much difficulties.
+
+Note the following:
+ * non-5.3 versions might still work, albeit can produce worse results
 
 #### Other ####
 
