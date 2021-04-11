@@ -108,9 +108,11 @@ GIT_EXTERNAL_DIFF='zs-diff --color' git show --ext-diff
 
 ## Integrating into Git ##
 
+### For a single repository ###
+
 Add `zs-diff` as a diff tool to `git` with these lines (`.git/config`):
 
-```config
+```gitconfig
 [diff "zs-diff"]
     command = zs-diff --color
 ```
@@ -136,6 +138,13 @@ option to be specified and might require use of an alias.
 
 If parsing or comparison failed for some reason, `git diff --no-ext` will be
 called to produce diff so in the worst case a regular diff will be displayed.
+
+### Globally ###
+
+Same as above, but specify attributes in `~/.config/git/attributes` and use one of the following files for configuration:
+
+ * `~/.config/git/config`
+ * `~/.gitconfig`
 
 [zograscope]: ../../README.md
 
