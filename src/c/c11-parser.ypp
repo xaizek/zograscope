@@ -151,7 +151,7 @@ void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
 %token <text> FUNCTION TYPENAME
 %token <text> INLINE _NORETURN _ALIGNAS _STATIC_ASSERT
 %token <text> IF ELSE SWITCH WHILE DO FOR BREAK CONTINUE GOTO
-%token <text> __ASM__ __VOLATILE__
+%token <text> ASM
 %token <text> ARR_OP INC_OP DEC_OP LSH_OP RSH_OP LTE_OP GTE_OP EQ_OP NE_OP AND_OP OR_OP
 %token <text> TIMESEQ_OP DIVEQ_OP MODEQ_OP PLUSEQ_OP MINUSEQ_OP LSHIFTEQ_OP RSHIFTEQ_OP ANDEQ_OP XOREQ_OP OREQ_OP
 %token <text> TYPEDEF EXTERN STATIC CASE _THREAD_LOCAL AUTO REGISTER STRUCT UNION ENUM
@@ -319,10 +319,10 @@ postfix_expression
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
     /* This is an extension to work with __asm__ directive. */
-    | __ASM__ '(' asm_argument_list ')'
+    | ASM '(' asm_argument_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
-    | __ASM__ __VOLATILE__ '(' asm_argument_list ')'
+    | ASM VOLATILE '(' asm_argument_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) }); }

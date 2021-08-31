@@ -255,15 +255,43 @@ TEST_CASE("extern C", "[parser]")
     CHECK(cIsParsed(R"(extern "C" { void f(); };)"));
 }
 
-TEST_CASE("asm volatile directive", "[parser]")
+TEST_CASE("asm directives", "[parser]")
 {
-    const char *const str = R"(
-        void f() {
-            __asm__ __volatile__("" ::: "memory");
-        }
-    )";
+    SECTION("asm without volatile") {
+        const char *const str = R"(
+            void f() {
+                asm("isync" ::: "memory");
+            }
+        )";
+        CHECK(cIsParsed(str));
+    }
 
-    CHECK(cIsParsed(str));
+    SECTION("asm with volatile") {
+        const char *const str = R"(
+            void f() {
+                asm volatile("isync" ::: "memory");
+            }
+        )";
+        CHECK(cIsParsed(str));
+    }
+
+    SECTION("__asm__ without __volatile__") {
+        const char *const str = R"(
+            void f() {
+                __asm__("" ::: "memory");
+            }
+        )";
+        CHECK(cIsParsed(str));
+    }
+
+    SECTION("__asm__ with __volatile__") {
+        const char *const str = R"(
+            void f() {
+                __asm__ __volatile__("" ::: "memory");
+            }
+        )";
+        CHECK(cIsParsed(str));
+    }
 }
 
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
