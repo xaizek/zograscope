@@ -185,9 +185,9 @@ void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
 %type <node> compound_statement block_item_list block_item expression_statement
 %type <node> selection_statement iteration_statement jump_statement
 %type <node> translation_unit top_level external_declaration function_definition
-%type <node> function_header macro_invocation expr_or_type asm_argument_list
+%type <node> function_header macro_invocation expr_or_type
 %type <node> meta_parameter_type_list meta_parameter_declaration
-%type <node> string_lit declaration_specifier
+%type <node> string_lit declaration_specifier asm_argument_list asm_directive
 /* XXX: Disabled because of memory exhaustion */
 /* %type <node> declaration_list */
 
@@ -318,8 +318,13 @@ postfix_expression
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5), tb->addNode($6, @6) }); }
-    /* This is an extension to work with __asm__ directive. */
-    | ASM '(' asm_argument_list ')'
+    | asm_directive
+    { $$ = $1; }
+    ;
+
+/* This is an extension to work with asm/__asm__ directives. */
+asm_directive
+    : ASM '(' asm_argument_list ')'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4) }); }
     | ASM VOLATILE '(' asm_argument_list ')'
