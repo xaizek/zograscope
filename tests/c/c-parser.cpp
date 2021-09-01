@@ -292,6 +292,16 @@ TEST_CASE("asm directives", "[parser]")
         )";
         CHECK(cIsParsed(str));
     }
+
+    SECTION("top-level asm directive") {
+        const char *const str = R"(
+            asm("isync" ::: "memory");
+            asm volatile("isync" ::: "memory");
+            __asm__("isync" ::: "memory");
+            __asm__ __volatile__("isync" ::: "memory");
+        )";
+        CHECK(cIsParsed(str));
+    }
 }
 
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
