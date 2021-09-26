@@ -296,6 +296,7 @@ NL                      \n|\r|\r\n
 <INITIAL,beforeparen>"asm"                   { KW(ASM); }
 <INITIAL,beforeparen>"__asm__"               { KW(ASM); }
 <INITIAL,beforeparen>"__volatile__"          { KW(VOLATILE); }
+<INITIAL,beforeparen>"__attribute__"         { KW(ATTRIBUTE); }
 <INITIAL>{ID}                                { TOKEN(ID); }
 <beforeparen>{ID} {
     BEGIN(INITIAL);

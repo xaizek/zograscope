@@ -49,6 +49,7 @@ C11Language::C11Language() : map(NTOKENS)
     map[VOLATILE]      = Type::Specifiers;
     map[RESTRICT]      = Type::Specifiers;
     map[TYPEDEF]       = Type::Specifiers;
+    map[ATTRIBUTE]     = Type::Specifiers;
 
     map[VOID]     = Type::Types;
     map[CHAR]     = Type::Types;

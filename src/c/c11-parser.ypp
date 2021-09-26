@@ -151,7 +151,7 @@ void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
 %token <text> FUNCTION TYPENAME
 %token <text> INLINE _NORETURN _ALIGNAS _STATIC_ASSERT
 %token <text> IF ELSE SWITCH WHILE DO FOR BREAK CONTINUE GOTO
-%token <text> ASM
+%token <text> ASM ATTRIBUTE
 %token <text> ARR_OP INC_OP DEC_OP LSH_OP RSH_OP LTE_OP GTE_OP EQ_OP NE_OP AND_OP OR_OP
 %token <text> TIMESEQ_OP DIVEQ_OP MODEQ_OP PLUSEQ_OP MINUSEQ_OP LSHIFTEQ_OP RSHIFTEQ_OP ANDEQ_OP XOREQ_OP OREQ_OP
 %token <text> TYPEDEF EXTERN STATIC CASE _THREAD_LOCAL AUTO REGISTER STRUCT UNION ENUM
@@ -189,6 +189,7 @@ void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
 %type <node> meta_parameter_type_list meta_parameter_declaration
 %type <node> string_lit declaration_specifier
 %type <node> asm_directive asm_argument_list asm_arguments asm_argument
+%type <node> attributes attr attr_list attr_args attr_arg
 /* XXX: Disabled because of memory exhaustion */
 /* %type <node> declaration_list */
 
@@ -702,6 +703,52 @@ declaration_specifier
     | alignment_specifier     { $$ = tb->addNode($1, @1); }
     ;
 
+/* These are extensions to allow attributes and types defined by macros. */
+attributes
+    : ATTRIBUTE '(' '(' attr_list ')' ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), $4,
+                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
+    /* Sometimes attributes are set via macros. */
+    | ID '(' ID ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
+                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    ;
+
+attr_list
+    : attr
+    { $$ = tb->addNode($1, @1, +C11SType::TemporaryContainer); }
+    | attr ',' attr_list
+    { $$ = tb->prepend($3, { $1, tb->addNode($2, @2) }); }
+    ;
+
+attr
+    : ID
+    /* Highlight non-function-like attribute names like functions for
+     * consistency. */
+    { $$ = tb->addNode($1, @1, FUNCTION); }
+    | ID '(' attr_args ')'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2), $3,
+                         tb->addNode($4, @4) }); }
+    ;
+
+attr_args
+    : attr_arg
+    { $$ = tb->addNode($1, @1, +C11SType::TemporaryContainer); }
+    | attr_arg ',' attr_args
+    { $$ = tb->prepend($3, { $1, tb->addNode($2, @2) }); }
+    ;
+
+attr_arg
+    : ID
+    /* Highlight attribute args like __attribute__ keyword. */
+    { $$ = tb->addNode($1, @1, ATTRIBUTE); }
+    | constant
+    { $$ = $1; }
+    | SLIT
+    { $$ = tb->addNode($1, @1); }
+    ;
+
 /* (6.7) init-declarator-list: */
 /*     init-declarator */
 /*     init-declarator-list , init-declarator */
@@ -718,6 +765,10 @@ init_declarator_list
 init_declarator
     : declarator
     { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::WithoutInitializer) },
+                       +C11SType::Declarator); }
+    | declarator attributes
+    { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::WithoutInitializer),
+                         $2 },
                        +C11SType::Declarator); }
     | declarator '=' initializer
     { $$ = tb->addNode({ tb->addNode($1, @1, +C11SType::WithoutInitializer),
@@ -778,14 +829,8 @@ type_specifier
     | struct_or_union_specifier { $$ = tb->addNode($1, @1); }
     | enum_specifier            { $$ = tb->addNode($1, @1); }
     | ID                        { $$ = tb->addNode($1, @1, TYPENAME); }
-    /* These are extension to allow attributes and types defined by macros. */
-    | ID '(' '(' type_name ')' ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5), tb->addNode($6, @6) }); }
-    | ID '(' type_name ')'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4) }); }
+    /* This is an extension to allow attributes and types defined by macros. */
+    | attributes                { $$ = $1; }
     ;
 
 /* (6.7.2.1) struct-or-union-specifier: */

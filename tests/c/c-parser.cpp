@@ -216,11 +216,41 @@ TEST_CASE("Function pointers returning user-defined types", "[parser]")
     CHECK(cIsParsed("typedef wint_t (*f)(int);"));
 }
 
-TEST_CASE("Attributes in typedef", "[parser]")
+TEST_CASE("Attributes", "[parser][extensions]")
 {
-    const char *const str =
-        "typedef union { int a, b; } __attribute__((packed)) u;";
-    CHECK(cIsParsed(str));
+    SECTION("Attributes in typedef") {
+        const char *const str =
+            "typedef union { int a, b; } __attribute__((packed)) u;";
+        CHECK(cIsParsed(str));
+    }
+
+    SECTION("Attributes on structs") {
+        const char *const str = R"(
+            struct bla {
+                char field;
+            } __attribute__((packed, aligned));
+
+            struct bla {
+                char field;
+            } __attribute__((packed, aligned(128)));
+        )";
+        CHECK(cIsParsed(str));
+    }
+
+    SECTION("Attributes on functions") {
+        const char *const str = R"(
+            void format(const char format[], ...)
+                 __attribute__((format(printf, 1,2)));
+        )";
+        CHECK(cIsParsed(str));
+    }
+
+    SECTION("Attributes on variables") {
+        const char *const str = R"(
+            uint8_t some_buf[BUF_SIZE] __attribute__((section(".my_section")));
+        )";
+        CHECK(cIsParsed(str));
+    }
 }
 
 TEST_CASE("Extra braces around call", "[parser][conflict]")
