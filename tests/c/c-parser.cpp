@@ -238,24 +238,13 @@ TEST_CASE("Macro definition of function declaration", "[parser]")
     CHECK(cIsParsed("int DECL(func, (int arg), stuff);"));
 }
 
-TEST_CASE("asm directive", "[parser]")
-{
-    const char *const str = R"(
-        void f() {
-            __asm__("" ::: "memory");
-        }
-    )";
-
-    CHECK(cIsParsed(str));
-}
-
 TEST_CASE("extern C", "[parser]")
 {
     CHECK(cIsParsed(R"(extern "C" { void f(); })"));
     CHECK(cIsParsed(R"(extern "C" { void f(); };)"));
 }
 
-TEST_CASE("asm directives", "[parser]")
+TEST_CASE("asm directives", "[parser][extensions]")
 {
     SECTION("asm without volatile") {
         const char *const str = R"(
@@ -307,6 +296,16 @@ TEST_CASE("asm directives", "[parser]")
         const char *const str = R"(
             register int r2 __asm__("r2");
             register int r3 asm("r3");
+        )";
+        CHECK(cIsParsed(str));
+    }
+
+    SECTION("complex asm syntax") {
+        const char *const str = R"(
+            void f() {
+                asm volatile("isync" : "+r"(r3) :: "memory");
+                asm volatile("isync" : "+r"(r3) :: "r30", "memory");
+            }
         )";
         CHECK(cIsParsed(str));
     }

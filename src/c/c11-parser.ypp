@@ -187,7 +187,8 @@ void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
 %type <node> translation_unit top_level external_declaration function_definition
 %type <node> function_header macro_invocation expr_or_type
 %type <node> meta_parameter_type_list meta_parameter_declaration
-%type <node> string_lit declaration_specifier asm_argument_list asm_directive
+%type <node> string_lit declaration_specifier
+%type <node> asm_directive asm_argument_list asm_arguments asm_argument
 /* XXX: Disabled because of memory exhaustion */
 /* %type <node> declaration_list */
 
@@ -334,12 +335,26 @@ asm_directive
     ;
 
 asm_argument_list
-    : string_lit
-    { $$ = tb->addNode($1, @1); }
-    | string_lit ':' asm_argument_list
-    { $$ = tb->prepend($3, { tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    : asm_arguments
+    { $$ = $1; }
+    | asm_arguments ':' asm_argument_list
+    { $$ = tb->prepend($3, { $1, tb->addNode($2, @2) }); }
     | ':' asm_argument_list
     { $$ = tb->prepend($2, tb->addNode($1, @1)); }
+    ;
+
+asm_arguments
+    : asm_argument
+    { $$ = tb->addNode($1, @1); }
+    | asm_argument ',' asm_arguments
+    { $$ = tb->prepend($3, { tb->addNode($1, @1), tb->addNode($2, @2) }); }
+    ;
+
+asm_argument
+    : string_lit
+    { $$ = $1; }
+    | string_lit '(' primary_expression ')'
+    { $$ = tb->addNode({ $1, tb->addNode($2, @2), $3, tb->addNode($4, @4) }); }
     ;
 
 /* (6.5.2) argument-expression-list: */
