@@ -302,6 +302,14 @@ TEST_CASE("asm directives", "[parser]")
         )";
         CHECK(cIsParsed(str));
     }
+
+    SECTION("asm for a variable") {
+        const char *const str = R"(
+            register int r2 __asm__("r2");
+            register int r3 asm("r3");
+        )";
+        CHECK(cIsParsed(str));
+    }
 }
 
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
