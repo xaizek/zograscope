@@ -96,7 +96,7 @@ TEST_CASE("C is detected", "[language]")
 
 TEST_CASE("C++ is detected", "[.srcml][language]")
 {
-    auto names = {
+    const std::string names[] = {
         "Makefile.cpp", "file.hpp",
         "c.cxx", "main.hpp",
         "head.cc", "tail.hh",
