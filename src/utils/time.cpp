@@ -65,7 +65,7 @@ operator<<(std::ostream &os, const TimeReport &tr)
                          if (child.foreign) {
                              foreign += child.end - child.start;
                          } else {
-                            accounted += child.end - child.start;
+                             accounted += child.end - child.start;
                          }
                      }
                      msf unaccounted = duration - accounted;
