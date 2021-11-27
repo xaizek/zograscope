@@ -339,6 +339,16 @@ TEST_CASE("asm directives", "[parser][extensions]")
         )";
         CHECK(cIsParsed(str));
     }
+
+    SECTION("complex expressions") {
+        const char *const str = R"(
+            asm volatile(
+                "inc eax\n"
+                :: "r"(function(arg) + 12), "r"(anotherf(more, args, "here"))
+                : "memory");
+        )";
+        CHECK(cIsParsed(str));
+    }
 }
 
 TEST_CASE("Trailing id in bitfield declarator is variable by default",
