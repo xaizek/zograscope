@@ -1792,6 +1792,12 @@ top_level
                        +C11SType::TemporaryContainer); }
     | top_level external_declaration
     { $$ = tb->append($1, tb->addNode($2, @2)); }
+    /* This is an extensions to allow empty top-level statements, also covers
+     * semicolon after a function definition. */
+    | ';'
+    { $$ = tb->addNode($1, @1); }
+    | top_level ';'
+    { $$ = tb->append($1, tb->addNode($2, @2)); }
     ;
 
 /* (6.9) external-declaration: */
@@ -1802,9 +1808,6 @@ external_declaration
     { $$ = tb->addNode($1, @1); }
     | declaration                               %dprec 1
     { $$ = $1; }
-    /* This is an extension to allow semicolon after function definition. */
-    | function_definition ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     /* This is an extension to work with top-level asm/__asm__ directives. */
     | asm_directive ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
@@ -1825,11 +1828,6 @@ external_declaration
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
                          tb->addNode($3, @3), tb->addNode($4, @4),
                          tb->addNode($5, @5) },
-                       +C11SType::TemporaryContainer); }
-    | EXTERN SLIT '{' top_level '}' ';'
-    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2),
-                         tb->addNode($3, @3), tb->addNode($4, @4),
-                         tb->addNode($5, @5), tb->addNode($6, @6) },
                        +C11SType::TemporaryContainer); }
     ;
 

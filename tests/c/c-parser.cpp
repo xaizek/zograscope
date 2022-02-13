@@ -49,6 +49,20 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
 TEST_CASE("Semicolon after function definition", "[parser][extensions]")
 {
     CHECK(cIsParsed("void f() {};"));
+    CHECK(cIsParsed("void f() {};"));
+}
+
+TEST_CASE("Empty top-level statement", "[parser][extensions]")
+{
+    CHECK(cIsParsed(";"));
+    CHECK(cIsParsed(";;"));
+
+    CHECK(cIsParsed(";  void f() {}"));
+    CHECK(cIsParsed(";; void f() {}"));
+    CHECK(cIsParsed(";; void f() {} ;"));
+    CHECK(cIsParsed(";; void f() {} ;;"));
+    CHECK(cIsParsed("   void f() {} ;;"));
+    CHECK(cIsParsed("   void f() {}  ;"));
 }
 
 TEST_CASE("Missing final newline is added", "[parser][extensions]")
