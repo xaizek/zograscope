@@ -1802,6 +1802,9 @@ external_declaration
     { $$ = tb->addNode($1, @1); }
     | declaration                               %dprec 1
     { $$ = $1; }
+    /* This is an extension to allow semicolon after function definition. */
+    | function_definition ';'
+    { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }
     /* This is an extension to work with top-level asm/__asm__ directives. */
     | asm_directive ';'
     { $$ = tb->addNode({ tb->addNode($1, @1), tb->addNode($2, @2) }); }

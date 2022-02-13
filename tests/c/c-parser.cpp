@@ -46,6 +46,11 @@ TEST_CASE("Empty input is OK", "[parser][extensions]")
     CHECK(tree.getRoot()->stype == +C11SType::TranslationUnit);
 }
 
+TEST_CASE("Semicolon after function definition", "[parser][extensions]")
+{
+    CHECK(cIsParsed("void f() {};"));
+}
+
 TEST_CASE("Missing final newline is added", "[parser][extensions]")
 {
     Tree tree;
