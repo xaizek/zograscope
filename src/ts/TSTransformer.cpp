@@ -28,9 +28,6 @@
 #include "TreeBuilder.hpp"
 #include "types.hpp"
 
-// XXX: hard-coded width of a tabulation character.
-const int tabWidth = 4;
-
 static bool isSeparator(Type type);
 
 TSTransformer::TSTransformer(const std::string &contents,
@@ -38,9 +35,10 @@ TSTransformer::TSTransformer(const std::string &contents,
                              TreeBuilder &tb,
                            const std::unordered_map<std::string, SType> &stypes,
                              const std::unordered_map<std::string, Type> &types,
+                             int tabWidth,
                              bool debug)
     : contents(contents), tsLanguage(tsLanguage), tb(tb), stypes(stypes),
-      types(types), debug(debug)
+      types(types), tabWidth(tabWidth), debug(debug)
 { }
 
 void
