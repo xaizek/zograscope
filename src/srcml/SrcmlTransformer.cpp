@@ -34,18 +34,17 @@
 
 namespace ti = tinyxml2;
 
-// XXX: hard-coded width of a tabulation character.
-const int tabWidth = 4;
-
 static boost::string_ref processValue(boost::string_ref str);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents,
-                                   const std::string &path, TreeBuilder &tb,
+                                   const std::string &path,
+                                   TreeBuilder &tb,
                                    const std::string &language,
                               const std::unordered_map<std::string, SType> &map,
-                                const std::unordered_set<std::string> &keywords)
+                                const std::unordered_set<std::string> &keywords,
+                                   int tabWidth)
     : contents(contents), path(path), tb(tb), language(language),
-      map(map), keywords(keywords)
+      map(map), keywords(keywords), tabWidth(tabWidth)
 { }
 
 void

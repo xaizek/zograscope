@@ -199,8 +199,12 @@ SrcmlCxxLanguage::parse(const std::string &contents,
                         const std::string &fileName, bool /*debug*/,
                         cpp17::pmr::monolithic &mr) const
 {
+    // XXX: hard-coded width of a tabulation character.
+    const int tabWidth = 4;
+
     TreeBuilder tb(mr);
-    SrcmlTransformer(contents, fileName, tb, "C++", map, keywords).transform();
+    SrcmlTransformer t(contents, fileName, tb, "C++", map, keywords, tabWidth);
+    t.transform();
 
     postProcessTree(tb.getRoot(), tb, contents);
 

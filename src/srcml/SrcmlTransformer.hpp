@@ -40,10 +40,13 @@ class SrcmlTransformer
 public:
     // Remembers parameters to use them later.  `contents`, `map` and `keywords`
     // have to be lvalues.
-    SrcmlTransformer(const std::string &contents, const std::string &path,
-                     TreeBuilder &tb, const std::string &language,
+    SrcmlTransformer(const std::string &contents,
+                     const std::string &path,
+                     TreeBuilder &tb,
+                     const std::string &language,
                      const std::unordered_map<std::string, SType> &map,
-                     const std::unordered_set<std::string> &keywords);
+                     const std::unordered_set<std::string> &keywords,
+                     int tabWidth);
 
 public:
     // Does all the work of transforming.
@@ -66,6 +69,7 @@ private:
     std::string language;                              // Language name.
     const std::unordered_map<std::string, SType> &map; // Tag -> SType map.
     const std::unordered_set<std::string> &keywords;   // List of keywords.
+    int tabWidth;                                      // Tabulation width.
     int line;                                          // Current line.
     int col;                                           // Current column.
     int inCppDirective;                                // Level of cpp nesting.
