@@ -78,4 +78,7 @@ split(boost::string_ref str, char with)
 // line endings.
 std::string && normalizeEols(std::string &&str);
 
+// Goes over characters of the string and updates line and column accordingly.
+void updatePosition(boost::string_ref str, int tabWidth, int &line, int &col);
+
 #endif // ZOGRASCOPE__UTILS__STRINGS__HPP__

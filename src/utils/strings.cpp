@@ -106,3 +106,24 @@ normalizeEols(std::string &&str)
 
     return std::move(str);
 }
+
+void
+updatePosition(boost::string_ref str, int tabWidth, int &line, int &col)
+{
+    while (!str.empty()) {
+        switch (str.front()) {
+            case '\n':
+                ++line;
+                col = 1;
+                break;
+            case '\t':
+                col += tabWidth - (col - 1)%tabWidth;
+                break;
+
+            default:
+                ++col;
+                break;
+        }
+        str.remove_prefix(1);
+    }
+}

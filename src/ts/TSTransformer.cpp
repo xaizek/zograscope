@@ -24,13 +24,13 @@
 #include <boost/utility/string_ref.hpp>
 #include "tree_sitter/api.h"
 
+#include "utils/strings.hpp"
 #include "TreeBuilder.hpp"
 #include "types.hpp"
 
 // XXX: hard-coded width of a tabulation character.
 const int tabWidth = 4;
 
-static void updatePosition(boost::string_ref str, int &line, int &col);
 static bool isSeparator(Type type);
 
 TSTransformer::TSTransformer(const std::string &contents,
@@ -118,7 +118,7 @@ TSTransformer::visitLeaf(SType stype, PNode *pnode, const TSNode &leaf)
     uint32_t to = ts_node_end_byte(leaf);
 
     boost::string_ref skipped(contents.c_str() + position, from - position);
-    updatePosition(skipped, line, col);
+    updatePosition(skipped, tabWidth, line, col);
 
     boost::string_ref val(contents.c_str() + from, to - from);
     Type type = determineType(leaf);
@@ -131,30 +131,8 @@ TSTransformer::visitLeaf(SType stype, PNode *pnode, const TSNode &leaf)
     tb.append(pnode, tb.addNode(Text{from, len, 0, 0, static_cast<int>(type)},
                                 Location{line, col, 0, 0}, stype));
 
-    updatePosition(val, line, col);
+    updatePosition(val, tabWidth, line, col);
     position = to;
-}
-
-// Goes over characters in the string and updates line and column accordingly.
-static void
-updatePosition(boost::string_ref str, int &line, int &col)
-{
-    while (!str.empty()) {
-        switch (str.front()) {
-            case '\n':
-                ++line;
-                col = 1;
-                break;
-            case '\t':
-                col += tabWidth - (col - 1)%tabWidth;
-                break;
-
-            default:
-                ++col;
-                break;
-        }
-        str.remove_prefix(1);
-    }
 }
 
 Type
