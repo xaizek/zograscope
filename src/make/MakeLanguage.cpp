@@ -68,7 +68,9 @@ TreeBuilder
 MakeLanguage::parse(const std::string &contents, const std::string &fileName,
                     bool debug, cpp17::pmr::monolithic &mr) const
 {
-    return make_parse(contents, fileName, debug, mr);
+    // XXX: hard-coded width of a tabulation character.
+    const int tabWidth = 4;
+    return make_parse(contents, fileName, tabWidth, debug, mr);
 }
 
 bool

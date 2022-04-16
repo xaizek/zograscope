@@ -57,8 +57,9 @@ struct MakeLexerData : LexerData
 
     // Remembers arguments to use them in the lexer, all of them must be alive
     // during lexing (including the string which isn't copied).
-    MakeLexerData(const std::string &str, TreeBuilder &tb, MakeParseData &pd)
-        : LexerData(str, tb), pd(&pd)
+    MakeLexerData(const std::string &str, int tabWidth, TreeBuilder &tb,
+                  MakeParseData &pd)
+        : LexerData(str, tabWidth, tb), pd(&pd)
     { }
 };
 

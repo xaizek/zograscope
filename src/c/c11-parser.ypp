@@ -124,7 +124,7 @@ namespace cpp17 {
 struct C11ParseData;
 
 TreeBuilder c11_parse(const std::string &contents, const std::string &fileName,
-                      bool debug, cpp17::pmr::monolithic &mr);
+                      int tabWidth, bool debug, cpp17::pmr::monolithic &mr);
 
 void c11_error(C11_LTYPE *loc, void *scanner, TreeBuilder *tb, C11ParseData *pd,
                const char s[]);
@@ -1876,12 +1876,12 @@ macro_invocation
 %%
 
 TreeBuilder
-c11_parse(const std::string &contents, const std::string &fileName, bool debug,
-          cpp17::pmr::monolithic &mr)
+c11_parse(const std::string &contents, const std::string &fileName,
+          int tabWidth, bool debug, cpp17::pmr::monolithic &mr)
 {
     TreeBuilder tb(mr);
     C11ParseData pd = { fileName, false };
-    C11LexerData ld(contents, tb, pd);
+    C11LexerData ld(contents, tabWidth, tb, pd);
 
     yyscan_t scanner;
     c11_lex_init_extra(&ld, &scanner);

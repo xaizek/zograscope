@@ -25,13 +25,12 @@ class TreeBuilder;
 
 struct LexerData
 {
-    enum { tabWidth = 4 };
-
     TreeBuilder *tb;
     const char *contents;
+    int tabWidth;
 
-    LexerData(const std::string &str, TreeBuilder &tb)
-        : tb(&tb), contents(str.data()), next(contents),
+    LexerData(const std::string &str, int tabWidth, TreeBuilder &tb)
+        : tb(&tb), contents(str.data()), tabWidth(tabWidth), next(contents),
           finish(str.data() + str.size())
     {
         if (str.empty()) {

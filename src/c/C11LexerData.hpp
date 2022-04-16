@@ -37,8 +37,9 @@ struct C11LexerData : LexerData
 
     C11ParseData *pd;
 
-    C11LexerData(const std::string &str, TreeBuilder &tb, C11ParseData &pd)
-        : LexerData(str, tb), pd(&pd)
+    C11LexerData(const std::string &str, int tabWidth, TreeBuilder &tb,
+                 C11ParseData &pd)
+        : LexerData(str, tabWidth, tb), pd(&pd)
     { }
 };
 
