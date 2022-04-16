@@ -194,6 +194,8 @@ private:
     cpp17::pmr::vector<char> stringified;
     // Storage for interned strings.
     cpp17::pmr::deque<std::string> internPool;
+    // XXX: hard-coded width of a tabulation character.
+    int tabWidth = 4;
 };
 
 std::vector<Node *> postOrder(Node &root);

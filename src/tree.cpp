@@ -40,25 +40,21 @@
 #include "decoration.hpp"
 #include "types.hpp"
 
-// XXX: lexer also has such variable and they need to be synchronized
-//      (actually we should pass this to lexer).
-constexpr int tabWidth = 4;
-
 // How many neighbours to consider on each side when computing overlap.
 constexpr int subtreeOverlapSize = 3;
 
 static void putNodeChild(Node &parent, Node *child, const Language *lang);
 static void preStringifyPTree(const std::string &contents,
-                              PNode *node, const Language *lang,
+                              PNode *node, const Language *lang, int tabWidth,
                               cpp17::pmr::vector<char> &stringified);
 static boost::string_ref
 stringifyPNode(const cpp17::pmr::vector<char> &stringified, const PNode *node);
 static void preStringifyPNode(const std::string &contents, PNode *node,
-                              const Language *lang,
+                              const Language *lang, int tabWidth,
                               cpp17::pmr::vector<char> &stringified);
 static std::string stringifyPNodeSpelling(const std::string &contents,
-                                          const PNode *node);
-static int maxStringifiedSize(boost::string_ref contents);
+                                          const PNode *node, int tabWidth);
+static int maxStringifiedSize(boost::string_ref contents, int tabWidth);
 static void postOrder(Node &node, std::vector<Node *> &v);
 static std::unordered_map<std::size_t, std::vector<int>>
 hashChildren(Node &node);
@@ -75,11 +71,11 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const PNode *node, allocator_type al)
     : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
 {
-    stringified.reserve(maxStringifiedSize(contents));
+    stringified.reserve(maxStringifiedSize(contents, tabWidth));
     const char *buf = stringified.data();
 
     preStringifyPTree(contents, const_cast<PNode *>(node), this->lang.get(),
-                      stringified);
+                      tabWidth, stringified);
     root = materializePNode(contents, node);
 
     assert(stringified.data() == buf && "Stringified buffer got relocated!");
@@ -90,10 +86,11 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
            const SNode *node, allocator_type al)
     : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
 {
-    stringified.reserve(maxStringifiedSize(contents));
+    stringified.reserve(maxStringifiedSize(contents, tabWidth));
     const char *buf = stringified.data();
 
-    preStringifyPTree(contents, node->value, this->lang.get(), stringified);
+    preStringifyPTree(contents, node->value, this->lang.get(), tabWidth,
+                      stringified);
     root = materializeSNode(contents, node, nullptr);
 
     assert(stringified.data() == buf && "Stringified buffer got relocated!");
@@ -196,18 +193,20 @@ putNodeChild(Node &parent, Node *child, const Language *lang)
 // value.postponedFrom (start index) and value.postponedTo (length).
 static void
 preStringifyPTree(const std::string &contents, PNode *node,
-                  const Language *lang, cpp17::pmr::vector<char> &stringified)
+                  const Language *lang, int tabWidth,
+                  cpp17::pmr::vector<char> &stringified)
 {
     struct {
         const std::string &contents;
         const Language *lang;
+        int tabWidth;
         cpp17::pmr::vector<char> &out;
         void run(PNode *node)
         {
             node->value.postponedFrom = out.size();
 
             if (node->line != 0 && node->col != 0) {
-                preStringifyPNode(contents, node, lang, out);
+                preStringifyPNode(contents, node, lang, tabWidth, out);
             }
 
             for (PNode *child : node->children) {
@@ -219,7 +218,7 @@ preStringifyPTree(const std::string &contents, PNode *node,
                                         - node->value.postponedFrom;
             }
         }
-    } visitor { contents, lang, stringified };
+    } visitor { contents, lang, tabWidth, stringified };
 
     visitor.run(node);
 }
@@ -236,7 +235,7 @@ Tree::materializePNode(const std::string &contents, const PNode *node)
     Node &n = *nodes.make();
     n.label = stringifyPNode(stringified, node);
     if (lang->shouldDropLeadingWS(node->stype)) {
-        n.spelling = intern(stringifyPNodeSpelling(contents, node));
+        n.spelling = intern(stringifyPNodeSpelling(contents, node, tabWidth));
     } else {
         n.spelling = n.label;
     }
@@ -266,7 +265,8 @@ stringifyPNode(const cpp17::pmr::vector<char> &stringified, const PNode *node)
 // value.postponedFrom (start index) and value.postponedTo (length).
 static void
 preStringifyPNode(const std::string &contents, PNode *node,
-                  const Language *lang, cpp17::pmr::vector<char> &stringified)
+                  const Language *lang, int tabWidth,
+                  cpp17::pmr::vector<char> &stringified)
 {
     node->value.postponedFrom = stringified.size();
 
@@ -309,12 +309,13 @@ preStringifyPNode(const std::string &contents, PNode *node,
 
 // Computes node label only expanding tabs in it.
 static std::string
-stringifyPNodeSpelling(const std::string &contents, const PNode *node)
+stringifyPNodeSpelling(const std::string &contents, const PNode *node,
+                       int tabWidth)
 {
     boost::string_ref sr(contents.c_str() + node->value.from, node->value.len);
 
     std::string str;
-    str.reserve(maxStringifiedSize(sr));
+    str.reserve(maxStringifiedSize(sr, tabWidth));
 
     int col = node->col;
     for (char c : sr) {
@@ -342,10 +343,8 @@ stringifyPNodeSpelling(const std::string &contents, const PNode *node)
 
 // Computes maximum length of stringified buffer.
 static int
-maxStringifiedSize(boost::string_ref contents)
+maxStringifiedSize(boost::string_ref contents, int tabWidth)
 {
-    static_assert(tabWidth > 0, "Tabulation can't have zero width.");
-
     int nTabs = std::count(contents.cbegin(), contents.cend(), '\t');
     return contents.size() + nTabs*(tabWidth - 1);
 }
