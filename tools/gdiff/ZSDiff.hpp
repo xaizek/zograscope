@@ -40,6 +40,7 @@ class ZSDiff;
 
 class QPlainTextEdit;
 
+class Environment;
 class Node;
 class TimeReport;
 class SynHi;
@@ -69,7 +70,7 @@ class ZSDiff : public QMainWindow
     struct CodeBuffer;
 
 public:
-    ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
+    ZSDiff(LaunchMode launchMode, DiffList diffList, Environment &env,
            QWidget *parent = nullptr);
     ~ZSDiff();
 
@@ -126,7 +127,7 @@ private:
     FoldTextAttr foldTextAttr;
     // Whether respective lines supposed to be folded.
     std::vector<bool> leftFolded, rightFolded;
-    TimeReport &timeReport;
+    Environment &env;
     LaunchMode launchMode;
     DiffList diffList;
 };

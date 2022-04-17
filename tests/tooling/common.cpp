@@ -28,20 +28,17 @@
 
 TEST_CASE("Exception is thrown for files that don't exist", "[common]")
 {
-    CommonArgs args = {};
-    TimeReport tr;
+    Environment env;
     cpp17::pmr::monolithic mr;
-    REQUIRE_THROWS_AS(buildTreeFromFile("no-such-file", args, tr, &mr),
+    REQUIRE_THROWS_AS(buildTreeFromFile(env, "no-such-file", &mr),
                       std::runtime_error);
 }
 
 TEST_CASE("Directories aren't parsed", "[common]")
 {
-    CommonArgs args = {};
-    TimeReport tr;
+    Environment env;
     cpp17::pmr::monolithic mr;
-    REQUIRE_THROWS_AS(buildTreeFromFile("tests", args, tr, &mr),
-                      std::runtime_error);
+    REQUIRE_THROWS_AS(buildTreeFromFile(env, "tests", &mr), std::runtime_error);
 }
 
 TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
@@ -50,8 +47,7 @@ TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
         return;
     }
 
-    CommonArgs args = {};
-    TimeReport tr;
+    Environment env;
     cpp17::pmr::monolithic mr;
-    REQUIRE_NOTHROW(buildTreeFromFile("/dev/null", args, tr, &mr));
+    REQUIRE_NOTHROW(buildTreeFromFile(env, "/dev/null", &mr));
 }

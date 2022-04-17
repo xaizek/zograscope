@@ -41,6 +41,11 @@ namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args,
                                       po::options_description &options);
+static optional_t<Tree> buildTreeFromFile(Environment &env,
+                                          TimeReport &tr,
+                                          const std::string &path,
+                                          const std::string &contents,
+                                          cpp17::pmr::memory_resource *mr);
 
 Environment::Environment(const po::options_description &extraOpts)
     : options(extraOpts), config(boost::filesystem::current_path())
@@ -131,20 +136,37 @@ Environment::printOptions()
     std::cout << options;
 }
 
-optional_t<Tree>
-buildTreeFromFile(const std::string &path, const CommonArgs &args,
-                  TimeReport &tr, cpp17::pmr::memory_resource *mr)
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   const std::string &path,
+                                   cpp17::pmr::memory_resource *mr)
 {
-    return buildTreeFromFile(path, readFile(path), args, tr, mr);
+    return buildTreeFromFile(env, env.getTimeKeeper(), path, mr);
 }
 
 optional_t<Tree>
-buildTreeFromFile(const std::string &path, const std::string &contents,
-                  const CommonArgs &args, TimeReport &tr,
+buildTreeFromFile(Environment &env, TimeReport &tr, const std::string &path,
                   cpp17::pmr::memory_resource *mr)
+{
+    return buildTreeFromFile(env, tr, path, readFile(path), mr);
+}
+
+optional_t<Tree>
+buildTreeFromFile(Environment &env, const std::string &path,
+                  const std::string &contents, cpp17::pmr::memory_resource *mr)
+{
+    return buildTreeFromFile(env, env.getTimeKeeper(), path, contents, mr);
+}
+
+// Parses a file to build its tree.
+static optional_t<Tree> buildTreeFromFile(Environment &env,
+                                          TimeReport &tr,
+                                          const std::string &path,
+                                          const std::string &contents,
+                                          cpp17::pmr::memory_resource *mr)
 {
     // XXX: hard-coded width of a tabulation character.
     const int tabWidth = 4;
+    const CommonArgs &args = env.getCommonArgs();
 
     auto timer = tr.measure("parsing: " + path);
 

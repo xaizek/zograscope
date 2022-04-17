@@ -28,7 +28,7 @@
 #include "TermHighlighter.hpp"
 #include "tree.hpp"
 
-static int run(const CommonArgs &args, TimeReport &tr);
+static int run(Environment &env);
 
 int
 main(int argc, char *argv[])
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
         Environment env;
         env.setup({ argv + 1, argv + argc });
 
-        CommonArgs args = env.getCommonArgs();
+        const CommonArgs &args = env.getCommonArgs();
         if (args.help) {
             std::cout << "Usage: zs-hi [options...] [file|-]\n"
                       << "\n"
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        result = run(args, env.getTimeKeeper());
+        result = run(env);
 
         env.teardown();
     } catch (const std::exception &e) {
@@ -66,8 +66,9 @@ main(int argc, char *argv[])
 }
 
 static int
-run(const CommonArgs &args, TimeReport &tr)
+run(Environment &env)
 {
+    const CommonArgs &args = env.getCommonArgs();
     cpp17::pmr::monolithic mr;
     Tree tree(&mr);
 
@@ -76,8 +77,8 @@ run(const CommonArgs &args, TimeReport &tr)
         oss << std::cin.rdbuf();
         std::string contents = oss.str();
 
-        if (optional_t<Tree> &&t = buildTreeFromFile("<input>", contents, args,
-                                                     tr, &mr)) {
+        if (optional_t<Tree> &&t = buildTreeFromFile(env, "<input>", contents,
+                                                     &mr)) {
             tree = *t;
         } else {
             std::cerr << "Failed to parse standard input\n";
@@ -85,7 +86,7 @@ run(const CommonArgs &args, TimeReport &tr)
         }
     } else {
         const std::string &path = args.pos[0];
-        if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
+        if (optional_t<Tree> &&t = buildTreeFromFile(env, path, &mr)) {
             tree = *t;
         } else {
             std::cerr << "Failed to parse: " << path << '\n';

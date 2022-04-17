@@ -90,16 +90,20 @@ private:
 };
 
 // Reads and parses a file to build its tree.
-optional_t<Tree> buildTreeFromFile(const std::string &path,
-                                   const CommonArgs &args,
-                                   TimeReport &tr,
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   const std::string &path,
+                                   cpp17::pmr::memory_resource *mr);
+
+// Reads and parses a file to build its tree.  This form allows specifying
+// custom time keeper, which might be necessary for non-main threads.
+optional_t<Tree> buildTreeFromFile(Environment &env, TimeReport &tr,
+                                   const std::string &path,
                                    cpp17::pmr::memory_resource *mr);
 
 // Parses a file to build its tree.
-optional_t<Tree> buildTreeFromFile(const std::string &path,
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   const std::string &path,
                                    const std::string &contents,
-                                   const CommonArgs &args,
-                                   TimeReport &tr,
                                    cpp17::pmr::memory_resource *mr);
 
 void dumpTree(const CommonArgs &args, Tree &tree);

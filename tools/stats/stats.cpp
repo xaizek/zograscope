@@ -140,15 +140,15 @@ private:
 class FileProcessor
 {
 public:
-    FileProcessor(const Args &args, TimeReport &tr);
+    FileProcessor(Environment &env, const Args &args);
 
 public:
     bool operator()(const std::string &path);
     void printReport() const;
 
 private:
+    Environment &env;
     const Args &args;
-    TimeReport &tr;
 
     decor::Decoration lineNoHi;
     decor::Decoration pathHi;
@@ -275,8 +275,8 @@ StatsAggregator::getMedian() const
 }
 
 inline
-FileProcessor::FileProcessor(const Args &args, TimeReport &tr)
-    : args(args), tr(tr)
+FileProcessor::FileProcessor(Environment &env, const Args &args)
+    : env(env), args(args)
 {
     ColorScheme cs;
     lineNoHi = cs[ColorGroup::LineNo];
@@ -295,7 +295,7 @@ FileProcessor::operator()(const std::string &path)
     cpp17::pmr::monolithic mr;
     Tree tree(&mr);
 
-    if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
+    if (optional_t<Tree> &&t = buildTreeFromFile(env, path, &mr)) {
         tree = *t;
     } else {
         std::cerr << "Failed to parse: " << path << '\n';
@@ -498,9 +498,8 @@ run(const Args &args, Environment &env)
         paths.emplace_back(".");
     }
 
-    TimeReport &tr = env.getTimeKeeper();
     Config &config = env.getConfig();
-    FileProcessor processor(args, tr);
+    FileProcessor processor(env, args);
 
     if (!Traverser(paths, args.lang, config, std::ref(processor)).search()) {
         std::cerr << "No matching files were discovered.\n";

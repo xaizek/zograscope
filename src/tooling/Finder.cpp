@@ -48,11 +48,8 @@ operator<<(std::ostream &os, const AutoNL &val)
 
 }
 
-Finder::Finder(const CommonArgs &args,
-               TimeReport &tr,
-               const Config &config,
-               bool countOnly)
-    : args(args), tr(tr), config(config), countOnly(countOnly)
+Finder::Finder(Environment &env, bool countOnly)
+    : env(env), countOnly(countOnly)
 {
     auto convert = [](const std::string &str) {
         if (str == "decl") {
@@ -78,7 +75,7 @@ Finder::Finder(const CommonArgs &args,
 
     std::vector<std::string> mpatterns, gpatterns;
     enum { PATHS, MPATTERNS, GPATTERNS } stage = PATHS;
-    for (const std::string &arg : args.pos) {
+    for (const std::string &arg : env.getCommonArgs().pos) {
         switch (stage) {
             case PATHS:
                 if (arg == ":") {
@@ -124,7 +121,7 @@ Finder::~Finder() = default;
 bool
 Finder::search()
 {
-    bool found = Traverser(paths, args.lang, config,
+    bool found = Traverser(paths, env.getCommonArgs().lang, env.getConfig(),
                            [this](const std::string &path) {
                                return process(path);
                            }).search();
@@ -138,8 +135,8 @@ Finder::process(const std::string &path)
     static ColorScheme cs;
 
     cpp17::pmr::monolithic mr;
-    if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
-        auto timer = tr.measure("looking: " + path);
+    if (optional_t<Tree> &&t = buildTreeFromFile(env, path, &mr)) {
+        auto timer = env.getTimeKeeper().measure("looking: " + path);
 
         Tree tree = *t;
         Language &lang = *tree.getLanguage();
