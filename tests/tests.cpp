@@ -106,7 +106,7 @@ isParsed(const std::string &fileName, const std::string &str)
 {
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
-    return !lang->parse(str, "<input>", false, mr).hasFailed();
+    return !lang->parse(str, "<input>", /*tabWidth=*/4, false, mr).hasFailed();
 }
 
 Tree
@@ -140,7 +140,7 @@ parse(const std::string &fileName, const std::string &str, bool coarse)
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
 
-    TreeBuilder tb = lang->parse(str, "<input>", false, mr);
+    TreeBuilder tb = lang->parse(str, "<input>", /*tabWidth=*/4, false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {

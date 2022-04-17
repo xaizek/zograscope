@@ -196,12 +196,9 @@ SrcmlCxxLanguage::mapToken(int token) const
 
 TreeBuilder
 SrcmlCxxLanguage::parse(const std::string &contents,
-                        const std::string &fileName, bool /*debug*/,
-                        cpp17::pmr::monolithic &mr) const
+                        const std::string &fileName, int tabWidth,
+                        bool /*debug*/, cpp17::pmr::monolithic &mr) const
 {
-    // XXX: hard-coded width of a tabulation character.
-    const int tabWidth = 4;
-
     TreeBuilder tb(mr);
     SrcmlTransformer t(contents, fileName, tb, "C++", map, keywords, tabWidth);
     t.transform();

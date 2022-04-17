@@ -143,13 +143,16 @@ buildTreeFromFile(const std::string &path, const std::string &contents,
                   const CommonArgs &args, TimeReport &tr,
                   cpp17::pmr::memory_resource *mr)
 {
+    // XXX: hard-coded width of a tabulation character.
+    const int tabWidth = 4;
+
     auto timer = tr.measure("parsing: " + path);
 
     std::unique_ptr<Language> lang = Language::create(path, args.lang);
 
     cpp17::pmr::monolithic localMR;
 
-    TreeBuilder tb = lang->parse(contents, path, args.debug, localMR);
+    TreeBuilder tb = lang->parse(contents, path, tabWidth, args.debug, localMR);
     if (tb.hasFailed()) {
         return {};
     }
