@@ -26,6 +26,7 @@
 
 #include "make/MakeSType.hpp"
 #include "utils/strings.hpp"
+#include "STree.hpp"
 #include "TermHighlighter.hpp"
 #include "tree.hpp"
 
@@ -775,4 +776,37 @@ TEST_CASE("New line node does not appear in the tree", "[make][parser]")
                                     return node->label == "\n";
                                 });
     REQUIRE(node == nullptr);
+}
+
+TEST_CASE("Tabulation of size 1 is allowed in Makefiles", "[make][parser]")
+{
+    const char *const str = ""
+        "# 0\n"
+        "\t# 1\n"
+        "\t\t# 2\n"
+    ;
+
+    cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create("Makefile");
+
+    TreeBuilder tb = lang->parse(str, "<input>", /*tabWidth=*/1,
+                                 /*debug=*/false, mr);
+    REQUIRE_FALSE(tb.hasFailed());
+
+    STree stree(std::move(tb), str, false, false, *lang, mr);
+    Tree tree(std::move(lang), str, stree.getRoot());
+
+    const Node *node;
+
+    node = findNode(tree, Type::Comments, "# 0");
+    REQUIRE(node);
+    CHECK(node->col == 1);
+
+    node = findNode(tree, Type::Comments, "# 1");
+    REQUIRE(node);
+    CHECK(node->col == 2);
+
+    node = findNode(tree, Type::Comments, "# 2");
+    REQUIRE(node);
+    CHECK(node->col == 3);
 }
