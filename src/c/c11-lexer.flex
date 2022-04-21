@@ -241,7 +241,10 @@ NL                      \n|\r|\r\n
 
 [ ]                     ;
 \t {
-    yyextra->col += yyextra->tabWidth - (yyextra->col - 1)%yyextra->tabWidth;
+    if (yyextra->tabWidth > 1) {
+        yyextra->col += yyextra->tabWidth;
+        yyextra->col -= (yyextra->col - 1)%yyextra->tabWidth;
+    }
 }
 {NL}                    { ADVANCE_LINE(); }
 \\{NL} {
