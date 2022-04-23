@@ -164,12 +164,19 @@ static optional_t<Tree> buildTreeFromFile(Environment &env,
                                           const std::string &contents,
                                           cpp17::pmr::memory_resource *mr)
 {
-    const int tabWidth = env.getConfig().lookupAttrs(path).tabWidth;
-    const CommonArgs &args = env.getCommonArgs();
-
     auto timer = tr.measure("parsing: " + path);
 
-    std::unique_ptr<Language> lang = Language::create(path, args.lang);
+    const CommonArgs &args = env.getCommonArgs();
+
+    Attrs attrs = env.getConfig().lookupAttrs(path);
+    const int tabWidth = attrs.tabWidth;
+
+    std::string langName = args.lang;
+    if (langName.empty()) {
+        langName = attrs.lang;
+    }
+
+    std::unique_ptr<Language> lang = Language::create(path, langName);
 
     cpp17::pmr::monolithic localMR;
 

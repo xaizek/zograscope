@@ -32,6 +32,7 @@ TEST_CASE("No configuration", "[tooling][config]")
     CHECK(config.shouldProcessFile("ignored.cpp"));
 
     Attrs attrs = config.lookupAttrs("file.c");
+    CHECK(attrs.lang == "");
     CHECK(attrs.tabWidth == 4);
 }
 
@@ -217,7 +218,7 @@ TEST_CASE("Attributes file application", "[tooling][config]")
         "* tab-size=1",
         "#another tab-size=10",
         "file.c tab-size=2",
-        "another.c tab-size=2",
+        "another.c tab-size=2 lang=make",
         "*.c tab-size=3",
         "another.c tab-size=5",
         "some.c",
@@ -234,4 +235,7 @@ TEST_CASE("Attributes file application", "[tooling][config]")
     CHECK(config.lookupAttrs("some.c").tabWidth == 3);
 
     CHECK(config.lookupAttrs("dir/another.c").tabWidth == 5);
+
+    CHECK(config.lookupAttrs("something").lang == "");
+    CHECK(config.lookupAttrs("another.c").lang == "make");
 }

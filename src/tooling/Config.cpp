@@ -46,6 +46,7 @@ static const char ConfigDirName[] = ".zs";
 static const char ExcludeFileName[] = "exclude";
 static const char AttributesFileName[] = "attributes";
 static const char TabWidthAttr[] = "tab-size";
+static const char LangAttr[] = "lang";
 
 // Type of match expression.
 enum class MatchType
@@ -375,6 +376,8 @@ extractAttrs(const std::vector<boost::string_ref> &parts)
             if (pos == value.length() && width > 0) {
                 attrRules.tabWidth = width;
             }
+        } else if (name == LangAttr) {
+            attrRules.lang = value;
         }
     }
 
@@ -385,6 +388,9 @@ extractAttrs(const std::vector<boost::string_ref> &parts)
 static Attrs &
 operator+=(Attrs &lhs, const Attrs &rhs)
 {
+    if (!rhs.lang.empty()) {
+        lhs.lang = rhs.lang;
+    }
     if (rhs.tabWidth > 0) {
         lhs.tabWidth = rhs.tabWidth;
     }

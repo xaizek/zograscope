@@ -26,6 +26,8 @@
 // Set of attribute for a path.
 struct Attrs
 {
+    // Language to use, empty if unspecified.
+    std::string lang;
     // Number of spaces in a full tabulation, -1 if unspecified.
     int tabWidth = -1;
 };

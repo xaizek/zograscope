@@ -193,6 +193,9 @@ values:
 
 Supported attributes:
 
+* `lang`\
+  Default: ""\
+  Those accepted by `--lang` command-line option: c, cxx, make, lua
 * `tab-size`\
   Default: 4\
   Value should be an integer that's greater than zero
@@ -205,10 +208,13 @@ Example:
 # .zs/exclude
 
 *.c tab-size=8
-tab-2.c tab-size=2
+*.h tab-size=8 lang=c
+tab-2.[ch] tab-size=2
 
 # any.c has tab-size=8
 # tab-2.c has tab-size=2
+# tab-2.h has tab-size=2 lang=c
+# any.h has tab-size=8 lang=c
 # any.cpp has tab-size=4
 ```
 

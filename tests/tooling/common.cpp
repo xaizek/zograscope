@@ -81,7 +81,7 @@ TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
     REQUIRE_NOTHROW(buildTreeFromFile(env, "/dev/null", &mr));
 }
 
-TEST_CASE("Attributes are taken into account on parsing", "[common]")
+TEST_CASE("tab-size attr is taken into account on parsing", "[common]")
 {
     TempDir tempDir("config");
     REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
@@ -98,4 +98,21 @@ TEST_CASE("Attributes are taken into account on parsing", "[common]")
     const Node *node = findNode(tree, Type::Comments, "// comment");
     REQUIRE(node);
     CHECK(node->col == 3);
+}
+
+TEST_CASE("lang attr is taken into account on parsing", "[common]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/test.c", {
+        "# comment"
+    });
+    makeFile(tempDir.str() + "/.zs/attributes", { "test.c lang=make" });
+
+    Chdir chdirInsideTmpDir(tempDir.str());
+    Environment env;
+    cpp17::pmr::monolithic mr;
+    Tree tree = *buildTreeFromFile(env, "test.c", &mr);
+
+    CHECK(findNode(tree, Type::Comments, "# comment"));
 }
