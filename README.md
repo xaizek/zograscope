@@ -1,4 +1,4 @@
-**zograscope**, _2017 - 2021_
+**zograscope**, _2017 - 2022_
 
 ![Screenshot](data/examples/c/screenshot.png)
 
@@ -252,8 +252,8 @@ wget http://131.123.42.38/lmcrs/beta/srcML-Ubuntu18.04.deb
 sudo apt install ./srcML-Ubuntu18.04.deb
 ```
 
-You can also check out the [travis config](.travis.yml) (`.travis.yml`) in
-case dependencies change in the future.
+You can also check out the [CI build script](data/appveyor/ubuntu.sh) in case
+dependencies change in the future.
 
 ## Documentation ##
 
