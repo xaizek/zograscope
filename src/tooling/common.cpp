@@ -164,8 +164,7 @@ static optional_t<Tree> buildTreeFromFile(Environment &env,
                                           const std::string &contents,
                                           cpp17::pmr::memory_resource *mr)
 {
-    // XXX: hard-coded width of a tabulation character.
-    const int tabWidth = 4;
+    const int tabWidth = env.getConfig().lookupAttrs(path).tabWidth;
     const CommonArgs &args = env.getCommonArgs();
 
     auto timer = tr.measure("parsing: " + path);

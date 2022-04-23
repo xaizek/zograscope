@@ -26,6 +26,35 @@
 #include "utils/time.hpp"
 #include "tree.hpp"
 
+#include "tests.hpp"
+
+namespace {
+
+namespace fs = boost::filesystem;
+
+class Chdir
+{
+public:
+    explicit Chdir(const std::string &where) : previousPath(fs::current_path())
+    {
+        fs::current_path(where);
+    }
+
+    Chdir(const Chdir &rhs) = delete;
+    Chdir & operator=(const Chdir &rhs) = delete;
+
+    ~Chdir()
+    {
+        boost::system::error_code ec;
+        fs::current_path(previousPath, ec);
+    }
+
+private:
+    const fs::path previousPath;
+};
+
+}
+
 TEST_CASE("Exception is thrown for files that don't exist", "[common]")
 {
     Environment env;
@@ -50,4 +79,23 @@ TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
     Environment env;
     cpp17::pmr::monolithic mr;
     REQUIRE_NOTHROW(buildTreeFromFile(env, "/dev/null", &mr));
+}
+
+TEST_CASE("Attributes are taken into account on parsing", "[common]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/test.c", {
+        "\t// comment"
+    });
+    makeFile(tempDir.str() + "/.zs/attributes", { "test.c tab-size=2" });
+
+    Chdir chdirInsideTmpDir(tempDir.str());
+    Environment env;
+    cpp17::pmr::monolithic mr;
+    Tree tree = *buildTreeFromFile(env, "test.c", &mr);
+
+    const Node *node = findNode(tree, Type::Comments, "// comment");
+    REQUIRE(node);
+    CHECK(node->col == 3);
 }

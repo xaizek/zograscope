@@ -170,6 +170,48 @@ moc_*.h
 /config.h
 ```
 
+#### `.zs/attributes` file ####
+
+Borrowing from the `git` project here again.  This file consists of lines
+matching paths to attributes.  Lines are trimmed before being processed.
+
+Empty lines and comments work like in `.zs/excludes` file, all other lines
+follow this pattern:
+
+    exclude-expr [attr1=value1 [attr2=value2 [...]]]
+
+Expressions that define exceptions (start with `!`) are recognized but ignored
+to keep syntax consistent between different files, which basically makes them
+another type of comments.
+
+Each line of the file is visited in top down order and attributes from every
+matching entry are merged with the current state.  Hierarchy of configuration
+values:
+ 1. Default values (lowest priority)
+ 2. Attributes
+ 3. Command-line parameters (highest priority)
+
+Supported attributes:
+
+* `tab-size`\
+  Default: 4\
+  Value should be an integer that's greater than zero
+
+Unknown attributes are ignored.
+
+Example:
+
+```
+# .zs/exclude
+
+*.c tab-size=8
+tab-2.c tab-size=2
+
+# any.c has tab-size=8
+# tab-2.c has tab-size=2
+# any.cpp has tab-size=4
+```
+
 ## Tools ##
 
 ### [zs-diff](tools/diff/README.md) ###
