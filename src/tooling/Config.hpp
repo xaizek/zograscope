@@ -25,7 +25,7 @@
 // Encapsulates configuration information.
 class Config
 {
-    class ExcludeExpr;
+    class MatchExpr;
 
 public:
     // Discovers configuration files and root by visiting parents of the
@@ -54,7 +54,8 @@ private:
     boost::filesystem::path rootDir; // Root for the configuration.
     boost::filesystem::path currDir; // Current directory for relative paths.
 
-    std::vector<ExcludeExpr> excluded; // List of excluded file paths.
+    // List of rules for file exclusion.
+    std::vector<MatchExpr> excludeRules;
 };
 
 #endif // ZOGRASCOPE__TOOLING__CONFIG_HPP__
