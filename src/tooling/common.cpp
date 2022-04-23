@@ -100,7 +100,7 @@ parseOptions(const std::vector<std::string> &args,
         ("fine-only",   "use only fine-grained tree")
         ("color",       "force colorization of output")
         ("lang",        po::value<std::string>()->default_value({}),
-                        "force specific language (c, cxx, make)");
+                        "force specific language (c, cxx, make, lua)");
 
     po::options_description allOptions;
     allOptions.add(options).add(hiddenOpts);
