@@ -16,6 +16,7 @@
 
 #include "Config.hpp"
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/utility/string_ref.hpp>
@@ -29,6 +30,8 @@
 #include <string>
 #include <utility>
 
+#include "utils/strings.hpp"
+
 namespace fs = boost::filesystem;
 
 static bool pathIsInSubtree(const fs::path &root, const fs::path &path);
@@ -36,9 +39,13 @@ static fs::path normalizePath(const fs::path &path);
 static fs::path makeRelativePath(fs::path base, fs::path path);
 static bool isGlob(const std::string &expr);
 static std::string globToRegex(boost::string_ref glob);
+static Attrs extractAttrs(const std::vector<boost::string_ref> &parts);
+static Attrs & operator+=(Attrs &lhs, const Attrs &rhs);
 
 static const char ConfigDirName[] = ".zs";
 static const char ExcludeFileName[] = "exclude";
+static const char AttributesFileName[] = "attributes";
+static const char TabWidthAttr[] = "tab-size";
 
 // Type of match expression.
 enum class MatchType
@@ -149,6 +156,7 @@ void
 Config::loadConfigDir(const fs::path &configDir)
 {
     fs::path excludeFilePath = configDir / ExcludeFileName;
+    fs::path attributesFilePath = configDir / AttributesFileName;
 
     std::ifstream excludeFile(excludeFilePath.string());
     for (std::string line; std::getline(excludeFile, line); ) {
@@ -156,6 +164,20 @@ Config::loadConfigDir(const fs::path &configDir)
             bool directoryOnly = (line.back() == '/');
             excludeRules.emplace_back(normalizePath(line).string(),
                                       directoryOnly);
+        }
+    }
+
+    std::ifstream attrsFile(attributesFilePath.string());
+    for (std::string line; std::getline(attrsFile, line); ) {
+        boost::trim_if(line, boost::is_any_of("\r\n \t"));
+        if (!line.empty() && line.front() != '#') {
+            std::vector<boost::string_ref> parts = split(line, ' ');
+
+            MatchExpr expr(normalizePath(parts[0].to_string()).string(),
+                           /*directoryOnly=*/false);
+            if (!expr.isException()) {
+                attrRules.emplace_back(std::move(expr), extractAttrs(parts));
+            }
         }
     }
 }
@@ -197,6 +219,31 @@ Config::isAllowed(const std::string &path, bool isDir) const
         return expr.isException() && expr.matches(relative, filename, isDir);
     });
     return (it != excludeRules.cend());
+}
+
+Attrs
+Config::lookupAttrs(const std::string &path) const
+{
+    Attrs result;
+    result.tabWidth = 4;
+
+    fs::path canonicPath = normalizePath(fs::absolute(path, currDir));
+
+    if (!pathIsInSubtree(rootDir, canonicPath)) {
+        return result;
+    }
+
+    fs::path relPath = makeRelativePath(rootDir, canonicPath);
+    std::string relative = relPath.string();
+    std::string filename = relPath.filename().string();
+
+    for (const auto &entry : attrRules) {
+        if (entry.first.matches(relative, filename, /*isDir=*/false)) {
+            result += entry.second;
+        }
+    }
+
+    return result;
 }
 
 // Checks that a path is somewhere under specified root (root is considered to
@@ -310,4 +357,36 @@ globToRegex(boost::string_ref glob)
     }
 
     return regexp;
+}
+
+// Extracts attributes from a line from an attribute file.
+static Attrs
+extractAttrs(const std::vector<boost::string_ref> &parts)
+{
+    Attrs attrRules;
+
+    for (auto it = ++parts.begin(); it < parts.end(); ++it) {
+        std::string name, value;
+        std::tie(name, value) = splitAt(it->to_string(), '=');
+
+        if (name == TabWidthAttr) {
+            std::size_t pos;
+            int width = std::stoi(value, &pos);
+            if (pos == value.length() && width > 0) {
+                attrRules.tabWidth = width;
+            }
+        }
+    }
+
+    return attrRules;
+}
+
+// Merges two sets of attributes together.
+static Attrs &
+operator+=(Attrs &lhs, const Attrs &rhs)
+{
+    if (rhs.tabWidth > 0) {
+        lhs.tabWidth = rhs.tabWidth;
+    }
+    return lhs;
 }

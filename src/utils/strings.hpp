@@ -44,6 +44,19 @@ private:
     std::vector<unsigned short> bigrams;
 };
 
+// Splits string in two parts at the leftmost delimiter.  Returns a pair of
+// empty strings on failure.
+inline std::pair<std::string, std::string>
+splitAt(const std::string &s, char delim)
+{
+    const std::string::size_type pos = s.find(delim);
+    if (pos == std::string::npos) {
+        return { };
+    }
+
+    return { s.substr(0, pos), s.substr(pos + 1U) };
+}
+
 inline void
 split(boost::string_ref str, char with, std::vector<boost::string_ref> &results)
 {
