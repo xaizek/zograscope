@@ -18,6 +18,7 @@
 
 #include "Catch/catch.hpp"
 
+#include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -527,4 +528,14 @@ void
 reportDiffFailure(const std::string &report)
 {
     std::cout << report;
+}
+
+void
+makeFile(const std::string &path, const std::vector<std::string> &lines)
+{
+    std::ofstream file(path);
+    REQUIRE(file.is_open());
+    for (const std::string &line : lines) {
+        file << line << '\n';
+    }
 }

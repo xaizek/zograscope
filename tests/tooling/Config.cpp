@@ -18,18 +18,11 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include <fstream>
-#include <string>
-#include <vector>
-
 #include "tooling/Config.hpp"
 
 #include "tests.hpp"
 
 namespace fs = boost::filesystem;
-
-static void makeFile(const std::string &path,
-                     const std::vector<std::string> &lines);
 
 TEST_CASE("No configuration", "[tooling][config]")
 {
@@ -241,15 +234,4 @@ TEST_CASE("Attributes file application", "[tooling][config]")
     CHECK(config.lookupAttrs("some.c").tabWidth == 3);
 
     CHECK(config.lookupAttrs("dir/another.c").tabWidth == 5);
-}
-
-// Creates a file with specified contents.
-static void
-makeFile(const std::string &path, const std::vector<std::string> &lines)
-{
-    std::ofstream file(path);
-    REQUIRE(file.is_open());
-    for (const std::string &line : lines) {
-        file << line << '\n';
-    }
 }

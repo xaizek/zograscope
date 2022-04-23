@@ -24,6 +24,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 class Node;
 class Tree;
@@ -183,5 +184,8 @@ std::string diffTsLua(const std::string &left, const std::string &right);
 // Prints report.  This function is needed to make our custom output appear
 // after Catch's failure report.
 void reportDiffFailure(const std::string &report);
+
+// Creates a file with specified contents.
+void makeFile(const std::string &path, const std::vector<std::string> &lines);
 
 #endif // ZOGRASCOPE_TESTS__TESTS_HPP__
