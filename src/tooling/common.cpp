@@ -41,8 +41,9 @@ namespace po = boost::program_options;
 
 static po::variables_map parseOptions(const std::vector<std::string> &args,
                                       po::options_description &options);
-static optional_t<Tree> buildTreeFromFile(Environment &env,
+static optional_t<Tree> buildTreeFromFile(const CommonArgs &args,
                                           TimeReport &tr,
+                                          const Attrs &attrs,
                                           const std::string &path,
                                           const std::string &contents,
                                           cpp17::pmr::memory_resource *mr);
@@ -140,47 +141,76 @@ optional_t<Tree> buildTreeFromFile(Environment &env,
                                    const std::string &path,
                                    cpp17::pmr::memory_resource *mr)
 {
-    return buildTreeFromFile(env, env.getTimeKeeper(), path, mr);
+    Attrs attrs = env.getConfig().lookupAttrs(path);
+    return buildTreeFromFile(env, env.getTimeKeeper(), attrs, path, mr);
 }
 
 optional_t<Tree>
-buildTreeFromFile(Environment &env, TimeReport &tr, const std::string &path,
+buildTreeFromFile(Environment &env,
+                  TimeReport &tr,
+                  const Attrs &attrs,
+                  const std::string &path,
                   cpp17::pmr::memory_resource *mr)
 {
-    return buildTreeFromFile(env, tr, path, readFile(path), mr);
+    return buildTreeFromFile(env.getCommonArgs(),
+                             tr,
+                             attrs,
+                             path,
+                             readFile(path),
+                             mr);
+}
+
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   TimeReport &tr,
+                                   const Attrs &attrs,
+                                   const std::string &path,
+                                   const std::string &contents,
+                                   cpp17::pmr::memory_resource *mr)
+{
+    return buildTreeFromFile(env.getCommonArgs(),
+                             tr,
+                             attrs,
+                             path,
+                             contents,
+                             mr);
 }
 
 optional_t<Tree>
-buildTreeFromFile(Environment &env, const std::string &path,
-                  const std::string &contents, cpp17::pmr::memory_resource *mr)
+buildTreeFromFile(Environment &env,
+                  const std::string &path,
+                  const std::string &contents,
+                  cpp17::pmr::memory_resource *mr)
 {
-    return buildTreeFromFile(env, env.getTimeKeeper(), path, contents, mr);
+    Attrs attrs = env.getConfig().lookupAttrs(path);
+    return buildTreeFromFile(env.getCommonArgs(),
+                             env.getTimeKeeper(),
+                             attrs,
+                             path,
+                             contents,
+                             mr);
 }
 
 // Parses a file to build its tree.
-static optional_t<Tree> buildTreeFromFile(Environment &env,
+static optional_t<Tree> buildTreeFromFile(const CommonArgs &args,
                                           TimeReport &tr,
+                                          const Attrs &attrs,
                                           const std::string &path,
                                           const std::string &contents,
                                           cpp17::pmr::memory_resource *mr)
 {
     auto timer = tr.measure("parsing: " + path);
 
-    const CommonArgs &args = env.getCommonArgs();
-
-    Attrs attrs = env.getConfig().lookupAttrs(path);
-    const int tabWidth = attrs.tabWidth;
-
     std::string langName = args.lang;
     if (langName.empty()) {
         langName = attrs.lang;
     }
 
-    std::unique_ptr<Language> lang = Language::create(path, langName);
+    std::unique_ptr<Language> lang = Language::create(path, attrs.lang);
 
     cpp17::pmr::monolithic localMR;
 
-    TreeBuilder tb = lang->parse(contents, path, tabWidth, args.debug, localMR);
+    TreeBuilder tb =
+        lang->parse(contents, path, attrs.tabWidth, args.debug, localMR);
     if (tb.hasFailed()) {
         return {};
     }

@@ -95,9 +95,20 @@ optional_t<Tree> buildTreeFromFile(Environment &env,
                                    cpp17::pmr::memory_resource *mr);
 
 // Reads and parses a file to build its tree.  This form allows specifying
-// custom time keeper, which might be necessary for non-main threads.
-optional_t<Tree> buildTreeFromFile(Environment &env, TimeReport &tr,
+// custom time keeper, which might be necessary for non-main threads.  It also
+// accepts custom attributes to apply attributes of one file on another.
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   TimeReport &tr,
+                                   const Attrs &attrs,
                                    const std::string &path,
+                                   cpp17::pmr::memory_resource *mr);
+
+// As above, but with contents.
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   TimeReport &tr,
+                                   const Attrs &attrs,
+                                   const std::string &path,
+                                   const std::string &contents,
                                    cpp17::pmr::memory_resource *mr);
 
 // Parses a file to build its tree.

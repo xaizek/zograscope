@@ -138,6 +138,7 @@ run(Environment &env, const Args &args)
 
     using overload = optional_t<Tree> (*)(Environment &,
                                           TimeReport &,
+                                          const Attrs &,
                                           const std::string &,
                                           cpp17::pmr::memory_resource *);
     overload func = &buildTreeFromFile;
@@ -145,13 +146,20 @@ run(Environment &env, const Args &args)
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
 
+    // New file should be in-tree.
+    Attrs attrs = env.getConfig().lookupAttrs(newFile);
+
     TimeReport &tr = env.getTimeKeeper();
     TimeReport nestedTr(tr);
-    std::future<optional_t<Tree>> newTreeFuture =
-        std::async(std::launch::async, func, std::ref(env), std::ref(nestedTr),
-                   newFile, &mrB);
+    std::future<optional_t<Tree>> newTreeFuture = std::async(std::launch::async,
+                                                             func,
+                                                             std::ref(env),
+                                                             std::ref(nestedTr),
+                                                             attrs,
+                                                             newFile,
+                                                             &mrB);
 
-    if (optional_t<Tree> &&tree = buildTreeFromFile(env, oldFile, &mrA)) {
+    if (optional_t<Tree> &&tree = func(env, tr, attrs, oldFile, &mrA)) {
         treeA = *tree;
     } else {
         // Wait the other thread to finish to avoid data races.

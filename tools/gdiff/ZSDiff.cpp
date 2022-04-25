@@ -302,9 +302,14 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
 
     updateTitle();
 
+    // New file should be in-tree.
+    Attrs attrs = env.getConfig().lookupAttrs(diffEntry.updated.path);
+
     // TODO: parse in parallel like zs-diff does.
 
     if (optional_t<Tree> &&tree = buildTreeFromFile(env,
+                                                    timeReport,
+                                                    attrs,
                                                     diffEntry.original.path,
                                                     diffEntry.original.contents,
                                                     &mr)) {
@@ -316,6 +321,8 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
     }
 
     if (optional_t<Tree> &&tree = buildTreeFromFile(env,
+                                                    timeReport,
+                                                    attrs,
                                                     diffEntry.updated.path,
                                                     diffEntry.updated.contents,
                                                     &mr)) {
