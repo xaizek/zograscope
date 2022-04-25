@@ -23,6 +23,29 @@
 
 #include "tests.hpp"
 
+TEST_CASE("Traverser doesn't exclude passed in paths", "[tooling][traverser]")
+{
+    TempDir tempDir("config");
+    REQUIRE(boost::filesystem::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/.zs/exclude", { "test.c" });
+    std::string file = tempDir.str() + "/test.c";
+    makeFile(file, { });
+
+    std::vector<std::string> paths;
+    auto handler = [&](const std::string &path) {
+        paths.push_back(path);
+        return true;
+    };
+
+    Chdir chdirInsideTmpDir(tempDir.str());
+    Environment env;
+
+    CHECK(!Traverser({ tempDir }, "", env.getConfig(), handler).search());
+    CHECK(paths.size() == 0);
+    CHECK(Traverser({ file }, "", env.getConfig(), handler).search());
+    CHECK(paths.size() == 1);
+}
+
 TEST_CASE("Traverser accounts for lang attribute", "[tooling][traverser]")
 {
     TempDir tempDir("config");
