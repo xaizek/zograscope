@@ -26,22 +26,23 @@
 #include "utils/time.hpp"
 #include "tree.hpp"
 
+#include "tests.hpp"
+
+namespace fs = boost::filesystem;
+
 TEST_CASE("Exception is thrown for files that don't exist", "[common]")
 {
-    CommonArgs args = {};
-    TimeReport tr;
+    Environment env;
     cpp17::pmr::monolithic mr;
-    REQUIRE_THROWS_AS(buildTreeFromFile("no-such-file", args, tr, &mr),
+    REQUIRE_THROWS_AS(buildTreeFromFile(env, "no-such-file", &mr),
                       std::runtime_error);
 }
 
 TEST_CASE("Directories aren't parsed", "[common]")
 {
-    CommonArgs args = {};
-    TimeReport tr;
+    Environment env;
     cpp17::pmr::monolithic mr;
-    REQUIRE_THROWS_AS(buildTreeFromFile("tests", args, tr, &mr),
-                      std::runtime_error);
+    REQUIRE_THROWS_AS(buildTreeFromFile(env, "tests", &mr), std::runtime_error);
 }
 
 TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
@@ -50,8 +51,43 @@ TEST_CASE("Parsing /dev/null file doesn't throw", "[common]")
         return;
     }
 
-    CommonArgs args = {};
-    TimeReport tr;
+    Environment env;
     cpp17::pmr::monolithic mr;
-    REQUIRE_NOTHROW(buildTreeFromFile("/dev/null", args, tr, &mr));
+    REQUIRE_NOTHROW(buildTreeFromFile(env, "/dev/null", &mr));
+}
+
+TEST_CASE("tab-size attr is taken into account on parsing", "[common]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/test.c", {
+        "\t// comment"
+    });
+    makeFile(tempDir.str() + "/.zs/attributes", { "test.c tab-size=2" });
+
+    Chdir chdirInsideTmpDir(tempDir.str());
+    Environment env;
+    cpp17::pmr::monolithic mr;
+    Tree tree = *buildTreeFromFile(env, "test.c", &mr);
+
+    const Node *node = findNode(tree, Type::Comments, "// comment");
+    REQUIRE(node);
+    CHECK(node->col == 3);
+}
+
+TEST_CASE("lang attr is taken into account on parsing", "[common]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/test.c", {
+        "# comment"
+    });
+    makeFile(tempDir.str() + "/.zs/attributes", { "test.c lang=make" });
+
+    Chdir chdirInsideTmpDir(tempDir.str());
+    Environment env;
+    cpp17::pmr::monolithic mr;
+    Tree tree = *buildTreeFromFile(env, "test.c", &mr);
+
+    CHECK(findNode(tree, Type::Comments, "# comment"));
 }

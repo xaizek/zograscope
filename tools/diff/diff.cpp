@@ -46,7 +46,7 @@ struct Args : CommonArgs
 
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
-static int run(const Args &args, TimeReport &tr);
+static int run(Environment &env, const Args &args);
 
 int
 main(int argc, char *argv[])
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        result = run(args, env.getTimeKeeper());
+        result = run(env, args);
 
         env.teardown();
     } catch (const std::exception &e) {
@@ -124,7 +124,7 @@ parseLocalArgs(const Environment &env)
 }
 
 static int
-run(const Args &args, TimeReport &tr)
+run(Environment &env, const Args &args)
 {
     if (args.gitRenameOnly) {
         std::cout << (decor::bold << "{ renamed without changes }\n")
@@ -136,20 +136,30 @@ run(const Args &args, TimeReport &tr)
     cpp17::pmr::monolithic mrA, mrB;
     Tree treeA(&mrA), treeB(&mrB);
 
-    using overload = optional_t<Tree> (*)(const std::string &,
-                                          const CommonArgs &, TimeReport &,
+    using overload = optional_t<Tree> (*)(Environment &,
+                                          TimeReport &,
+                                          const Attrs &,
+                                          const std::string &,
                                           cpp17::pmr::memory_resource *);
     overload func = &buildTreeFromFile;
 
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
 
-    TimeReport nestedTr(tr);
-    std::future<optional_t<Tree>> newTreeFuture =
-        std::async(std::launch::async, func, newFile,
-                   std::ref(args), std::ref(nestedTr), &mrB);
+    // New file should be in-tree.
+    Attrs attrs = env.getConfig().lookupAttrs(newFile);
 
-    if (optional_t<Tree> &&tree = buildTreeFromFile(oldFile, args, tr, &mrA)) {
+    TimeReport &tr = env.getTimeKeeper();
+    TimeReport nestedTr(tr);
+    std::future<optional_t<Tree>> newTreeFuture = std::async(std::launch::async,
+                                                             func,
+                                                             std::ref(env),
+                                                             std::ref(nestedTr),
+                                                             attrs,
+                                                             newFile,
+                                                             &mrB);
+
+    if (optional_t<Tree> &&tree = func(env, tr, attrs, oldFile, &mrA)) {
         treeA = *tree;
     } else {
         // Wait the other thread to finish to avoid data races.

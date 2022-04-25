@@ -369,7 +369,8 @@ TEST_CASE("Working around srcml bug of handling stdin input",
 
         cpp17::pmr::monolithic mr;
         std::unique_ptr<Language> lang = Language::create("test-file.cpp");
-        CHECK_FALSE(lang->parse("C::C(){}\n", tmpFile, false, mr).hasFailed());
+        CHECK_FALSE(lang->parse("C::C(){}\n", tmpFile, /*tabWidth=*/4, false,
+                                mr).hasFailed());
     }
 
     {
@@ -380,8 +381,8 @@ TEST_CASE("Working around srcml bug of handling stdin input",
 
         cpp17::pmr::monolithic mr;
         std::unique_ptr<Language> lang = Language::create("test-file.cpp");
-        CHECK_FALSE(lang->parse("void\na::b()\n{\n}", tmpFile, false,
-                                mr).hasFailed());
+        CHECK_FALSE(lang->parse("void\na::b()\n{\n}", tmpFile, /*tabWidth=*/4,
+                                false, mr).hasFailed());
     }
 }
 

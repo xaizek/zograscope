@@ -66,9 +66,9 @@ MakeLanguage::mapToken(int token) const
 
 TreeBuilder
 MakeLanguage::parse(const std::string &contents, const std::string &fileName,
-                    bool debug, cpp17::pmr::monolithic &mr) const
+                    int tabWidth, bool debug, cpp17::pmr::monolithic &mr) const
 {
-    return make_parse(contents, fileName, debug, mr);
+    return make_parse(contents, fileName, tabWidth, debug, mr);
 }
 
 bool

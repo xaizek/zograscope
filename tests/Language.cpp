@@ -48,6 +48,8 @@ static std::string luaFile = R"(
     end
 )";
 
+static const int tabWidth = 4;
+
 TEST_CASE("Language can be forced", "[language]")
 {
     cpp17::pmr::monolithic mr;
@@ -63,7 +65,7 @@ TEST_CASE("Language can be forced", "[language]")
         str = makeFile;
     }
 
-    CHECK_FALSE(lang->parse(str, "<input>", false, mr).hasFailed());
+    CHECK_FALSE(lang->parse(str, "<input>", tabWidth, false, mr).hasFailed());
 }
 
 TEST_CASE("Unknown language causes exception", "[language]")
@@ -75,7 +77,7 @@ TEST_CASE("C is the default", "[language]")
 {
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create("<input>");
-    CHECK_FALSE(lang->parse(cFile, "<input>", false, mr).hasFailed());
+    CHECK_FALSE(lang->parse(cFile, "<input>", tabWidth, false, mr).hasFailed());
 }
 
 TEST_CASE("C is detected", "[language]")
@@ -91,7 +93,7 @@ TEST_CASE("C is detected", "[language]")
 
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
-    CHECK_FALSE(lang->parse(cFile, "<input>", false, mr).hasFailed());
+    CHECK_FALSE(lang->parse(cFile, "<input>", tabWidth, false, mr).hasFailed());
 }
 
 TEST_CASE("C++ is detected", "[.srcml][language]")
@@ -107,7 +109,8 @@ TEST_CASE("C++ is detected", "[.srcml][language]")
 
         cpp17::pmr::monolithic mr;
         std::unique_ptr<Language> lang = Language::create(fileName);
-        CHECK_FALSE(lang->parse(cxxFile, "<input>", false, mr).hasFailed());
+        CHECK_FALSE(lang->parse(cxxFile, "<input>", tabWidth, false,
+                                mr).hasFailed());
     }
 }
 
@@ -139,14 +142,16 @@ TEST_CASE("Make is detected", "[language]")
 
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
-    CHECK_FALSE(lang->parse(makeFile, "<input>", false, mr).hasFailed());
+    CHECK_FALSE(lang->parse(makeFile, "<input>", tabWidth, false,
+                            mr).hasFailed());
 }
 
 TEST_CASE("Lua is detected", "[language]")
 {
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create("file.lua");
-    CHECK_FALSE(lang->parse(luaFile, "<input>", false, mr).hasFailed());
+    CHECK_FALSE(lang->parse(luaFile, "<input>", tabWidth, false,
+                            mr).hasFailed());
 }
 
 TEST_CASE("Language matching", "[language]")

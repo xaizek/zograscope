@@ -24,9 +24,8 @@
 #include "pmr/monolithic.hpp"
 #include "tree.hpp"
 
-class CommonArgs;
+class Environment;
 class Node;
-class TimeReport;
 
 struct Location
 {
@@ -46,7 +45,7 @@ struct FuncInfo
 class FileRegistry
 {
 public:
-    FileRegistry(const CommonArgs &args, TimeReport &tr);
+    explicit FileRegistry(Environment &env);
 
 public:
     bool addFile(const std::string &path);
@@ -56,8 +55,7 @@ public:
     const Tree & getTree(const std::string &path) const;
 
 private:
-    const CommonArgs &args;
-    TimeReport &tr;
+    Environment &env;
 
     cpp17::pmr::monolithic mr;
     std::unordered_map<std::string, Tree> trees;

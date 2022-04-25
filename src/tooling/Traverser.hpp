@@ -28,7 +28,7 @@ class Config;
 // Discovers files matching specified arguments and invokes callback on them.
 class Traverser
 {
-    // Callback type.
+    // Callback type.  Should return `true` to indicate positive visitation.
     using callbackPrototype = bool(const std::string &path);
 
 public:
@@ -39,7 +39,7 @@ public:
               std::function<callbackPrototype> callback);
 
 public:
-    // Processes all specified paths.
+    // Processes all specified paths.  Returns `true` if something was found.
     bool search();
 
 private:

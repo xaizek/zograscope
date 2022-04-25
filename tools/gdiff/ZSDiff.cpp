@@ -213,7 +213,7 @@ ZSDiff::printTree(Tree &tree, CodeView *textEdit, bool original)
     return { std::move(hi), std::move(map) };
 }
 
-ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
+ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, Environment &env,
                QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::ZSDiff),
@@ -225,7 +225,7 @@ ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
       folded(false),
       oldTree(&mr),
       newTree(&mr),
-      timeReport(tr),
+      env(env),
       launchMode(launchMode),
       diffList(std::move(diffList))
 {
@@ -292,6 +292,7 @@ ZSDiff::ZSDiff(LaunchMode launchMode, DiffList diffList, TimeReport &tr,
 void
 ZSDiff::loadDiff(const DiffEntry &diffEntry)
 {
+    TimeReport &timeReport = env.getTimeKeeper();;
     auto timer = timeReport.measure("loading-entry");
 
     loaded = false;
@@ -301,9 +302,17 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
 
     updateTitle();
 
-    if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.original.path,
+    // New file should be in-tree.
+    Attrs attrs = env.getConfig().lookupAttrs(diffEntry.updated.path);
+
+    // TODO: parse in parallel like zs-diff does.
+
+    if (optional_t<Tree> &&tree = buildTreeFromFile(env,
+                                                    timeReport,
+                                                    attrs,
+                                                    diffEntry.original.path,
                                                     diffEntry.original.contents,
-                                                    {}, timeReport, &mr)) {
+                                                    &mr)) {
         oldTree = *tree;
     } else {
         ui->oldCode->setPlaceholderText("   PARSING HAS FAILED");
@@ -311,9 +320,12 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
         return;
     }
 
-    if (optional_t<Tree> &&tree = buildTreeFromFile(diffEntry.updated.path,
+    if (optional_t<Tree> &&tree = buildTreeFromFile(env,
+                                                    timeReport,
+                                                    attrs,
+                                                    diffEntry.updated.path,
                                                     diffEntry.updated.contents,
-                                                    {}, timeReport, &mr)) {
+                                                    &mr)) {
         newTree = *tree;
     } else {
         ui->oldCode->setPlaceholderText("   PARSING HAS FAILED");

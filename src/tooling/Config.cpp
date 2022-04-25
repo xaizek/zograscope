@@ -16,6 +16,7 @@
 
 #include "Config.hpp"
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/utility/string_ref.hpp>
@@ -29,6 +30,8 @@
 #include <string>
 #include <utility>
 
+#include "utils/strings.hpp"
+
 namespace fs = boost::filesystem;
 
 static bool pathIsInSubtree(const fs::path &root, const fs::path &path);
@@ -36,23 +39,28 @@ static fs::path normalizePath(const fs::path &path);
 static fs::path makeRelativePath(fs::path base, fs::path path);
 static bool isGlob(const std::string &expr);
 static std::string globToRegex(boost::string_ref glob);
+static Attrs extractAttrs(const std::vector<boost::string_ref> &parts);
+static Attrs & operator+=(Attrs &lhs, const Attrs &rhs);
 
 static const char ConfigDirName[] = ".zs";
 static const char ExcludeFileName[] = "exclude";
+static const char AttributesFileName[] = "attributes";
+static const char TabWidthAttr[] = "tab-size";
+static const char LangAttr[] = "lang";
 
-// Type of exclude expression.
-enum class ExcludeType
+// Type of match expression.
+enum class MatchType
 {
     Exact, // Exact match.
     Glob,  // Glob expression (implemented as a regexp).
 };
 
-// Single exclude expression.
-class Config::ExcludeExpr
+// Single match expression.
+class Config::MatchExpr
 {
 public:
     // Recognizes expression and prepares for matching against it.
-    ExcludeExpr(std::string expr, bool directoryOnly);
+    MatchExpr(std::string expr, bool directoryOnly);
 
 public:
     // Checks for a match.
@@ -66,13 +74,13 @@ public:
 private:
     std::regex regexp;  // Regular-expression match.
     std::string exact;  // String to match against exactly.
-    ExcludeType type;   // Type of the expression.
+    MatchType type;     // Type of the expression.
     bool filenameOnly;  // Matches only against tail entry of a path.
     bool directoryOnly; // Matches only directories.
     bool exception;     // Whether this rule defines exception.
 };
 
-Config::ExcludeExpr::ExcludeExpr(std::string expr, bool directoryOnly) :
+Config::MatchExpr::MatchExpr(std::string expr, bool directoryOnly) :
     directoryOnly(directoryOnly)
 {
     filenameOnly = (expr.find('/') == std::string::npos);
@@ -91,17 +99,17 @@ Config::ExcludeExpr::ExcludeExpr(std::string expr, bool directoryOnly) :
 
     if (isGlob(expr)) {
         regexp = globToRegex(expr);
-        type = ExcludeType::Glob;
+        type = MatchType::Glob;
     } else {
         exact = std::move(expr);
-        type = ExcludeType::Exact;
+        type = MatchType::Exact;
     }
 }
 
 bool
-Config::ExcludeExpr::matches(const std::string &relative,
-                             const std::string &filename,
-                             bool isDir) const
+Config::MatchExpr::matches(const std::string &relative,
+                           const std::string &filename,
+                           bool isDir) const
 {
     if (directoryOnly && !isDir) {
         return false;
@@ -110,9 +118,9 @@ Config::ExcludeExpr::matches(const std::string &relative,
     const std::string &str = (filenameOnly ? filename : relative);
 
     switch (type) {
-        case ExcludeType::Exact:
+        case MatchType::Exact:
             return (str == exact);
-        case ExcludeType::Glob:
+        case MatchType::Glob:
             return std::regex_match(str.begin(), str.end(), regexp);
     }
 
@@ -149,12 +157,28 @@ void
 Config::loadConfigDir(const fs::path &configDir)
 {
     fs::path excludeFilePath = configDir / ExcludeFileName;
+    fs::path attributesFilePath = configDir / AttributesFileName;
 
     std::ifstream excludeFile(excludeFilePath.string());
     for (std::string line; std::getline(excludeFile, line); ) {
         if (!line.empty() && line.front() != '#') {
             bool directoryOnly = (line.back() == '/');
-            excluded.emplace_back(normalizePath(line).string(), directoryOnly);
+            excludeRules.emplace_back(normalizePath(line).string(),
+                                      directoryOnly);
+        }
+    }
+
+    std::ifstream attrsFile(attributesFilePath.string());
+    for (std::string line; std::getline(attrsFile, line); ) {
+        boost::trim_if(line, boost::is_any_of("\r\n \t"));
+        if (!line.empty() && line.front() != '#') {
+            std::vector<boost::string_ref> parts = split(line, ' ');
+
+            MatchExpr expr(normalizePath(parts[0].to_string()).string(),
+                           /*directoryOnly=*/false);
+            if (!expr.isException()) {
+                attrRules.emplace_back(std::move(expr), extractAttrs(parts));
+            }
         }
     }
 }
@@ -184,18 +208,43 @@ Config::isAllowed(const std::string &path, bool isDir) const
     std::string relative = relPath.string();
     std::string filename = relPath.filename().string();
 
-    auto it = std::find_if(excluded.cbegin(), excluded.cend(),
-                           [&] (const ExcludeExpr &expr) {
+    auto it = std::find_if(excludeRules.cbegin(), excludeRules.cend(),
+                           [&] (const MatchExpr &expr) {
         return !expr.isException() && expr.matches(relative, filename, isDir);
     });
-    if (it == excluded.cend()) {
+    if (it == excludeRules.cend()) {
         return true;
     }
 
-    it = std::find_if(it, excluded.cend(), [&] (const ExcludeExpr &expr) {
+    it = std::find_if(it, excludeRules.cend(), [&] (const MatchExpr &expr) {
         return expr.isException() && expr.matches(relative, filename, isDir);
     });
-    return (it != excluded.cend());
+    return (it != excludeRules.cend());
+}
+
+Attrs
+Config::lookupAttrs(const std::string &path) const
+{
+    Attrs result;
+    result.tabWidth = 4;
+
+    fs::path canonicPath = normalizePath(fs::absolute(path, currDir));
+
+    if (!pathIsInSubtree(rootDir, canonicPath)) {
+        return result;
+    }
+
+    fs::path relPath = makeRelativePath(rootDir, canonicPath);
+    std::string relative = relPath.string();
+    std::string filename = relPath.filename().string();
+
+    for (const auto &entry : attrRules) {
+        if (entry.first.matches(relative, filename, /*isDir=*/false)) {
+            result += entry.second;
+        }
+    }
+
+    return result;
 }
 
 // Checks that a path is somewhere under specified root (root is considered to
@@ -309,4 +358,41 @@ globToRegex(boost::string_ref glob)
     }
 
     return regexp;
+}
+
+// Extracts attributes from a line from an attribute file.
+static Attrs
+extractAttrs(const std::vector<boost::string_ref> &parts)
+{
+    Attrs attrRules;
+
+    for (auto it = ++parts.begin(); it < parts.end(); ++it) {
+        std::string name, value;
+        std::tie(name, value) = splitAt(it->to_string(), '=');
+
+        if (name == TabWidthAttr) {
+            std::size_t pos;
+            int width = std::stoi(value, &pos);
+            if (pos == value.length() && width > 0) {
+                attrRules.tabWidth = width;
+            }
+        } else if (name == LangAttr) {
+            attrRules.lang = value;
+        }
+    }
+
+    return attrRules;
+}
+
+// Merges two sets of attributes together.
+static Attrs &
+operator+=(Attrs &lhs, const Attrs &rhs)
+{
+    if (!rhs.lang.empty()) {
+        lhs.lang = rhs.lang;
+    }
+    if (rhs.tabWidth > 0) {
+        lhs.tabWidth = rhs.tabWidth;
+    }
+    return lhs;
 }

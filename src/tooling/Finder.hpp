@@ -23,19 +23,15 @@
 #include "Grepper.hpp"
 #include "Matcher.hpp"
 
-class CommonArgs;
+class Environment;
 class Config;
-class TimeReport;
 
 // Processes files and looks for matches in them.
 class Finder
 {
 public:
     // Parses arguments and records for future use.
-    Finder(const CommonArgs &args,
-           TimeReport &tr,
-           const Config &config,
-           bool countOnly);
+    Finder(Environment &env, bool countOnly);
     // To destruct `matchers` field with complete type.
     ~Finder();
 
@@ -50,9 +46,7 @@ private:
     void report();
 
 private:
-    const CommonArgs &args;         // Arguments of a tool.
-    TimeReport &tr;                 // Time reporter.
-    const Config &config;           // Configuration.
+    Environment &env;               // Source of environment data.
     bool countOnly;                 // Only print statistics about results.
     std::vector<std::string> paths; // List of paths to process.
     std::deque<Matcher> matchers;   // Storage of matchers.

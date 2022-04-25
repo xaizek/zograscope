@@ -153,9 +153,9 @@ C11Language::mapToken(int token) const
 
 TreeBuilder
 C11Language::parse(const std::string &contents, const std::string &fileName,
-                   bool debug, cpp17::pmr::monolithic &mr) const
+                   int tabWidth, bool debug, cpp17::pmr::monolithic &mr) const
 {
-    return c11_parse(contents, fileName, debug, mr);
+    return c11_parse(contents, fileName, tabWidth, debug, mr);
 }
 
 bool

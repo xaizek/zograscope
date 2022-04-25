@@ -58,7 +58,7 @@ class Environment
     using variables_map = boost::program_options::variables_map;
 
 public:
-    Environment(const options_description &extraOpts = {});
+    explicit Environment(const options_description &extraOpts = {});
 
 public:
     void setup(const std::vector<std::string> &argv);
@@ -90,16 +90,31 @@ private:
 };
 
 // Reads and parses a file to build its tree.
-optional_t<Tree> buildTreeFromFile(const std::string &path,
-                                   const CommonArgs &args,
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   const std::string &path,
+                                   cpp17::pmr::memory_resource *mr);
+
+// Reads and parses a file to build its tree.  This form allows specifying
+// custom time keeper, which might be necessary for non-main threads.  It also
+// accepts custom attributes to apply attributes of one file on another.
+optional_t<Tree> buildTreeFromFile(Environment &env,
                                    TimeReport &tr,
+                                   const Attrs &attrs,
+                                   const std::string &path,
+                                   cpp17::pmr::memory_resource *mr);
+
+// As above, but with contents.
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   TimeReport &tr,
+                                   const Attrs &attrs,
+                                   const std::string &path,
+                                   const std::string &contents,
                                    cpp17::pmr::memory_resource *mr);
 
 // Parses a file to build its tree.
-optional_t<Tree> buildTreeFromFile(const std::string &path,
+optional_t<Tree> buildTreeFromFile(Environment &env,
+                                   const std::string &path,
                                    const std::string &contents,
-                                   const CommonArgs &args,
-                                   TimeReport &tr,
                                    cpp17::pmr::memory_resource *mr);
 
 void dumpTree(const CommonArgs &args, Tree &tree);

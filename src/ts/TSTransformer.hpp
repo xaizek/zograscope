@@ -35,10 +35,12 @@ class TSTransformer
 public:
     // Remembers parameters to use them later.  `contents`, `styles` and `types`
     // have to be lvalues.
-    TSTransformer(const std::string &contents, const TSLanguage &tsLanguage,
+    TSTransformer(const std::string &contents,
+                  const TSLanguage &tsLanguage,
                   TreeBuilder &tb,
                   const std::unordered_map<std::string, SType> &stypes,
                   const std::unordered_map<std::string, Type> &types,
+                  int tabWidth,
                   bool debug);
 
 public:
@@ -64,6 +66,7 @@ private:
     int line;                                             // Current line.
     int col;                                              // Current column.
     uint32_t position;                                    // Parsing position.
+    int tabWidth;                                         // Tabulation width.
     bool debug;                                           // Debugging state.
 };
 

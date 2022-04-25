@@ -47,6 +47,8 @@ public:
     // Checks whether file matches given language.  When `lang` is an empty
     // string any of supported languages is considered a match.
     static bool matches(const std::string &fileName, const std::string &lang);
+    // Checks whether two language ids are equal.
+    static bool equal(const std::string &langA, const std::string &langB);
 
 public:
     // Virtual destructor for a base class.
@@ -58,6 +60,7 @@ public:
     // Parses source file into a tree.
     virtual TreeBuilder parse(const std::string &contents,
                               const std::string &fileName,
+                              int tabWidth,
                               bool debug,
                               cpp17::pmr::monolithic &mr) const = 0;
 

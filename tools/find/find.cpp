@@ -117,9 +117,7 @@ run(const Args &args, Environment &env)
 {
     int foundSomething = false;
     if (!args.dryRun) {
-        TimeReport &tr = env.getTimeKeeper();
-        Config &config = env.getConfig();
-        foundSomething = Finder(args, tr, config, args.count).search();
+        foundSomething = Finder(env, args.count).search();
     }
     return (foundSomething ? EXIT_SUCCESS : EXIT_FAILURE);
 }

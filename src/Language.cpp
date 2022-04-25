@@ -37,6 +37,7 @@ namespace fs = boost::filesystem;
 
 using boost::algorithm::to_lower_copy;
 
+static std::string simplifyLanguage(const std::string &lang);
 static std::string detectLanguage(const std::string &stem,
                                   const std::string &ext);
 
@@ -56,13 +57,15 @@ Language::create(const std::string &fileName, const std::string &l)
         }
     }
 
+    lang = simplifyLanguage(lang);
+
     if (lang == "c") {
         return std::unique_ptr<C11Language>(new C11Language());
     }
-    if (lang == "cxx" || lang == "srcml:cxx") {
+    if (lang == "cxx") {
         return std::unique_ptr<SrcmlCxxLanguage>(new SrcmlCxxLanguage());
     }
-    if (lang == "lua" || lang == "ts:lua") {
+    if (lang == "lua") {
         return std::unique_ptr<TsLuaLanguage>(new TsLuaLanguage());
     }
     if (lang == "make") {
@@ -88,6 +91,27 @@ Language::matches(const std::string &fileName, const std::string &lang)
     }
 
     return false;
+}
+
+bool
+Language::equal(const std::string &langA, const std::string &langB)
+{
+    return !langA.empty()
+        && !langB.empty()
+        && simplifyLanguage(langA) == simplifyLanguage(langB);
+}
+
+// Removes parser prefixes from language ids or does nothing.
+static std::string
+simplifyLanguage(const std::string &lang)
+{
+    if (lang == "srcml:cxx") {
+        return "cxx";
+    }
+    if (lang == "ts:lua") {
+        return "lua";
+    }
+    return lang;
 }
 
 // Determines language from normalized stem and extension of a file.

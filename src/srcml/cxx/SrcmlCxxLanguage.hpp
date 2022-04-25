@@ -35,6 +35,7 @@ public:
     // Parses source file into a tree.
     virtual TreeBuilder parse(const std::string &contents,
                               const std::string &fileName,
+                              int tabWidth,
                               bool debug,
                               cpp17::pmr::monolithic &mr) const override;
 

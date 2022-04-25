@@ -55,7 +55,7 @@ namespace cpp17 {
 struct MakeParseData;
 
 TreeBuilder make_parse(const std::string &contents, const std::string &fileName,
-                       bool debug, cpp17::pmr::monolithic &mr);
+                       int tabWidth, bool debug, cpp17::pmr::monolithic &mr);
 
 void make_error(MAKE_LTYPE *loc, void *scanner, TreeBuilder *tb,
                 MakeParseData *pd, const char s[]);
@@ -897,12 +897,12 @@ comment_opt
 %%
 
 TreeBuilder
-make_parse(const std::string &contents, const std::string &fileName, bool debug,
-           cpp17::pmr::monolithic &mr)
+make_parse(const std::string &contents, const std::string &fileName,
+           int tabWidth, bool debug, cpp17::pmr::monolithic &mr)
 {
     TreeBuilder tb(mr);
     MakeParseData pd { contents, fileName, false };
-    MakeLexerData ld(contents, tb, pd);
+    MakeLexerData ld(contents, tabWidth, tb, pd);
 
     yyscan_t scanner;
     make_lex_init_extra(&ld, &scanner);

@@ -18,18 +18,11 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include <fstream>
-#include <string>
-#include <vector>
-
 #include "tooling/Config.hpp"
 
 #include "tests.hpp"
 
 namespace fs = boost::filesystem;
-
-static void makeFile(const std::string &path,
-                     const std::vector<std::string> &lines);
 
 TEST_CASE("No configuration", "[tooling][config]")
 {
@@ -37,6 +30,10 @@ TEST_CASE("No configuration", "[tooling][config]")
     Config config(tempDir.str());
 
     CHECK(config.shouldProcessFile("ignored.cpp"));
+
+    Attrs attrs = config.lookupAttrs("file.c");
+    CHECK(attrs.lang == "");
+    CHECK(attrs.tabWidth == 4);
 }
 
 TEST_CASE("Exclude file", "[tooling][config]")
@@ -195,13 +192,50 @@ TEST_CASE("Directory-only matching in exclude file", "[tooling][config]")
     CHECK(config.shouldProcessFile("sub/dir"));
 }
 
-// Creates a file with specified contents.
-static void
-makeFile(const std::string &path, const std::vector<std::string> &lines)
+TEST_CASE("Attributes file parsing", "[tooling][config]")
 {
-    std::ofstream file(path);
-    REQUIRE(file.is_open());
-    for (const std::string &line : lines) {
-        file << line << '\n';
-    }
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/.zs/attributes", {
+        " # a comment",
+        "# another comment",
+        " file.c tab-size=2  ",
+        "file.c unknown-option=value ",
+        " file.c unknown-option-wo-value",
+    });
+
+    Config config(tempDir.str());
+
+    CHECK(config.lookupAttrs("file.c").tabWidth == 2);
+}
+
+TEST_CASE("Attributes file application", "[tooling][config]")
+{
+    TempDir tempDir("config");
+    REQUIRE(fs::create_directory(tempDir.str() + "/.zs"));
+    makeFile(tempDir.str() + "/.zs/attributes", {
+        " # a comment",
+        "* tab-size=1",
+        "#another tab-size=10",
+        "file.c tab-size=2",
+        "another.c tab-size=2 lang=make",
+        "*.c tab-size=3",
+        "another.c tab-size=5",
+        "some.c",
+    });
+
+    Config config(tempDir.str());
+
+    CHECK(config.lookupAttrs("something").tabWidth == 1);
+    CHECK(config.lookupAttrs("#another").tabWidth == 1);
+
+    CHECK(config.lookupAttrs("file.c").tabWidth == 3);
+    CHECK(config.lookupAttrs("almost-any.c").tabWidth == 3);
+    CHECK(config.lookupAttrs("another.c").tabWidth == 5);
+    CHECK(config.lookupAttrs("some.c").tabWidth == 3);
+
+    CHECK(config.lookupAttrs("dir/another.c").tabWidth == 5);
+
+    CHECK(config.lookupAttrs("something").lang == "");
+    CHECK(config.lookupAttrs("another.c").lang == "make");
 }

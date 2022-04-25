@@ -18,6 +18,7 @@
 
 #include "Catch/catch.hpp"
 
+#include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -106,7 +107,7 @@ isParsed(const std::string &fileName, const std::string &str)
 {
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
-    return !lang->parse(str, "<input>", false, mr).hasFailed();
+    return !lang->parse(str, "<input>", /*tabWidth=*/4, false, mr).hasFailed();
 }
 
 Tree
@@ -140,7 +141,7 @@ parse(const std::string &fileName, const std::string &str, bool coarse)
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
 
-    TreeBuilder tb = lang->parse(str, "<input>", false, mr);
+    TreeBuilder tb = lang->parse(str, "<input>", /*tabWidth=*/4, false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {
@@ -527,4 +528,14 @@ void
 reportDiffFailure(const std::string &report)
 {
     std::cout << report;
+}
+
+void
+makeFile(const std::string &path, const std::vector<std::string> &lines)
+{
+    std::ofstream file(path);
+    REQUIRE(file.is_open());
+    for (const std::string &line : lines) {
+        file << line << '\n';
+    }
 }

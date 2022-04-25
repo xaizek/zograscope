@@ -53,18 +53,20 @@ Traverser::search()
 bool
 Traverser::search(const boost::filesystem::path &path)
 {
-    auto match = [this](const std::string &file) {
-        if (!config.shouldProcessFile(file)) {
+    auto match = [this](const std::string &file, bool passedIn) {
+        if (!passedIn && !config.shouldProcessFile(file)) {
             return false;
         }
-        if (Language::matches(file, language)) {
+
+        if (Language::matches(file, language) ||
+            Language::equal(config.lookupAttrs(file).lang, language)) {
             return callback(file);
         }
         return false;
     };
 
     if (!fs::is_directory(path)) {
-        return match(path.string());
+        return match(path.string(), /*passedIn=*/true);
     }
 
     using it = fs::directory_iterator;
@@ -77,7 +79,7 @@ Traverser::search(const boost::filesystem::path &path)
                 found |= search(path);
             }
         } else {
-            found |= match(path.string());
+            found |= match(path.string(), /*passedIn=*/false);
         }
     }
     return found;

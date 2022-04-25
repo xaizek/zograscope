@@ -20,19 +20,29 @@
 #include <boost/filesystem/path.hpp>
 
 #include <string>
+#include <utility>
 #include <vector>
+
+// Set of attribute for a path.
+struct Attrs
+{
+    // Language to use, empty if unspecified.
+    std::string lang;
+    // Number of spaces in a full tabulation, -1 if unspecified.
+    int tabWidth = -1;
+};
 
 // Encapsulates configuration information.
 class Config
 {
-    class ExcludeExpr;
+    class MatchExpr;
 
 public:
     // Discovers configuration files and root by visiting parents of the
     // specified path.
     explicit Config(const boost::filesystem::path &currDir);
 
-    // Destroys `excluded` with full type.
+    // Destroys fields with full types.
     ~Config();
 
 public:
@@ -40,6 +50,9 @@ public:
     bool shouldVisitDirectory(const std::string &path) const;
     // Checks whether specific file should be processed.
     bool shouldProcessFile(const std::string &path) const;
+
+    // Retrieves attributes for a specific path.
+    Attrs lookupAttrs(const std::string &path) const;
 
 private:
     // Finds root directory (sets `rootDir`) and returns path to configuration
@@ -54,7 +67,10 @@ private:
     boost::filesystem::path rootDir; // Root for the configuration.
     boost::filesystem::path currDir; // Current directory for relative paths.
 
-    std::vector<ExcludeExpr> excluded; // List of excluded file paths.
+    // List of rules for file exclusion.
+    std::vector<MatchExpr> excludeRules;
+    // List of rules for attribute assignments.
+    std::vector<std::pair<MatchExpr, Attrs>> attrRules;
 };
 
 #endif // ZOGRASCOPE__TOOLING__CONFIG_HPP__

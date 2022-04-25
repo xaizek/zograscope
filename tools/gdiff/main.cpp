@@ -95,7 +95,7 @@ main(int argc, char *argv[]) try
         return EXIT_SUCCESS;
     }
 
-    ZSDiff w(launchMode, std::move(diffList), env.getTimeKeeper());
+    ZSDiff w(launchMode, std::move(diffList), env);
     w.show();
 
     int result = app.exec();

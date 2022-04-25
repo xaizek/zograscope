@@ -29,16 +29,16 @@
 #include "mtypes.hpp"
 #include "tree.hpp"
 
-FileRegistry::FileRegistry(const CommonArgs &args, TimeReport &tr)
-    : args(args), tr(tr)
+FileRegistry::FileRegistry(Environment &env) : env(env)
 { }
 
 bool
 FileRegistry::addFile(const std::string &path)
 {
+    const CommonArgs &args = env.getCommonArgs();
     Tree &tree = trees.emplace(path, Tree(&mr)).first->second;
 
-    if (optional_t<Tree> &&t = buildTreeFromFile(path, args, tr, &mr)) {
+    if (optional_t<Tree> &&t = buildTreeFromFile(env, path, &mr)) {
         tree = *t;
     } else {
         std::cerr << "Failed to parse: " << path << '\n';

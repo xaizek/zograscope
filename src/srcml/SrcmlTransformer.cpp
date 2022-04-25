@@ -27,25 +27,24 @@
 #include "tinyxml2/tinyxml2.h"
 
 #include "utils/fs.hpp"
+#include "utils/strings.hpp"
 #include "TreeBuilder.hpp"
 #include "integration.hpp"
 #include "types.hpp"
 
 namespace ti = tinyxml2;
 
-// XXX: hard-coded width of a tabulation character.
-const int tabWidth = 4;
-
 static boost::string_ref processValue(boost::string_ref str);
-static void updatePosition(boost::string_ref str, int &line, int &col);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents,
-                                   const std::string &path, TreeBuilder &tb,
+                                   const std::string &path,
+                                   TreeBuilder &tb,
                                    const std::string &language,
                               const std::unordered_map<std::string, SType> &map,
-                                const std::unordered_set<std::string> &keywords)
+                                const std::unordered_set<std::string> &keywords,
+                                   int tabWidth)
     : contents(contents), path(path), tb(tb), language(language),
-      map(map), keywords(keywords)
+      map(map), keywords(keywords), tabWidth(tabWidth)
 { }
 
 void
@@ -148,7 +147,7 @@ SrcmlTransformer::visitLeaf(ti::XMLNode *parent, PNode *pnode,
 
     for (boost::string_ref val : vals) {
         const std::size_t skipped = left.find(val);
-        updatePosition(left.substr(0U, skipped), line, col);
+        updatePosition(left.substr(0U, skipped), tabWidth, line, col);
         left.remove_prefix(skipped);
 
         const Type type = determineType(parent->ToElement(), val);
@@ -159,7 +158,7 @@ SrcmlTransformer::visitLeaf(ti::XMLNode *parent, PNode *pnode,
                   tb.addNode(Text{offset, len, 0, 0, static_cast<int>(type)},
                              Location{line, col, 0, 0}, stype));
 
-        updatePosition(left.substr(0U, len), line, col);
+        updatePosition(left.substr(0U, len), tabWidth, line, col);
         left.remove_prefix(len);
     }
 }
@@ -179,28 +178,6 @@ processValue(boost::string_ref str)
     }
 
     return str;
-}
-
-// Goes over characters in the string and updates line and column accordingly.
-static void
-updatePosition(boost::string_ref str, int &line, int &col)
-{
-    while (!str.empty()) {
-        switch (str.front()) {
-            case '\n':
-                ++line;
-                col = 1;
-                break;
-            case '\t':
-                col += tabWidth - (col - 1)%tabWidth;
-                break;
-
-            default:
-                ++col;
-                break;
-        }
-        str.remove_prefix(1);
-    }
 }
 
 Type

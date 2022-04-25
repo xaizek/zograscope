@@ -1,4 +1,4 @@
-**zograscope**, _2017 - 2021_
+**zograscope**, _2017 - 2022_
 
 ![Screenshot](data/examples/c/screenshot.png)
 
@@ -170,6 +170,54 @@ moc_*.h
 /config.h
 ```
 
+#### `.zs/attributes` file ####
+
+Borrowing from the `git` project here again.  This file consists of lines
+matching paths to attributes.  Lines are trimmed before being processed.
+
+Empty lines and comments work like in `.zs/excludes` file, all other lines
+follow this pattern:
+
+    exclude-expr [attr1=value1 [attr2=value2 [...]]]
+
+Expressions that define exceptions (start with `!`) are recognized but ignored
+to keep syntax consistent between different files, which basically makes them
+another type of comments.
+
+Each line of the file is visited in top down order and attributes from every
+matching entry are merged with the current state.  Hierarchy of configuration
+values:
+ 1. Default values (lowest priority)
+ 2. Attributes
+ 3. Command-line parameters (highest priority)
+
+Supported attributes:
+
+* `lang`\
+  Default: ""\
+  Those accepted by `--lang` command-line option: c, cxx, make, lua
+* `tab-size`\
+  Default: 4\
+  Value should be an integer that's greater than zero
+
+Unknown attributes are ignored.
+
+Example:
+
+```
+# .zs/exclude
+
+*.c tab-size=8
+*.h tab-size=8 lang=c
+tab-2.[ch] tab-size=2
+
+# any.c has tab-size=8
+# tab-2.c has tab-size=2
+# tab-2.h has tab-size=2 lang=c
+# any.h has tab-size=8 lang=c
+# any.cpp has tab-size=4
+```
+
 ## Tools ##
 
 ### [zs-diff](tools/diff/README.md) ###
@@ -252,8 +300,8 @@ wget http://131.123.42.38/lmcrs/beta/srcML-Ubuntu18.04.deb
 sudo apt install ./srcML-Ubuntu18.04.deb
 ```
 
-You can also check out the [travis config](.travis.yml) (`.travis.yml`) in
-case dependencies change in the future.
+You can also check out the [CI build script](data/appveyor/ubuntu.sh) in case
+dependencies change in the future.
 
 ## Documentation ##
 
