@@ -28,32 +28,7 @@
 
 #include "tests.hpp"
 
-namespace {
-
 namespace fs = boost::filesystem;
-
-class Chdir
-{
-public:
-    explicit Chdir(const std::string &where) : previousPath(fs::current_path())
-    {
-        fs::current_path(where);
-    }
-
-    Chdir(const Chdir &rhs) = delete;
-    Chdir & operator=(const Chdir &rhs) = delete;
-
-    ~Chdir()
-    {
-        boost::system::error_code ec;
-        fs::current_path(previousPath, ec);
-    }
-
-private:
-    const fs::path previousPath;
-};
-
-}
 
 TEST_CASE("Exception is thrown for files that don't exist", "[common]")
 {

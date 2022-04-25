@@ -47,6 +47,8 @@ public:
     // Checks whether file matches given language.  When `lang` is an empty
     // string any of supported languages is considered a match.
     static bool matches(const std::string &fileName, const std::string &lang);
+    // Checks whether two language ids are equal.
+    static bool equal(const std::string &langA, const std::string &langB);
 
 public:
     // Virtual destructor for a base class.

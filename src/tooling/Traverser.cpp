@@ -57,7 +57,9 @@ Traverser::search(const boost::filesystem::path &path)
         if (!config.shouldProcessFile(file)) {
             return false;
         }
-        if (Language::matches(file, language)) {
+
+        if (Language::matches(file, language) ||
+            Language::equal(config.lookupAttrs(file).lang, language)) {
             return callback(file);
         }
         return false;

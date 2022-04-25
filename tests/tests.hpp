@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/filesystem/operations.hpp>
+
 class Node;
 class Tree;
 
@@ -100,6 +102,26 @@ public:
 
 private:
     std::string path; // Path to the temporary directory.
+};
+
+class Chdir
+{
+public:
+    explicit Chdir(const std::string &where)
+        : previousPath(boost::filesystem::current_path())
+    { boost::filesystem::current_path(where); }
+
+    Chdir(const Chdir &rhs) = delete;
+    Chdir & operator=(const Chdir &rhs) = delete;
+
+    ~Chdir()
+    {
+        boost::system::error_code ec;
+        boost::filesystem::current_path(previousPath, ec);
+    }
+
+private:
+    const boost::filesystem::path previousPath;
 };
 
 // Checks whether C source can be parsed or not.
