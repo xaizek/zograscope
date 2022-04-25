@@ -48,7 +48,7 @@ static optional_t<Tree> buildTreeFromFile(Environment &env,
                                           cpp17::pmr::memory_resource *mr);
 
 Environment::Environment(const po::options_description &extraOpts)
-    : options(extraOpts), config(boost::filesystem::current_path())
+    : options(extraOpts), args(), config(boost::filesystem::current_path())
 { }
 
 void

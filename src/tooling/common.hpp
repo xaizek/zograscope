@@ -58,7 +58,7 @@ class Environment
     using variables_map = boost::program_options::variables_map;
 
 public:
-    Environment(const options_description &extraOpts = {});
+    explicit Environment(const options_description &extraOpts = {});
 
 public:
     void setup(const std::vector<std::string> &argv);
