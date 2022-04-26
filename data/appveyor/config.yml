@@ -6,13 +6,16 @@ environment:
     - BUILDENV: ubuntu
       SRCML: v0.9.5
       CC: ccache clang
+      CXX: ccache clang++
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - BUILDENV: ubuntu
       SRCML: v1.0
       CC: ccache gcc
+      CXX: ccache g++
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - BUILDENV: macos
       CC: ccache clang
+      CXX: ccache clang++
       APPVEYOR_BUILD_WORKER_IMAGE: macOS
 
 cache:
