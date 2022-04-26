@@ -40,7 +40,7 @@ TEST_CASE("Traverser doesn't exclude passed in paths", "[tooling][traverser]")
     Chdir chdirInsideTmpDir(tempDir.str());
     Environment env;
 
-    CHECK(!Traverser({ tempDir }, "", env.getConfig(), handler).search());
+    CHECK(!Traverser({ "." }, "", env.getConfig(), handler).search());
     CHECK(paths.size() == 0);
     CHECK(Traverser({ file }, "", env.getConfig(), handler).search());
     CHECK(paths.size() == 1);
@@ -62,7 +62,7 @@ TEST_CASE("Traverser accounts for lang attribute", "[tooling][traverser]")
     Chdir chdirInsideTmpDir(tempDir.str());
     Environment env;
 
-    Traverser traverser({ tempDir }, "make", env.getConfig(), handler);
+    Traverser traverser({ "." }, "make", env.getConfig(), handler);
     CHECK(traverser.search());
 
     CHECK(paths.size() == 1);
