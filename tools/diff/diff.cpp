@@ -47,6 +47,7 @@ struct Args : CommonArgs
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
 static int run(Environment &env, const Args &args);
+static int gitFallback(const Args &args);
 
 int
 main(int argc, char *argv[])
@@ -83,14 +84,7 @@ main(int argc, char *argv[])
     }
 
     if (result != EXIT_SUCCESS && args.gitDiff) {
-        if (args.pos[5] == std::string(40U, '0')) {
-            execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
-                "--", args.pos[0].c_str(), static_cast<char *>(nullptr));
-            exit(127);
-        }
-        execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
-            args.pos[5].c_str(), "--", static_cast<char *>(nullptr));
-        exit(127);
+        return gitFallback(args);
     }
 
     return result;
@@ -197,4 +191,17 @@ run(Environment &env, const Args &args)
     printer.print(tr);
 
     return EXIT_SUCCESS;
+}
+
+static int
+gitFallback(const Args &args)
+{
+    if (args.pos[5] == std::string(40U, '0')) {
+        execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
+               "--", args.pos[0].c_str(), static_cast<char *>(nullptr));
+        return 127;
+    }
+    execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
+           args.pos[5].c_str(), "--", static_cast<char *>(nullptr));
+    return 127;
 }
