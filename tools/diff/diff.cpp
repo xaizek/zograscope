@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <boost/optional.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
@@ -47,6 +50,7 @@ struct Args : CommonArgs
 static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
 static int run(Environment &env, const Args &args);
+static int gitFallback(const Args &args);
 
 int
 main(int argc, char *argv[])
@@ -83,14 +87,7 @@ main(int argc, char *argv[])
     }
 
     if (result != EXIT_SUCCESS && args.gitDiff) {
-        if (args.pos[5] == std::string(40U, '0')) {
-            execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
-                "--", args.pos[0].c_str(), static_cast<char *>(nullptr));
-            exit(127);
-        }
-        execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
-            args.pos[5].c_str(), "--", static_cast<char *>(nullptr));
-        exit(127);
+        return gitFallback(args);
     }
 
     return result;
@@ -195,6 +192,60 @@ run(Environment &env, const Args &args)
         printer.addHeader({ oldFile, newFile });
     }
     printer.print(tr);
+
+    return EXIT_SUCCESS;
+}
+
+static int
+gitFallback(const Args &args)
+{
+    auto isValid = [](const std::string &hash) {
+        // At least older versions of git passed 40 zeroes.
+        return (hash != "." && hash != std::string(40U, '0'));
+    };
+
+    std::cout << "Parsing has failed, falling back to `git diff`\n";
+
+    // Print only a header by passing in an empty tree.
+    Node n;
+    std::unique_ptr<Language> l = Language::create(args.pos[0]);
+    Printer printer(n, n, *l, std::cout);
+    printer.addHeader({ args.pos[3], args.pos[6] });
+    printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });
+    TimeReport tr;
+    printer.print(tr);
+
+    std::cout.flush();
+
+    bool isAddition = !isValid(args.pos[2]);
+    bool isRemoval = !isValid(args.pos[5]);
+
+    if (!isAddition && !isRemoval) {
+        execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
+               args.pos[5].c_str(), "--", static_cast<char *>(nullptr));
+        return 127;
+    }
+
+    // The form of git invocation used below implies --exit-code, which can't be
+    // disabled.  Fork, exec, wait and ignore exit code unless something is
+    // really off.
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        exit(127);
+    }
+    if (pid == 0) {
+        execlp("git", "git", "diff", "--no-ext-diff", "--",
+                args.pos[1].c_str(), args.pos[4].c_str(),
+                static_cast<char *>(nullptr));
+        exit(127);
+    }
+
+    int wstatus;
+    if (waitpid(pid, &wstatus, 0) == -1 || !WIFEXITED(wstatus) ||
+        WEXITSTATUS(wstatus) == 127) {
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
