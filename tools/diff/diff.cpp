@@ -196,6 +196,19 @@ run(Environment &env, const Args &args)
 static int
 gitFallback(const Args &args)
 {
+    std::cout << "Parsing has failed, falling back to `git diff`\n";
+
+    // Print only a header by passing in an empty tree.
+    Node n;
+    std::unique_ptr<Language> l = Language::create(args.pos[0]);
+    Printer printer(n, n, *l, std::cout);
+    printer.addHeader({ args.pos[3], args.pos[6] });
+    printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[0] });
+    TimeReport tr;
+    printer.print(tr);
+
+    std::cout.flush();
+
     if (args.pos[5] == std::string(40U, '0')) {
         execlp("git", "git", "diff", "--no-ext-diff", args.pos[2].c_str(),
                "--", args.pos[0].c_str(), static_cast<char *>(nullptr));
