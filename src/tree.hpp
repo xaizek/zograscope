@@ -50,6 +50,8 @@ struct Node
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
     boost::string_ref label;
+    // Leafs whose label is modified for the purpose of processing have
+    // non-empty spelling that matches unmodified label.
     boost::string_ref spelling;
     cpp17::pmr::vector<Node *> children;
     Node *relative = nullptr;
