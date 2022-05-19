@@ -218,11 +218,12 @@ static optional_t<Tree> buildTreeFromFile(const CommonArgs &args,
     Tree t(mr);
 
     if (args.fine) {
-        t = Tree(std::move(lang), contents, tb.getRoot(), mr);
+        t = Tree(std::move(lang), attrs.tabWidth, contents, tb.getRoot(), mr);
     } else {
         STree stree(std::move(tb), contents, args.dumpSTree, args.sdebug,
                     *lang, localMR);
-        t = Tree(std::move(lang), contents, stree.getRoot(), mr);
+        t = Tree(std::move(lang), attrs.tabWidth, contents, stree.getRoot(),
+                 mr);
     }
 
     return optional_t<Tree>(std::move(t));

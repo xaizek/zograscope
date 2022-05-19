@@ -780,6 +780,8 @@ TEST_CASE("New line node does not appear in the tree", "[make][parser]")
 
 TEST_CASE("Tabulation of size 1 is allowed in Makefiles", "[make][parser]")
 {
+    int tabWidth = 1;
+
     const char *const str = ""
         "# 0\n"
         "\t# 1\n"
@@ -789,12 +791,11 @@ TEST_CASE("Tabulation of size 1 is allowed in Makefiles", "[make][parser]")
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create("Makefile");
 
-    TreeBuilder tb = lang->parse(str, "<input>", /*tabWidth=*/1,
-                                 /*debug=*/false, mr);
+    TreeBuilder tb = lang->parse(str, "<input>", tabWidth, /*debug=*/false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     STree stree(std::move(tb), str, false, false, *lang, mr);
-    Tree tree(std::move(lang), str, stree.getRoot());
+    Tree tree(std::move(lang), tabWidth, str, stree.getRoot());
 
     const Node *node;
 

@@ -67,9 +67,10 @@ static void dumpTree(std::ostream &os, const Node *node, const Language *lang,
                      std::vector<bool> &trace, int depth);
 static void dumpNode(std::ostream &os, const Node *node, const Language *lang);
 
-Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
-           const PNode *node, allocator_type al)
-    : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
+Tree::Tree(std::unique_ptr<Language> lang, int tabWidth,
+           const std::string &contents, const PNode *node, allocator_type al)
+    : lang(std::move(lang)), nodes(al), stringified(al), internPool(al),
+      tabWidth(tabWidth)
 {
     stringified.reserve(maxStringifiedSize(contents, tabWidth));
     const char *buf = stringified.data();
@@ -82,9 +83,10 @@ Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
     (void)buf;
 }
 
-Tree::Tree(std::unique_ptr<Language> lang, const std::string &contents,
-           const SNode *node, allocator_type al)
-    : lang(std::move(lang)), nodes(al), stringified(al), internPool(al)
+Tree::Tree(std::unique_ptr<Language> lang, int tabWidth,
+           const std::string &contents, const SNode *node, allocator_type al)
+    : lang(std::move(lang)), nodes(al), stringified(al), internPool(al),
+      tabWidth(tabWidth)
 {
     stringified.reserve(maxStringifiedSize(contents, tabWidth));
     const char *buf = stringified.data();

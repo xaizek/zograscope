@@ -138,18 +138,20 @@ parseLua(const std::string &str)
 static Tree
 parse(const std::string &fileName, const std::string &str, bool coarse)
 {
+    const int tabWidth = 4;
+
     cpp17::pmr::monolithic mr;
     std::unique_ptr<Language> lang = Language::create(fileName);
 
-    TreeBuilder tb = lang->parse(str, "<input>", /*tabWidth=*/4, false, mr);
+    TreeBuilder tb = lang->parse(str, "<input>", tabWidth, false, mr);
     REQUIRE_FALSE(tb.hasFailed());
 
     if (!coarse) {
-        return Tree(std::move(lang), str, tb.getRoot());
+        return Tree(std::move(lang), tabWidth, str, tb.getRoot());
     }
 
     STree stree(std::move(tb), str, false, false, *lang, mr);
-    return Tree(std::move(lang), str, stree.getRoot());
+    return Tree(std::move(lang), tabWidth, str, stree.getRoot());
 }
 
 const Node *

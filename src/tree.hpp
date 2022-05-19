@@ -123,14 +123,17 @@ class Tree
     using allocator_type = cpp17::pmr::polymorphic_allocator<cpp17::byte>;
 
 public:
-    Tree(allocator_type al = {}) : nodes(al), stringified(al), internPool(al)
+    Tree(allocator_type al = {})
+        : nodes(al), stringified(al), internPool(al), tabWidth(0)
     { }
     Tree(const Tree &rhs) = delete;
     Tree(Tree &&rhs) = default;
-    Tree(std::unique_ptr<Language> lang, const std::string &contents,
-         const PNode *node, allocator_type al = {});
-    Tree(std::unique_ptr<Language> lang, const std::string &contents,
-         const SNode *node, allocator_type al = {});
+    Tree(std::unique_ptr<Language> lang, int tabWidth,
+         const std::string &contents, const PNode *node,
+         allocator_type al = {});
+    Tree(std::unique_ptr<Language> lang, int tabWidth,
+         const std::string &contents, const SNode *node,
+         allocator_type al = {});
 
     Tree & operator=(const Tree &rhs) = delete;
     Tree & operator=(Tree &&rhs) = default;
@@ -196,8 +199,8 @@ private:
     cpp17::pmr::vector<char> stringified;
     // Storage for interned strings.
     cpp17::pmr::deque<std::string> internPool;
-    // XXX: hard-coded width of a tabulation character.
-    int tabWidth = 4;
+    // Width of a single tabulation character.
+    int tabWidth;
 };
 
 std::vector<Node *> postOrder(Node &root);

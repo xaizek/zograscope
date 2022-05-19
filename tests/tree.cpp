@@ -16,7 +16,10 @@
 
 #include "Catch/catch.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
+
 #include "c/C11SType.hpp"
+#include "STree.hpp"
 #include "tree.hpp"
 
 #include "tests.hpp"
@@ -63,4 +66,41 @@ TEST_CASE("Coarse reduction links matched nodes", "[tree]")
     };
     CHECK(findNode(oldTree, test, true) == nullptr);
     CHECK(findNode(newTree, test, true) == nullptr);
+}
+
+TEST_CASE("Tabulation size in comments is variable", "[tree]")
+{
+    int tabWidth = 8;
+
+    const char *const str = ""
+        "/*\n"
+        "\t * comment\n"
+        "\t */"
+    ;
+
+    std::string expanded = str;
+    boost::replace_all(expanded, "\t", std::string(8, ' '));
+
+    cpp17::pmr::monolithic mr;
+    std::unique_ptr<Language> lang = Language::create("file.c");
+
+    TreeBuilder tb = lang->parse(str, "<input>", tabWidth, /*debug=*/false, mr);
+    REQUIRE_FALSE(tb.hasFailed());
+
+    STree stree(std::move(tb), str, false, false, *lang, mr);
+    Tree tree(std::move(lang), tabWidth, str, stree.getRoot());
+
+    const Node *node = findNode(tree,
+                                [&](const Node *node) {
+                                    if (node->type == Type::Comments) {
+                                        if (!node->spelling.empty()) {
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                },
+                                /*skipLastLayer=*/false);
+
+    REQUIRE(node != nullptr);
+    CHECK(node->spelling == expanded);
 }
