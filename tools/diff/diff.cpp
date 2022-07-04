@@ -143,8 +143,12 @@ run(Environment &env, const Args &args)
     const std::string oldFile = (args.gitDiff ? args.pos[1] : args.pos[0]);
     const std::string newFile = (args.gitDiff ? args.pos[4] : args.pos[1]);
 
-    // New file should be in-tree.
-    Attrs attrs = env.getConfig().lookupAttrs(newFile);
+    const int newNameIdx = (args.gitRename ? 7 : 0);
+
+    // Using new file for attributes under assumption that it better matches
+    // user's expectations (e.g., new location reflects file's properties
+    // better).
+    Attrs attrs = env.getConfig().lookupAttrs(args.pos[newNameIdx]);
 
     TimeReport &tr = env.getTimeKeeper();
     TimeReport nestedTr(tr);
@@ -186,7 +190,6 @@ run(Environment &env, const Args &args)
                     std::cout);
     if (args.gitDiff) {
         printer.addHeader({ args.pos[3], args.pos[6] });
-        const int newNameIdx = (args.gitRename ? 7 : 0);
         printer.addHeader({ "a/" + args.pos[0], "b/" + args.pos[newNameIdx] });
     } else {
         printer.addHeader({ oldFile, newFile });

@@ -302,7 +302,9 @@ ZSDiff::loadDiff(const DiffEntry &diffEntry)
 
     updateTitle();
 
-    // New file should be in-tree.
+    // Using new file for attributes under assumption that it better matches
+    // user's expectations (e.g., new location reflects file's properties
+    // better).
     Attrs attrs = env.getConfig().lookupAttrs(diffEntry.updated.path);
 
     // TODO: parse in parallel like zs-diff does.
