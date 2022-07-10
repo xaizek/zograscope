@@ -205,7 +205,7 @@ static optional_t<Tree> buildTreeFromFile(const CommonArgs &args,
         langName = attrs.lang;
     }
 
-    std::unique_ptr<Language> lang = Language::create(path, attrs.lang);
+    std::unique_ptr<Language> lang = Language::create(path, langName);
 
     cpp17::pmr::monolithic localMR;
 
