@@ -45,24 +45,6 @@ R"(Usage: zs-tui [options...] [paths...]
 
 Paths can specify both files and directories.  When no path is specified, "." is
 assumed.
-
-Supported Vim-like shortcuts: G, gg, j and k.
-
-Other shortcuts:
- * files view:
-    - c -- enter code view
-    - d -- enter dump view
-    - f -- switch to functions view
-    - q -- quit the application
- * functions view:
-    - c -- enter code view
-    - d -- enter dump view
-    - f -- switch to files view
-    - q -- quit the application
- * code view:
-    - c/q -- leave code view
- * dump view:
-    - d/q -- leave dump view
 )";
 
 const int InputBufferWidth = 10;

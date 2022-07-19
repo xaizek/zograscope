@@ -13,4 +13,9 @@ It's not clear if it's worth adding diffing functionality here.  It's probably
 not, which means that this tool will be mostly for interactive browsing or
 similar activities and other tools might be extracted out of it.
 
+## Documentation ##
+
+See the [manual page][manual] for more details.
+
 [zograscope]: ../../README.md
+[manual]: ../../docs/zs-tui.md

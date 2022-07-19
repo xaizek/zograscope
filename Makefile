@@ -7,7 +7,7 @@ CXXFLAGS += -Isrc/ -Ithird-party/ $(CFLAGS)
 LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
 LDFLAGS  += -lboost_system -pthread
 
-INSTALL := install
+INSTALL := install -D
 DESTDIR :=
 PREFIX  := /usr
 
@@ -131,6 +131,7 @@ tools_objects += $$($1.objects)
 tools_depends += $$($1.depends)
 
 all: $$($1.bin)
+man: man/zs-$1.1
 
 $$($1.bin): | $(out_dirs)
 
@@ -158,9 +159,18 @@ out_dirs := $(sort $(dir $(lib_objects) $(tools_objects) $(tests_objects)))
 # processs of running other rules
 $(shell mkdir -p $(out_dirs))
 
-.PHONY: all check clean debug release sanitize-basic
+.PHONY: all man check clean debug release sanitize-basic
 .PHONY: coverage reset-coverage
 .PHONY: install uninstall
+
+man: man/$(NAME).7
+man/%.1 man/%.7: docs/%.md
+	pandoc -V title=$* \
+	       -V section=$(shell echo -n $@ | tail -c1) \
+	       -V app=$* \
+	       -V date="$$(date +'%B %d, %Y')" \
+	       -V author='xaizek <xaizek@posteo.net>' \
+	       -s -o $@ $<
 
 all: $(lib)
 
@@ -185,8 +195,9 @@ check: $(out_dir)/tests/tests reset-coverage
 	@$(out_dir)/tests/tests $(TESTS)
 
 install: release
-	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) $(tools_bins) $(DESTDIR)$(PREFIX)/bin
+	$(INSTALL) -t $(DESTDIR)$(PREFIX)/bin $(tools_bins)
+	$(INSTALL) -t $(DESTDIR)$(PREFIX)/share/man/man7/ -m 644 man/*.7
+	$(INSTALL) -t $(DESTDIR)$(PREFIX)/share/man/man1/ -m 644 man/*.1
 
 uninstall:
 	$(RM) $(addprefix $(DESTDIR)$(PREFIX)/bin/,$(notdir $(tools_bins)))

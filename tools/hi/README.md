@@ -9,15 +9,9 @@ testing and debugging of code parsing, but it can also be used on its own.
 
 The only hard-coded color scheme at the moment is for xterm-256color palette.
 
-## Checking if code parses correctly ##
+## Documentation ##
 
-Whether the parser is able to handle given sources can be checked using command
-like this:
-
-```
-find -name '*.[hc]' -exec zs-hi --dry {} \;
-```
-
-It produces output for files with which it has issues.
+See the [manual page][manual] for more details.
 
 [zograscope]: ../../README.md
+[manual]: ../../docs/zs-hi.md
