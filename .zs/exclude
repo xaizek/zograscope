@@ -4,6 +4,12 @@
 !/tools/
 !/Makefile
 
+# submodules
+/tools/tui/libs
+
+# examples
+example/
+
 # automatically generated sources
 *.gen.*
 
@@ -11,3 +17,4 @@
 ui_*.h
 moc_*.cpp
 moc_*.h
+qrc_resources.cpp
