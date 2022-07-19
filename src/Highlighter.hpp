@@ -108,9 +108,9 @@ private:
     // returned by `getEntry()` earlier.
     void advance(const Entry &entry);
     // Formats spelling of a node into a colored string.
-    ColorCane getSpelling(const Node &node, State state);
+    ColorCane getSpelling(const Entry &entry);
     // Diffs labels of two nodes (specified one and its relative).
-    ColorCane diffSpelling(const Node &node);
+    ColorCane diffSpelling(const Node &node, bool moved);
 
 private:
     const Language &lang;                     // Language services.

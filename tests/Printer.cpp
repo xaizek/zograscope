@@ -123,7 +123,7 @@ TEST_CASE("Inner diffing does not mess up column tracking", "[printer]")
     REQUIRE(printed == expected);
 }
 
-TEST_CASE("Comment contents is not marked as updated on move", "[printer]")
+TEST_CASE("Comment contents is marked as moved on move", "[printer]")
 {
     std::string printed = compareAndPrint(parseC(
 R"(void f() {
@@ -138,13 +138,13 @@ R"(void f() {
     )"), true);
 
     std::string expected = normalizeText(R"(
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         1  void f() {                 |  1  void f() {
-         -                             {+++}  2      {+{+}
-         2      /* {-This-} is bad. */ {#~#}  3          /* {+Failure+} is bad. */
-         -                             {+++}  4      {+}+}
-         3  }                          |  5  }
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         1  void f() {                         |  1  void f() {
+         -                                     {+++}  2      {+{+}
+         2      {:/* :}{-This-}{: is bad. */:} {#~#}  3          {:/* :}{+Failure+}{: is bad. */:}
+         -                                     {+++}  4      {+}+}
+         3  }                                  |  5  }
     )");
 
     REQUIRE(printed == expected);

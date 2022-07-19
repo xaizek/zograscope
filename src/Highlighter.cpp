@@ -249,7 +249,7 @@ Highlighter::skipUntil(int targetLine)
             if (++line == targetLine) {
                 current = node;
                 colorPicker->advancedLine();
-                lines = getSpelling(*node, entry.state).splitIntoLines();
+                lines = getSpelling(entry).splitIntoLines();
                 olines.erase(olines.begin(), olines.begin() + i);
                 lines.erase(lines.begin(), lines.begin() + i);
                 return;
@@ -299,7 +299,7 @@ Highlighter::print(int n)
 
         advance(entry);
 
-        lines = getSpelling(*node, entry.state).splitIntoLines();
+        lines = getSpelling(entry).splitIntoLines();
         split(node->spelling, '\n', olines);
         current = node;
 
@@ -456,10 +456,12 @@ getHighlight(const Node &node, int moved, State state, const Language &lang)
 }
 
 ColorCane
-Highlighter::getSpelling(const Node &node, State state)
+Highlighter::getSpelling(const Entry &entry)
 {
-    const bool diffable = isDiffable(node, state, lang);
-    if (!diffable && state != State::Updated) {
+    const Node &node = *entry.node;
+
+    const bool diffable = isDiffable(node, entry.state, lang);
+    if (!diffable && entry.state != State::Updated) {
         ColorCane cc;
         cc.append(node.spelling, &node);
         return cc;
@@ -467,7 +469,7 @@ Highlighter::getSpelling(const Node &node, State state)
 
     ColorCane cc;
     if (diffable) {
-        cc = diffSpelling(node);
+        cc = diffSpelling(node, entry.moved);
     } else {
         cc.append(node.spelling, &node, ColorGroup::Updated);
     }
@@ -493,7 +495,7 @@ isDiffable(const Node &node, State state, const Language &lang)
 }
 
 ColorCane
-Highlighter::diffSpelling(const Node &node)
+Highlighter::diffSpelling(const Node &node, bool moved)
 {
     // XXX: some kind of caching would be nice since we're doing the same thing
     //      for both original and updated nodes.
@@ -556,9 +558,12 @@ Highlighter::diffSpelling(const Node &node)
     };
 
     // Unchanged parts are highlighted using this color group.
-    ColorGroup def = transparentDiffables || !surround
-                   ? ColorGroup::None
-                   : ColorGroup::PieceUpdated;
+    ColorGroup def = ColorGroup::None;
+    if (moved) {
+        def = ColorGroup::Moved;
+    } else if (!transparentDiffables && surround) {
+        def = ColorGroup::PieceUpdated;
+    }
 
     for (const auto &x : diff.getSes().getSequence()) {
         switch (x.second.type) {
