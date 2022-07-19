@@ -613,16 +613,25 @@ toWords(boost::string_ref s)
         return Word;
     };
 
+    auto isNonWord = [](State state) {
+        return (state == Punctuation || state == WhiteSpace);
+    };
+
+    auto hasInput = [](State state) {
+        return (state != Start && state != End);
+    };
+
     State currentState = Start;
     std::size_t wordStart = 0U;
     for (std::size_t i = 0U; i <= s.size(); ++i) {
         const State newState = (i == s.size() ? End : classify(s[i]));
-        // Each punctuation character is treated as a separate "word".
-        if (currentState != newState || currentState == Punctuation) {
-            if (currentState == Punctuation || currentState == Word) {
+        // Each punctuation or whitespace character is treated as a separate
+        // "word".
+        if (currentState != newState || isNonWord(currentState)) {
+            if (hasInput(currentState)) {
                 words.emplace_back(s.substr(wordStart, i - wordStart));
             }
-            if (newState == Punctuation || newState == Word) {
+            if (hasInput(newState)) {
                 wordStart = i;
             }
         }
