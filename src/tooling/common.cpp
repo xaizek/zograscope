@@ -66,10 +66,15 @@ Environment::setup(const std::vector<std::string> &argv)
     args.color = varMap.count("color");
     args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
+    args.noPager = varMap.count("no-pager");
     args.lang = varMap["lang"].as<std::string>();
 
     if (args.color) {
         decor::enableDecorations();
+    }
+
+    if (args.noPager) {
+        redirectToPager.discharge();
     }
 }
 
@@ -98,6 +103,7 @@ parseOptions(const std::vector<std::string> &args,
         ("dump-stree",  "display stree(s)")
         ("dump-tree",   "display tree(s)")
         ("time-report", "report time spent on different activities")
+        ("no-pager",    "never spawn a pager for output")
         ("fine-only",   "use only fine-grained tree")
         ("color",       "force colorization of output")
         ("lang",        po::value<std::string>()->default_value({}),

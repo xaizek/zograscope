@@ -233,14 +233,18 @@ force colorization of output
 `--lang` _arg_ \
 force specific language (`c`, `cxx`, `make`, `lua`) and disable auto-detection
 
+`--no-pager` \
+never spawn a pager for output
+
 BEHAVIOUR
 =========
 
 Pager
 -----
 
-When output is a terminal (not the case when invoked by Git), `less` is spawn
-if output is about the size of the screen.
+By default when output is a terminal (not the case when invoked by Git), `less`
+is spawn if output is about the size of the screen.  Use `--no-pager` to change
+the behaviour.
 
 Language detection
 ------------------

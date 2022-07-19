@@ -50,6 +50,7 @@ struct CommonArgs
     bool color;                   // Fine-grained tree.
     bool fine;                    // Whether to build only fine-grained tree.
     bool timeReport;              // Print time report.
+    bool noPager;                 // Don't spawn a pager.
 };
 
 class Environment

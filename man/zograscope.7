@@ -334,11 +334,18 @@ force colorization of output
 .PD
 force specific language (\f[V]c\f[R], \f[V]cxx\f[R], \f[V]make\f[R],
 \f[V]lua\f[R]) and disable auto-detection
+.PP
+\f[V]--no-pager\f[R]
+.PD 0
+.P
+.PD
+never spawn a pager for output
 .SH BEHAVIOUR
 .SS Pager
 .PP
-When output is a terminal (not the case when invoked by Git),
+By default when output is a terminal (not the case when invoked by Git),
 \f[V]less\f[R] is spawn if output is about the size of the screen.
+Use \f[V]--no-pager\f[R] to change the behaviour.
 .SS Language detection
 .PP
 By default language is auto-detected based on file name.
