@@ -128,3 +128,64 @@ TEST_CASE("Condition removal", "[.srcml][srcml-cxx][comparison]")
         }
     )123");
 }
+
+TEST_CASE("C++ condition addition", "[.srcml][srcml-cxx][comparison]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            if (fullVal.back() == ';') {
+            }
+        }
+    )", R"(
+        void f() {
+            if (
+                fullVal.back() == ':' ||  /// Additions
+                fullVal.back() == ';') {
+            }
+        }
+    )");
+}
+
+TEST_CASE("C++ subexpr addition", "[.srcml][srcml-cxx][comparison]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            return -child->stype != SrcmlCxxSType::Function;
+        }
+    )", R"(
+        void f() {
+            return
+                -child->stype != SrcmlCxxSType::Parameter &&  /// Additions
+                -child->stype != SrcmlCxxSType::Function;
+        }
+    )");
+}
+
+TEST_CASE("C++ statement deletion", "[.srcml][srcml-cxx][comparison]")
+{
+    diffSrcmlCxx(R"(
+        void f() {
+            for (int i : is) {
+                if (ci[i]->satellite) {       /// Deletions
+                    continue;                 /// Deletions
+                }                             /// Deletions
+
+                for (int j : js) {
+                    if (cj[j]->satellite) {
+                        continue;
+                    }
+                }
+            }
+        }
+    )", R"(
+        void f() {
+            for (int i : is) {
+                for (int j : js) {
+                    if (cj[j]->satellite) {
+                        continue;
+                    }
+                }
+            }
+        }
+    )");
+}

@@ -115,6 +115,13 @@ private:
 
 }
 
+// Method used to determine if two nodes match on overlap.
+enum class OverlapKind
+{
+    Relation, // The nodes were matched with each other.
+    Token,    // The spelling of nodes matches.
+};
+
 // Description of a single match candidate for matching terminals.
 struct Distiller::TerminalMatch
 {
@@ -123,14 +130,18 @@ struct Distiller::TerminalMatch
     float similarity;   // How similar labels of two nodes are in [0.0, 1.0].
 };
 
-// Computes rate that depends on number and position of neighbouring nodes of
-// `x` that match corresponding (by offset) nodes of `y`.  This heuristics glues
-// unmatched nodes to their already matched neighbours and resolves ties quite
-// well.  Matched nodes that are closer to the one being analyzed contribute
-// more to the rate.
-static int
-rateOverlap(const Node *x, const std::vector<Node *> &po1,
-            const Node *y, const std::vector<Node *> &po2)
+static bool
+isAnOverlap(const Node *x, const Node *y, OverlapKind how)
+{
+    switch (how) {
+        case OverlapKind::Relation: return (x->relative == y);
+        case OverlapKind::Token:    return (x->label == y->label);
+    }
+    return false;
+}
+
+int
+Distiller::rateOverlap(const Node *x, const Node *y, OverlapKind how) const
 {
     int overlap = 0;
 
@@ -138,7 +149,9 @@ rateOverlap(const Node *x, const std::vector<Node *> &po1,
     for (int i = 1; i <= maxLeftOffset; ++i) {
         int xi = x->poID - i;
         int yi = y->poID - i;
-        overlap += (po1[xi]->relative == po2[yi] ? maxLeftOffset - i + 1 : 0);
+        if (isAnOverlap(po1[xi], po2[yi], how)) {
+            overlap += maxLeftOffset - i + 1;
+        }
     }
 
     int maxRightOffset = std::min({ static_cast<int>(po1.size()) - 1 - x->poID,
@@ -147,7 +160,9 @@ rateOverlap(const Node *x, const std::vector<Node *> &po1,
     for (int i = 1; i <= maxRightOffset; ++i) {
         int xi = x->poID + i;
         int yi = y->poID + i;
-        overlap += (po1[xi]->relative == po2[yi] ? maxRightOffset - i + 1 : 0);
+        if (isAnOverlap(po1[xi], po2[yi], how)) {
+            overlap += maxRightOffset - i + 1 + (xi == yi);
+        }
     }
 
     return overlap;
@@ -160,7 +175,7 @@ Distiller::rateTerminalsMatch(const Node *x, const Node *y) const
     const Node *yParent = getParent(y);
 
     if (xParent && xParent->relative && xParent->relative == yParent) {
-        return 4 + rateOverlap(x, po1, y, po2);
+        return 4 + rateOverlap(x, y, OverlapKind::Relation);
     }
 
     if (haveValues(xParent, yParent)) {
@@ -187,12 +202,22 @@ Distiller::distill(Node &T1, Node &T2)
 
     std::vector<TerminalMatch> matches;
 
-    // First round.
-
     // First time terminal matching.
     matches = generateTerminalMatches();
     std::stable_sort(matches.begin(), matches.end(),
                      [&](const TerminalMatch &a, const TerminalMatch &b) {
+                         // Use overlap rate here too to resolve ties, but
+                         // match token-by-token rather then relations, which
+                         // don't exist yet.
+                         //
+                         // The idea is to get fewer incorrect satellite matches
+                         // which otherwise stick and kinda ruin everything.
+
+                         // TODO: cache the rate (and not just here)
+                         if (b.similarity == a.similarity) {
+                            return rateOverlap(b.x, b.y, OverlapKind::Token)
+                                 < rateOverlap(a.x, a.y, OverlapKind::Token);
+                         }
                          return b.similarity < a.similarity;
                      });
     applyTerminalMatches(matches);
@@ -289,7 +314,8 @@ postOrderAndInitImpl(Node &node, std::vector<Node *> &v)
 static void
 clear(Node *node)
 {
-    if (node->satellite) {
+    // Treat layer breaks as satellites.
+    if (node->satellite || node->next != nullptr) {
         return;
     }
 

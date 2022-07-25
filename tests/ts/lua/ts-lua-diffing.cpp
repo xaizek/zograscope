@@ -40,3 +40,24 @@ TEST_CASE("Lua functions are matched", "[ts-lua][comparison]")
         end
     )");
 }
+
+TEST_CASE("Variable is moved to table value", "[ts-lua][comparison]")
+{
+    diffTsLua(R"(
+        function f()
+            something()
+            return
+                text     --- Moves
+        end
+    )", R"(
+        function f()
+            something()
+            return
+            {            --- Additions
+                text     --- Additions
+                =        --- Additions
+                text     --- Moves
+            }            --- Additions
+        end
+    )");
+}

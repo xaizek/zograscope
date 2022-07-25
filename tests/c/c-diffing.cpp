@@ -1889,6 +1889,29 @@ TEST_CASE("Number change", "[comparison]")
     )", false);
 }
 
+TEST_CASE("C condition removal", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            if (
+                cmd_info->argc == 1 &&                       /// Deletions
+                strcasecmp(cmd_info->argv[0], "clear") == 0  /// Moves
+                ) {
+                cs_reset(curr_stats.cs);                     /// Deletions
+                return 0;                                    /// Deletions
+            }
+        }
+    )", R"(
+        void f() {
+            if (
+                strcasecmp(cmd_info->argv[0], "clear") == 0  /// Moves
+                ) {
+                return highlight_clear(cmd_info);            /// Additions
+            }
+        }
+    )", false);
+}
+
 TEST_CASE("Condition addition", "[comparison]")
 {
     diffC(R"(
@@ -1900,6 +1923,140 @@ TEST_CASE("Condition addition", "[comparison]")
             if (
                 !error &&  /// Additions
                 !cloned);
+        }
+    )", false);
+}
+
+TEST_CASE("Change one of duplicates", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd,
+                       SANDBOX_PATH                          /// Updates
+                       , &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+        }
+    )", R"(
+        void f() {
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd,
+                       SANDBX_PATH                           /// Updates
+                       , &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+            fsdata_get(fsd, SANDBOX_PATH, &ch, sizeof(ch));
+        }
+    )", false);
+}
+
+TEST_CASE("Case addition", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            switch(a) {
+                case 'P':
+                    switch(b) {
+                        case 'l':
+                            ++x;
+                            break;
+                    }
+                    break;
+            }
+        }
+    )", R"(
+        void f() {
+            switch(a) {
+                case 'l':           /// Additions
+                    break;          /// Additions
+                case 'P':
+                    switch(b) {
+                        case 'l':
+                            ++x;
+                            break;
+                    }
+                    break;
+            }
+        }
+    )", false);
+}
+
+TEST_CASE("Return update", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            if(command == NULL)
+            {
+                return NULL;      /// Deletions
+            }
+
+            if(job == NULL)
+            {
+                return 1;
+            }
+        }
+    )", R"(
+        void f() {
+            if(command == NULL)
+            {
+                return 1;         /// Additions
+            }
+
+            if(job == NULL)
+            {
+                return 1;
+            }
+        }
+    )", false);
+}
+
+TEST_CASE("if-statement removal", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            if (magic == NULL) {                  /// Deletions
+                return -1;                        /// Deletions
+            }                                     /// Deletions
+
+            descr = magic_file(magic, filename);
+            if (descr == NULL) {
+                return -1;
+            }
+        }
+    )", R"(
+        void f() {
+            descr = magic_file(magic, filename);
+            if (descr == NULL) {
+                return -1;
+            }
+        }
+    )", false);
+}
+
+TEST_CASE("Condition update", "[comparison]")
+{
+    diffC(R"(
+        void f() {
+            if (
+                nitems_res.              /// Moves
+                value == DCACHE_UNKNOWN  /// Deletions
+                && !is_slow_fs           /// Moves
+                ) {
+            }
+        }
+    )", R"(
+        void f() {
+            if (
+                !                        /// Additions
+                nitems_res.              /// Moves
+                is_valid                 /// Additions
+                && !is_slow_fs           /// Moves
+                ) {
+            }
         }
     )", false);
 }

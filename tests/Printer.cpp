@@ -129,13 +129,13 @@ TEST_CASE("Comment contents is marked as moved on move", "[printer]")
 R"(void f() {
     /* This is bad. */
 }
-    )"), parseC(
+    )", true), parseC(
 R"(void f() {
     {
         /* Failure is bad. */
     }
 }
-    )"), true);
+    )", true), false);
 
     std::string expected = normalizeText(R"(
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

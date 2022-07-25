@@ -27,6 +27,8 @@ class DiceString;
 class Language;
 class Node;
 
+enum class OverlapKind;
+
 // Implements change-distilling algorithm.
 class Distiller
 {
@@ -57,6 +59,12 @@ private:
     // Computes rating of a match of terminals, which is to be compared with
     // ratings of other matches.
     int rateTerminalsMatch(const Node *x, const Node *y) const;
+    // Computes rate that depends on number and position of neighbouring nodes
+    // of `x` that match corresponding (by offset) nodes of `y`.  This
+    // heuristics glues unmatched nodes to their already matched neighbours and
+    // resolves ties quite well.  Matched nodes that are closer to the one
+    // being analyzed contribute more to the rate.
+    int rateOverlap(const Node *x, const Node *y, OverlapKind how) const;
     // Retrieves parent of the node possibly skipping container parents.  Might
     // return `nullptr`.
     const Node * getParent(const Node *n) const;
