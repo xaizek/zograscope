@@ -559,10 +559,10 @@ Highlighter::diffSpelling(const Node &node, bool moved)
 
     // Unchanged parts are highlighted using this color group.
     ColorGroup def = ColorGroup::None;
-    if (moved) {
-        def = ColorGroup::Moved;
-    } else if (!transparentDiffables && surround) {
+    if (!transparentDiffables && surround) {
         def = ColorGroup::PieceUpdated;
+    } else if (moved) {
+        def = ColorGroup::Moved;
     }
 
     for (const auto &x : diff.getSes().getSequence()) {

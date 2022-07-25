@@ -148,3 +148,40 @@ TEST_CASE("Non-transparent diffables have background filled", "[highlighter]")
     newHi.setTransparentDiffables(false);
     CHECK(newHi.print() == "// aa bb {+dd+}");
 }
+
+TEST_CASE("Rename highligh has priority over move", "[highlighter]")
+{
+    Tree oldTree = parseC(R"(
+        void f() {
+            int var;
+            if (condition) {
+            }
+        }
+    )", true);
+    Tree newTree = parseC(R"(
+        void f() {
+            if (condition) {
+                int varr;
+            }
+        }
+    )", true);
+
+    TimeReport tr;
+    compare(oldTree, newTree, tr, true, false);
+
+    TermHighlighter oldHi(oldTree, true);
+    CHECK(oldHi.print() == R"(
+        void f() {
+            {:int:}{: :}{~var~}{:;:}
+            if (condition) {
+            }
+        })");
+
+    TermHighlighter newHi(newTree, false);
+    CHECK(newHi.print() == R"(
+        void f() {
+            if (condition) {
+                {:int:}{: :}{~var~}{+r+}{:;:}
+            }
+        })");
+}
