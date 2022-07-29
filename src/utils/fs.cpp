@@ -19,7 +19,7 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <fstream>
-#include <sstream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 
@@ -58,7 +58,5 @@ readFile(const std::string &path)
         throw std::runtime_error("Can't open file: " + path);
     }
 
-    std::ostringstream iss;
-    iss << ifile.rdbuf();
-    return normalizeEols(iss.str());
+    return normalizeEols({ std::istreambuf_iterator<char>{ifile}, {} });
 }
