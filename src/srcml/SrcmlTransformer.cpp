@@ -34,6 +34,10 @@
 
 namespace ti = tinyxml2;
 
+static void toSrcmlForm(const std::string &contents,
+                        const std::string &path,
+                        const std::string &language,
+                        ti::XMLDocument &doc);
 static boost::string_ref processValue(boost::string_ref str);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents,
@@ -49,6 +53,27 @@ SrcmlTransformer::SrcmlTransformer(const std::string &contents,
 
 void
 SrcmlTransformer::transform()
+{
+    ti::XMLDocument doc;
+    toSrcmlForm(contents, path, language, doc);
+    if (doc.Error()) {
+        throw std::runtime_error("Failed to parse: " +
+                                 std::string(doc.ErrorStr()));
+    }
+
+    left = contents;
+    line = 1;
+    col = 1;
+    inCppDirective = 0;
+
+    tb.setRoot(visit(doc.RootElement(), 0));
+}
+
+// Parses source file via SrcML and gets result in a form of XML DOM.
+static void toSrcmlForm(const std::string &contents,
+                        const std::string &path,
+                        const std::string &language,
+                        ti::XMLDocument &doc)
 {
     TempFile tmpFile(path);
 
@@ -66,7 +91,6 @@ SrcmlTransformer::transform()
 
     std::string xml = readCommandOutput(cmd, std::string());
 
-    ti::XMLDocument doc;
     if (doc.Parse(xml.data(), xml.size()) == ti::XML_SUCCESS &&
         doc.RootElement() == nullptr) {
 
@@ -78,18 +102,6 @@ SrcmlTransformer::transform()
         xml = readCommandOutput(cmd, contents);
         doc.Parse(xml.data(), xml.size());
     }
-
-    if (doc.Error()) {
-        throw std::runtime_error("Failed to parse: " +
-                                 std::string(doc.ErrorStr()));
-    }
-
-    left = contents;
-    line = 1;
-    col = 1;
-    inCppDirective = 0;
-
-    tb.setRoot(visit(doc.RootElement(), 0));
 }
 
 PNode *
