@@ -16,7 +16,9 @@ TESTS :=
 
 # optional build-time dependencies
 QT5_PROG :=
+HAVE_CURSESW :=
 HAVE_LIBGIT2 :=
+HAVE_LIBSRCML :=
 
 ifneq ($(OS),Windows_NT)
     bin_suffix :=
@@ -73,6 +75,12 @@ else
 endif
 
 -include config.mk
+
+ifeq ($(HAVE_LIBSRCML),yes)
+    TESTS := '*' $(TESTS)
+    EXTRA_LDFLAGS += -lsrcml
+    CXXFLAGS += -DHAVE_LIBSRCML
+endif
 
 CXXFLAGS := -I$(out_dir)/src/ $(CXXFLAGS)
 
@@ -137,7 +145,7 @@ $$($1.bin): | $(out_dirs)
 
 ifeq (,$(wildcard tools/$1/tool.mk))
 $$($1.bin): $$($1.objects)
-	$(CXX) $(EXTRA_LDFLAGS) $$^ $(LDFLAGS) -o $$@
+	$(CXX) $$^ $(EXTRA_LDFLAGS) $(LDFLAGS) -o $$@
 else
 $$($1.bin): $$($1.sources) $$($1.extradeps) $(lib)
 endif

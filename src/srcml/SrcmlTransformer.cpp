@@ -24,6 +24,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/utility/string_ref.hpp>
+#include <srcml.h>
 #include "tinyxml2/tinyxml2.h"
 
 #include "utils/fs.hpp"
@@ -38,6 +39,9 @@ static void toSrcmlForm(const std::string &contents,
                         const std::string &path,
                         const std::string &language,
                         ti::XMLDocument &doc);
+static bool toLibSrcmlForm(const std::string &contents,
+                           const std::string &language,
+                           ti::XMLDocument &doc);
 static boost::string_ref processValue(boost::string_ref str);
 
 SrcmlTransformer::SrcmlTransformer(const std::string &contents,
@@ -75,6 +79,13 @@ static void toSrcmlForm(const std::string &contents,
                         const std::string &language,
                         ti::XMLDocument &doc)
 {
+    if (toLibSrcmlForm(contents, language, doc)) {
+        return;
+    }
+#ifdef HAVE_LIBSRCML
+    throw std::runtime_error("Failed to parse " + path);
+#endif
+
     TempFile tmpFile(path);
 
     std::ofstream ofs(tmpFile);
@@ -100,8 +111,80 @@ static void toSrcmlForm(const std::string &contents,
         // both ways.
         cmd.pop_back();
         xml = readCommandOutput(cmd, contents);
-        doc.Parse(xml.data(), xml.size());
+        (void)doc.Parse(xml.data(), xml.size());
     }
+}
+
+template <typename T, typename D>
+std::unique_ptr<T, D>
+asUniquePtr(T *p, D &&d)
+{
+    return std::unique_ptr<T, D>(p, std::forward<D>(d));
+}
+
+static bool
+toLibSrcmlForm(const std::string &contents,
+               const std::string &language,
+               ti::XMLDocument &doc)
+{
+#ifdef HAVE_LIBSRCML
+    auto archive = asUniquePtr(srcml_archive_create(), &srcml_archive_free);
+    if (archive == nullptr) {
+        return false;
+    }
+
+    int status;
+
+    status = srcml_archive_set_src_encoding(archive.get(), "utf8");
+    if (status != SRCML_STATUS_OK) {
+        return false;
+    }
+
+    char *buffer;
+    size_t size;
+
+    status = srcml_archive_write_open_memory(archive.get(), &buffer, &size);
+    if (status != SRCML_STATUS_OK) {
+        return false;
+    }
+
+    auto unit = asUniquePtr(srcml_unit_create(archive.get()), &srcml_unit_free);
+    if (unit == nullptr) {
+        return false;
+    }
+
+    // single input file, so non-archive unit
+    status = srcml_archive_enable_solitary_unit(archive.get());
+    if (status != SRCML_STATUS_OK) {
+        return false;
+    }
+
+    status = srcml_unit_set_language(unit.get(), language.c_str());
+    if (status != SRCML_STATUS_OK) {
+        return false;
+    }
+
+    status = srcml_unit_parse_memory(unit.get(),
+                                     contents.data(),
+                                     contents.size());
+    if (status != SRCML_STATUS_OK) {
+        return false;
+    }
+
+    status = srcml_archive_write_unit(archive.get(), unit.get());
+    if (status != SRCML_STATUS_OK) {
+        return false;
+    }
+
+    srcml_archive_close(archive.get());
+    auto bufGuard = asUniquePtr(buffer, &std::free);
+
+    (void)doc.Parse(buffer, size);
+    return true;
+#else
+    (void)contents, (void)language, (void)doc;
+    return false;
+#endif
 }
 
 PNode *

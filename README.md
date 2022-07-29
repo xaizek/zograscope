@@ -81,6 +81,8 @@ TUI interface with underdefined scope of functionality.
 echo 'QT5_PROG := qmake-qt5' >> config.mk
 # if libgit2 is present
 echo 'HAVE_LIBGIT2 := yes'   >> config.mk
+# if libsrcml is present
+echo 'HAVE_LIBSRCML := yes'  >> config.mk
 # if cursesw is present
 echo 'HAVE_CURSESW := yes'   >> config.mk
 
@@ -107,7 +109,8 @@ make install
 * [flex][flex]
 * [GNU Bison][bison] v3+
 * [Boost][boost], tested with 1.58, but older versions might work too
-* (optional, run-time, for C++) [srcml][srcml] (v0.9.5 and v1.0.0 were tested)
+* (optional, run- or build-time, for C++) [srcml][srcml] (v0.9.5 and v1.0.0 were
+  tested)
 * (optional, for `gdiff` tool) [qt5][qt5]
 * (optional, for `gdiff` tool) [libgit2][libgit2]
 * (optional, for `tui` tool) [curses][curses] with support of wide characters
