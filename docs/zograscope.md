@@ -209,28 +209,19 @@ print help message
 `--dry-run` \
 parse and exit
 
-`--debug` \
-enable debugging of grammar
+`--debug[=g]` \
+enable debugging of grammar (`g` flag) and/or stree (`s` flag)
 
-`--sdebug` \
-enable debugging of strees
-
-`--dump-stree` \
-display stree(s)
-
-`--dump-tree` \
-display tree(s)
+`--dump[=t]` \
+display tree (`t` flag) and/or stree (`s` flag)
 
 `--time-report` \
 report time spent on different activities
 
-`--fine-only` \
-use only fine-grained tree
-
 `--color` \
 force colorization of output
 
-`--lang` _arg_ \
+`--lang` _name_ \
 force specific language (`c`, `cxx`, `make`, `lua`) and disable auto-detection
 
 `--no-pager` \

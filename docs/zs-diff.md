@@ -34,12 +34,6 @@ Git Rename Form
 
 When Git calls external diff for renamed and possibly changed file.
 
-Tool-specific Options
----------------------
-
-`--no-refine` \
-do not refine coarse results
-
 USAGE AND BEHAVIOUR
 ===================
 

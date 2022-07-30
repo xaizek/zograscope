@@ -48,6 +48,7 @@ struct CommonArgs
     bool dumpTree;                // Whether to dump trees.
     bool dryRun;                  // Exit after parsing.
     bool color;                   // Fine-grained tree.
+    // TODO: probably drop this one completely
     bool fine;                    // Whether to build only fine-grained tree.
     bool timeReport;              // Print time report.
     bool noPager;                 // Don't spawn a pager.

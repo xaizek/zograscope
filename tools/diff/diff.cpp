@@ -41,13 +41,11 @@
 // Tool-specific type for holding arguments.
 struct Args : CommonArgs
 {
-    bool noRefine;      // Don't run TED on updated nodes.
     bool gitDiff;       // Invoked by git and file was changed.
     bool gitRename;     // File was renamed and possibly changed too.
     bool gitRenameOnly; // File was renamed without changing it.
 };
 
-static boost::program_options::options_description getLocalOpts();
 static Args parseLocalArgs(const Environment &env);
 static int run(Environment &env, const Args &args);
 static int gitFallback(const Args &args);
@@ -59,7 +57,7 @@ main(int argc, char *argv[])
     int result;
 
     try {
-        Environment env(getLocalOpts());
+        Environment env;
         env.setup({ argv + 1, argv + argc });
 
         args = parseLocalArgs(env);
@@ -93,25 +91,12 @@ main(int argc, char *argv[])
     return result;
 }
 
-static boost::program_options::options_description
-getLocalOpts()
-{
-    boost::program_options::options_description options;
-    options.add_options()
-        ("no-refine", "do not refine coarse results");
-
-    return options;
-}
-
 static Args
 parseLocalArgs(const Environment &env)
 {
     Args args;
     static_cast<CommonArgs &>(args) = env.getCommonArgs();
 
-    const boost::program_options::variables_map &varMap = env.getVarMap();
-
-    args.noRefine = varMap.count("no-refine");
     args.gitDiff = args.pos.size() == 7U
                 || (args.pos.size() == 9U && args.pos[2] != args.pos[5]);
     args.gitRename = (args.pos.size() == 9U);
@@ -182,7 +167,7 @@ run(Environment &env, const Args &args)
         return EXIT_SUCCESS;
     }
 
-    compare(treeA, treeB, tr, !args.fine, args.noRefine);
+    compare(treeA, treeB, tr, !args.fine, /*skipRefine=*/false);
 
     dumpTrees(args, treeA, treeB);
 

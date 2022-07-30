@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "zograscope" "7" "July 19, 2022" "" ""
+.TH "zograscope" "7" "July 30, 2022" "" ""
 .hy
 .SH NAME
 .PP
@@ -286,29 +286,18 @@ print help message
 .PD
 parse and exit
 .PP
-\f[V]--debug\f[R]
+\f[V]--debug[=g]\f[R]
 .PD 0
 .P
 .PD
-enable debugging of grammar
+enable debugging of grammar (\f[V]g\f[R] flag) and/or stree (\f[V]s\f[R]
+flag)
 .PP
-\f[V]--sdebug\f[R]
+\f[V]--dump[=t]\f[R]
 .PD 0
 .P
 .PD
-enable debugging of strees
-.PP
-\f[V]--dump-stree\f[R]
-.PD 0
-.P
-.PD
-display stree(s)
-.PP
-\f[V]--dump-tree\f[R]
-.PD 0
-.P
-.PD
-display tree(s)
+display tree (\f[V]t\f[R] flag) and/or stree (\f[V]s\f[R] flag)
 .PP
 \f[V]--time-report\f[R]
 .PD 0
@@ -316,19 +305,13 @@ display tree(s)
 .PD
 report time spent on different activities
 .PP
-\f[V]--fine-only\f[R]
-.PD 0
-.P
-.PD
-use only fine-grained tree
-.PP
 \f[V]--color\f[R]
 .PD 0
 .P
 .PD
 force colorization of output
 .PP
-\f[V]--lang\f[R] \f[I]arg\f[R]
+\f[V]--lang\f[R] \f[I]name\f[R]
 .PD 0
 .P
 .PD
