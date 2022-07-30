@@ -209,11 +209,8 @@ print help message
 `--dry-run` \
 parse and exit
 
-`--debug` \
-enable debugging of grammar
-
-`--sdebug` \
-enable debugging of strees
+`--debug[=g]` \
+enable debugging of grammar (`g` flag) and/or stree (`s` flag)
 
 `--dump[=t]` \
 display tree (`t` flag) and/or stree (`s` flag)
@@ -227,7 +224,7 @@ use only fine-grained tree
 `--color` \
 force colorization of output
 
-`--lang` _arg_ \
+`--lang` _name_ \
 force specific language (`c`, `cxx`, `make`, `lua`) and disable auto-detection
 
 `--no-pager` \

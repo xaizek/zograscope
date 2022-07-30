@@ -58,14 +58,28 @@ Environment::setup(const std::vector<std::string> &argv)
     varMap = parseOptions(argv, options);
     args.pos = varMap["positional"].as<std::vector<std::string>>();
     args.help = varMap.count("help");
-    args.debug = varMap.count("debug");
-    args.sdebug = varMap.count("sdebug");
+    args.dumpSTree = varMap.count("dump-stree");
+    args.dumpTree = varMap.count("dump-tree");
     args.dryRun = varMap.count("dry-run");
     args.color = varMap.count("color");
     args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
     args.noPager = varMap.count("no-pager");
     args.lang = varMap["lang"].as<std::string>();
+
+    if (varMap.count("debug")) {
+        auto debugList = varMap["debug"].as<std::string>();
+        for (char debugItem : debugList) {
+            if (debugItem == 'g') {
+                args.debug = true;
+            } else if (debugItem == 's') {
+                args.sdebug = true;
+            } else {
+                throw std::invalid_argument("unknown value for --debug: " +
+                                            std::string(1, debugItem));
+            }
+        }
+    }
 
     if (varMap.count("dump")) {
         auto dumpList = varMap["dump"].as<std::string>();
@@ -110,15 +124,18 @@ parseOptions(const std::vector<std::string> &args,
     options.add_options()
         ("help,h",      "print help message")
         ("dry-run",     "just parse")
-        ("debug",       "enable debugging of grammar")
-        ("sdebug",      "enable debugging of strees")
-        ("dump",        po::value<std::string>()->implicit_value("t"),
+        ("debug",       po::value<std::string>()->value_name("what")
+                                                ->implicit_value("g"),
+                        "enable debug prints")
+        ("dump",        po::value<std::string>()->value_name("what")
+                                                ->implicit_value("t"),
                         "display internal representation")
         ("time-report", "report time spent on different activities")
         ("no-pager",    "never spawn a pager for output")
         ("fine-only",   "use only fine-grained tree")
         ("color",       "force colorization of output")
-        ("lang",        po::value<std::string>()->default_value({}),
+        ("lang",        po::value<std::string>()->value_name("name")
+                                                ->default_value({}),
                         "force specific language (c, cxx, make, lua)");
 
     po::options_description allOptions;
