@@ -62,7 +62,6 @@ Environment::setup(const std::vector<std::string> &argv)
     args.dumpTree = varMap.count("dump-tree");
     args.dryRun = varMap.count("dry-run");
     args.color = varMap.count("color");
-    args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
     args.noPager = varMap.count("no-pager");
     args.lang = varMap["lang"].as<std::string>();
@@ -132,7 +131,6 @@ parseOptions(const std::vector<std::string> &args,
                         "display internal representation")
         ("time-report", "report time spent on different activities")
         ("no-pager",    "never spawn a pager for output")
-        ("fine-only",   "use only fine-grained tree")
         ("color",       "force colorization of output")
         ("lang",        po::value<std::string>()->value_name("name")
                                                 ->default_value({}),

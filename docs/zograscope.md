@@ -218,9 +218,6 @@ display tree (`t` flag) and/or stree (`s` flag)
 `--time-report` \
 report time spent on different activities
 
-`--fine-only` \
-use only fine-grained tree
-
 `--color` \
 force colorization of output
 
