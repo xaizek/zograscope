@@ -114,6 +114,9 @@ suckIn(PNode *node, PNode *child)
 
 #include "TreeBuilder.hpp"
 #define C11_LTYPE Location
+/* To avoid memory exhaustion, default depth of 10000 isn't enough and memory
+ * usage doesn't go throught the roof with this. */
+#define YYMAXDEPTH 100000
 
 namespace cpp17 {
     namespace pmr {

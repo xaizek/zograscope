@@ -592,6 +592,33 @@ TEST_CASE("Tabulation of size 1 is allowed", "[parser]")
     CHECK(node->col == 3);
 }
 
+TEST_CASE("Memory not exhausted", "[parser]")
+{
+    const char *const str = R"(
+        void f() {
+            for (uint8_t i = 0; i < MAX_I; i++) {
+                for (int j = 0; j < MAX_J; j++) {
+                    uint32_t mask = MASK(i, 123, 11) | MASK(j, 117, 15);
+                    uint32_t val1 = (0xfa << 12) | (mask & ~0xf);
+                    uint32_t val2 = (0x00 << 12) | (mask & ~0xf);
+                    char path_1[24], path_2[24];
+                    snprintf(path_1, sizeof(path_1), "/some/dir%d/%d", 2, val1);
+                    snprintf(path_2, sizeof(path_2), "/some/dir%d/%d", 3, val2);
+
+                    if (!node->id) {
+                        process_it(tree, node, val2);
+                        process_it(tree, l2_node, val1, node->id);
+                    }
+
+                    fill_cpu_node(tree, cpu_node, i, pir, l2_node->id);
+                }
+            }
+        }
+    )";
+
+    CHECK(cIsParsed(str));
+}
+
 static int
 countNodes(const Node &root)
 {
