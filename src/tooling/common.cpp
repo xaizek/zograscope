@@ -60,14 +60,26 @@ Environment::setup(const std::vector<std::string> &argv)
     args.help = varMap.count("help");
     args.debug = varMap.count("debug");
     args.sdebug = varMap.count("sdebug");
-    args.dumpSTree = varMap.count("dump-stree");
-    args.dumpTree = varMap.count("dump-tree");
     args.dryRun = varMap.count("dry-run");
     args.color = varMap.count("color");
     args.fine = varMap.count("fine-only");
     args.timeReport = varMap.count("time-report");
     args.noPager = varMap.count("no-pager");
     args.lang = varMap["lang"].as<std::string>();
+
+    if (varMap.count("dump")) {
+        auto dumpList = varMap["dump"].as<std::string>();
+        for (char dumpItem : dumpList) {
+            if (dumpItem == 't') {
+                args.dumpTree = true;
+            } else if (dumpItem == 's') {
+                args.dumpSTree = true;
+            } else {
+                throw std::invalid_argument("unknown value for --dump: " +
+                                            std::string(1, dumpItem));
+            }
+        }
+    }
 
     if (args.color) {
         decor::enableDecorations();
@@ -100,8 +112,8 @@ parseOptions(const std::vector<std::string> &args,
         ("dry-run",     "just parse")
         ("debug",       "enable debugging of grammar")
         ("sdebug",      "enable debugging of strees")
-        ("dump-stree",  "display stree(s)")
-        ("dump-tree",   "display tree(s)")
+        ("dump",        po::value<std::string>()->implicit_value("t"),
+                        "display internal representation")
         ("time-report", "report time spent on different activities")
         ("no-pager",    "never spawn a pager for output")
         ("fine-only",   "use only fine-grained tree")

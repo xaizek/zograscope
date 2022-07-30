@@ -215,11 +215,8 @@ enable debugging of grammar
 `--sdebug` \
 enable debugging of strees
 
-`--dump-stree` \
-display stree(s)
-
-`--dump-tree` \
-display tree(s)
+`--dump[=t]` \
+display tree (`t` flag) and/or stree (`s` flag)
 
 `--time-report` \
 report time spent on different activities
