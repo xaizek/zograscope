@@ -90,7 +90,7 @@ Language::matches(const std::string &fileName, const std::string &lang)
     if (lang.empty() ? !detected.empty() : detected == lang) {
         return true;
     }
-    if ((lang == "cxx" || lang == "srcml:cxx") && ext == ".h") {
+    if (simplifyLanguage(lang) == "cxx" && ext == ".h") {
         return true;
     }
 
