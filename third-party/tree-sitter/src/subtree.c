@@ -166,7 +166,8 @@ static inline bool ts_subtree_can_inline(Length padding, Length size, uint32_t l
 
 Subtree ts_subtree_new_leaf(
   SubtreePool *pool, TSSymbol symbol, Length padding, Length size,
-  uint32_t lookahead_bytes, TSStateId parse_state, bool has_external_tokens,
+  uint32_t lookahead_bytes, TSStateId parse_state,
+  bool has_external_tokens, bool depends_on_column,
   bool is_keyword, const TSLanguage *language
 ) {
   TSSymbolMetadata metadata = ts_language_symbol_metadata(language, symbol);
@@ -213,6 +214,7 @@ Subtree ts_subtree_new_leaf(
       .fragile_right = false,
       .has_changes = false,
       .has_external_tokens = has_external_tokens,
+      .depends_on_column = depends_on_column,
       .is_missing = false,
       .is_keyword = is_keyword,
       {{.first_leaf = {.symbol = 0, .parse_state = 0}}}
@@ -245,7 +247,7 @@ Subtree ts_subtree_new_error(
 ) {
   Subtree result = ts_subtree_new_leaf(
     pool, ts_builtin_sym_error, padding, size, bytes_scanned,
-    parse_state, false, false, language
+    parse_state, false, false, false, language
   );
   SubtreeHeapData *data = (SubtreeHeapData *)result.ptr;
   data->fragile_left = true;
@@ -378,6 +380,7 @@ void ts_subtree_summarize_children(
   self.ptr->repeat_depth = 0;
   self.ptr->node_count = 1;
   self.ptr->has_external_tokens = false;
+  self.ptr->depends_on_column = false;
   self.ptr->dynamic_precedence = 0;
 
   uint32_t structural_index = 0;
@@ -387,6 +390,13 @@ void ts_subtree_summarize_children(
   const Subtree *children = ts_subtree_children(self);
   for (uint32_t i = 0; i < self.ptr->child_count; i++) {
     Subtree child = children[i];
+
+    if (
+      self.ptr->size.extent.row == 0 &&
+      ts_subtree_depends_on_column(child)
+    ) {
+      self.ptr->depends_on_column = true;
+    }
 
     if (i == 0) {
       self.ptr->padding = ts_subtree_padding(child);
@@ -399,14 +409,19 @@ void ts_subtree_summarize_children(
       self.ptr->padding.bytes +
       self.ptr->size.bytes +
       ts_subtree_lookahead_bytes(child);
-    if (child_lookahead_end_byte > lookahead_end_byte) lookahead_end_byte = child_lookahead_end_byte;
+    if (child_lookahead_end_byte > lookahead_end_byte) {
+      lookahead_end_byte = child_lookahead_end_byte;
+    }
 
     if (ts_subtree_symbol(child) != ts_builtin_sym_error_repeat) {
       self.ptr->error_cost += ts_subtree_error_cost(child);
     }
 
     uint32_t grandchild_count = ts_subtree_child_count(child);
-    if (self.ptr->symbol == ts_builtin_sym_error || self.ptr->symbol == ts_builtin_sym_error_repeat) {
+    if (
+      self.ptr->symbol == ts_builtin_sym_error ||
+      self.ptr->symbol == ts_builtin_sym_error_repeat
+    ) {
       if (!ts_subtree_extra(child) && !(ts_subtree_is_error(child) && grandchild_count == 0)) {
         if (ts_subtree_visible(child)) {
           self.ptr->error_cost += ERROR_COST_PER_SKIPPED_TREE;
@@ -444,7 +459,10 @@ void ts_subtree_summarize_children(
 
   self.ptr->lookahead_bytes = lookahead_end_byte - self.ptr->size.bytes - self.ptr->padding.bytes;
 
-  if (self.ptr->symbol == ts_builtin_sym_error || self.ptr->symbol == ts_builtin_sym_error_repeat) {
+  if (
+    self.ptr->symbol == ts_builtin_sym_error ||
+    self.ptr->symbol == ts_builtin_sym_error_repeat
+  ) {
     self.ptr->error_cost +=
       ERROR_COST_PER_RECOVERY +
       ERROR_COST_PER_SKIPPED_CHAR * self.ptr->size.bytes +
@@ -541,11 +559,12 @@ Subtree ts_subtree_new_missing_leaf(
   SubtreePool *pool,
   TSSymbol symbol,
   Length padding,
+  uint32_t lookahead_bytes,
   const TSLanguage *language
 ) {
   Subtree result = ts_subtree_new_leaf(
-    pool, symbol, padding, length_zero(), 0,
-    0, false, false, language
+    pool, symbol, padding, length_zero(), lookahead_bytes,
+    0, false, false, false, language
   );
   if (result.data.is_inline) {
     result.data.is_missing = true;
@@ -591,37 +610,6 @@ void ts_subtree_release(SubtreePool *pool, Subtree self) {
       ts_subtree_pool_free(pool, tree.ptr);
     }
   }
-}
-
-bool ts_subtree_eq(Subtree self, Subtree other) {
-  if (self.data.is_inline || other.data.is_inline) {
-    return memcmp(&self, &other, sizeof(SubtreeInlineData)) == 0;
-  }
-
-  if (self.ptr) {
-    if (!other.ptr) return false;
-  } else {
-    return !other.ptr;
-  }
-
-  if (self.ptr->symbol != other.ptr->symbol) return false;
-  if (self.ptr->visible != other.ptr->visible) return false;
-  if (self.ptr->named != other.ptr->named) return false;
-  if (self.ptr->padding.bytes != other.ptr->padding.bytes) return false;
-  if (self.ptr->size.bytes != other.ptr->size.bytes) return false;
-  if (self.ptr->symbol == ts_builtin_sym_error) return self.ptr->lookahead_char == other.ptr->lookahead_char;
-  if (self.ptr->child_count != other.ptr->child_count) return false;
-  if (self.ptr->child_count > 0) {
-    if (self.ptr->visible_child_count != other.ptr->visible_child_count) return false;
-    if (self.ptr->named_child_count != other.ptr->named_child_count) return false;
-
-    for (uint32_t i = 0; i < self.ptr->child_count; i++) {
-      if (!ts_subtree_eq(ts_subtree_children(self)[i], ts_subtree_children(other)[i])) {
-        return false;
-      }
-    }
-  }
-  return true;
 }
 
 int ts_subtree_compare(Subtree left, Subtree right) {
@@ -670,6 +658,7 @@ Subtree ts_subtree_edit(Subtree self, const TSInputEdit *edit, SubtreePool *pool
     Edit edit = entry.edit;
     bool is_noop = edit.old_end.bytes == edit.start.bytes && edit.new_end.bytes == edit.start.bytes;
     bool is_pure_insertion = edit.old_end.bytes == edit.start.bytes;
+    bool invalidate_first_row = ts_subtree_depends_on_column(*entry.tree);
 
     Length size = ts_subtree_size(*entry.tree);
     Length padding = ts_subtree_padding(*entry.tree);
@@ -733,6 +722,7 @@ Subtree ts_subtree_edit(Subtree self, const TSInputEdit *edit, SubtreePool *pool
         data->fragile_right = false;
         data->has_changes = false;
         data->has_external_tokens = false;
+        data->depends_on_column = false;
         data->is_missing = result.data.is_missing;
         data->is_keyword = result.data.is_keyword;
         result.ptr = data;
@@ -755,9 +745,18 @@ Subtree ts_subtree_edit(Subtree self, const TSInputEdit *edit, SubtreePool *pool
       // If this child ends before the edit, it is not affected.
       if (child_right.bytes + ts_subtree_lookahead_bytes(*child) < edit.start.bytes) continue;
 
-      // If this child starts after the edit, then we're done processing children.
-      if (child_left.bytes > edit.old_end.bytes ||
-          (child_left.bytes == edit.old_end.bytes && child_size.bytes > 0 && i > 0)) break;
+      // Keep editing child nodes until a node is reached that starts after the edit.
+      // Also, if this node's validity depends on its column position, then continue
+      // invaliditing child nodes until reaching a line break.
+      if ((
+        (child_left.bytes > edit.old_end.bytes) ||
+        (child_left.bytes == edit.old_end.bytes && child_size.bytes > 0 && i > 0)
+      ) && (
+        !invalidate_first_row ||
+        child_left.extent.row > entry.tree->ptr->padding.extent.row
+      )) {
+        break;
+      }
 
       // Transform edit into the child's coordinate space.
       Edit child_edit = {
@@ -775,8 +774,10 @@ Subtree ts_subtree_edit(Subtree self, const TSInputEdit *edit, SubtreePool *pool
       // Interpret all inserted text as applying to the *first* child that touches the edit.
       // Subsequent children are only never have any text inserted into them; they are only
       // shrunk to compensate for the edit.
-      if (child_right.bytes > edit.start.bytes ||
-          (child_right.bytes == edit.start.bytes && is_pure_insertion)) {
+      if (
+        child_right.bytes > edit.start.bytes ||
+        (child_right.bytes == edit.start.bytes && is_pure_insertion)
+      ) {
         edit.new_end = edit.start;
       }
 
@@ -851,7 +852,7 @@ static size_t ts_subtree__write_to_string(
   if (!self.ptr) return snprintf(string, limit, "(NULL)");
 
   char *cursor = string;
-  char **writer = (limit > 0) ? &cursor : &string;
+  char **writer = (limit > 1) ? &cursor : &string;
   bool is_root = field_name == ROOT_FIELD;
   bool is_visible =
     include_all ||
@@ -950,7 +951,7 @@ char *ts_subtree_string(
 ) {
   char scratch_string[1];
   size_t size = ts_subtree__write_to_string(
-    self, scratch_string, 0,
+    self, scratch_string, 1,
     language, include_all,
     0, false, ROOT_FIELD
   ) + 1;
@@ -969,7 +970,7 @@ void ts_subtree__print_dot_graph(const Subtree *self, uint32_t start_offset,
   TSSymbol subtree_symbol = ts_subtree_symbol(*self);
   TSSymbol symbol = alias_symbol ? alias_symbol : subtree_symbol;
   uint32_t end_offset = start_offset + ts_subtree_total_bytes(*self);
-  fprintf(f, "tree_%p [label=\"", self);
+  fprintf(f, "tree_%p [label=\"", (void *)self);
   ts_subtree__write_dot_string(f, ts_language_symbol_name(language, symbol));
   fprintf(f, "\"");
 
@@ -981,12 +982,14 @@ void ts_subtree__print_dot_graph(const Subtree *self, uint32_t start_offset,
     "state: %d\n"
     "error-cost: %u\n"
     "has-changes: %u\n"
+    "depends-on-column: %u\n"
     "repeat-depth: %u\n"
     "lookahead-bytes: %u",
     start_offset, end_offset,
     ts_subtree_parse_state(*self),
     ts_subtree_error_cost(*self),
     ts_subtree_has_changes(*self),
+    ts_subtree_depends_on_column(*self),
     ts_subtree_repeat_depth(*self),
     ts_subtree_lookahead_bytes(*self)
   );
@@ -1009,7 +1012,7 @@ void ts_subtree__print_dot_graph(const Subtree *self, uint32_t start_offset,
       child_info_offset++;
     }
     ts_subtree__print_dot_graph(child, child_start_offset, language, alias_symbol, f);
-    fprintf(f, "tree_%p -> tree_%p [tooltip=%u]\n", self, child, i);
+    fprintf(f, "tree_%p -> tree_%p [tooltip=%u]\n", (void *)self, (void *)child, i);
     child_start_offset += ts_subtree_total_bytes(*child);
   }
 }
