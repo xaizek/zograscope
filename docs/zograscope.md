@@ -19,6 +19,7 @@ LANGUAGE SUPPORT
 |-----------|-------------------------------------------------------------------
 |  C        | C11 and earlier with common extensions, but without K&R syntax
 |  C++      | C++14 and earlier with common extensions
+|  Bash     | Not targeting a specific version
 |  GNU Make | Most of the syntax
 |  Lua      | Version 5.3
 
@@ -55,6 +56,11 @@ that wasn't that hard to integrate.
 Note the following:
 
  * the tuning of comparison is in progress and will be refined over time
+
+Bash
+----
+
+The source of the grammar doesn't explicitly specify the version.
 
 GNU Make
 --------
