@@ -35,10 +35,11 @@ TSTransformer::TSTransformer(const std::string &contents,
                              TreeBuilder &tb,
                            const std::unordered_map<std::string, SType> &stypes,
                              const std::unordered_map<std::string, Type> &types,
+                             const std::unordered_set<std::string> &badNodes,
                              int tabWidth,
                              bool debug)
     : contents(contents), tsLanguage(tsLanguage), tb(tb), stypes(stypes),
-      types(types), tabWidth(tabWidth), debug(debug)
+      types(types), badNodes(badNodes), tabWidth(tabWidth), debug(debug)
 { }
 
 void
@@ -112,6 +113,10 @@ TSTransformer::visit(const TSNode &node)
 void
 TSTransformer::visitLeaf(SType stype, PNode *pnode, const TSNode &leaf)
 {
+    if (badNodes.find(ts_node_type(leaf)) != badNodes.end()) {
+        return;
+    }
+
     uint32_t from = ts_node_start_byte(leaf);
     uint32_t to = ts_node_end_byte(leaf);
 

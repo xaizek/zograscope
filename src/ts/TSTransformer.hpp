@@ -40,6 +40,7 @@ public:
                   TreeBuilder &tb,
                   const std::unordered_map<std::string, SType> &stypes,
                   const std::unordered_map<std::string, Type> &types,
+                  const std::unordered_set<std::string> &badNodes,
                   int tabWidth,
                   bool debug);
 
@@ -61,6 +62,7 @@ private:
     TreeBuilder &tb;                                      // Result builder.
     const std::unordered_map<std::string, SType> &stypes; // Node type -> SType.
     const std::unordered_map<std::string, Type> &types;   // Node type -> Type.
+    const std::unordered_set<std::string> &badNodes;      // Nodes to ignore.
     std::unordered_set<std::string> badSTypes;            // Missing stypes.
     std::unordered_set<std::string> badTypes;             // Missing types.
     int line;                                             // Current line.

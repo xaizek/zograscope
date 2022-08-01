@@ -18,6 +18,7 @@
 #define ZOGRASCOPE__TS__LUA__TSLUALANGUAGE_HPP__
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Language.hpp"
 
@@ -89,6 +90,7 @@ private:
     const TSLanguage &tsLanguage;                  // Language description.
     std::unordered_map<std::string, SType> stypes; // Maps nodes to STypes.
     std::unordered_map<std::string, Type> types;   // Maps nodes to Types.
+    std::unordered_set<std::string> badNodes;      // Lists nodes to ignore.
 };
 
 #endif // ZOGRASCOPE__TS__LUA__TSLUALANGUAGE_HPP__
