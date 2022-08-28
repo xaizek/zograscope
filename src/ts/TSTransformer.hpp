@@ -49,10 +49,11 @@ public:
     void transform();
 
 private:
-    // Transforms a single node.
-    PNode * visit(const TSNode &node);
+    // Transforms a single node while propagating last node type to leafs
+    // without type.
+    PNode * visit(const TSNode &node, Type defType);
     // Transforms a leaf.
-    void visitLeaf(SType stype, PNode *pnode, const TSNode &leaf);
+    void visitLeaf(SType stype, PNode *pnode, const TSNode &leaf, Type defType);
     // Determines type of a child of the specified node.
     Type determineType(const TSNode &node);
 
