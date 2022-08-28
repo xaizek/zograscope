@@ -35,10 +35,11 @@ TSTransformer::TSTransformer(const std::string &contents,
                              TreeBuilder &tb,
                            const std::unordered_map<std::string, SType> &stypes,
                              const std::unordered_map<std::string, Type> &types,
+                             const std::unordered_set<std::string> &badNodes,
                              int tabWidth,
                              bool debug)
     : contents(contents), tsLanguage(tsLanguage), tb(tb), stypes(stypes),
-      types(types), tabWidth(tabWidth), debug(debug)
+      types(types), badNodes(badNodes), tabWidth(tabWidth), debug(debug)
 { }
 
 void
@@ -61,7 +62,7 @@ TSTransformer::transform()
     line = 1;
     col = 1;
 
-    tb.setRoot(visit(ts_tree_root_node(tree.get())));
+    tb.setRoot(visit(ts_tree_root_node(tree.get()), Type::Other));
 
     if (debug) {
         for (const std::string &type : badSTypes) {
@@ -74,7 +75,7 @@ TSTransformer::transform()
 }
 
 PNode *
-TSTransformer::visit(const TSNode &node)
+TSTransformer::visit(const TSNode &node, Type defType)
 {
     SType stype = {};
     const char *type = ts_node_type(node);
@@ -86,6 +87,11 @@ TSTransformer::visit(const TSNode &node)
         uint32_t to = ts_node_end_byte(node);
         boost::string_ref val(contents.c_str() + from, to - from);
         badSTypes.insert(type + (": `" + val.to_string() + '`'));
+    }
+
+    auto typeIt = types.find(type);
+    if (typeIt != types.end()) {
+        defType = typeIt->second;
     }
 
     PNode *pnode = tb.addNode({}, stype);
@@ -100,9 +106,9 @@ TSTransformer::visit(const TSNode &node)
                 stype = it->second;
             }
 
-            visitLeaf(stype, pnode, child);
+            visitLeaf(stype, pnode, child, defType);
         } else {
-            tb.append(pnode, visit(child));
+            tb.append(pnode, visit(child, defType));
         }
     }
 
@@ -110,8 +116,15 @@ TSTransformer::visit(const TSNode &node)
 }
 
 void
-TSTransformer::visitLeaf(SType stype, PNode *pnode, const TSNode &leaf)
+TSTransformer::visitLeaf(SType stype,
+                         PNode *pnode,
+                         const TSNode &leaf,
+                         Type defType)
 {
+    if (badNodes.find(ts_node_type(leaf)) != badNodes.end()) {
+        return;
+    }
+
     uint32_t from = ts_node_start_byte(leaf);
     uint32_t to = ts_node_end_byte(leaf);
 
@@ -120,6 +133,9 @@ TSTransformer::visitLeaf(SType stype, PNode *pnode, const TSNode &leaf)
 
     boost::string_ref val(contents.c_str() + from, to - from);
     Type type = determineType(leaf);
+    if (type == Type::Other) {
+        type = defType;
+    }
 
     if (stype == SType{} && isSeparator(type)) {
         stype = stypes.at("separator");

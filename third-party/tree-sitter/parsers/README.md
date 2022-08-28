@@ -1,3 +1,10 @@
+`bash-*` files
+==============
+
+Lua parser is generated from a grammar at
+
+    https://github.com/tree-sitter/tree-sitter-bash
+
 `lua-*` files
 =============
 

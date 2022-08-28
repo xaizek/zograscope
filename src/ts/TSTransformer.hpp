@@ -40,6 +40,7 @@ public:
                   TreeBuilder &tb,
                   const std::unordered_map<std::string, SType> &stypes,
                   const std::unordered_map<std::string, Type> &types,
+                  const std::unordered_set<std::string> &badNodes,
                   int tabWidth,
                   bool debug);
 
@@ -48,10 +49,11 @@ public:
     void transform();
 
 private:
-    // Transforms a single node.
-    PNode * visit(const TSNode &node);
+    // Transforms a single node while propagating last node type to leafs
+    // without type.
+    PNode * visit(const TSNode &node, Type defType);
     // Transforms a leaf.
-    void visitLeaf(SType stype, PNode *pnode, const TSNode &leaf);
+    void visitLeaf(SType stype, PNode *pnode, const TSNode &leaf, Type defType);
     // Determines type of a child of the specified node.
     Type determineType(const TSNode &node);
 
@@ -61,6 +63,7 @@ private:
     TreeBuilder &tb;                                      // Result builder.
     const std::unordered_map<std::string, SType> &stypes; // Node type -> SType.
     const std::unordered_map<std::string, Type> &types;   // Node type -> Type.
+    const std::unordered_set<std::string> &badNodes;      // Nodes to ignore.
     std::unordered_set<std::string> badSTypes;            // Missing stypes.
     std::unordered_set<std::string> badTypes;             // Missing types.
     int line;                                             // Current line.

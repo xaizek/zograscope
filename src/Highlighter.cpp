@@ -313,7 +313,7 @@ Highlighter::printSpelling(int &n)
     ColorGroup hi = colorPicker->getHighlight();
 
     auto printLine = [&](ColorCane &cc) {
-        std::vector<ColorCane> ccs = std::move(cc).breakAt(" \t");
+        std::vector<ColorCane> ccs = std::move(cc).cutAfter(" \t");
 
         for (auto &piece : ccs[0]) {
             colorCane.append(piece.text, piece.node, piece.hi);

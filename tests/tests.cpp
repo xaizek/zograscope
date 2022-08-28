@@ -301,6 +301,13 @@ diffTsLua(const std::string &left, const std::string &right)
     return diffSources(left, right, true, "test-input.lua", "--- ");
 }
 
+#undef diffTsBash
+std::string
+diffTsBash(const std::string &left, const std::string &right)
+{
+    return diffSources(left, right, true, "test-input.sh", "### ");
+}
+
 // Compares two sources with expectation being embedded in them in form of
 // trailing markers.  Returns difference report.
 static std::string

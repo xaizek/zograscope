@@ -30,6 +30,7 @@
 #include "c/C11Language.hpp"
 #include "make/MakeLanguage.hpp"
 #include "srcml/cxx/SrcmlCxxLanguage.hpp"
+#include "ts/bash/TSBashLanguage.hpp"
 #include "ts/lua/TSLuaLanguage.hpp"
 #include "tree.hpp"
 
@@ -65,6 +66,9 @@ Language::create(const std::string &fileName, const std::string &l)
     if (lang == "cxx") {
         return std::unique_ptr<SrcmlCxxLanguage>(new SrcmlCxxLanguage());
     }
+    if (lang == "bash") {
+        return std::unique_ptr<TsBashLanguage>(new TsBashLanguage());
+    }
     if (lang == "lua") {
         return std::unique_ptr<TsLuaLanguage>(new TsLuaLanguage());
     }
@@ -86,7 +90,7 @@ Language::matches(const std::string &fileName, const std::string &lang)
     if (lang.empty() ? !detected.empty() : detected == lang) {
         return true;
     }
-    if ((lang == "cxx" || lang == "srcml:cxx") && ext == ".h") {
+    if (simplifyLanguage(lang) == "cxx" && ext == ".h") {
         return true;
     }
 
@@ -107,6 +111,9 @@ simplifyLanguage(const std::string &lang)
 {
     if (lang == "srcml:cxx") {
         return "cxx";
+    }
+    if (lang == "ts:bash") {
+        return "bash";
     }
     if (lang == "ts:lua") {
         return "lua";
@@ -129,6 +136,10 @@ detectLanguage(const std::string &stem, const std::string &ext)
 
     if (ext == ".lua") {
         return "lua";
+    }
+
+    if (ext == ".sh" || ext == ".bash") {
+        return "bash";
     }
 
     using boost::algorithm::ends_with;

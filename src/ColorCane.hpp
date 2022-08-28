@@ -61,9 +61,9 @@ public:
 
     // Breaks the cane into possibly multiple ones none of which contain `'\n'`.
     std::vector<ColorCane> splitIntoLines() &&;
-    // Breaks the cane into exactly two ones at first character of `separators`
-    // found.
-    std::vector<ColorCane> breakAt(boost::string_ref separators) &&;
+    // Breaks the cane into exactly two ones at first character not in
+    // `separators`.
+    std::vector<ColorCane> cutAfter(boost::string_ref separators) &&;
 
 private:
     // Checks whether can append to the last piece instead of creating new one.

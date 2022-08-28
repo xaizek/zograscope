@@ -1,4 +1,4 @@
-// Copyright (C) 2021 xaizek <xaizek@posteo.net>
+// Copyright (C) 2022 xaizek <xaizek@posteo.net>
 //
 // This file is part of zograscope.
 //
@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TS__LUA__TSLUALANGUAGE_HPP__
-#define ZOGRASCOPE__TS__LUA__TSLUALANGUAGE_HPP__
+#ifndef ZOGRASCOPE__TS__BASH__TSBASHLANGUAGE_HPP__
+#define ZOGRASCOPE__TS__BASH__TSBASHLANGUAGE_HPP__
 
 #include <unordered_map>
 #include <unordered_set>
@@ -24,12 +24,12 @@
 
 struct TSLanguage;
 
-// Lua-specific routines.
-class TsLuaLanguage : public Language
+// Bash-specific routines.
+class TsBashLanguage : public Language
 {
 public:
-    // Initializes Lua-specific data.
-    TsLuaLanguage();
+    // Initializes Bash-specific data.
+    TsBashLanguage();
 
 public:
     // Maps language-specific token to an element of Type enumeration.
@@ -93,4 +93,4 @@ private:
     std::unordered_set<std::string> badNodes;      // Lists nodes to ignore.
 };
 
-#endif // ZOGRASCOPE__TS__LUA__TSLUALANGUAGE_HPP__
+#endif // ZOGRASCOPE__TS__BASH__TSBASHLANGUAGE_HPP__

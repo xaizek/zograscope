@@ -86,6 +86,9 @@ Makefile.am   diff=zs-diff
 Makefile.win  diff=zs-diff
 
 *.lua         diff=zs-diff
+
+*.bash        diff=zs-diff
+*.sh          diff=zs-diff
 ```
 
 This will make it work for `git diff` and `git show`, but `git log` and other

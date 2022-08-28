@@ -181,7 +181,8 @@ TsLuaLanguage::parse(const std::string &contents,
                      cpp17::pmr::monolithic &mr) const
 {
     TreeBuilder tb(mr);
-    TSTransformer t(contents, tsLanguage, tb, stypes, types, tabWidth, debug);
+    TSTransformer t(contents, tsLanguage, tb, stypes, types, badNodes, tabWidth,
+                    debug);
     t.transform();
 
     return tb;

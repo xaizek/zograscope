@@ -203,6 +203,16 @@ std::string diffTsLua(const std::string &left, const std::string &right);
         reportDiffFailure(difference); \
     } while (false)
 
+// Compares two Bash sources with expectation being embedded in them in form of
+// trailing `### <expectation>` markers.  Returns difference report.
+std::string diffTsBash(const std::string &left, const std::string &right);
+// This is a wrapper that makes reported failure point be somewhere in the test.
+#define diffTsBash(left, right) do { \
+        std::string difference = diffTsBash((left), (right)); \
+        CHECK(difference.empty()); \
+        reportDiffFailure(difference); \
+    } while (false)
+
 // Prints report.  This function is needed to make our custom output appear
 // after Catch's failure report.
 void reportDiffFailure(const std::string &report);

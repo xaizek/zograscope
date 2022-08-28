@@ -96,7 +96,7 @@ ColorCane::splitIntoLines() &&
 }
 
 std::vector<ColorCane>
-ColorCane::breakAt(boost::string_ref separators) &&
+ColorCane::cutAfter(boost::string_ref separators) &&
 {
     std::vector<ColorCane> split(1);
     for (ColorCanePiece &piece : pieces) {
