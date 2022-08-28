@@ -24,8 +24,11 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/utility/string_ref.hpp>
-#include <srcml.h>
 #include "tinyxml2/tinyxml2.h"
+
+#ifdef HAVE_LIBSRCML
+#include <srcml.h>
+#endif
 
 #include "utils/fs.hpp"
 #include "utils/strings.hpp"
