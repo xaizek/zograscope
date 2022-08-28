@@ -12,11 +12,14 @@ if [ "$SRCML" = v0.9.5 ]; then
     echo "CFLAGS += -fPIC" >> config.mk
 elif [ "$SRCML" = v1.0 ]; then
     wget http://131.123.42.38/lmcrs/v1.0.0/srcml_1.0.0-1_ubuntu18.04.deb
+    wget http://131.123.42.38/lmcrs/v1.0.0/srcml-dev_1.0.0-1_ubuntu16.04.deb
     sudo apt install -y ./srcml_1.0.0-1_ubuntu18.04.deb
+    sudo apt install -y ./srcml-dev_1.0.0-1_ubuntu16.04.deb
 
     srcml --version
 
     echo "TESTS := '*'" > config.mk
+    echo "HAVE_LIBSRCML := yes" >> config.mk
 fi
 
 sudo apt install -y libboost-filesystem-dev \
