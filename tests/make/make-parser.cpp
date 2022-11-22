@@ -169,8 +169,9 @@ TEST_CASE("Variables are parsed in a Makefile", "[make][parser]")
     CHECK(makeIsParsed("target: )()("));
 
     Tree tree = parseMake("target: $$($1.name)");
-    CHECK(findNode(tree, Type::UserTypes, "$$") != nullptr);
     CHECK(findNode(tree, Type::UserTypes, "$1") != nullptr);
+    // This isn't a variable, it's an escape sequence.
+    CHECK(findNode(tree, Type::UserTypes, "$$") == nullptr);
 }
 
 TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")

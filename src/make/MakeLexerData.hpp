@@ -31,8 +31,9 @@ struct MakeLexerData : LexerData
 {
     // Type of nesting.
     enum {
-        FunctionNesting, // Function nesting.
-        ArgumentNesting, // Function argument nesting.
+        FunctionNesting,     // Function nesting.
+        ArgumentNesting,     // Function argument nesting.
+        EvalArgumentNesting, // `$$(...)` inside a call.
     };
 
     std::size_t offset = 0U; // Byte offset in the input.
@@ -51,7 +52,7 @@ struct MakeLexerData : LexerData
     // Whether whitespace token might be needed before the next token.
     bool fakeWSIsNeeded = false;
     // Keeps track of function nesting (where keywords stop being keywords).
-    std::vector<bool> nesting;
+    std::vector<unsigned char> nesting;
 
     MakeParseData *pd; // Link to Make-specific state of the parser.
 

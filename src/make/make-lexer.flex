@@ -82,7 +82,7 @@
 
 using namespace makestypes;
 
-// Convenience definition for token() funciton's argument.
+// Convenience definition for token() function's argument.
 enum { NeedFakeWS = 1 };
 
 // Performs additional operations on returning a token.
@@ -257,6 +257,15 @@ NL                      \n|\r|\r\n
     yyextra->nesting.push_back(MakeLexerData::FunctionNesting);
     return token(CALL_PREFIX, yylval, yyextra);
 }
+"$$(" {
+    if (shouldInsertFakeWS(yylval, yyextra)) {
+        return FAKE_TOKEN(WS);
+    }
+    if (!yyextra->nesting.empty()) {
+        yyextra->nesting.push_back(MakeLexerData::EvalArgumentNesting);
+    }
+    return token(CHARS, yylval, yyextra, NeedFakeWS);
+}
 $.                             return token(VAR, yylval, yyextra);
 "(" {
     if (shouldInsertFakeWS(yylval, yyextra)) {
@@ -271,11 +280,16 @@ $.                             return token(VAR, yylval, yyextra);
     if (yyextra->nesting.empty()) {
         return token(')', yylval, yyextra);
     }
-    if (yyextra->nesting.back() == MakeLexerData::ArgumentNesting) {
-        yyextra->nesting.pop_back();
+
+    int what = yyextra->nesting.back();
+    yyextra->nesting.pop_back();
+
+    if (what == MakeLexerData::ArgumentNesting) {
         return token(')', yylval, yyextra, NeedFakeWS);
     }
-    yyextra->nesting.pop_back();
+    if (what == MakeLexerData::EvalArgumentNesting) {
+        return token(CHARS, yylval, yyextra, NeedFakeWS);
+    }
     return token(CALL_SUFFIX, yylval, yyextra, NeedFakeWS);
 }
 "}" {
