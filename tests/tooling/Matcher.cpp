@@ -215,7 +215,7 @@ TEST_CASE("Declaration matcher works", "[tooling][matcher][.srcml]")
         CHECK(nMatches == 4);
     }
     SECTION("In Lua") {
-        Tree tree = parseLua("a1 = 1; a2 = 2; a3 = 3; a4 = 4");
+        Tree tree = parseLua("local a1; local a2; local a3; local a4");
         CHECK(matcher.match(tree.getRoot(), *tree.getLanguage(), matchHandler));
         CHECK(nMatches == 4);
     }

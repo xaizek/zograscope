@@ -34,50 +34,54 @@ enum class TSLuaSType : std::uint8_t
 
     Program,
 
-    Function,
-    FunctionName,
-    FunctionBody,
-    Parameters,
-    Parameter,
-
-    FunctionCall,
-    Arguments,
-
-    VariableDecl,
-    VariableDeclarator,
-
-    UnaryOperation,
-    BinaryOperation,
-
-    Expression,
+    BinaryExpression,
     ConditionExpression,
-    LoopExpression,
-    FieldExpression,
-
-    IfStatement,
-    ElseIfStatement,
-    ElseStatement,
-
-    DoStatement,
-    RepeatStatement,
-    WhileStatement,
-    ForInStatement,
-    ForStatement,
-
-    GotoStatement,
-    LabelStatement,
-    ReturnStatement,
-    CallStatement,
-    DeclStatement,
+    Expression,
+    ParenthesizedExpression,
+    PrefixExpression,
+    UnaryExpression,
 
     Table,
+    ExpressionList,
+
+    Statement,
+    CallStatement,
+    DoStatement,
+    EmptyStatement,
+    ForGenericStatement,
+    ForNumericStatement,
+    FunctionDefinitionStatement,
+    GotoStatement,
+    LabelStatement,
+    LocalFunctionDefinitionStatement,
+    RepeatStatement,
+    ReturnStatement,
+    WhileStatement,
+
+    IfStatement,
+    ElseClause,
+    ElseifClause,
+
+    FunctionBody,
+    FunctionDefinition,
+
+    LocalVariableDeclaration,
+    Variable,
+    VariableAssignment,
+    VariableList,
+
+    Parameter,
+    ParameterList,
+
+    ArgumentList,
+    Attribute,
+    Block,
+    Call,
     Field,
-    QuotedField,
+    FieldList,
 
-    GlobalVariable,
-
-    UnaryOperator,
     BinaryOperator,
+    UnaryOperator,
 };
 
 // "Conversion operator": TSLuaSType -> SType.

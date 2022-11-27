@@ -61,3 +61,18 @@ TEST_CASE("Variable is moved to table value", "[ts-lua][comparison]")
         end
     )");
 }
+
+TEST_CASE("Complex update picks correct statement", "[ts-lua][comparison]")
+{
+    diffTsLua(R"(
+        local name = prefix                                --- Deletions
+        if name == nil then                                --- Mixed
+            name = vifm.fnamemodify(current, ':t:r:r')     --- Mixed
+        end
+    )", R"(
+        local outname = vifm.fnamemodify(current, ':t:r')  --- Additions
+        if ext == 'tar' then                               --- Mixed
+            outname = vifm.fnamemodify(outname, ':r')      --- Mixed
+        end
+    )");
+}
