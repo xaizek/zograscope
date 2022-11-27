@@ -197,6 +197,7 @@ TsLuaLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
 {
     switch (level) {
         case 0:
+            return -child->stype == TSLuaSType::Table;
         case 1:
         case 2:
             return false;
@@ -286,6 +287,7 @@ TsLuaLanguage::isLayerBreak(SType /*parent*/, SType stype) const
         || -stype == TSLuaSType::LocalVariableDeclaration
         || -stype == TSLuaSType::FunctionDefinition
         || -stype == TSLuaSType::FunctionDefinitionStatement
+        || -stype == TSLuaSType::Table
         || -stype == TSLuaSType::Field
         || -stype == TSLuaSType::Parameter
         || -stype == TSLuaSType::ReturnStatement

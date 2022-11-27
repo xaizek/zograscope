@@ -76,3 +76,18 @@ TEST_CASE("Complex update picks correct statement", "[ts-lua][comparison]")
         end
     )");
 }
+
+TEST_CASE("Lua tables are nested", "[ts-lua][comparison]")
+{
+    diffTsLua(R"(
+        function f()
+            something()
+            return {}              --- Deletions
+        end
+    )", R"(
+        function f()
+            something()
+            return { lines = {} }  --- Additions
+        end
+    )");
+}
