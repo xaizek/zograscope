@@ -324,6 +324,8 @@ TsLuaLanguage::classify(SType stype) const
         case TSLuaSType::VariableAssignment:
             return MType::Statement;
 
+        case TSLuaSType::FunctionDefinitionStatement:
+        case TSLuaSType::LocalFunctionDefinitionStatement:
         case TSLuaSType::FunctionDefinition:
             return MType::Function;
 
