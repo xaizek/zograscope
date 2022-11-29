@@ -725,15 +725,14 @@ targets
     ;
 
 recipes
-    : mid_recipes last_recipe
-    { $$ = tb->append($1, tb->addNode($2, @2, +MakeSType::Recipe)); }
+    : mid_recipes last_recipe { $$ = tb->append($1, $2); }
     ;
 
 mid_recipes
     : %empty
     { $$ = tb->addNode({ }, +MakeSType::TemporaryContainer); }
     | mid_recipes recipe
-    { $$ = tb->append($1, tb->addNode($2, @2, +MakeSType::Recipe)); }
+    { $$ = tb->append($1, $2); }
     ;
 
 recipes_opt
@@ -752,8 +751,10 @@ recipe
     ;
 
 last_recipe
-    : LEADING_TAB exprs_in_recipe  { $$ = $2; }
-    | NL conditional_in_recipe     { $$ = $2; }
+    : LEADING_TAB exprs_in_recipe
+    { $$ = tb->addNode($2, @2, +MakeSType::Recipe); }
+    | NL conditional_in_recipe
+    { $$ = $2; }
     ;
 
 identifier

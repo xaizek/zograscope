@@ -73,3 +73,33 @@ ifeq ($(VAR),)
 endif
     )");
 }
+
+TEST_CASE("Conditionals don't mess up recipes", "[make][comparison][parsing]")
+{
+    diffMake(R"(
+target:
+ifeq ($(COND),y)
+	command arg1 \           ## Moves
+	        arg2 \           ## Moves
+	        arg3             ## Moves
+	do something \
+	   else here
+	some other test command  ## Moves
+endif # COND
+    )", R"(
+target:
+ifeq ($(COND),y)
+	do something \
+	   else here
+ifeq ($(NEW_COND),y)         ## Additions
+	@printf "if block"       ## Additions
+else                         ## Additions
+	@printf "else block"     ## Additions
+	command arg1 \           ## Moves
+	        arg2 \           ## Moves
+	        arg3             ## Moves
+	some other test command  ## Moves
+endif # NEW_COND             ## Additions
+endif # COND
+    )");
+}
