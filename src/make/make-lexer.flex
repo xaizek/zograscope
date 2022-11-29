@@ -267,6 +267,12 @@ NL                      \n|\r|\r\n
     return token(CHARS, yylval, yyextra, NeedFakeWS);
 }
 $.                             return token(VAR, yylval, yyextra);
+\\\(|\\\) {
+    if (shouldInsertFakeWS(yylval, yyextra)) {
+        return FAKE_TOKEN(WS);
+    }
+    return token(CHARS, yylval, yyextra, NeedFakeWS);
+}
 "(" {
     if (shouldInsertFakeWS(yylval, yyextra)) {
         return FAKE_TOKEN(WS);

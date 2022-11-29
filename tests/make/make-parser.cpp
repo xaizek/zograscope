@@ -219,6 +219,11 @@ TEST_CASE("Functions are parsed in a Makefile", "[make][parser]")
         CHECK(makeIsParsed(R"_(${shell "$(CC)"})_"));
         CHECK(makeIsParsed(R"($(error "str"))"));
     }
+    SECTION("Parenthesis can be escaped in a call") {
+        CHECK(makeIsParsed(R"_($(shell \( echo hi    ))_"));
+        CHECK(makeIsParsed(R"_($(shell    echo hi \) ))_"));
+        CHECK(makeIsParsed(R"_($(shell \( echo hi \) ))_"));
+    }
 }
 
 TEST_CASE("Targets are parsed in a Makefile", "[make][parser]")
