@@ -737,8 +737,10 @@ mid_recipes
     ;
 
 recipes_opt
-    : comment_opt NL          { $$ = $1; }
-    | comment_opt recipes NL  { $$ = tb->addNode({ $1, $2  }); }
+    : comment_opt NL
+    { $$ = $1; }
+    | comment_opt recipes NL
+    { $$ = tb->addNode({ $1, $2 }, +MakeSType::TemporaryContainer); }
     ;
 
 recipe

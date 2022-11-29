@@ -58,3 +58,18 @@ target:
 #	echo '#define HAVE_FILE_PROG' >> $@;
     )");
 }
+
+TEST_CASE("Lines of recipes are tokenized", "[make][comparison][parsing]")
+{
+    diffMake(R"(
+a: b
+ifeq ($(VAR),)
+	cp from to
+endif
+    )", R"(
+a: b
+ifeq ($(VAR),)
+	cp -r from to  ## Mixed
+endif
+    )");
+}
