@@ -69,6 +69,8 @@ TsLuaLanguage::TsLuaLanguage() : tsLanguage(*tree_sitter_lua())
 
         { "function_body", +TSLuaSType::FunctionBody },
         { "function_definition", +TSLuaSType::FunctionDefinition },
+        { "function_definition_signature",
+          +TSLuaSType::FunctionDefinitionSignature },
 
         { "local_variable_declaration", +TSLuaSType::LocalVariableDeclaration },
         { "variable", +TSLuaSType::Variable },
@@ -276,7 +278,8 @@ TsLuaLanguage::shouldSplice(SType parent, const Node *childNode) const
 bool
 TsLuaLanguage::isValueNode(SType stype) const
 {
-    return -stype == TSLuaSType::ConditionExpression;
+    return -stype == TSLuaSType::ConditionExpression
+        || -stype == TSLuaSType::FunctionDefinitionSignature;
 }
 
 bool
@@ -382,6 +385,7 @@ TsLuaLanguage::toString(SType stype) const
         CASE(ForNumericStatement);
         CASE(FunctionBody);
         CASE(FunctionDefinition);
+        CASE(FunctionDefinitionSignature);
         CASE(FunctionDefinitionStatement);
         CASE(GotoStatement);
         CASE(IfStatement);

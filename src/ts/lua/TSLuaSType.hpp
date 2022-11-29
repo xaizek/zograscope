@@ -64,6 +64,7 @@ enum class TSLuaSType : std::uint8_t
 
     FunctionBody,
     FunctionDefinition,
+    FunctionDefinitionSignature,
 
     LocalVariableDeclaration,
     Variable,
