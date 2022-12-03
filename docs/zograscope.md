@@ -21,7 +21,7 @@ LANGUAGE SUPPORT
 |  C++      | C++14 and earlier with common extensions
 |  Bash     | Not targeting a specific version
 |  GNU Make | Most of the syntax
-|  Lua      | Version 5.3
+|  Lua      | Version 5.4
 
 C
 -
@@ -85,7 +85,8 @@ Lua
 
 Note the following:
 
- * non-5.3 versions might still work, albeit can produce worse results
+ * non-5.4 versions should work, but can produce worse results (however, syntax
+   is normally backward compatible so this shouldn't happen often)
 
 Other
 -----

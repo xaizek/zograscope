@@ -134,6 +134,12 @@ parseLua(const std::string &str)
     return parse("test-input.lua", str, true);
 }
 
+Tree
+parseBash(const std::string &str)
+{
+    return parse("test-input.sh", str, true);
+}
+
 // Parses source into a tree.
 static Tree
 parse(const std::string &fileName, const std::string &str, bool coarse)

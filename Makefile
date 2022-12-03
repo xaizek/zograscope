@@ -242,7 +242,7 @@ $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Wno-error=parentheses
 $(out_dir)/tests/tests: EXTRA_CXXFLAGS += -Itests/
 $(out_dir)/tests/tests: \
     EXTRA_CXXFLAGS += -DCATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH=999
-$(out_dir)/tests/tests: $(tests_objects) tests/. | $(out_dirs)
+$(out_dir)/tests/tests: $(tests_objects) | $(out_dirs)
 	$(CXX) $(tests_objects) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@
 
 $(out_dir)/%.gen.o: $(out_dir)/%.gen.cpp | $(out_dirs)

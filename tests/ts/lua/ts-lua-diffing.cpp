@@ -61,3 +61,33 @@ TEST_CASE("Variable is moved to table value", "[ts-lua][comparison]")
         end
     )");
 }
+
+TEST_CASE("Complex update picks correct statement", "[ts-lua][comparison]")
+{
+    diffTsLua(R"(
+        local name = prefix                                --- Deletions
+        if name == nil then                                --- Mixed
+            name = vifm.fnamemodify(current, ':t:r:r')     --- Mixed
+        end
+    )", R"(
+        local outname = vifm.fnamemodify(current, ':t:r')  --- Additions
+        if ext == 'tar' then                               --- Mixed
+            outname = vifm.fnamemodify(outname, ':r')      --- Mixed
+        end
+    )");
+}
+
+TEST_CASE("Lua tables are nested", "[ts-lua][comparison]")
+{
+    diffTsLua(R"(
+        function f()
+            something()
+            return {}              --- Deletions
+        end
+    )", R"(
+        function f()
+            something()
+            return { lines = {} }  --- Additions
+        end
+    )");
+}

@@ -142,6 +142,9 @@ Tree parseCxx(const std::string &str);
 // Parses Lua source into a tree.
 Tree parseLua(const std::string &str);
 
+// Parses Lua source into a tree.
+Tree parseBash(const std::string &str);
+
 // Finds the first node of specified type which has a matching value of its
 // label (or any label if `label` is an empty string).
 const Node * findNode(const Tree &tree, Type type,

@@ -35,54 +35,57 @@ TsLuaLanguage::TsLuaLanguage() : tsLanguage(*tree_sitter_lua())
         { "separator", +TSLuaSType::Separator },
         { "comment", +TSLuaSType::Comment },
 
-        { "program", +TSLuaSType::Program },
+        { "chunk", +TSLuaSType::Program },
 
-        { "function", +TSLuaSType::Function },
-        { "function_definition", +TSLuaSType::Function },
-        { "local_function", +TSLuaSType::Function },
-        { "function_name", +TSLuaSType::FunctionName },
-        { "function_name_field", +TSLuaSType::FunctionName },
-        { "function_body", +TSLuaSType::FunctionBody },
-        { "parameters", +TSLuaSType::Parameters },
-        { "parameter", +TSLuaSType::Parameter },
-
-        { "function_call", +TSLuaSType::FunctionCall },
-        { "function_call_statement", +TSLuaSType::CallStatement },
-        { "arguments", +TSLuaSType::Arguments },
-
-        { "local_variable_declaration_statement", +TSLuaSType::DeclStatement },
-        { "variable_declaration_statement", +TSLuaSType::DeclStatement },
-        { "local_variable_declaration", +TSLuaSType::VariableDecl },
-        { "variable_declaration", +TSLuaSType::VariableDecl },
-        { "variable_declarator", +TSLuaSType::VariableDeclarator },
-
-        { "unary_operation", +TSLuaSType::UnaryOperation },
-        { "binary_operation", +TSLuaSType::BinaryOperation },
-
-        { "expression", +TSLuaSType::Expression },
+        { "binary_expression", +TSLuaSType::BinaryExpression },
         { "condition_expression", +TSLuaSType::ConditionExpression },
-        { "loop_expression", +TSLuaSType::LoopExpression },
-        { "field_expression", +TSLuaSType::FieldExpression },
-
-        { "if_statement", +TSLuaSType::IfStatement },
-        { "elseif", +TSLuaSType::ElseIfStatement },
-        { "else", +TSLuaSType::ElseStatement },
-
-        { "do_statement", +TSLuaSType::DoStatement },
-        { "repeat_statement", +TSLuaSType::RepeatStatement },
-        { "while_statement", +TSLuaSType::WhileStatement },
-        { "for_in_statement", +TSLuaSType::ForInStatement },
-        { "for_statement", +TSLuaSType::ForStatement },
-
-        { "goto_statement", +TSLuaSType::GotoStatement },
-        { "label_statement", +TSLuaSType::LabelStatement },
-        { "return_statement", +TSLuaSType::ReturnStatement },
+        { "expression", +TSLuaSType::Expression },
+        { "parenthesized_expression", +TSLuaSType::ParenthesizedExpression },
+        { "prefix_expression", +TSLuaSType::PrefixExpression },
+        { "unary_expression", +TSLuaSType::UnaryExpression },
 
         { "table", +TSLuaSType::Table },
-        { "field", +TSLuaSType::Field },
-        { "quoted_field", +TSLuaSType::QuotedField },
+        { "expression_list", +TSLuaSType::ExpressionList },
 
-        { "global_variable", +TSLuaSType::GlobalVariable },
+        { "statement", +TSLuaSType::Statement },
+        { "call_statement", +TSLuaSType::CallStatement },
+        { "do_statement", +TSLuaSType::DoStatement },
+        { "empty_statement", +TSLuaSType::EmptyStatement },
+        { "for_generic_statement", +TSLuaSType::ForGenericStatement },
+        { "for_numeric_statement", +TSLuaSType::ForNumericStatement },
+        { "function_definition_statement",
+          +TSLuaSType::FunctionDefinitionStatement },
+        { "goto_statement", +TSLuaSType::GotoStatement },
+        { "label_statement", +TSLuaSType::LabelStatement },
+        { "local_function_definition_statement",
+          +TSLuaSType::LocalFunctionDefinitionStatement },
+        { "repeat_statement", +TSLuaSType::RepeatStatement },
+        { "return_statement", +TSLuaSType::ReturnStatement },
+        { "while_statement", +TSLuaSType::WhileStatement },
+
+        { "if_statement", +TSLuaSType::IfStatement },
+        { "else_clause", +TSLuaSType::ElseClause },
+        { "elseif_clause", +TSLuaSType::ElseifClause },
+
+        { "function_body", +TSLuaSType::FunctionBody },
+        { "function_definition", +TSLuaSType::FunctionDefinition },
+        { "function_definition_signature",
+          +TSLuaSType::FunctionDefinitionSignature },
+
+        { "local_variable_declaration", +TSLuaSType::LocalVariableDeclaration },
+        { "variable", +TSLuaSType::Variable },
+        { "variable_assignment", +TSLuaSType::VariableAssignment },
+        { "variable_list", +TSLuaSType::VariableList },
+
+        { "parameter", +TSLuaSType::Parameter },
+        { "parameter_list", +TSLuaSType::ParameterList },
+
+        { "argument_list", +TSLuaSType::ArgumentList },
+        { "attribute", +TSLuaSType::Attribute },
+        { "block", +TSLuaSType::Block },
+        { "call", +TSLuaSType::Call },
+        { "field", +TSLuaSType::Field },
+        { "field_list", +TSLuaSType::FieldList },
 
         { "not", +TSLuaSType::UnaryOperator },
         { "and", +TSLuaSType::BinaryOperator },
@@ -90,52 +93,55 @@ TsLuaLanguage::TsLuaLanguage() : tsLanguage(*tree_sitter_lua())
     };
 
     types = {
+        { "comment", Type::Comments },
+        { "shebang", Type::Directives },
+
         { "local", Type::Specifiers },
 
-        { "comment", Type::Comments },
-
-        { "function", Type::Keywords },
-        { "while", Type::Keywords },
-        { "repeat", Type::Keywords },
-        { "until", Type::Keywords },
-        { "if", Type::Keywords },
-        { "then", Type::Keywords },
+        { "do", Type::Keywords },
         { "else", Type::Keywords },
         { "elseif", Type::Keywords },
         { "end", Type::Keywords },
-        { "for", Type::Keywords },
-        { "in", Type::Keywords },
-        { "do", Type::Keywords },
-        { "true", Type::Keywords },
         { "false", Type::Keywords },
-        { "return", Type::Keywords },
+        { "for", Type::Keywords },
+        { "function", Type::Keywords },
+        { "if", Type::Keywords },
         { "nil", Type::Keywords },
+        { "repeat", Type::Keywords },
+        { "return", Type::Keywords },
+        { "then", Type::Keywords },
+        { "true", Type::Keywords },
+        { "until", Type::Keywords },
+        { "while", Type::Keywords },
 
         { "break_statement", Type::Jumps },
-        { "next", Type::Jumps },
         { "goto", Type::Jumps },
 
+        { "and", Type::Keywords },
+        { "in", Type::Keywords  },
+        { "not", Type::Keywords },
+        { "or", Type::Keywords },
+
+        { "identifier", Type::Identifiers },
         { "number", Type::IntConstants },
         { "string", Type::StrConstants },
 
-        { "method", Type::Functions },
-
-        { "_G", Type::Identifiers },
-        { "_VERSION", Type::Identifiers },
-        { "self", Type::Identifiers },
-        { "identifier", Type::Identifiers },
-        { "property_identifier", Type::Identifiers },
-
-        { "and", Type::Keywords },
-        { "or", Type::Keywords },
-        { "not", Type::Keywords },
-
-        { "==", Type::Comparisons },
-        { "~=", Type::Comparisons },
+        { "<=", Type::Comparisons },
         { "<", Type::Comparisons },
         { ">", Type::Comparisons },
-        { "<=", Type::Comparisons },
+        { "==", Type::Comparisons },
         { ">=", Type::Comparisons },
+        { "~=", Type::Comparisons },
+
+        { "=", Type::Assignments },
+
+        { "(", Type::LeftBrackets },
+        { "{", Type::LeftBrackets },
+        { "[", Type::LeftBrackets },
+
+        { ")", Type::RightBrackets },
+        { "}", Type::RightBrackets },
+        { "]", Type::RightBrackets },
 
         { "~", Type::Operators },
         { "#", Type::Operators },
@@ -152,23 +158,14 @@ TsLuaLanguage::TsLuaLanguage() : tsLanguage(*tree_sitter_lua())
         { ">>", Type::Operators },
         { "..", Type::Operators },
 
-        { "=", Type::Assignments },
-
-        { "(", Type::LeftBrackets },
-        { "{", Type::LeftBrackets },
-        { "[", Type::LeftBrackets },
-
-        { ")", Type::RightBrackets },
-        { "}", Type::RightBrackets },
-        { "]", Type::RightBrackets },
-
         { ",", Type::Other },
         { ":", Type::Other },
         { "::", Type::Other },
         { ";", Type::Other },
         { ".", Type::Other },
-        { "spread", Type::Other },
+        { "vararg_expression", Type::Other },
     };
+
 }
 
 Type
@@ -202,12 +199,13 @@ TsLuaLanguage::canBeFlattened(const Node */*parent*/, const Node *child,
 {
     switch (level) {
         case 0:
+            return -child->stype == TSLuaSType::Table;
         case 1:
         case 2:
             return false;
         default:
-            return -child->stype != TSLuaSType::FunctionCall
-                && -child->stype != TSLuaSType::VariableDecl
+            return -child->stype != TSLuaSType::Call
+                && -child->stype != TSLuaSType::LocalVariableDeclaration
                 && -child->stype != TSLuaSType::Parameter;
     }
 }
@@ -253,15 +251,15 @@ TsLuaLanguage::shouldSplice(SType parent, const Node *childNode) const
 {
     TSLuaSType child = -childNode->stype;
 
-    // Splice all but first BinaryOperation node of a nesting chain.
-    if (-parent == TSLuaSType::BinaryOperation &&
-        child == TSLuaSType::BinaryOperation) {
+    // Splice all but first BinaryExpression node of a nesting chain.
+    if (-parent == TSLuaSType::BinaryExpression &&
+        child == TSLuaSType::BinaryExpression) {
         bool oneLevel = true;
         const Node *n = (childNode->next && !childNode->next->last)
                       ? childNode->next
                       : childNode;
         for (const Node *node : n->children) {
-            if (-node->stype == TSLuaSType::BinaryOperation) {
+            if (-node->stype == TSLuaSType::BinaryExpression) {
                 oneLevel = false;
                 break;
             }
@@ -271,8 +269,7 @@ TsLuaLanguage::shouldSplice(SType parent, const Node *childNode) const
         }
     }
 
-    if (child == TSLuaSType::Parameters ||
-        child == TSLuaSType::Arguments) {
+    if (child == TSLuaSType::ParameterList) {
         return true;
     }
     return false;
@@ -282,20 +279,23 @@ bool
 TsLuaLanguage::isValueNode(SType stype) const
 {
     return -stype == TSLuaSType::ConditionExpression
-        || -stype == TSLuaSType::LoopExpression;
+        || -stype == TSLuaSType::FunctionDefinitionSignature;
 }
 
 bool
 TsLuaLanguage::isLayerBreak(SType /*parent*/, SType stype) const
 {
-    return -stype == TSLuaSType::FunctionCall
-        || -stype == TSLuaSType::Function
-        || -stype == TSLuaSType::VariableDecl
+    return -stype == TSLuaSType::Call
+        || -stype == TSLuaSType::LocalFunctionDefinitionStatement
+        || -stype == TSLuaSType::LocalVariableDeclaration
+        || -stype == TSLuaSType::FunctionDefinition
+        || -stype == TSLuaSType::FunctionDefinitionStatement
+        || -stype == TSLuaSType::Table
         || -stype == TSLuaSType::Field
         || -stype == TSLuaSType::Parameter
         || -stype == TSLuaSType::ReturnStatement
-        || -stype == TSLuaSType::UnaryOperation
-        || -stype == TSLuaSType::BinaryOperation
+        || -stype == TSLuaSType::UnaryExpression
+        || -stype == TSLuaSType::BinaryExpression
         || isValueNode(stype);
 }
 
@@ -311,27 +311,30 @@ MType
 TsLuaLanguage::classify(SType stype) const
 {
     switch (-stype) {
-        case TSLuaSType::VariableDecl:
+        case TSLuaSType::LocalVariableDeclaration:
             return MType::Declaration;
 
         case TSLuaSType::IfStatement:
-        case TSLuaSType::ElseIfStatement:
-        case TSLuaSType::ElseStatement:
+        case TSLuaSType::ElseifClause:
+        case TSLuaSType::ElseClause:
+        case TSLuaSType::CallStatement:
         case TSLuaSType::RepeatStatement:
         case TSLuaSType::WhileStatement:
-        case TSLuaSType::ForInStatement:
-        case TSLuaSType::ForStatement:
+        case TSLuaSType::EmptyStatement:
         case TSLuaSType::GotoStatement:
         case TSLuaSType::LabelStatement:
         case TSLuaSType::ReturnStatement:
-        case TSLuaSType::CallStatement:
-        case TSLuaSType::DeclStatement:
+        case TSLuaSType::ForGenericStatement:
+        case TSLuaSType::ForNumericStatement:
+        case TSLuaSType::VariableAssignment:
             return MType::Statement;
 
-        case TSLuaSType::Function:
+        case TSLuaSType::FunctionDefinitionStatement:
+        case TSLuaSType::LocalFunctionDefinitionStatement:
+        case TSLuaSType::FunctionDefinition:
             return MType::Function;
 
-        case TSLuaSType::FunctionCall:
+        case TSLuaSType::Call:
             return MType::Call;
 
         case TSLuaSType::Parameter:
@@ -352,79 +355,61 @@ TsLuaLanguage::classify(SType stype) const
 const char *
 TsLuaLanguage::toString(SType stype) const
 {
+#define CASE(item) case TSLuaSType::item: return "TSLuaSType::" #item
+
     switch (-stype) {
-        case TSLuaSType::None:         return "TSLuaSType::None";
+        CASE(None);
 
-        case TSLuaSType::Separator:    return "TSLuaSType::Separator";
-        case TSLuaSType::Comment:      return "TSLuaSType::Comment";
+        CASE(Separator);
+        CASE(Comment);
 
-        case TSLuaSType::Program:      return "TSLuaSType::Program";
+        CASE(Program);
 
-        case TSLuaSType::Function:     return "TSLuaSType::Function";
-        case TSLuaSType::FunctionName: return "TSLuaSType::FunctionName";
-        case TSLuaSType::FunctionBody: return "TSLuaSType::FunctionBody";
-        case TSLuaSType::Parameters:   return "TSLuaSType::Parameters";
-        case TSLuaSType::Parameter:    return "TSLuaSType::Parameter";
-
-        case TSLuaSType::FunctionCall: return "TSLuaSType::FunctionCall";
-        case TSLuaSType::Arguments:    return "TSLuaSType::Arguments";
-
-        case TSLuaSType::VariableDecl: return "TSLuaSType::VariableDecl";
-        case TSLuaSType::VariableDeclarator:
-                                       return "TSLuaSType::VariableDeclarator";
-
-        case TSLuaSType::UnaryOperation:
-                                       return "TSLuaSType::UnaryOperation";
-        case TSLuaSType::BinaryOperation:
-                                       return "TSLuaSType::BinaryOperation";
-
-        case TSLuaSType::Expression:   return "TSLuaSType::Expression";
-        case TSLuaSType::ConditionExpression:
-                                       return "TSLuaSType::ConditionExpression";
-        case TSLuaSType::LoopExpression:
-                                       return "TSLuaSType::LoopExpression";
-        case TSLuaSType::FieldExpression:
-                                       return "TSLuaSType::FieldExpression";
-
-        case TSLuaSType::IfStatement:  return "TSLuaSType::IfStatement";
-        case TSLuaSType::ElseIfStatement:
-                                       return "TSLuaSType::ElseIfStatement";
-        case TSLuaSType::ElseStatement:
-                                       return "TSLuaSType::ElseStatement";
-
-        case TSLuaSType::DoStatement:  return "TSLuaSType::DoStatement";
-        case TSLuaSType::RepeatStatement:
-                                       return "TSLuaSType::RepeatStatement";
-        case TSLuaSType::WhileStatement:
-                                       return "TSLuaSType::WhileStatement";
-        case TSLuaSType::ForInStatement:
-                                       return "TSLuaSType::ForInStatement";
-        case TSLuaSType::ForStatement: return "TSLuaSType::ForStatement";
-
-        case TSLuaSType::GotoStatement:
-                                       return "TSLuaSType::GotoStatement";
-        case TSLuaSType::LabelStatement:
-                                       return "TSLuaSType::LabelStatement";
-        case TSLuaSType::ReturnStatement:
-                                       return "TSLuaSType::ReturnStatement";
-        case TSLuaSType::CallStatement:
-                                       return "TSLuaSType::CallStatement";
-        case TSLuaSType::DeclStatement:
-                                       return "TSLuaSType::DeclStatement";
-
-        case TSLuaSType::Table:        return "TSLuaSType::Table";
-        case TSLuaSType::Field:        return "TSLuaSType::Field";
-        case TSLuaSType::QuotedField:  return "TSLuaSType::QuotedField";
-
-        case TSLuaSType::GlobalVariable:
-                                       return "TSLuaSType::GlobalVariable";
-
-        case TSLuaSType::UnaryOperator:
-                                       return "TSLuaSType::UnaryOperator";
-        case TSLuaSType::BinaryOperator:
-                                       return "TSLuaSType::BinaryOperator";
+        CASE(Expression);
+        CASE(PrefixExpression);
+        CASE(Statement);
+        CASE(ArgumentList);
+        CASE(Attribute);
+        CASE(BinaryExpression);
+        CASE(ConditionExpression);
+        CASE(Block);
+        CASE(Call);
+        CASE(DoStatement);
+        CASE(ElseClause);
+        CASE(ElseifClause);
+        CASE(EmptyStatement);
+        CASE(ExpressionList);
+        CASE(Field);
+        CASE(FieldList);
+        CASE(ForGenericStatement);
+        CASE(ForNumericStatement);
+        CASE(FunctionBody);
+        CASE(FunctionDefinition);
+        CASE(FunctionDefinitionSignature);
+        CASE(FunctionDefinitionStatement);
+        CASE(GotoStatement);
+        CASE(IfStatement);
+        CASE(LabelStatement);
+        CASE(LocalFunctionDefinitionStatement);
+        CASE(LocalVariableDeclaration);
+        CASE(Parameter);
+        CASE(ParameterList);
+        CASE(ParenthesizedExpression);
+        CASE(CallStatement);
+        CASE(RepeatStatement);
+        CASE(ReturnStatement);
+        CASE(Table);
+        CASE(UnaryExpression);
+        CASE(Variable);
+        CASE(VariableAssignment);
+        CASE(VariableList);
+        CASE(WhileStatement);
+        CASE(UnaryOperator);
+        CASE(BinaryOperator);
     }
 
     assert(false && "Unhandled enumeration item");
     return "<UNKNOWN>";
+
+#undef CASE
 }
