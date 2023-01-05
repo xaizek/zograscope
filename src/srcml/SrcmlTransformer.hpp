@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__SRCML__SRCMLTRANSFORMER_HPP__
-#define ZOGRASCOPE__SRCML__SRCMLTRANSFORMER_HPP__
+#ifndef ZOGRASCOPE_SRCML_SRCMLTRANSFORMER_HPP_
+#define ZOGRASCOPE_SRCML_SRCMLTRANSFORMER_HPP_
 
 #include <string>
 #include <unordered_map>
@@ -75,4 +75,4 @@ private:
     int inCppDirective;                                // Level of cpp nesting.
 };
 
-#endif // ZOGRASCOPE__SRCML__SRCMLTRANSFORMER_HPP__
+#endif // ZOGRASCOPE_SRCML_SRCMLTRANSFORMER_HPP_

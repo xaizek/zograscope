@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__LANGUAGE_HPP__
-#define ZOGRASCOPE__LANGUAGE_HPP__
+#ifndef ZOGRASCOPE_LANGUAGE_HPP_
+#define ZOGRASCOPE_LANGUAGE_HPP_
 
 #include <cstdint>
 
@@ -115,4 +115,4 @@ public:
     bool hasMoveableItems(const Node *x) const;
 };
 
-#endif // ZOGRASCOPE__LANGUAGE_HPP__
+#endif // ZOGRASCOPE_LANGUAGE_HPP_

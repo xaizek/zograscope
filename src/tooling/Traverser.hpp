@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLING__TRAVERSER_HPP__
-#define ZOGRASCOPE__TOOLING__TRAVERSER_HPP__
+#ifndef ZOGRASCOPE_TOOLING_TRAVERSER_HPP_
+#define ZOGRASCOPE_TOOLING_TRAVERSER_HPP_
 
 #include <boost/filesystem/path.hpp>
 
@@ -54,4 +54,4 @@ private:
     std::function<callbackPrototype> callback; // Invoked per file.
 };
 
-#endif // ZOGRASCOPE__TOOLING__TRAVERSER_HPP__
+#endif // ZOGRASCOPE_TOOLING_TRAVERSER_HPP_

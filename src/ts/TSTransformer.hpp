@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TS__TSTRANSFORMER_HPP__
-#define ZOGRASCOPE__TS__TSTRANSFORMER_HPP__
+#ifndef ZOGRASCOPE_TS_TSTRANSFORMER_HPP_
+#define ZOGRASCOPE_TS_TSTRANSFORMER_HPP_
 
 #include <string>
 #include <unordered_map>
@@ -73,4 +73,4 @@ private:
     bool debug;                                           // Debugging state.
 };
 
-#endif // ZOGRASCOPE__TS__TSTRANSFORMER_HPP__
+#endif // ZOGRASCOPE_TS_TSTRANSFORMER_HPP_

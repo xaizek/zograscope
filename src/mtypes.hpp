@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__MTYPES_HPP__
-#define ZOGRASCOPE__MTYPES_HPP__
+#ifndef ZOGRASCOPE_MTYPES_HPP_
+#define ZOGRASCOPE_MTYPES_HPP_
 
 #include <cstdint>
 
@@ -41,4 +41,4 @@ std::ostream & operator<<(std::ostream &os, MType mtype);
 // Checks whether nodes of the meta-type can nest.
 bool canNest(MType mtype);
 
-#endif // ZOGRASCOPE__MTYPES_HPP__
+#endif // ZOGRASCOPE_MTYPES_HPP_

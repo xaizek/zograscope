@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TREEBUILDER_HPP__
-#define ZOGRASCOPE__TREEBUILDER_HPP__
+#ifndef ZOGRASCOPE_TREEBUILDER_HPP_
+#define ZOGRASCOPE_TREEBUILDER_HPP_
 
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -221,4 +221,4 @@ private:
     bool failed = false;
 };
 
-#endif // ZOGRASCOPE__TREEBUILDER_HPP__
+#endif // ZOGRASCOPE_TREEBUILDER_HPP_

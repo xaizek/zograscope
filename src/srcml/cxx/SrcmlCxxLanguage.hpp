@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__SRCML__CXX__SRCMLCXXLANGUAGE_HPP__
-#define ZOGRASCOPE__SRCML__CXX__SRCMLCXXLANGUAGE_HPP__
+#ifndef ZOGRASCOPE_SRCML_CXX_SRCMLCXXLANGUAGE_HPP_
+#define ZOGRASCOPE_SRCML_CXX_SRCMLCXXLANGUAGE_HPP_
 
 #include <unordered_map>
 #include <unordered_set>
@@ -89,4 +89,4 @@ private:
     std::unordered_set<std::string> keywords;   // List of reserved keywords.
 };
 
-#endif // ZOGRASCOPE__SRCML__CXX__SRCMLCXXLANGUAGE_HPP__
+#endif // ZOGRASCOPE_SRCML_CXX_SRCMLCXXLANGUAGE_HPP_

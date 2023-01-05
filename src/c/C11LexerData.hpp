@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__C__LEXERDATA_HPP__
-#define ZOGRASCOPE__C__LEXERDATA_HPP__
+#ifndef ZOGRASCOPE_C_C11LEXERDATA_HPP_
+#define ZOGRASCOPE_C_C11LEXERDATA_HPP_
 
 #include <cstddef>
 #include <cstring>
@@ -43,4 +43,4 @@ struct C11LexerData : LexerData
     { }
 };
 
-#endif // ZOGRASCOPE__C__LEXERDATA_HPP__
+#endif // ZOGRASCOPE_C_C11LEXERDATA_HPP_

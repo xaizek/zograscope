@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TS__BASH__TSBASHLANGUAGE_HPP__
-#define ZOGRASCOPE__TS__BASH__TSBASHLANGUAGE_HPP__
+#ifndef ZOGRASCOPE_TS_BASH_TSBASHLANGUAGE_HPP_
+#define ZOGRASCOPE_TS_BASH_TSBASHLANGUAGE_HPP_
 
 #include <unordered_map>
 #include <unordered_set>
@@ -93,4 +93,4 @@ private:
     std::unordered_set<std::string> badNodes;      // Lists nodes to ignore.
 };
 
-#endif // ZOGRASCOPE__TS__BASH__TSBASHLANGUAGE_HPP__
+#endif // ZOGRASCOPE_TS_BASH_TSBASHLANGUAGE_HPP_

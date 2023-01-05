@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__COUNTITERATOR_HPP__
-#define ZOGRASCOPE__UTILS__COUNTITERATOR_HPP__
+#ifndef ZOGRASCOPE_UTILS_COUNTITERATOR_HPP_
+#define ZOGRASCOPE_UTILS_COUNTITERATOR_HPP_
 
 #include <iterator>
 
@@ -41,4 +41,4 @@ private:
     int count = 0;
 };
 
-#endif // ZOGRASCOPE__UTILS__COUNTITERATOR_HPP__
+#endif // ZOGRASCOPE_UTILS_COUNTITERATOR_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TERMHIGHLIGHTER_HPP__
-#define ZOGRASCOPE__TERMHIGHLIGHTER_HPP__
+#ifndef ZOGRASCOPE_TERMHIGHLIGHTER_HPP_
+#define ZOGRASCOPE_TERMHIGHLIGHTER_HPP_
 
 #include <string>
 
@@ -45,4 +45,4 @@ private:
     ColorScheme cs; // Terminal color scheme.
 };
 
-#endif // ZOGRASCOPE__TERMHIGHLIGHTER_HPP__
+#endif // ZOGRASCOPE_TERMHIGHLIGHTER_HPP_

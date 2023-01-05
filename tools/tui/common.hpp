@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__TUI__COMMON_HPP__
-#define ZOGRASCOPE__TOOLS__TUI__COMMON_HPP__
+#ifndef ZOGRASCOPE_TOOLS_TUI_COMMON_HPP_
+#define ZOGRASCOPE_TOOLS_TUI_COMMON_HPP_
 
 #include <functional>
 
@@ -32,4 +32,4 @@ void addListOperations(vle::Mode &mode, cursed::ListLike &list,
 // Populates mode with typical text operations.
 void addTextOperations(vle::Mode &mode, cursed::Text &text);
 
-#endif // ZOGRASCOPE__TOOLS__TUI__COMMON_HPP__
+#endif // ZOGRASCOPE_TOOLS_TUI_COMMON_HPP_

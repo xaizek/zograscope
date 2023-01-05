@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__NUMS_HPP__
-#define ZOGRASCOPE__UTILS__NUMS_HPP__
+#ifndef ZOGRASCOPE_UTILS_NUMS_HPP_
+#define ZOGRASCOPE_UTILS_NUMS_HPP_
 
 #include <cassert>
 
@@ -33,4 +33,4 @@ countWidth(int n)
     return (width == 0) ? 1 : width;
 }
 
-#endif // ZOGRASCOPE__UTILS__NUMS_HPP__
+#endif // ZOGRASCOPE_UTILS_NUMS_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__GDIFF__BLANKLINEATTR_HPP__
-#define ZOGRASCOPE__TOOLS__GDIFF__BLANKLINEATTR_HPP__
+#ifndef ZOGRASCOPE_TOOLS_GDIFF_BLANKLINEATTR_HPP_
+#define ZOGRASCOPE_TOOLS_GDIFF_BLANKLINEATTR_HPP_
 
 #include <QObject>
 #include <QTextObjectInterface>
@@ -40,4 +40,4 @@ public:
                             const QTextFormat &format) override;
 };
 
-#endif // ZOGRASCOPE__TOOLS__GDIFF__BLANKLINEATTR_HPP__
+#endif // ZOGRASCOPE_TOOLS_GDIFF_BLANKLINEATTR_HPP_

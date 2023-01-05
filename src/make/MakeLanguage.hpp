@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__MAKE__MAKELANGUAGE_HPP__
-#define ZOGRASCOPE__MAKE__MAKELANGUAGE_HPP__
+#ifndef ZOGRASCOPE_MAKE_MAKELANGUAGE_HPP_
+#define ZOGRASCOPE_MAKE_MAKELANGUAGE_HPP_
 
 #include <vector>
 
@@ -87,4 +87,4 @@ private:
     std::vector<Type> map; // Static token-type to Type map.
 };
 
-#endif // ZOGRASCOPE__MAKE__MAKELANGUAGE_HPP__
+#endif // ZOGRASCOPE_MAKE_MAKELANGUAGE_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__MAKE__MAKESTYPE_HPP__
-#define ZOGRASCOPE__MAKE__MAKESTYPE_HPP__
+#ifndef ZOGRASCOPE_MAKE_MAKESTYPE_HPP_
+#define ZOGRASCOPE_MAKE_MAKESTYPE_HPP_
 
 #include <cstdint>
 
@@ -64,4 +64,4 @@ operator-(SType stype)
 
 }
 
-#endif // ZOGRASCOPE__MAKE__MAKESTYPE_HPP__
+#endif // ZOGRASCOPE_MAKE_MAKESTYPE_HPP_

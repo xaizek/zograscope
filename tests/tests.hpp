@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE_TESTS__TESTS_HPP__
-#define ZOGRASCOPE_TESTS__TESTS_HPP__
+#ifndef ZOGRASCOPE_TESTS_TESTS_HPP_
+#define ZOGRASCOPE_TESTS_TESTS_HPP_
 
 #include <cstdint>
 #include <cstdlib>
@@ -223,4 +223,4 @@ void reportDiffFailure(const std::string &report);
 // Creates a file with specified contents.
 void makeFile(const std::string &path, const std::vector<std::string> &lines);
 
-#endif // ZOGRASCOPE_TESTS__TESTS_HPP__
+#endif // ZOGRASCOPE_TESTS_TESTS_HPP_

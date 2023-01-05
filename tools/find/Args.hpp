@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__FIND__ARGS_HPP__
-#define ZOGRASCOPE__TOOLS__FIND__ARGS_HPP__
+#ifndef ZOGRASCOPE_TOOLS_FIND_ARGS_HPP_
+#define ZOGRASCOPE_TOOLS_FIND_ARGS_HPP_
 
 #include "tooling/common.hpp"
 
@@ -25,4 +25,4 @@ struct Args : CommonArgs
     bool count; // Only count matches and report statistics.
 };
 
-#endif // ZOGRASCOPE__TOOLS__FIND__ARGS_HPP__
+#endif // ZOGRASCOPE_TOOLS_FIND_ARGS_HPP_

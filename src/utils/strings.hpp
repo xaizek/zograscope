@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__STRINGS__HPP__
-#define ZOGRASCOPE__UTILS__STRINGS__HPP__
+#ifndef ZOGRASCOPE_UTILS_STRINGS_HPP_
+#define ZOGRASCOPE_UTILS_STRINGS_HPP_
 
 #include <boost/utility/string_ref.hpp>
 
@@ -94,4 +94,4 @@ std::string && normalizeEols(std::string &&str);
 // Goes over characters of the string and updates line and column accordingly.
 void updatePosition(boost::string_ref str, int tabWidth, int &line, int &col);
 
-#endif // ZOGRASCOPE__UTILS__STRINGS__HPP__
+#endif // ZOGRASCOPE_UTILS_STRINGS_HPP_

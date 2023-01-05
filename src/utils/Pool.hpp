@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__POOL_HPP__
-#define ZOGRASCOPE__UTILS__POOL_HPP__
+#ifndef ZOGRASCOPE_UTILS_POOL_HPP_
+#define ZOGRASCOPE_UTILS_POOL_HPP_
 
 #include <utility>
 
@@ -56,4 +56,4 @@ private:
     allocator_type alloc; // Allocator used for objects.
 };
 
-#endif // ZOGRASCOPE__UTILS__POOL_HPP__
+#endif // ZOGRASCOPE_UTILS_POOL_HPP_

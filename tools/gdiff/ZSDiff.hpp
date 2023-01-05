@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
-#define ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
+#ifndef ZOGRASCOPE_TOOLS_GDIFF_ZSDIFF_HPP_
+#define ZOGRASCOPE_TOOLS_GDIFF_ZSDIFF_HPP_
 
 #include <map>
 #include <memory>
@@ -132,4 +132,4 @@ private:
     DiffList diffList;
 };
 
-#endif // ZOGRASCOPE__TOOLS__GDIFF__ZSDIFF_HPP__
+#endif // ZOGRASCOPE_TOOLS_GDIFF_ZSDIFF_HPP_

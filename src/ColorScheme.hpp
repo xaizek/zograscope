@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__COLORSCHEME_HPP__
-#define ZOGRASCOPE__COLORSCHEME_HPP__
+#ifndef ZOGRASCOPE_COLORSCHEME_HPP_
+#define ZOGRASCOPE_COLORSCHEME_HPP_
 
 #include <array>
 
@@ -35,4 +35,4 @@ private:
                static_cast<std::size_t>(ColorGroup::ColorGroupCount)> groups;
 };
 
-#endif // ZOGRASCOPE__COLORSCHEME_HPP__
+#endif // ZOGRASCOPE_COLORSCHEME_HPP_

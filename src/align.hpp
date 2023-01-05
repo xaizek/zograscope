@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__ALIGN_HPP__
-#define ZOGRASCOPE__ALIGN_HPP__
+#ifndef ZOGRASCOPE_ALIGN_HPP_
+#define ZOGRASCOPE_ALIGN_HPP_
 
 #include "utils/strings.hpp"
 
@@ -74,4 +74,4 @@ private:
 // Generates alignment information describing two sequences.
 std::vector<DiffLine> makeDiff(DiffSource &&l, DiffSource &&r);
 
-#endif // ZOGRASCOPE__ALIGN_HPP__
+#endif // ZOGRASCOPE_ALIGN_HPP_

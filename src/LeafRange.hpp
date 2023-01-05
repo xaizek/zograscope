@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__LEAFRANGE_HPP__
-#define ZOGRASCOPE__LEAFRANGE_HPP__
+#ifndef ZOGRASCOPE_LEAFRANGE_HPP_
+#define ZOGRASCOPE_LEAFRANGE_HPP_
 
 #include <algorithm>
 #include <iterator>
@@ -118,4 +118,4 @@ public:
     { }
 };
 
-#endif // ZOGRASCOPE__LEAFRANGE_HPP__
+#endif // ZOGRASCOPE_LEAFRANGE_HPP_

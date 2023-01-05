@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__TUI__VIEWMANAGER_HPP__
-#define ZOGRASCOPE__TOOLS__TUI__VIEWMANAGER_HPP__
+#ifndef ZOGRASCOPE_TOOLS_TUI_VIEWMANAGER_HPP_
+#define ZOGRASCOPE_TOOLS_TUI_VIEWMANAGER_HPP_
 
 #include <memory>
 #include <string>
@@ -104,4 +104,4 @@ private:
     std::vector<View *> stack;
 };
 
-#endif // ZOGRASCOPE__TOOLS__TUI__VIEWMANAGER_HPP__
+#endif // ZOGRASCOPE_TOOLS_TUI_VIEWMANAGER_HPP_

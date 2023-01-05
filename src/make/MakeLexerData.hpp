@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__MAKE__MAKELEXERDATA_HPP__
-#define ZOGRASCOPE__MAKE__MAKELEXERDATA_HPP__
+#ifndef ZOGRASCOPE_MAKE_MAKELEXERDATA_HPP_
+#define ZOGRASCOPE_MAKE_MAKELEXERDATA_HPP_
 
 #include <cstddef>
 #include <cstring>
@@ -64,4 +64,4 @@ struct MakeLexerData : LexerData
     { }
 };
 
-#endif // ZOGRASCOPE__MAKE__MAKELEXERDATA_HPP__
+#endif // ZOGRASCOPE_MAKE_MAKELEXERDATA_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLING__GREPPER_HPP__
-#define ZOGRASCOPE__TOOLING__GREPPER_HPP__
+#ifndef ZOGRASCOPE_TOOLING_GREPPER_HPP_
+#define ZOGRASCOPE_TOOLING_GREPPER_HPP_
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/utility/string_ref.hpp>
@@ -230,4 +230,4 @@ Grepper::getMatched() const
     return matched;
 }
 
-#endif // ZOGRASCOPE__TOOLING__GREPPER_HPP__
+#endif // ZOGRASCOPE_TOOLING_GREPPER_HPP_

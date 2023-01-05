@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TS__BASH__TSBASHSTYPE_HPP__
-#define ZOGRASCOPE__TS__BASH__TSBASHSTYPE_HPP__
+#ifndef ZOGRASCOPE_TS_BASH_TSBASHSTYPE_HPP_
+#define ZOGRASCOPE_TS_BASH_TSBASHSTYPE_HPP_
 
 #include <cstdint>
 
@@ -110,4 +110,4 @@ operator-(SType stype)
 
 }
 
-#endif // ZOGRASCOPE__TS__BASH__TSBASHSTYPE_HPP__
+#endif // ZOGRASCOPE_TS_BASH_TSBASHSTYPE_HPP_

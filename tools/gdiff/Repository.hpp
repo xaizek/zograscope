@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__GDIFF__REPOSITORY_HPP__
-#define ZOGRASCOPE__TOOLS__GDIFF__REPOSITORY_HPP__
+#ifndef ZOGRASCOPE_TOOLS_GDIFF_REPOSITORY_HPP_
+#define ZOGRASCOPE_TOOLS_GDIFF_REPOSITORY_HPP_
 
 #include <string>
 #include <vector>
@@ -70,4 +70,4 @@ public:
     git_repository *repo;        // Repository handle.
 };
 
-#endif // ZOGRASCOPE__TOOLS__GDIFF__REPOSITORY_HPP__
+#endif // ZOGRASCOPE_TOOLS_GDIFF_REPOSITORY_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLING__CONFIG_HPP__
-#define ZOGRASCOPE__TOOLING__CONFIG_HPP__
+#ifndef ZOGRASCOPE_TOOLING_CONFIG_HPP_
+#define ZOGRASCOPE_TOOLING_CONFIG_HPP_
 
 #include <boost/filesystem/path.hpp>
 
@@ -73,4 +73,4 @@ private:
     std::vector<std::pair<MatchExpr, Attrs>> attrRules;
 };
 
-#endif // ZOGRASCOPE__TOOLING__CONFIG_HPP__
+#endif // ZOGRASCOPE_TOOLING_CONFIG_HPP_

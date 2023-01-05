@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__COLORS_HPP__
-#define ZOGRASCOPE__COLORS_HPP__
+#ifndef ZOGRASCOPE_COLORS_HPP_
+#define ZOGRASCOPE_COLORS_HPP_
 
 enum class ColorGroup
 {
@@ -59,4 +59,4 @@ enum class ColorGroup
     ColorGroupCount
 };
 
-#endif // ZOGRASCOPE__COLORS_HPP__
+#endif // ZOGRASCOPE_COLORS_HPP_

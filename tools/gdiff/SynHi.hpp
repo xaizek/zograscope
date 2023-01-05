@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__GDIFF__SYNHI_HPP__
-#define ZOGRASCOPE__TOOLS__GDIFF__SYNHI_HPP__
+#ifndef ZOGRASCOPE_TOOLS_GDIFF_SYNHI_HPP_
+#define ZOGRASCOPE_TOOLS_GDIFF_SYNHI_HPP_
 
 #include <vector>
 
@@ -44,4 +44,4 @@ private:
     GuiColorScheme cs;
 };
 
-#endif // ZOGRASCOPE__TOOLS__GDIFF__SYNHI_HPP__
+#endif // ZOGRASCOPE_TOOLS_GDIFF_SYNHI_HPP_

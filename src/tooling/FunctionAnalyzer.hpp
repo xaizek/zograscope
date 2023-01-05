@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
-#define ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
+#ifndef ZOGRASCOPE_TOOLING_FUNCTIONANALYZER_HPP_
+#define ZOGRASCOPE_TOOLING_FUNCTIONANALYZER_HPP_
 
 class Language;
 class Node;
@@ -38,4 +38,4 @@ private:
     const Language &lang; // Language of the functions being analyzed.
 };
 
-#endif // ZOGRASCOPE__TOOLING__FUNCTIONANALYZER_HPP__
+#endif // ZOGRASCOPE_TOOLING_FUNCTIONANALYZER_HPP_

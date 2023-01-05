@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__TIME_HPP__
-#define ZOGRASCOPE__UTILS__TIME_HPP__
+#ifndef ZOGRASCOPE_UTILS_TIME_HPP_
+#define ZOGRASCOPE_UTILS_TIME_HPP_
 
 #include <chrono>
 #include <iosfwd>
@@ -168,4 +168,4 @@ TimeReport::measure(const std::string &stage)
     return ProxyTimer(*this);
 }
 
-#endif // ZOGRASCOPE__UTILS__TIME_HPP__
+#endif // ZOGRASCOPE_UTILS_TIME_HPP_

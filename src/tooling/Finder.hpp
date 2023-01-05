@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLING__FINDER_HPP__
-#define ZOGRASCOPE__TOOLING__FINDER_HPP__
+#ifndef ZOGRASCOPE_TOOLING_FINDER_HPP_
+#define ZOGRASCOPE_TOOLING_FINDER_HPP_
 
 #include <deque>
 #include <string>
@@ -53,4 +53,4 @@ private:
     Grepper grepper;                // Finder of consecutive tokens.
 };
 
-#endif // ZOGRASCOPE__TOOLING__FINDER_HPP__
+#endif // ZOGRASCOPE_TOOLING_FINDER_HPP_

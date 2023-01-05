@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__TREES_HPP__
-#define ZOGRASCOPE__UTILS__TREES_HPP__
+#ifndef ZOGRASCOPE_UTILS_TREES_HPP_
+#define ZOGRASCOPE_UTILS_TREES_HPP_
 
 #include <ostream>
 #include <vector>
@@ -92,4 +92,4 @@ printSetTraits(std::ostream &os, N *node, const F &nodePrinter)
 
 }
 
-#endif // ZOGRASCOPE__UTILS__TREES_HPP__
+#endif // ZOGRASCOPE_UTILS_TREES_HPP_

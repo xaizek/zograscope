@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__TUI__VIEWS__FILESVIEW_HPP__
-#define ZOGRASCOPE__TOOLS__TUI__VIEWS__FILESVIEW_HPP__
+#ifndef ZOGRASCOPE_TOOLS_TUI_VIEWS_FILESVIEW_HPP_
+#define ZOGRASCOPE_TOOLS_TUI_VIEWS_FILESVIEW_HPP_
 
 #include <string>
 #include <vector>
@@ -42,4 +42,4 @@ private:
     std::vector<std::string> files;
 };
 
-#endif // ZOGRASCOPE__TOOLS__TUI__VIEWS__FILESVIEW_HPP__
+#endif // ZOGRASCOPE_TOOLS_TUI_VIEWS_FILESVIEW_HPP_

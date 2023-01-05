@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TYPES_HPP__
-#define ZOGRASCOPE__TYPES_HPP__
+#ifndef ZOGRASCOPE_TYPES_HPP_
+#define ZOGRASCOPE_TYPES_HPP_
 
 #include <cstdint>
 
@@ -169,4 +169,4 @@ std::ostream & operator<<(std::ostream &os, Type type);
 
 Type canonizeType(Type type);
 
-#endif // ZOGRASCOPE__TYPES_HPP__
+#endif // ZOGRASCOPE_TYPES_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TREE_EDIT_DISTANCE_HPP__
-#define ZOGRASCOPE__TREE_EDIT_DISTANCE_HPP__
+#ifndef ZOGRASCOPE_TREE_EDIT_DISTANCE_HPP_
+#define ZOGRASCOPE_TREE_EDIT_DISTANCE_HPP_
 
 #include <string>
 
@@ -26,4 +26,4 @@ void printTree(const std::string &name, Tree &tree);
 
 int ted(Node &T1, Node &T2);
 
-#endif // ZOGRASCOPE__TREE_EDIT_DISTANCE_HPP__
+#endif // ZOGRASCOPE_TREE_EDIT_DISTANCE_HPP_

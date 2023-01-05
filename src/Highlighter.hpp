@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__HIGHLIGHTER_HPP__
-#define ZOGRASCOPE__HIGHLIGHTER_HPP__
+#ifndef ZOGRASCOPE_HIGHLIGHTER_HPP_
+#define ZOGRASCOPE_HIGHLIGHTER_HPP_
 
 #include <cstdint>
 
@@ -131,4 +131,4 @@ private:
                                               // diffables with original color.
 };
 
-#endif // ZOGRASCOPE__HIGHLIGHTER_HPP__
+#endif // ZOGRASCOPE_HIGHLIGHTER_HPP_

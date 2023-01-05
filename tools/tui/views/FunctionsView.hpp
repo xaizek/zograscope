@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__TUI__VIEWS__FUNCTIONSVIEW_HPP__
-#define ZOGRASCOPE__TOOLS__TUI__VIEWS__FUNCTIONSVIEW_HPP__
+#ifndef ZOGRASCOPE_TOOLS_TUI_VIEWS_FUNCTIONSVIEW_HPP_
+#define ZOGRASCOPE_TOOLS_TUI_VIEWS_FUNCTIONSVIEW_HPP_
 
 #include <vector>
 
@@ -47,4 +47,4 @@ private:
     Sorting sorting;
 };
 
-#endif // ZOGRASCOPE__TOOLS__TUI__VIEWS__FUNCTIONSVIEW_HPP__
+#endif // ZOGRASCOPE_TOOLS_TUI_VIEWS_FUNCTIONSVIEW_HPP_

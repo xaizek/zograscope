@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__C__C11LANGUAGE_HPP__
-#define ZOGRASCOPE__C__C11LANGUAGE_HPP__
+#ifndef ZOGRASCOPE_C_C11LANGUAGE_HPP_
+#define ZOGRASCOPE_C_C11LANGUAGE_HPP_
 
 #include <vector>
 
@@ -87,4 +87,4 @@ private:
     std::vector<Type> map; // Static token-type to Type map.
 };
 
-#endif // ZOGRASCOPE__C__C11LANGUAGE_HPP__
+#endif // ZOGRASCOPE_C_C11LANGUAGE_HPP_

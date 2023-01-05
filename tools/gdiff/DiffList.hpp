@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__GDIFF__DIFFLIST_HPP__
-#define ZOGRASCOPE__TOOLS__GDIFF__DIFFLIST_HPP__
+#ifndef ZOGRASCOPE_TOOLS_GDIFF_DIFFLIST_HPP_
+#define ZOGRASCOPE_TOOLS_GDIFF_DIFFLIST_HPP_
 
 #include <string>
 #include <vector>
@@ -58,4 +58,4 @@ private:
     unsigned int current = 0U;
 };
 
-#endif // ZOGRASCOPE__TOOLS__GDIFF__DIFFLIST_HPP__
+#endif // ZOGRASCOPE_TOOLS_GDIFF_DIFFLIST_HPP_

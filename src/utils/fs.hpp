@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__UTILS__FS_HPP__
-#define ZOGRASCOPE__UTILS__FS_HPP__
+#ifndef ZOGRASCOPE_UTILS_FS_HPP_
+#define ZOGRASCOPE_UTILS_FS_HPP_
 
 #include <string>
 
@@ -51,4 +51,4 @@ private:
 // specifies a directory or file reading has failed.
 std::string readFile(const std::string &path);
 
-#endif // ZOGRASCOPE__UTILS__FS_HPP__
+#endif // ZOGRASCOPE_UTILS_FS_HPP_

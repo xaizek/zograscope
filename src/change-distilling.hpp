@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__CHANGE_DISTILLING_HPP__
-#define ZOGRASCOPE__CHANGE_DISTILLING_HPP__
+#ifndef ZOGRASCOPE_CHANGE_DISTILLING_HPP_
+#define ZOGRASCOPE_CHANGE_DISTILLING_HPP_
 
 #include <cstdint>
 
@@ -92,4 +92,4 @@ private:
     std::vector<DiceString> dice2; // DiceString of corresponding po2[i]->label.
 };
 
-#endif // ZOGRASCOPE__CHANGE_DISTILLING_HPP__
+#endif // ZOGRASCOPE_CHANGE_DISTILLING_HPP_

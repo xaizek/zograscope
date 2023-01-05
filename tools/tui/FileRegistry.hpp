@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TOOLS__TUI__FILEREGISTRY_HPP__
-#define ZOGRASCOPE__TOOLS__TUI__FILEREGISTRY_HPP__
+#ifndef ZOGRASCOPE_TOOLS_TUI_FILEREGISTRY_HPP_
+#define ZOGRASCOPE_TOOLS_TUI_FILEREGISTRY_HPP_
 
 #include <string>
 #include <unordered_map>
@@ -63,4 +63,4 @@ private:
     std::vector<FuncInfo> infos;
 };
 
-#endif // ZOGRASCOPE__TOOLS__TUI__FILEREGISTRY_HPP__
+#endif // ZOGRASCOPE_TOOLS_TUI_FILEREGISTRY_HPP_

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with zograscope.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ZOGRASCOPE__TREE_HPP__
-#define ZOGRASCOPE__TREE_HPP__
+#ifndef ZOGRASCOPE_TREE_HPP_
+#define ZOGRASCOPE_TREE_HPP_
 
 #include <boost/utility/string_ref.hpp>
 
@@ -216,4 +216,4 @@ bool canForceLeafMatch(const Node *x, const Node *y);
 // Dumps tree defined by the node into specified stream for debugging purposes.
 void dumpTree(std::ostream &os, const Node *node, const Language *lang);
 
-#endif // ZOGRASCOPE__TREE_HPP__
+#endif // ZOGRASCOPE_TREE_HPP_
