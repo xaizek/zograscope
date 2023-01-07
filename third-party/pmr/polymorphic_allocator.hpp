@@ -5,8 +5,8 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#ifndef PMR__POLYMORPHIC_ALLOCATOR_HPP__
-#define PMR__POLYMORPHIC_ALLOCATOR_HPP__
+#ifndef PMR_POLYMORPHIC_ALLOCATOR_HPP_
+#define PMR_POLYMORPHIC_ALLOCATOR_HPP_
 
 #include <atomic>
 #include <memory>
@@ -474,4 +474,4 @@ bool __pmrd::operator!=(const __pmrd::polymorphic_allocator_imp<T1>& a,
 
 } // close namespace cpp17
 
-#endif // PMR__POLYMORPHIC_ALLOCATOR_HPP__
+#endif // PMR_POLYMORPHIC_ALLOCATOR_HPP_

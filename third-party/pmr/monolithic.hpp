@@ -5,8 +5,8 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#ifndef PMR__MONOLITHIC_HPP__
-#define PMR__MONOLITHIC_HPP__
+#ifndef PMR_MONOLITHIC_HPP_
+#define PMR_MONOLITHIC_HPP_
 
 #include "pmr_vector.hpp"
 #include "polymorphic_allocator.hpp"
@@ -111,4 +111,4 @@ monolithic::do_is_equal(const memory_resource &other) const noexcept
 
 } // close namespace cpp17
 
-#endif // PMR__MONOLITHIC_HPP__
+#endif // PMR_MONOLITHIC_HPP_

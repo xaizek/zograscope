@@ -5,8 +5,8 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#ifndef PMR__PMR_DEQUE_HPP__
-#define PMR__PMR_DEQUE_HPP__
+#ifndef PMR_PMR_DEQUE_HPP_
+#define PMR_PMR_DEQUE_HPP_
 
 #include <deque>
 
@@ -22,4 +22,4 @@ namespace pmr {
 }
 }
 
-#endif // PMR__PMR_DEQUE_HPP__
+#endif // PMR_PMR_DEQUE_HPP_

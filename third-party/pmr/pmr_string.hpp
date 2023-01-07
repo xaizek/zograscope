@@ -5,8 +5,8 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#ifndef PMR__PMR_STRING_HPP__
-#define PMR__PMR_STRING_HPP__
+#ifndef PMR_PMR_STRING_HPP_
+#define PMR_PMR_STRING_HPP_
 
 #include <type_traits>
 #include <string>
@@ -142,4 +142,4 @@ namespace pmr {
 } // Close namespace pmr
 } // Close namespace cpp17
 
-#endif // PMR__PMR_STRING_HPP__
+#endif // PMR_PMR_STRING_HPP_
