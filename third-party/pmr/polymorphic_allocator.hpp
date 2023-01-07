@@ -74,7 +74,7 @@ bool operator!=(const memory_resource& a, const memory_resource& b)
     return ! (a == b);
 }
 
-namespace __details {
+namespace _details {
 
 // STL allocator that holds a pointer to a polymorphic allocator resource.
 // Used to implement `polymorphic_allocator`, which is a scoped allocator.
@@ -164,7 +164,7 @@ class resource_adaptor_imp : public memory_resource
     allocator_type get_allocator() const { return m_alloc; }
 };
 
-} // end namespace __details
+} // end namespace _details
 
 // A resource_adaptor converts a traditional STL allocator to a polymorphic
 // memory resource.  Somehow, this didn't make it into C++17, but it should
@@ -173,7 +173,7 @@ class resource_adaptor_imp : public memory_resource
 // `resource_adaptor<U>` are always the same type, whether or not
 // `T` and `U` are the same type.
 template <class Allocator>
-using resource_adaptor = __details::resource_adaptor_imp<
+using resource_adaptor = _details::resource_adaptor_imp<
     typename allocator_traits<Allocator>::template rebind_alloc<byte>>;
 
 // Memory resource that uses new and delete.
@@ -190,9 +190,9 @@ memory_resource *set_default_resource(memory_resource *r);
 
 template <class Tp>
 class polymorphic_allocator :
-    public scoped_allocator_adaptor<__details::polymorphic_allocator_imp<Tp>>
+    public scoped_allocator_adaptor<_details::polymorphic_allocator_imp<Tp>>
 {
-    typedef __details::polymorphic_allocator_imp<Tp> Imp;
+    typedef _details::polymorphic_allocator_imp<Tp> Imp;
     typedef scoped_allocator_adaptor<Imp>            Base;
 
   public:
@@ -209,7 +209,7 @@ class polymorphic_allocator :
         : Base(Imp((other.resource()))) { }
 
     template <class U>
-    polymorphic_allocator(const __details::polymorphic_allocator_imp<U>& other)
+    polymorphic_allocator(const _details::polymorphic_allocator_imp<U>& other)
         : Base(other) { }
 
     // Return a default-constructed allocator
@@ -268,7 +268,7 @@ pmr::set_default_resource(pmr::memory_resource *r)
 template <class Allocator>
     template <class Allocator2>
 inline
-pmr::__details::resource_adaptor_imp<Allocator>::resource_adaptor_imp(
+pmr::_details::resource_adaptor_imp<Allocator>::resource_adaptor_imp(
     Allocator2&& a2, typename
     enable_if<is_convertible<Allocator2, Allocator>::value, int>::type)
     : m_alloc(forward<Allocator2>(a2))
@@ -278,9 +278,9 @@ pmr::__details::resource_adaptor_imp<Allocator>::resource_adaptor_imp(
 template <class Allocator>
 template <size_t Align>
 void *
-pmr::__details::resource_adaptor_imp<Allocator>::allocate_imp(size_t bytes)
+pmr::_details::resource_adaptor_imp<Allocator>::allocate_imp(size_t bytes)
 {
-    typedef __details::aligned_chunk<Align> chunk;
+    typedef _details::aligned_chunk<Align> chunk;
     size_t chunks = (bytes + Align - 1) / Align;
 
     typedef  typename allocator_traits<Allocator>::
@@ -292,10 +292,10 @@ pmr::__details::resource_adaptor_imp<Allocator>::allocate_imp(size_t bytes)
 template <class Allocator>
 template <size_t Align>
 void
-pmr::__details::resource_adaptor_imp<Allocator>::deallocate_imp(void   *p,
-                                                                size_t  bytes)
+pmr::_details::resource_adaptor_imp<Allocator>::deallocate_imp(void   *p,
+                                                               size_t  bytes)
 {
-    typedef __details::aligned_chunk<Align> chunk;
+    typedef _details::aligned_chunk<Align> chunk;
     size_t chunks = (bytes + Align - 1) / Align;
 
     typedef  typename allocator_traits<Allocator>::
@@ -306,8 +306,8 @@ pmr::__details::resource_adaptor_imp<Allocator>::deallocate_imp(void   *p,
 
 template <class Allocator>
 void *
-pmr::__details::resource_adaptor_imp<Allocator>::do_allocate(size_t bytes,
-                                                             size_t alignment)
+pmr::_details::resource_adaptor_imp<Allocator>::do_allocate(size_t bytes,
+                                                            size_t alignment)
 {
     static const size_t max_natural_alignment = sizeof(max_align_t);
 
@@ -348,9 +348,9 @@ pmr::__details::resource_adaptor_imp<Allocator>::do_allocate(size_t bytes,
 
 template <class Allocator>
 void
-pmr::__details::resource_adaptor_imp<Allocator>::do_deallocate(void  *p,
-                                                               size_t bytes,
-                                                               size_t alignment)
+pmr::_details::resource_adaptor_imp<Allocator>::do_deallocate(void  *p,
+                                                              size_t bytes,
+                                                              size_t alignment)
 {
     static const size_t max_natural_alignment = sizeof(max_align_t);
 
@@ -380,7 +380,7 @@ pmr::__details::resource_adaptor_imp<Allocator>::do_deallocate(void  *p,
 }
 
 template <class Allocator>
-bool pmr::__details::resource_adaptor_imp<Allocator>::do_is_equal(
+bool pmr::_details::resource_adaptor_imp<Allocator>::do_is_equal(
     const memory_resource& other) const noexcept
 {
     const resource_adaptor_imp *other_p =
@@ -393,18 +393,18 @@ bool pmr::__details::resource_adaptor_imp<Allocator>::do_is_equal(
 }
 
 
-namespace __pmrd = pmr::__details;
+namespace _pmrd = pmr::_details;
 
 template <class Tp>
 inline
-__pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp()
+_pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp()
     : m_resource(get_default_resource())
 {
 }
 
 template <class Tp>
 inline
-__pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp(
+_pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp(
     pmr::memory_resource *r)
     : m_resource(r ? r : get_default_resource())
 {
@@ -413,47 +413,47 @@ __pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp(
 template <class Tp>
     template <class U>
 inline
-__pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp(
-    const __pmrd::polymorphic_allocator_imp<U>& other)
+_pmrd::polymorphic_allocator_imp<Tp>::polymorphic_allocator_imp(
+    const _pmrd::polymorphic_allocator_imp<U>& other)
     : m_resource(other.resource())
 {
 }
 
 template <class Tp>
 inline
-Tp *__pmrd::polymorphic_allocator_imp<Tp>::allocate(size_t n)
+Tp *_pmrd::polymorphic_allocator_imp<Tp>::allocate(size_t n)
 {
     return static_cast<Tp*>(m_resource->allocate(n * sizeof(Tp), alignof(Tp)));
 }
 
 template <class Tp>
 inline
-void __pmrd::polymorphic_allocator_imp<Tp>::deallocate(Tp *p, size_t n)
+void _pmrd::polymorphic_allocator_imp<Tp>::deallocate(Tp *p, size_t n)
 {
     m_resource->deallocate(p, n * sizeof(Tp), alignof(Tp));
 }
 
 template <class Tp>
 inline
-__pmrd::polymorphic_allocator_imp<Tp>
-__pmrd::polymorphic_allocator_imp<Tp>::select_on_container_copy_construction()
+_pmrd::polymorphic_allocator_imp<Tp>
+_pmrd::polymorphic_allocator_imp<Tp>::select_on_container_copy_construction()
     const
 {
-    return __pmrd::polymorphic_allocator_imp<Tp>();
+    return _pmrd::polymorphic_allocator_imp<Tp>();
 }
 
 template <class Tp>
 inline
 pmr::memory_resource *
-__pmrd::polymorphic_allocator_imp<Tp>::resource() const
+_pmrd::polymorphic_allocator_imp<Tp>::resource() const
 {
     return m_resource;
 }
 
 template <class T1, class T2>
 inline
-bool __pmrd::operator==(const __pmrd::polymorphic_allocator_imp<T1>& a,
-                        const __pmrd::polymorphic_allocator_imp<T2>& b)
+bool _pmrd::operator==(const _pmrd::polymorphic_allocator_imp<T1>& a,
+                       const _pmrd::polymorphic_allocator_imp<T2>& b)
 {
     // `operator==` for `memory_resource` first checks for equality of
     // addresses and calls `is_equal` only if the addresses differ.  The call
@@ -466,8 +466,8 @@ bool __pmrd::operator==(const __pmrd::polymorphic_allocator_imp<T1>& a,
 
 template <class T1, class T2>
 inline
-bool __pmrd::operator!=(const __pmrd::polymorphic_allocator_imp<T1>& a,
-                        const __pmrd::polymorphic_allocator_imp<T2>& b)
+bool _pmrd::operator!=(const _pmrd::polymorphic_allocator_imp<T1>& a,
+                       const _pmrd::polymorphic_allocator_imp<T2>& b)
 {
     return *a.resource() != *b.resource();
 }
