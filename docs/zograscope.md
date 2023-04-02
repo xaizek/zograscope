@@ -181,7 +181,7 @@ Supported attributes:
 
 * `lang`\
   Default: ""\
-  Those accepted by `--lang` command-line option: c, cxx, make, lua
+  Those accepted by `--lang` command-line option: bash, c, cxx, make, lua
 * `tab-size`\
   Default: 4\
   Value should be an integer that's greater than zero
@@ -191,7 +191,7 @@ Unknown attributes are ignored.
 Example:
 
 ```
-# .zs/exclude
+# .zs/attributes
 
 *.c tab-size=8
 *.h tab-size=8 lang=c
@@ -229,7 +229,8 @@ report time spent on different activities
 force colorization of output
 
 `--lang` _name_ \
-force specific language (`c`, `cxx`, `make`, `lua`) and disable auto-detection
+force specific language (`bash`, `c`, `cxx`, `make`, `lua`) and
+disable auto-detection
 
 `--no-pager` \
 never spawn a pager for output
