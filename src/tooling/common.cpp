@@ -134,7 +134,7 @@ parseOptions(const std::vector<std::string> &args,
         ("color",       "force colorization of output")
         ("lang",        po::value<std::string>()->value_name("name")
                                                 ->default_value({}),
-                        "force specific language (c, cxx, bash, lua, make)");
+                        "force specific language (bash, c, cxx, lua, make)");
 
     po::options_description allOptions;
     allOptions.add(options).add(hiddenOpts);
