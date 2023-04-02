@@ -13,7 +13,7 @@ environment:
       CC: ccache gcc
       CXX: ccache g++
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - BUILDENV: macos
+    - BUILDENV: macos-bigsur
       CC: ccache clang
       CXX: ccache clang++
       APPVEYOR_BUILD_WORKER_IMAGE: macOS
