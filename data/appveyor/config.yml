@@ -13,10 +13,10 @@ environment:
       CC: ccache gcc
       CXX: ccache g++
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - BUILDENV: macos-bigsur
+    - BUILDENV: macos
       CC: ccache clang
       CXX: ccache clang++
-      APPVEYOR_BUILD_WORKER_IMAGE: macOS
+      APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
 
 cache:
   - $HOME/.ccache
