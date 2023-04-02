@@ -331,6 +331,34 @@ TEST_CASE("Argument list is decomposed", "[comparison][parsing]")
 
     diffC(R"(
         void f() {
+            fprintf(fp, "%s\n",
+                    hist->items[i]       /// Deletions
+            );
+        }
+    )", R"(
+        void f() {
+            fprintf(fp, "%s\n",
+                    hist->items[i].text  /// Additions
+            );
+        }
+    )", false);
+
+    diffC(R"(
+        void f() {
+            set_colorscheme(
+                cmd_info->argv[0]  /// Deletions
+            );
+        }
+    )", R"(
+        void f() {
+            set_colorscheme(
+                cmd_info->argv     /// Additions
+            );
+        }
+    )", false);
+
+    diffC(R"(
+        void f() {
             function(firstArg);
         }
     )", R"(
@@ -789,6 +817,60 @@ TEST_CASE("Inversion of relatively complex condition", "[comparison][parsing]")
     )", true);
 }
 
+TEST_CASE("Reordering of conditionals", "[comparison][parsing]")
+{
+    diffC(R"(
+        void f() {
+            if (
+                cfg_confirm_delete(0)      /// Moves
+                &&
+                !curr_stats.confirmed
+                &&                         /// Moves
+                (ops == NULL || !ops->bg)  /// Moves
+            ) {
+            }
+        }
+    )", R"(
+        void f() {
+            if (
+                (ops == NULL || !ops->bg)  /// Moves
+                &&
+                cfg_confirm_delete(0)      /// Moves
+                &&                         /// Moves
+                !curr_stats.confirmed
+            ) {
+            }
+        }
+    )", true);
+}
+
+TEST_CASE("Condition replacement", "[comparison][parsing]")
+{
+    diffC(R"(
+        void f() {
+            if (cfg.use_system_calls
+                &&
+                !is_dir(fname)                      /// Deletions
+                &&
+                !is_dir(caused_by)                  /// Deletions
+            ) {
+                responses[i++] = append;
+            }
+        }
+    )", R"(
+        void f() {
+            if (cfg.use_system_calls
+                &&
+                is_regular_file_noderef(fname)      /// Additions
+                &&
+                is_regular_file_noderef(caused_by)  /// Additions
+            ) {
+                responses[i++] = append;
+            }
+        }
+    )", true);
+}
+
 TEST_CASE("Switch and label statements are decomposed", "[comparison][parsing]")
 {
     diffC(R"(
@@ -985,6 +1067,25 @@ TEST_CASE("Blocks are spliced into for statements", "[comparison][parsing]")
                 fpos_set_pos(put_confirm.view,              /// Additions
                              entry_to_pos(view, entry));    /// Additions
             }
+        }
+    )", true);
+}
+
+TEST_CASE("Multiply operator preserves its subexprs", "[comparison][parsing]")
+{
+    diffC(R"(
+        void f() {
+            int var = 2 +
+                      2
+                      /3  /// Updates
+                      ;
+        }
+    )", R"(
+        void f() {
+            int var = 2 +
+                      2
+                      *8  /// Updates
+                      ;
         }
     )", true);
 }
