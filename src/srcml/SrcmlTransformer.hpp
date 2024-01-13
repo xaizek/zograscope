@@ -17,6 +17,8 @@
 #ifndef ZOGRASCOPE_SRCML_SRCMLTRANSFORMER_HPP_
 #define ZOGRASCOPE_SRCML_SRCMLTRANSFORMER_HPP_
 
+#include <cstdint>
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

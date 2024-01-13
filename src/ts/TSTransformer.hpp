@@ -17,6 +17,8 @@
 #ifndef ZOGRASCOPE_TS_TSTRANSFORMER_HPP_
 #define ZOGRASCOPE_TS_TSTRANSFORMER_HPP_
 
+#include <cstdint>
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
