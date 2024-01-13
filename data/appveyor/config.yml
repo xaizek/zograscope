@@ -16,7 +16,7 @@ environment:
     - BUILDENV: macos
       CC: ccache clang
       CXX: ccache clang++
-      APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
+      APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
 
 cache:
   - $HOME/.ccache
