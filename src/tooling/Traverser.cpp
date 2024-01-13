@@ -18,7 +18,6 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/range/adaptors.hpp>
 
 #include <functional>
 #include <string>
@@ -26,6 +25,7 @@
 #include <vector>
 
 #include "tooling/Config.hpp"
+#include "utils/iterators.hpp"
 #include "Language.hpp"
 
 namespace fs = boost::filesystem;
@@ -69,10 +69,8 @@ Traverser::search(const boost::filesystem::path &path)
         return match(path.string(), /*passedIn=*/true);
     }
 
-    using it = fs::directory_iterator;
-
     bool found = false;
-    for (fs::directory_entry &e : boost::make_iterator_range(it(path), it())) {
+    for (fs::directory_entry &e : rangeFrom<fs::directory_iterator>(path)) {
         const fs::path &path = e.path();
         if (fs::is_directory(path)) {
             if (config.shouldVisitDirectory(path.string())) {
