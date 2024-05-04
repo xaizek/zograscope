@@ -16,9 +16,12 @@
 
 #include "Traverser.hpp"
 
-#include <boost/filesystem/directory.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 107200
+#  include <boost/filesystem/directory.hpp>
+#endif
 
 #include <functional>
 #include <string>
