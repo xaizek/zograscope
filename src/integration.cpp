@@ -125,7 +125,7 @@ public:
         //! Output collected so far.
         std::string buffer;
         //! Process id of a pager.
-        pid_t pid;
+        pid_t pid = -1;
 
         /**
          * @brief Pointer to buffer stored in RedirectToPager.
