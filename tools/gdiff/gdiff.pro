@@ -31,7 +31,7 @@ FORMS += \
 
 LIBS += -L$$OUT/ -lzograscope
 LIBS += -lboost_iostreams -lboost_program_options -lboost_filesystem
-LIBS += -lboost_system -lgit2
+LIBS += -lgit2
 
 INCLUDEPATH += $$PWD/../../src
 DEPENDPATH += $$PWD/../../src

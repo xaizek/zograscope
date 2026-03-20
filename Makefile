@@ -4,8 +4,8 @@ CFLAGS += -MMD -MP
 CFLAGS += -Ithird-party/tree-sitter/include/ -Ithird-party/tree-sitter/src/
 CXXFLAGS += -std=c++11 -Wall -Wextra -DYYDEBUG -pthread
 CXXFLAGS += -Isrc/ -Ithird-party/ $(CFLAGS)
-LDFLAGS  += -g -lboost_iostreams -lboost_program_options -lboost_filesystem
-LDFLAGS  += -lboost_system -pthread
+LDFLAGS  += -g -pthread
+LDFLAGS  += -lboost_iostreams -lboost_program_options -lboost_filesystem
 
 INSTALL := install -D
 DESTDIR :=
