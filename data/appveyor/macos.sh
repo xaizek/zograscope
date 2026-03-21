@@ -5,11 +5,10 @@ set -xe
 # make sure bison installed by brew is used
 export PATH="/usr/local/opt/bison/bin:$PATH"
 
-if [ "$SRCML" = v1.0 ]; then
-    echo "TESTS := '*'" > config.mk
-fi
+brew tap srcml/srcml
+brew install bison boost ccache srcml
 
-brew install bison boost ccache
+echo 'HAVE_LIBSRCML := yes' > config.mk
 
 make -j4
 make -j4 check
