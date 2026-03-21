@@ -4,15 +4,15 @@ clone_depth: 1
 environment:
   matrix:
     - BUILDENV: ubuntu
-      SRCML: v0.9.5
+      SRCML: v1.0.0
       CC: ccache clang
       CXX: ccache clang++
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
     - BUILDENV: ubuntu
-      SRCML: v1.0
+      SRCML: v1.1.0
       CC: ccache gcc
       CXX: ccache g++
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
     - BUILDENV: macos
       CC: ccache clang
       CXX: ccache clang++
